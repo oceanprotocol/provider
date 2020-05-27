@@ -11,6 +11,37 @@ accessed via:
 ## Encrypt endpoint
 
 ### GET /api/v1/service/encrypt
+Parameters
+```
+    documentId: String object containing document id (e.g. a DID)
+    signature: String object containg user signature (signed message)
+    publisherAddress: String object containing publisher's ethereum address
+    document: String, representing the list of `file` objects that describe each file in the dataset
+```
+
+Returns:
+Json object containing the encrypted document.
+
+
+Example:
+```
+POST /api/v1/service/encrypt
+payload:
+{
+    "signature":"0x00110011",
+    "documentId":"0x1111",
+    "publisherAddress":"0x990922334",
+    "document":"[{index:0, url:""}, {index:1, url:""}]"
+```
+
+Response:
+
+```json
+{
+  "encryptedDocument": ""
+}
+```
+
 
 
 ## Initial service request endpoint
@@ -94,7 +125,7 @@ Array of `status` objects as described above, in this case the array will have o
 
 Example:
 ```
-POST /api/v1/compute?signature=0x00110011&serviceAgreementId=0x1111&algorithmDid=0xa203e320008999099000&consumerAddress=0x990922334
+POST /api/v1/service/compute?signature=0x00110011&serviceAgreementId=0x1111&algorithmDid=0xa203e320008999099000&consumerAddress=0x990922334
 ```
 
 Response:
@@ -136,7 +167,7 @@ Array of `status` objects as described above
 
 Example:
 ```
-GET /api/v1/provider/services/compute?signature=0x00110011&serviceAgreementId=0x1111&jobId=012023
+GET /api/v1/service/compute?signature=0x00110011&serviceAgreementId=0x1111&jobId=012023
 ```
 
 Response:
@@ -199,7 +230,7 @@ Array of `status` objects as described above
 
 Example:
 ```
-PUT /api/v1/provider/services/compute?signature=0x00110011&serviceAgreementId=0x1111&jobId=012023
+PUT /api/v1/service/compute?signature=0x00110011&serviceAgreementId=0x1111&jobId=012023
 ```
 
 Response:
@@ -238,7 +269,7 @@ Array of `status` objects as described above
 
 Example:
 ```
-DELETE /api/v1/provider/services/compute?signature=0x00110011&serviceAgreementId=0x1111&jobId=012023
+DELETE /api/v1/service/compute?signature=0x00110011&serviceAgreementId=0x1111&jobId=012023
 ```
 
 Response:
