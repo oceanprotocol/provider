@@ -46,10 +46,77 @@ Response:
 
 ## Initial service request endpoint
 ### POST /api/v1/service/initialize
+Parameters
+```
+    documentId: String object containing document id (e.g. a DID)
+    serviceId: String, representing the list of `file` objects that describe each file in the dataset
+    signature: String object containg user signature (signed message)
+    consumerAddress: String object containing publisher's ethereum address
+```
+
+Returns:
+Json document with the token approveAndLock transaction parameters
+
+
+Example:
+```
+POST /api/v1/service/download
+payload:
+{
+    "signature":"0x00110011",
+    "documentId":"0x1111",
+    "consumerAddress":"0x990922334",
+    "serviceId": 0,
+    "fileIndex": 0,
+    "transactionId": "0xa09fc23421345532e34829"
+```
+
+Response:
+
+```json
+{
+  "": ""
+}
+```
 
 
 ## Download endpoint
 ### GET /api/v1/service/download
+Parameters
+```
+    documentId: String object containing document id (e.g. a DID)
+    serviceId: String, representing the list of `file` objects that describe each file in the dataset
+    fileIndex: integer, the index of the file from the files list in the dataset
+    signature: String object containg user signature (signed message)
+    consumerAddress: String object containing publisher's ethereum address
+    transactionId: Hex string -- the id of on-chain transaction for approval of DataTokens transfer 
+        given to the provider's account
+```
+
+Returns:
+File stream
+
+
+Example:
+```
+POST /api/v1/service/download
+payload:
+{
+    "signature":"0x00110011",
+    "documentId":"0x1111",
+    "consumerAddress":"0x990922334",
+    "serviceId": 0,
+    "fileIndex": 0,
+    "transactionId": "0xa09fc23421345532e34829"
+```
+
+Response:
+
+```json
+{
+  "": ""
+}
+```
 
 
 ## Compute endpoints
