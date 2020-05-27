@@ -473,3 +473,20 @@ def build_stage_dict(input_dict, algorithm_dict, output_dict):
         'algorithm': algorithm_dict,
         'output': output_dict
     })
+
+
+def get_metadata_store_url(token_address):
+    # grab the metadatastore URL from the DataToken contract (token_address)
+    metadata_url = ''
+    return metadata_url
+
+
+def get_asset_from_metadatastore(metadatastore, document_id):
+    return DDO()
+
+
+def get_asset_for_data_token(token_address, document_id):
+    return get_asset_from_metadatastore(
+        get_metadata_store_url(token_address),
+        document_id
+    )

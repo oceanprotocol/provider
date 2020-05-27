@@ -10,15 +10,15 @@ accessed via:
 
 ## Encrypt endpoint
 
-### GET /api/v1/provider/services/encrypt
+### GET /api/v1/service/encrypt
 
 
 ## Initial service request endpoint
-### POST /api/v1/provider/services/initialize
+### POST /api/v1/service/initialize
 
 
 ## Download endpoint
-### GET /api/v1/provider/services/download
+### GET /api/v1/service/download
 
 
 ## Compute endpoints
@@ -71,7 +71,7 @@ The `output` section required in creating a new compute job looks like this:
 
 ## Create new job or restart an existing stopped job
 
-### POST /api/v1/provider/services/compute
+### POST /api/v1/service/compute
 
 Start a new job
 
@@ -114,7 +114,7 @@ Response:
 ## Status and Result
   
   
-### GET /api/v1/provider/services/compute
+### GET /api/v1/service/compute
    
    
 Get all jobs and corresponding stats
@@ -179,7 +179,7 @@ Response:
 ## Stop
   
   
-### PUT /api/v1/provider/services/compute
+### PUT /api/v1/service/compute
 
 Stop a running compute job.
 
@@ -217,7 +217,7 @@ Response:
 
 ## Delete
 
-### DELETE /api/v1/provider/services/compute
+### DELETE /api/v1/service/compute
 
 Delete a compute job and all resources associated with the job. If job is running it will be stopped first.
 
