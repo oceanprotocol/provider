@@ -8,25 +8,26 @@ from cgi import parse_header
 from datetime import datetime
 from os import getenv
 
-from eth_utils import remove_0x_prefix
+import ecies
+import eth_keys
 from flask import Response
-from ocean_provider.contract_handler import ContractHandler
-from ocean_provider.event_filter import EventFilter
-from ocean_provider.utils import add_ethereum_prefix_and_hash_msg, get_account
-from ocean_provider.web3_provider import Web3Provider
-from ocean_utils.agreements.service_types import ServiceTypes
-from ocean_utils.did import did_to_id
-from ocean_utils.did_resolver.did_resolver import DIDResolver
+from ocean_keeper import Keeper
+from ocean_keeper.contract_handler import ContractHandler
+from ocean_keeper.utils import add_ethereum_prefix_and_hash_msg, get_account
+
+from ocean_keeper.web3_provider import Web3Provider
+from ocean_utils.ddo.ddo import DDO
 from osmosis_driver_interface.osmosis import Osmosis
+from web3 import Web3
+from web3.contract import ConciseContract
 
 from ocean_provider.config import Config
-from ocean_provider.constants import BaseURLs
 from ocean_provider.exceptions import InvalidSignatureError, ServiceAgreementExpired
 
 logger = logging.getLogger(__name__)
 
 
-def setup_keeper(config_file=None):
+def setup_network(config_file=None):
     config = Config(filename=config_file) if config_file else get_config()
     keeper_url = config.keeper_url
     artifacts_path = get_keeper_path(config)
@@ -71,69 +72,23 @@ def get_request_data(request, url_params_only=False):
     return request.args if request.args else request.json
 
 
-def do_encrypt(did_id, document, provider_acc, config):
-    encrypted_document = ''
+def get_private_key(account):
+    key = account.key
+    if account.password:
+        key = Web3.eth.account.decrypt(key, account.password)
+
+    return eth_keys.KeyAPI.PrivateKey(key)
+
+
+def do_encrypt(document, provider_acc):
+    key = get_private_key(provider_acc)
+    encrypted_document = ecies.encrypt(key.public_key, document.encode(encoding='utf-8'))
     return encrypted_document
 
 
-def do_decrypt(did_id, encrypted_document, provider_acc, config):
-    return ''
-
-
-def _get_agreement_actor_event(keeper, agreement_id, from_block=0, to_block='latest'):
-    _filter = {'agreementId': Web3Provider.get_web3().toBytes(hexstr=agreement_id)}
-
-    event_filter = EventFilter(
-        keeper.agreement_manager.AGREEMENT_ACTOR_ADDED_EVENT,
-        keeper.agreement_manager.get_event_filter_for_agreement_actor(None).event,
-        _filter,
-        from_block=from_block,
-        to_block=to_block
-    )
-    event_filter.set_poll_interval(0.5)
-    return event_filter
-
-
-def is_access_granted(agreement_id, did, consumer_address, keeper):
-    event_logs = _get_agreement_actor_event(keeper, agreement_id).get_all_entries()
-    if not event_logs:
-        return False
-
-    actors = [log.args.actor for log in event_logs]
-    if not actors:
-        return False
-
-    if consumer_address not in actors:
-        logger.warning(f'Invalid consumer address {consumer_address} and/or '
-                       f'service agreement id {agreement_id} (did {did})'
-                       f', agreement actors are {actors}')
-        return False
-
-    document_id = did_to_id(did)
-    return keeper.access_secret_store_condition.check_permissions(
-        document_id, consumer_address
-    )
-
-
-def validate_agreement_condition(agreement_id, did, consumer_address, keeper):
-    event_logs = _get_agreement_actor_event(keeper, agreement_id).get_all_entries()
-    if not event_logs:
-        return False
-
-    actors = [log.args.actor for log in event_logs]
-    if not actors:
-        return False
-
-    if consumer_address not in actors:
-        logger.warning(f'Invalid consumer address {consumer_address} and/or '
-                       f'service agreement id {agreement_id} (did {did})'
-                       f', agreement actors are {actors}')
-        return False
-
-    document_id = did_to_id(did)
-    return keeper.compute_execution_condition.was_compute_triggered(
-        document_id, consumer_address
-    )
+def do_decrypt(encrypted_document, provider_acc):
+    key = get_private_key(provider_acc)
+    return ecies.decrypt(key.to_hex(), encrypted_document).decode(encoding='utf-8')
 
 
 def is_token_valid(token):
@@ -154,7 +109,7 @@ def check_auth_token(token):
         return '0x0'
 
     message = f'{auth_token_message}\n{timestamp}'
-    address = Keeper.personal_ec_recover(message, sig)
+    address = personal_ec_recover(message, sig)
     return w3.toChecksumAddress(address)
 
 
@@ -163,14 +118,14 @@ def generate_token(account):
     _time = int(datetime.now().timestamp())
     _message = f'{raw_msg}\n{_time}'
     prefixed_msg_hash = add_ethereum_prefix_and_hash_msg(_message)
-    return f'{keeper_instance().sign_hash(prefixed_msg_hash, account)}-{_time}'
+    return f'{sign_hash(prefixed_msg_hash, account)}-{_time}'
 
 
-def verify_signature(keeper, signer_address, signature, original_msg):
+def verify_signature(signer_address, signature, original_msg):
     if is_token_valid(signature):
         address = check_auth_token(signature)
     else:
-        address = keeper.personal_ec_recover(original_msg, signature)
+        address = Keeper.personal_ec_recover(original_msg, signature)
 
     if address.lower() == signer_address.lower():
         return True
@@ -202,21 +157,6 @@ def get_keeper_path(config):
     return path
 
 
-def get_latest_keeper_version():
-    keeper = keeper_instance()
-    keeper_versions = sorted(
-        [tuple([int(v) for v in c.version[1:].split('.')]) for c in keeper.contract_name_to_instance.values() if c]
-    )
-    v_numbers = [str(n) for n in keeper_versions[-1]]
-    return 'v' + '.'.join(v_numbers)
-
-
-def keeper_instance():
-    # Init web3 before fetching keeper instance.
-    web3()
-    return Keeper.get_instance()
-
-
 def web3():
     return Web3Provider.get_web3(get_config().keeper_url)
 
@@ -228,15 +168,6 @@ def get_metadata(ddo):
                 return service['metadata']
     except Exception as e:
         logger.error("Error getting the metatada: %s" % e)
-
-
-def get_agreement_block_time(agreement_id):
-    # get starting time from the on-chain agreement's blocknumber
-    keeper = keeper_instance()
-    w3 = Web3Provider.get_web3()
-    agreement = keeper.agreement_manager.get_agreement(agreement_id)
-    block_time = w3.eth.getBlock(agreement.block_number_updated).timestamp
-    return int(block_time)
 
 
 def validate_agreement_expiry(service_agreement, start_time):
@@ -307,11 +238,9 @@ def build_download_response(request, requests_session, url, download_url, conten
 
 def get_asset_files_list(asset, account):
     try:
-        files_str = do_secret_store_decrypt(
-            remove_0x_prefix(asset.asset_id),
+        files_str = do_decrypt(
             asset.encrypted_files,
             account,
-            get_config()
         )
         logger.debug(f'Got decrypted files str {files_str}')
         files_list = json.loads(files_str)
@@ -380,10 +309,6 @@ def get_download_url(url, config_file):
         raise
 
 
-def get_compute_endpoint():
-    return get_config().operator_service_url + '/api/v1/operator/compute'
-
-
 def check_required_attributes(required_attributes, data, method):
     assert isinstance(data, dict), 'invalid payload format.'
     logger.info('got %s request: %s' % (method, data))
@@ -395,84 +320,6 @@ def check_required_attributes(required_attributes, data, method):
             logger.error('%s request failed: required attr %s missing.' % (method, attr))
             return '"%s" is required in the call to %s' % (attr, method), 400
     return None, None
-
-
-def validate_algorithm_dict(algorithm_dict, algorithm_did):
-    if algorithm_did and not algorithm_dict['url']:
-        return f'cannot get url for the algorithmDid {algorithm_did}', 400
-
-    if not algorithm_dict['url'] and not algorithm_dict['rawcode']:
-        return f'`algorithmMeta` must define one of `url` or `rawcode`, but both seem missing.', 400
-
-    container = algorithm_dict['container']
-    # Validate `container` data
-    if not (container.get('entrypoint') and container.get('image') and container.get('tag')):
-        return f'algorithm `container` must specify values for all of entrypoint, image and tag.', 400
-
-    return None, None
-
-
-def build_stage_algorithm_dict(algorithm_did, algorithm_meta, provider_account):
-    if algorithm_did is not None:
-        # use the DID
-        algo_asset = DIDResolver(keeper_instance().did_registry).resolve(algorithm_did)
-        algo_id = algorithm_did
-        raw_code = ''
-        algo_url = get_asset_url_at_index(0, algo_asset, provider_account)
-        container = algo_asset.metadata['main']['algorithm']['container']
-    else:
-        algo_id = ''
-        algo_url = algorithm_meta.get('url')
-        raw_code = algorithm_meta.get('rawcode')
-        container = algorithm_meta.get('container')
-
-    return dict({
-        'id': algo_id,
-        'url': algo_url,
-        'rawcode': raw_code,
-        'container': container
-    })
-
-
-def build_stage_output_dict(output_def, asset, owner, provider_account):
-    config = get_config()
-    service_endpoint = asset.get_service(ServiceTypes.CLOUD_COMPUTE).service_endpoint
-    if BaseURLs.ASSETS_URL in service_endpoint:
-        service_endpoint = service_endpoint.split(BaseURLs.ASSETS_URL)[0]
-
-    return dict({
-        'nodeUri': output_def.get('nodeUri', config.keeper_url),
-        'providerUri': output_def.get('providerUri', service_endpoint),
-        'providerAddress': output_def.get('providerAddress', provider_account.address),
-        'metadata': output_def.get('metadata', dict({
-            'main': {
-                'name': 'Compute job output'
-            },
-            'additionalInformation': {
-                'description': 'Output from running the compute job.'
-            }
-        })),
-        'metadataUri': output_def.get('metadataUri', config.aquarius_url),
-        'secretStoreUri': output_def.get('secretStoreUri', config.secret_store_url),
-        'owner': output_def.get('owner', owner),
-        'publishOutput': output_def.get('publishOutput', 1),
-        'publishAlgorithmLog': output_def.get('publishAlgorithmLog', 1),
-        'whitelist': output_def.get('whitelist', [])
-    })
-
-
-def build_stage_dict(input_dict, algorithm_dict, output_dict):
-    return dict({
-        'index': 0,
-        'input': [input_dict],
-        'compute': {
-            'Instances': 1,
-            'namespace': "ocean-compute",
-            'maxtime': 3600
-        },
-        'algorithm': algorithm_dict,
-        'output': output_dict
-    })
 
 
 def get_metadata_store_url(token_address):
@@ -490,3 +337,49 @@ def get_asset_for_data_token(token_address, document_id):
         get_metadata_store_url(token_address),
         document_id
     )
+
+
+def personal_ec_recover(message, signed_message, ):
+    return Keeper.personal_ec_recover(message, signed_message)
+
+
+def get_token_contract_abi():
+    if not ContractHandler.artifacts_path:
+        ContractHandler.set_artifacts_path(get_config().keeper_path)
+
+    return ContractHandler.get_contract_dict_by_name(
+        'DataTokenTemplate', # TODO: verify the actual contract name and update accordingly
+        ContractHandler.artifacts_path
+    )['abi']
+
+
+def get_data_token_contract(token_address):
+    abi = get_token_contract_abi()
+    return Web3Provider.get_web3().eth.contract(address=token_address, abi=abi)
+
+
+def get_data_token_concise_contract(token_address):
+    return ConciseContract(get_data_token_contract(token_address))
+
+
+def validate_approved_tokens(sender, receiver, token_address, num_tokens, tx_id):
+    tx = Web3.eth.getTransaction(tx_id)
+    if not tx:
+        raise AssertionError('Transaction is not found, or is not yet verified.')
+
+    if tx['from'] != sender or tx['to'] != token_address:
+        raise AssertionError(
+            f'Sender and receiver in the transaction {tx_id} '
+            f'do not match the expected consumer and provider addresses.'
+        )
+
+    dt_contract = get_data_token_concise_contract(token_address)
+    # TODO: update `getLockedAllowance` to match the actual function name
+    # in the DataTokenContract smart contract
+    allowance = dt_contract.getLockedAllowance(sender, receiver)
+    if allowance < num_tokens:
+        raise AssertionError(
+            f'The approved number of data tokens {allowance} does not match '
+            f'the expected amount {num_tokens}')
+
+    return True

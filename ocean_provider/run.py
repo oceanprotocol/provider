@@ -11,7 +11,7 @@ from brizo.config import Config
 from brizo.constants import BaseURLs, ConfigSections, Metadata
 from brizo.myapp import app
 from brizo.routes import services
-from brizo.util import keeper_instance, get_provider_account, get_latest_keeper_version
+from brizo.util import get_provider_account
 
 config = Config(filename=app.config['CONFIG_FILE'])
 provider_url = config.get(ConfigSections.RESOURCES, 'ocean_provider.url')

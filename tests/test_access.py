@@ -30,18 +30,14 @@ from ocean_provider.util import (
     get_config,
     get_provider_account,
     is_token_valid,
-    keeper_instance,
     verify_signature,
     web3,
     build_download_response,
     get_download_url,
-    get_latest_keeper_version,
     validate_agreement_expiry)
 from tests.conftest import get_sample_ddo
 from tests.test_helpers import (
     get_dataset_ddo_with_access_service,
-    lock_reward, place_order,
-    grant_access,
     get_consumer_account,
     get_publisher_account,
     get_access_service_descriptor)
@@ -285,11 +281,6 @@ def test_build_download_response():
     response = build_download_response(request, requests_session_with_content_type, url, url, None)
     assert response.headers["content-type"] == response_content_type
     assert response.headers.get_all('Content-Disposition')[0] == f'attachment;filename={filename}'
-
-
-def test_latest_keeper_version():
-    version = get_latest_keeper_version()
-    assert version.startswith('v') and len(version.split('.')) == 3, ''
 
 
 def test_agreement_expiry():

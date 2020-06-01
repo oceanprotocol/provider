@@ -305,7 +305,7 @@ def _check_job_id(client, job_id, agreement_id, wait_time=20):
     keeper = keeper_instance()
     msg = f'{cons_acc.address}{job_id}{agreement_id}'
     agreement_id_hash = add_ethereum_prefix_and_hash_msg(msg)
-    signature = keeper.sign_hash(agreement_id_hash, cons_acc)
+    signature = sign_hash(agreement_id_hash, cons_acc)
     payload = dict({
         'signature': signature,
         'serviceAgreementId': agreement_id,

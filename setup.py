@@ -19,6 +19,7 @@ with open('CHANGELOG.md') as history_file:
 install_requirements = [
     # Install ocean-utils first
     'ocean-utils==0.3.7',  # gets PyYAML, coloredlogs, web3
+    'ocean-keeper==0.3.5',
     'Flask==1.1.2',
     'Flask-Cors==3.0.8',
     'Flask-RESTful==0.3.8',
@@ -33,6 +34,8 @@ install_requirements = [
     'osmosis-on-premise-driver==0.0.6',
     'osmosis-ipfs-driver==0.0.1',
     'Werkzeug>=0.15.3',
+    'web3>=4.5.0',
+    'eciespy'
 ]
 
 # Required to run setup.py:
