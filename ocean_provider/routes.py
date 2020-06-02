@@ -10,9 +10,12 @@ from ocean_provider.myapp import app
 from ocean_provider.exceptions import InvalidSignatureError
 from ocean_provider.log import setup_logging
 from ocean_provider.util import (
-    get_provider_account,
-    get_request_data, check_required_attributes, verify_signature, do_encrypt, get_config, get_metadata_store_url, get_asset,
-    get_asset_for_data_token, build_download_response, get_download_url, get_asset_url_at_index, setup_network, validate_approved_tokens)
+    get_request_data, check_required_attributes,
+    get_asset_for_data_token, build_download_response, get_download_url, get_asset_url_at_index, setup_network,
+    validate_token_transfer)
+
+from ocean_provider.utils.accounts import verify_signature, get_provider_account
+from ocean_provider.utils.encryption import do_encrypt
 
 setup_logging()
 services = Blueprint('services', __name__)
@@ -123,15 +126,17 @@ def encrypt():
         return jsonify(error=e), 500
 
 
-def process_consume_request(data, method, additional_params=None):
+def process_consume_request(data, method, additional_params=None, require_signature=True):
     required_attributes = [
         'documentId',
         'serviceId',
         'serviceType',
-        'signature',
         'tokenAddress',
         'consumerAddress'
     ] + additional_params or []
+
+    if require_signature:
+        required_attributes.append('signature')
 
     msg, status = check_required_attributes(
         required_attributes, data, method)
@@ -139,7 +144,6 @@ def process_consume_request(data, method, additional_params=None):
         raise AssertionError(msg)
 
     did = data.get('documentId')
-    signature = data.get('signature')
     token_address = data.get('tokenAddress')
     consumer_address = data.get('consumerAddress')
     service_id = data.get('serviceId')
@@ -154,8 +158,10 @@ def process_consume_request(data, method, additional_params=None):
             f'does not match the requested service type {service_type}.'
         )
 
-    # Raises ValueError when signature is invalid
-    verify_signature(consumer_address, signature, did)
+    if require_signature:
+        # Raises ValueError when signature is invalid
+        signature = data.get('signature')
+        verify_signature(consumer_address, signature, did)
 
     return asset, service, did, consumer_address, token_address
 
@@ -172,28 +178,27 @@ def initialize():
     where the approval is given to the provider's ethereum account for
     the number of tokens required by the service.
 
-
     :return:
     """
     data = get_request_data(request)
     try:
         asset, service, did, consumer_address, token_address = process_consume_request(
-            data, 'initialize'
+            data,
+            'initialize',
+            require_signature=False
         )
         service_id = data.get('serviceId')
         service_type = data.get('serviceType')
-        signature = data.get('signature')
 
-        # Prepare the approveAndLock transaction with the appropriate
-        # number of tokens
+        # Prepare the `transfer` tokens transaction with the appropriate number of
+        # tokens required for this service
         # The consumer must sign and execute this transaction in order to be able to
         # consume the service
         approve_params = {
             "from": consumer_address,
             "to": provider_acc.address,
-            "tokens": service.get_tokens_price(),
+            "numTokens": service.get_tokens_price(),
             "dataTokenAddress": token_address,
-            "functionName": "approveAndLock"
         }
         return Response(
             json.dumps(approve_params),
@@ -201,17 +206,11 @@ def initialize():
             headers={'content-type': 'application/json'}
         )
 
-    except InvalidSignatureError as e:
-        msg = f'Consumer  signature failed verification: {e}'
-        logger.error(msg, exc_info=1)
-        return jsonify(error=msg), 401
-
     except Exception as e:
         logger.error(
             f'Error: {e}. \n'
             f'Payload was: documentId={did}, '
             f'consumerAddress={consumer_address},'
-            f'signature={signature}'
             f'serviceId={service_id}'
             f'serviceType={service_type}',
             exc_info=1
@@ -271,8 +270,8 @@ def download():
         service_id = data.get('serviceId')
         service_type = data.get('serviceType')
         signature = data.get('signature')
-        tx_id = data.get("transactionId")
-        validate_approved_tokens(
+        tx_id = data.get("transferTxId")
+        validate_token_transfer(
             consumer_address,
             provider_acc.address,
             token_address,
