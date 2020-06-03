@@ -6,14 +6,19 @@ import logging
 from flask import Blueprint, jsonify, request, Response
 from ocean_utils.http_requests.requests_session import get_requests_session
 
+from ocean_provider.basics import setup_network
 from ocean_provider.myapp import app
 from ocean_provider.exceptions import InvalidSignatureError
 from ocean_provider.log import setup_logging
 from ocean_provider.util import (
-    get_request_data, check_required_attributes,
-    get_asset_for_data_token, build_download_response, get_download_url, get_asset_url_at_index, setup_network,
-    validate_token_transfer)
-
+    get_request_data,
+    check_required_attributes,
+    build_download_response,
+    get_download_url,
+    get_asset_url_at_index,
+    validate_token_transfer,
+    process_consume_request
+)
 from ocean_provider.utils.accounts import verify_signature, get_provider_account
 from ocean_provider.utils.encryption import do_encrypt
 
@@ -126,46 +131,6 @@ def encrypt():
         return jsonify(error=e), 500
 
 
-def process_consume_request(data, method, additional_params=None, require_signature=True):
-    required_attributes = [
-        'documentId',
-        'serviceId',
-        'serviceType',
-        'tokenAddress',
-        'consumerAddress'
-    ] + additional_params or []
-
-    if require_signature:
-        required_attributes.append('signature')
-
-    msg, status = check_required_attributes(
-        required_attributes, data, method)
-    if msg:
-        raise AssertionError(msg)
-
-    did = data.get('documentId')
-    token_address = data.get('tokenAddress')
-    consumer_address = data.get('consumerAddress')
-    service_id = data.get('serviceId')
-    service_type = data.get('serviceType')
-
-    # grab asset for did from the metadatastore associated with the Data Token address
-    asset = get_asset_for_data_token(token_address, did)
-    service = asset.get_service(service_id)
-    if service.type != service_type:
-        raise AssertionError(
-            f'Requested service with id {service_id} has type {service.type} which '
-            f'does not match the requested service type {service_type}.'
-        )
-
-    if require_signature:
-        # Raises ValueError when signature is invalid
-        signature = data.get('signature')
-        verify_signature(consumer_address, signature, did)
-
-    return asset, service, did, consumer_address, token_address
-
-
 @services.route('/initialize', methods=['GET'])
 def initialize():
     """Initialize a service request.
@@ -265,7 +230,7 @@ def download():
         asset, service, did, consumer_address, token_address = process_consume_request(
             data,
             'initialize',
-            ["transactionId", "fileIndex"]
+            additional_params=["transactionId", "fileIndex"]
         )
         service_id = data.get('serviceId')
         service_type = data.get('serviceType')

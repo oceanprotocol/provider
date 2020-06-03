@@ -3,101 +3,24 @@ import json
 import logging
 import mimetypes
 import os
-import site
 from cgi import parse_header
-from os import getenv
 
 from flask import Response
-from ocean_keeper.contract_handler import ContractHandler
-from ocean_keeper.utils import get_account
 
-from ocean_keeper.web3_provider import Web3Provider
-from ocean_utils.aquarius.aquarius import Aquarius
-from ocean_utils.ddo.ddo import DDO
 from osmosis_driver_interface.osmosis import Osmosis
-from web3 import Web3
 
-from ocean_provider.config import Config
-from ocean_provider.utils.data_token import get_data_token_concise_contract, get_transfer_event
+from ocean_provider.utils.accounts import verify_signature
+from ocean_provider.utils.data_token import get_data_token_concise_contract, get_transfer_event, get_asset_for_data_token
 from ocean_provider.utils.encryption import do_decrypt
+from ocean_provider.web3 import web3
 
 logger = logging.getLogger(__name__)
-
-
-def setup_network(config_file=None):
-    config = Config(filename=config_file) if config_file else get_config()
-    keeper_url = config.keeper_url
-    artifacts_path = get_keeper_path(config)
-
-    ContractHandler.set_artifacts_path(artifacts_path)
-    Web3Provider.init_web3(keeper_url)
-    init_account_envvars()
-
-    account = get_account(0)
-    if account is None:
-        raise AssertionError(f'Ocean Provider cannot run without a valid '
-                             f'ethereum account. Account address was not found in the environment'
-                             f'variable `PROVIDER_ADDRESS`. Please set the following environment '
-                             f'variables and try again: `PROVIDER_ADDRESS`, [`PROVIDER_PASSWORD`, '
-                             f'and `PROVIDER_KEYFILE` or `PROVIDER_ENCRYPTED_KEY`] or `PROVIDER_KEY`.')
-
-    if not account._private_key and not (account.password and account._encrypted_key):
-        raise AssertionError(f'Ocean Provider cannot run without a valid '
-                             f'ethereum account with either a `PROVIDER_PASSWORD` '
-                             f'and `PROVIDER_KEYFILE`/`PROVIDER_ENCRYPTED_KEY` '
-                             f'or private key `PROVIDER_KEY`. Current account has password {account.password}, '
-                             f'keyfile {account.key_file}, encrypted-key {account._encrypted_key} '
-                             f'and private-key {account._private_key}.')
-
-
-def init_account_envvars():
-    os.environ['PARITY_ADDRESS'] = os.getenv('PROVIDER_ADDRESS', '')
-    os.environ['PARITY_PASSWORD'] = os.getenv('PROVIDER_PASSWORD', '')
-    os.environ['PARITY_KEY'] = os.getenv('PROVIDER_KEY', '')
-    os.environ['PARITY_KEYFILE'] = os.getenv('PROVIDER_KEYFILE', '')
-    os.environ['PARITY_ENCRYPTED_KEY'] = os.getenv('PROVIDER_ENCRYPTED_KEY', '')
-
-
-def get_config():
-    config_file = os.getenv('CONFIG_FILE', 'config.ini')
-    return Config(filename=config_file)
 
 
 def get_request_data(request, url_params_only=False):
     if url_params_only:
         return request.args
     return request.args if request.args else request.json
-
-
-def get_env_property(env_variable, property_name):
-    return getenv(
-        env_variable,
-        get_config().get('osmosis', property_name)
-    )
-
-
-def get_keeper_path(config):
-    path = config.keeper_path
-    if not os.path.exists(path):
-        if os.getenv('VIRTUAL_ENV'):
-            path = os.path.join(os.getenv('VIRTUAL_ENV'), 'artifacts')
-        else:
-            path = os.path.join(site.PREFIXES[0], 'artifacts')
-
-    return path
-
-
-def web3():
-    return Web3Provider.get_web3(get_config().keeper_url)
-
-
-def get_metadata(ddo):
-    try:
-        for service in ddo['service']:
-            if service['type'] == 'Metadata':
-                return service['metadata']
-    except Exception as e:
-        logger.error("Error getting the metatada: %s" % e)
 
 
 def build_download_response(request, requests_session, url, download_url, content_type):
@@ -172,26 +95,17 @@ def get_asset_files_list(asset, account):
 def get_asset_url_at_index(url_index, asset, account):
     logger.debug(f'get_asset_url_at_index(): url_index={url_index}, did={asset.did}, provider={account.address}')
     try:
-        files_list = get_asset_files_list(asset, account)
+        files_list = get_asset_urls(asset, account)
         if url_index >= len(files_list):
             raise ValueError(f'url index "{url_index}"" is invalid.')
-
-        file_meta_dict = files_list[url_index]
-        if not file_meta_dict or not isinstance(file_meta_dict, dict):
-            raise TypeError(f'Invalid file meta at index {url_index}, expected a dict, got a '
-                            f'{type(file_meta_dict)}.')
-        if 'url' not in file_meta_dict:
-            raise ValueError(f'The "url" key is not found in the '
-                             f'file dict {file_meta_dict} at index {url_index}.')
-
-        return file_meta_dict['url']
+        return files_list[url_index]
 
     except Exception as e:
         logger.error(f'Error decrypting url at index {url_index} for asset {asset.did}: {str(e)}')
         raise
 
 
-def get_asset_urls(asset, account, config_file):
+def get_asset_urls(asset, account):
     logger.debug(f'get_asset_urls(): did={asset.did}, provider={account.address}')
     try:
         files_list = get_asset_files_list(asset, account)
@@ -204,13 +118,17 @@ def get_asset_urls(asset, account, config_file):
                 raise ValueError(f'The "url" key is not found in the '
                                  f'file dict {file_meta_dict} at index {i}.')
 
-            url = file_meta_dict['url']
-            input_urls.append(get_download_url(url, config_file))
+            input_urls.append(file_meta_dict['url'])
 
         return input_urls
     except Exception as e:
         logger.error(f'Error decrypting urls for asset {asset.did}: {str(e)}')
         raise
+
+
+def get_asset_download_urls(asset, account, config_file):
+    return [get_download_url(url, config_file)
+            for url in get_asset_urls(asset, account)]
 
 
 def get_download_url(url, config_file):
@@ -238,26 +156,8 @@ def check_required_attributes(required_attributes, data, method):
     return None, None
 
 
-def get_metadata_store_url(token_address):
-    # grab the metadatastore URL from the DataToken contract (token_address)
-    metadata_url = ''
-    return metadata_url
-
-
-def get_asset_from_metadatastore(metadatastore, document_id):
-    Aquarius()
-    return DDO()
-
-
-def get_asset_for_data_token(token_address, document_id):
-    return get_asset_from_metadatastore(
-        get_metadata_store_url(token_address),
-        document_id
-    )
-
-
 def validate_token_transfer(sender, receiver, token_address, num_tokens, tx_id):
-    tx = Web3.eth.getTransaction(tx_id)
+    tx = web3().eth.getTransaction(tx_id)
     if not tx:
         raise AssertionError('Transaction is not found, or is not yet verified.')
 
@@ -287,3 +187,43 @@ def validate_token_transfer(sender, receiver, token_address, num_tokens, tx_id):
             f'the expected amount of {num_tokens} tokens')
 
     return True
+
+
+def process_consume_request(data, method, additional_params=None, require_signature=True):
+    required_attributes = [
+        'documentId',
+        'serviceId',
+        'serviceType',
+        'tokenAddress',
+        'consumerAddress'
+    ] + additional_params or []
+
+    if require_signature:
+        required_attributes.append('signature')
+
+    msg, status = check_required_attributes(
+        required_attributes, data, method)
+    if msg:
+        raise AssertionError(msg)
+
+    did = data.get('documentId')
+    token_address = data.get('tokenAddress')
+    consumer_address = data.get('consumerAddress')
+    service_id = data.get('serviceId')
+    service_type = data.get('serviceType')
+
+    # grab asset for did from the metadatastore associated with the Data Token address
+    asset = get_asset_for_data_token(token_address, did)
+    service = asset.get_service(service_id)
+    if service.type != service_type:
+        raise AssertionError(
+            f'Requested service with id {service_id} has type {service.type} which '
+            f'does not match the requested service type {service_type}.'
+        )
+
+    if require_signature:
+        # Raises ValueError when signature is invalid
+        signature = data.get('signature')
+        verify_signature(consumer_address, signature, did)
+
+    return asset, service, did, consumer_address, token_address

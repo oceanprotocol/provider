@@ -26,15 +26,15 @@ from ocean_provider.exceptions import InvalidSignatureError, ServiceAgreementExp
 from ocean_provider.util import (
     check_auth_token,
     do_secret_store_decrypt,
-    generate_token,
+    generate_auth_token,
     get_config,
     get_provider_account,
-    is_token_valid,
+    is_auth_token_valid,
     verify_signature,
     web3,
     build_download_response,
     get_download_url,
-    validate_agreement_expiry)
+)
 from tests.conftest import get_sample_ddo
 from tests.test_helpers import (
     get_dataset_ddo_with_access_service,
@@ -171,7 +171,7 @@ def test_publish(client):
     assert encrypted_url.startswith('0x')
 
     # publish using auth token
-    signature = generate_token(account)
+    signature = generate_auth_token(account)
     payload['signature'] = signature
     did = DID.did({"0": str(uuid.uuid4())})
     asset_id = did_to_id(did)
@@ -191,7 +191,7 @@ def test_auth_token():
             "76fbde8ca2e41b4eb1b3565047ecd9acf300-1568372035"
     pub_address = "0xe2DD09d719Da89e5a3D0F2549c7E24566e947260"
     doc_id = "663516d306904651bbcf9fe45a00477c215c7303d8a24c5bad6005dd2f95e68e"
-    assert is_token_valid(token), f'cannot recognize auth-token {token}'
+    assert is_auth_token_valid(token), f'cannot recognize auth-token {token}'
     address = check_auth_token(token)
     assert address and address.lower() == pub_address.lower(), f'address mismatch, got {address}, ' \
                                                                f'' \
