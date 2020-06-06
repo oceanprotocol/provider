@@ -6,21 +6,13 @@ from ocean_keeper import Keeper
 from ocean_keeper.utils import get_account, add_ethereum_prefix_and_hash_msg
 from web3 import Web3
 
-from ocean_provider.basics import get_config
+from ocean_provider.utils.basics import get_config
 from ocean_provider.exceptions import InvalidSignatureError
-from ocean_provider.web3 import web3
+from ocean_provider.utils.web3 import web3
 
 
 def get_provider_account():
     return get_account(0)
-
-
-def init_account_envvars():
-    os.environ['PARITY_ADDRESS'] = os.getenv('PROVIDER_ADDRESS', '')
-    os.environ['PARITY_PASSWORD'] = os.getenv('PROVIDER_PASSWORD', '')
-    os.environ['PARITY_KEY'] = os.getenv('PROVIDER_KEY', '')
-    os.environ['PARITY_KEYFILE'] = os.getenv('PROVIDER_KEYFILE', '')
-    os.environ['PARITY_ENCRYPTED_KEY'] = os.getenv('PROVIDER_ENCRYPTED_KEY', '')
 
 
 def verify_signature(signer_address, signature, original_msg):

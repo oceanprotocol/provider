@@ -6,7 +6,7 @@ import logging
 from flask import Blueprint, jsonify, request, Response
 from ocean_utils.http_requests.requests_session import get_requests_session
 
-from ocean_provider.basics import setup_network
+from ocean_provider.utils.basics import setup_network
 from ocean_provider.myapp import app
 from ocean_provider.exceptions import InvalidSignatureError
 from ocean_provider.log import setup_logging
@@ -162,7 +162,7 @@ def initialize():
         approve_params = {
             "from": consumer_address,
             "to": provider_acc.address,
-            "numTokens": service.get_tokens_price(),
+            "numTokens": 5, #service.get_price(),
             "dataTokenAddress": token_address,
         }
         return Response(
@@ -205,8 +205,8 @@ def download():
         type: string
       - name: url
         in: query
-        description: This URL is only valid if Brizo acts as a proxy.
-                     Consumer can't download using the URL if it's not through Brizo.
+        description: This URL is only valid if Provider acts as a proxy.
+                     Consumer can't download using the URL if it's not through the Provider.
         required: true
         type: string
       - name: signature
@@ -230,7 +230,7 @@ def download():
         asset, service, did, consumer_address, token_address = process_consume_request(
             data,
             'initialize',
-            additional_params=["transactionId", "fileIndex"]
+            additional_params=["transferTxId", "fileIndex"]
         )
         service_id = data.get('serviceId')
         service_type = data.get('serviceType')
@@ -240,7 +240,7 @@ def download():
             consumer_address,
             provider_acc.address,
             token_address,
-            service.get_price(),
+            5, #service.get_price(),
             tx_id
         )
 

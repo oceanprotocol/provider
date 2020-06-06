@@ -47,7 +47,7 @@
     {
       "type": "compute",
       "index": 2,
-      "serviceEndpoint": "http://mybrizo.org/api/v1/brizo/services/compute",
+      "serviceEndpoint": "http://ocean-provider.org/api/v1/services/compute",
       "templateId": "",
       "attributes": {
         "main": {

@@ -11,7 +11,7 @@ import uuid
 
 import pytest
 from eth_utils import add_0x_prefix
-from ocean_lib.utils import add_ethereum_prefix_and_hash_msg
+from ocean_keeper.utils import add_ethereum_prefix_and_hash_msg
 from ocean_utils.agreements.service_agreement import ServiceAgreement
 from ocean_utils.agreements.service_factory import ServiceFactory
 from ocean_utils.agreements.service_types import ServiceTypes
@@ -22,19 +22,20 @@ from werkzeug.utils import get_content_type
 from ocean_utils.did import DID, did_to_id
 
 from ocean_provider.constants import BaseURLs
+from ocean_provider.contracts.custom_contract import FactoryContract, DataTokenContract
 from ocean_provider.exceptions import InvalidSignatureError, ServiceAgreementExpired
-from ocean_provider.util import (
+from ocean_provider.util import build_download_response, get_download_url
+from ocean_provider.utils.accounts import (
     check_auth_token,
-    do_secret_store_decrypt,
     generate_auth_token,
-    get_config,
     get_provider_account,
     is_auth_token_valid,
     verify_signature,
-    web3,
-    build_download_response,
-    get_download_url,
 )
+from ocean_provider.utils.basics import get_config
+from ocean_provider.utils.encryption import do_decrypt
+from ocean_provider.utils.web3 import web3
+
 from tests.conftest import get_sample_ddo
 from tests.test_helpers import (
     get_dataset_ddo_with_access_service,
@@ -42,79 +43,72 @@ from tests.test_helpers import (
     get_publisher_account,
     get_access_service_descriptor)
 
-PURCHASE_ENDPOINT = BaseURLs.BASE_BRIZO_URL + '/services/access/initialize'
-SERVICE_ENDPOINT = BaseURLs.BASE_BRIZO_URL + '/services/consume'
+SERVICE_ENDPOINT = BaseURLs.BASE_PROVIDER_URL + '/services/download'
 
 
 def dummy_callback(*_):
     pass
 
 
-def test_consume(client):
+def test_download_service(client):
     aqua = Aquarius('http://localhost:5000')
     for did in aqua.list_assets():
         aqua.retire_asset_ddo(did)
 
-    endpoint = BaseURLs.ASSETS_URL + '/consume'
+    init_endpoint = BaseURLs.ASSETS_URL + '/initialize'
+    download_endpoint = BaseURLs.ASSETS_URL + '/download'
 
     pub_acc = get_publisher_account()
     cons_acc = get_consumer_account()
 
-    keeper = keeper_instance()
-    ddo = get_dataset_ddo_with_access_service(pub_acc, providers=[pub_acc.address])
+    ddo = get_dataset_ddo_with_access_service(pub_acc)
+    dt_address = ddo.as_dictionary()['dataTokenAddress']
+    dt_token = DataTokenContract(dt_address)
+    tx_id = dt_token.mint(cons_acc.address, 100, cons_acc)
+    dt_token.get_tx_receipt(tx_id)
 
-    # initialize an agreement
-    agreement_id = place_order(pub_acc, ddo, cons_acc, ServiceTypes.ASSET_ACCESS)
-    payload = dict({
-        'serviceAgreementId': agreement_id,
-        'consumerAddress': cons_acc.address
-    })
-
-    agr_id_hash = add_ethereum_prefix_and_hash_msg(agreement_id)
-    signature = keeper.sign_hash(agr_id_hash, cons_acc)
+    auth_token = generate_auth_token(cons_acc)
     index = 0
 
-    event = keeper.agreement_manager.subscribe_agreement_created(
-        agreement_id, 15, None, (), wait=True, from_block=0
-    )
-    assert event, "Agreement event is not found, check the keeper node's logs"
-
-    consumer_balance = keeper.token.get_token_balance(cons_acc.address)
-    if consumer_balance < 50:
-        keeper.dispenser.request_tokens(50-consumer_balance, cons_acc)
-
     sa = ServiceAgreement.from_ddo(ServiceTypes.ASSET_ACCESS, ddo)
-    lock_reward(agreement_id, sa, cons_acc)
-    event = keeper.lock_reward_condition.subscribe_condition_fulfilled(
-        agreement_id, 15, None, (), wait=True, from_block=0
-    )
-    assert event, "Lock reward condition fulfilled event is not found, check the keeper node's logs"
-
-    grant_access(agreement_id, ddo, cons_acc, pub_acc)
-    event = keeper.access_secret_store_condition.subscribe_condition_fulfilled(
-        agreement_id, 15, None, (), wait=True, from_block=0
-    )
-    assert event or keeper.access_secret_store_condition.check_permissions(
-        ddo.asset_id, cons_acc.address
-    ), f'Failed to get access permission: agreement_id={agreement_id}, ' \
-       f'did={ddo.did}, consumer={cons_acc.address}'
 
     # Consume using decrypted url
     files_list = json.loads(
-        do_secret_store_decrypt(did_to_id(ddo.did), ddo.encrypted_files, pub_acc, get_config()))
+        do_decrypt(ddo.encrypted_files, pub_acc))
+
+    # initialize an agreement
+    payload = dict({
+        'documentId': ddo.did,
+        'serviceId': sa.index,
+        'serviceType': sa.type,
+        'tokenAddress': dt_address,
+        'consumerAddress': cons_acc.address
+    })
+
     payload['url'] = files_list[index]['url']
-    request_url = endpoint + '?' + '&'.join([f'{k}={v}' for k, v in payload.items()])
+    request_url = init_endpoint + '?' + '&'.join([f'{k}={v}' for k, v in payload.items()])
 
     response = client.get(
         request_url
     )
     assert response.status == '200 OK'
 
-    # Consume using url index and signature (let brizo do the decryption)
+    tx_params = response.json
+    num_tokens = tx_params['numTokens']
+    assert tx_params['from'] == cons_acc.address
+    assert tx_params['to'] == pub_acc.address
+    assert tx_params['dataTokenAddress'] == ddo.as_dictionary()['dataTokenAddress']
+
+    # Transfer tokens to provider account
+    tx_id = dt_token.transfer(tx_params['to'], num_tokens, cons_acc)
+    dt_token.get_tx_receipt(tx_id)
+
+    # Consume using url index and signature (let the provider do the decryption)
     payload.pop('url')
-    payload['signature'] = signature
-    payload['index'] = index
-    request_url = endpoint + '?' + '&'.join([f'{k}={v}' for k, v in payload.items()])
+    payload['signature'] = auth_token
+    payload['transferTxId'] = tx_id
+    payload['fileIndex'] = index
+    request_url = download_endpoint + '?' + '&'.join([f'{k}={v}' for k, v in payload.items()])
     response = client.get(
         request_url
     )

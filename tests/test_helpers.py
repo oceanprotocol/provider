@@ -2,28 +2,26 @@
 #  SPDX-License-Identifier: Apache-2.0
 
 import json
-import time
 import uuid
 
 
-from eth_utils import remove_0x_prefix
-from ocean_lib.utils import get_account, add_ethereum_prefix_and_hash_msg
+from ocean_keeper.utils import get_account
 
 from ocean_provider.constants import BaseURLs
-from ocean_provider.util import do_encrypt, get_config, web3, keeper_instance
+from ocean_provider.contracts.custom_contract import FactoryContract
+from ocean_provider.utils.basics import get_config
+from ocean_provider.utils.encryption import do_encrypt
 
-from tests.conftest import get_sample_ddo, get_resource_path
+from tests.conftest import get_sample_ddo
 
 from plecos import plecos
 from ocean_utils.ddo.ddo import DDO
 from ocean_utils.utils.utilities import checksum
 from ocean_utils.ddo.metadata import MetadataMain
 from ocean_utils.aquarius.aquarius import Aquarius
-from ocean_utils.did import DID, did_to_id_bytes
+from ocean_utils.did import DID
 from ocean_utils.ddo.public_key_rsa import PUBLIC_KEY_TYPE_RSA
-from ocean_utils.agreements.service_agreement import ServiceAgreement
 from ocean_utils.agreements.service_factory import ServiceDescriptor, ServiceFactory
-from ocean_utils.agreements.service_types import ServiceTypes
 
 
 def get_publisher_account():
@@ -34,25 +32,7 @@ def get_consumer_account():
     return get_account(1)
 
 
-def get_sample_algorithm_ddo():
-    path = get_resource_path('ddo', 'ddo_sample_algorithm.json')
-    assert path.exists(), f"{path} does not exist!"
-    with open(path, 'r') as file_handle:
-        metadata = file_handle.read()
-    return json.loads(metadata)
-
-
-def get_sample_ddo_with_compute_service():
-    # 'ddo_sa_sample.json')
-    path = get_resource_path('ddo', 'ddo_with_compute_service.json')
-    assert path.exists(), f"{path} does not exist!"
-    with open(path, 'r') as file_handle:
-        metadata = file_handle.read()
-    return json.loads(metadata)
-
-
-def get_access_service_descriptor(keeper, account, metadata):
-    template_name = keeper.template_manager.SERVICE_TO_TEMPLATE_NAME[ServiceTypes.ASSET_ACCESS]
+def get_access_service_descriptor(account, metadata):
     access_service_attributes = {
         "main": {
             "name": "dataAssetAccessServiceAgreement",
@@ -65,127 +45,31 @@ def get_access_service_descriptor(keeper, account, metadata):
 
     return ServiceDescriptor.access_service_descriptor(
         access_service_attributes,
-        f'http://localhost:8030{BaseURLs.ASSETS_URL}/consume',
+        f'http://localhost:8030{BaseURLs.ASSETS_URL}/download',
+        0
     )
 
 
-def get_compute_service_descriptor(keeper, account, price, metadata):
-    template_name = keeper.template_manager.SERVICE_TO_TEMPLATE_NAME[ServiceTypes.CLOUD_COMPUTE]
-    compute_service_attributes = {
-        "main": {
-            "name": "dataAssetComputeServiceAgreement",
-            "creator": account.address,
-            "price": price,
-            "timeout": 3600,
-            "datePublished": metadata[MetadataMain.KEY]['dateCreated']
-        }
-    }
-
-    return ServiceDescriptor.compute_service_descriptor(
-        compute_service_attributes,
-        f'http://localhost:8030{BaseURLs.ASSETS_URL}/compute',
-    )
-
-
-def get_compute_service_descriptor_no_rawalgo(keeper, account, price, metadata):
-    template_name = keeper.template_manager.SERVICE_TO_TEMPLATE_NAME[ServiceTypes.CLOUD_COMPUTE]
-    compute_service_attributes = {
-        "main": {
-            "name": "dataAssetComputeServiceAgreement",
-            "creator": account.address,
-            "price": price,
-            "privacy": {
-                "allowRawAlgorithm": False,
-                "trustedAlgorithms": [],
-                "allowNetworkAccess": True
-            },
-            "timeout": 3600,
-            "datePublished": metadata[MetadataMain.KEY]['dateCreated']
-        }
-    }
-
-    return ServiceDescriptor.compute_service_descriptor(
-        compute_service_attributes,
-        f'http://localhost:8030{BaseURLs.ASSETS_URL}/compute',
-    )
-
-
-def get_compute_service_descriptor_specific_algo_dids(keeper, account, price, metadata):
-    template_name = keeper.template_manager.SERVICE_TO_TEMPLATE_NAME[ServiceTypes.CLOUD_COMPUTE]
-    compute_service_attributes = {
-        "main": {
-            "name": "dataAssetComputeServiceAgreement",
-            "creator": account.address,
-            "price": price,
-            "privacy": {
-                "allowRawAlgorithm": True,
-                "trustedAlgorithms": ['did:op:123', 'did:op:1234'],
-                "allowNetworkAccess": True
-            },
-            "timeout": 3600,
-            "datePublished": metadata[MetadataMain.KEY]['dateCreated']
-        }
-    }
-
-    return ServiceDescriptor.compute_service_descriptor(
-        compute_service_attributes,
-        f'http://localhost:8030{BaseURLs.ASSETS_URL}/compute',
-    )
-
-
-def get_algorithm_ddo(account, providers=None):
-    keeper = keeper_instance()
-    metadata = get_sample_algorithm_ddo()['service'][0]['attributes']
-    metadata['main']['files'][0]['checksum'] = str(uuid.uuid4())
-    service_descriptor = get_access_service_descriptor(
-        keeper, account, metadata)
-    return get_registered_ddo(account, metadata, service_descriptor, providers)
-
-
-def get_dataset_ddo_with_compute_service(account, providers=None):
-    keeper = keeper_instance()
-    metadata = get_sample_ddo_with_compute_service()[
-        'service'][0]['attributes']
-    metadata['main']['files'][0]['checksum'] = str(uuid.uuid4())
-    service_descriptor = get_compute_service_descriptor(
-        keeper, account, metadata[MetadataMain.KEY]['price'], metadata)
-    return get_registered_ddo(account, metadata, service_descriptor, providers)
-
-
-def get_dataset_ddo_with_compute_service_no_rawalgo(account, providers=None):
-    keeper = keeper_instance()
-    metadata = get_sample_ddo_with_compute_service()[
-        'service'][0]['attributes']
-    metadata['main']['files'][0]['checksum'] = str(uuid.uuid4())
-    service_descriptor = get_compute_service_descriptor_no_rawalgo(
-        keeper, account, metadata[MetadataMain.KEY]['price'], metadata)
-    return get_registered_ddo(account, metadata, service_descriptor, providers)
-
-
-def get_dataset_ddo_with_compute_service_specific_algo_dids(account, providers=None):
-    keeper = keeper_instance()
-    metadata = get_sample_ddo_with_compute_service()[
-        'service'][0]['attributes']
-    metadata['main']['files'][0]['checksum'] = str(uuid.uuid4())
-    service_descriptor = get_compute_service_descriptor_specific_algo_dids(
-        keeper, account, metadata[MetadataMain.KEY]['price'], metadata)
-    return get_registered_ddo(account, metadata, service_descriptor, providers)
-
-
-def get_dataset_ddo_with_access_service(account, providers=None):
-    keeper = keeper_instance()
+def get_dataset_ddo_with_access_service(account):
     metadata = get_sample_ddo()['service'][0]['attributes']
     metadata['main']['files'][0]['checksum'] = str(uuid.uuid4())
-    service_descriptor = get_access_service_descriptor(
-        keeper, account, metadata)
-    return get_registered_ddo(account, metadata, service_descriptor, providers)
+    service_descriptor = get_access_service_descriptor(account, metadata)
+    return get_registered_ddo(account, metadata, service_descriptor)
 
 
-def get_registered_ddo(account, metadata, service_descriptor, providers=None):
+def get_registered_ddo(account, metadata, service_descriptor):
     aqua = Aquarius('http://localhost:5000')
 
     ddo = DDO()
     ddo_service_endpoint = aqua.get_service_endpoint()
+
+    # Create new data token contract
+    dt_contract = FactoryContract(get_config().factory_address)\
+        .create_data_token(account, metadata_url=ddo_service_endpoint)
+    if not dt_contract:
+        raise AssertionError('Creation of data token contract failed.')
+
+    ddo._other_values = {'dataTokenAddress': dt_contract.address}
 
     metadata_service_desc = ServiceDescriptor.metadata_service_descriptor(
         metadata, ddo_service_endpoint
@@ -234,10 +118,8 @@ def get_registered_ddo(account, metadata, service_descriptor, providers=None):
         assert False, f'invalid metadata: {plecos.validate_dict_local(ddo.metadata)}'
 
     encrypted_files = do_encrypt(
-        remove_0x_prefix(ddo.asset_id),
         json.dumps(metadata['main']['files']),
         account,
-        get_config()
     )
 
     # only assign if the encryption worked
@@ -249,14 +131,7 @@ def get_registered_ddo(account, metadata, service_descriptor, providers=None):
             del file['url']
         metadata['encryptedFiles'] = encrypted_files
 
-    keeper_instance().did_registry.register(
-        ddo.asset_id,
-        checksum=web3().toBytes(hexstr=ddo.asset_id),
-        url=ddo_service_endpoint,
-        account=account,
-        providers=providers
-    )
-
+    # ddo._other_values
     try:
         aqua.publish_asset_ddo(ddo)
     except Exception as e:
@@ -264,74 +139,3 @@ def get_registered_ddo(account, metadata, service_descriptor, providers=None):
         raise
 
     return ddo
-
-
-def get_possible_compute_job_status_text():
-    return {
-        10: 'Job started',
-        20: 'Configuring volumes',
-        30: 'Provisioning success',
-        31: 'Data provisioning failed',
-        32: 'Algorithm provisioning failed',
-        40: 'Running algorithm',
-        50: 'Filtering results',
-        60: 'Publishing results',
-        70: 'Job completed',
-    }.values()
-
-
-def get_compute_job_info(client, endpoint, params):
-    response = client.get(
-        endpoint + '?' + '&'.join([f'{k}={v}' for k, v in params.items()]),
-        data=json.dumps(params),
-        content_type='application/json'
-    )
-    assert response.status_code == 200 and response.data, \
-        f'get compute job info failed: status {response.status}, data {response.data}'
-
-    job_info = response.json if response.json else json.loads(response.data)
-    if not job_info:
-        print(
-            f'There is a problem with the job info response: {response.data}')
-        return None, None
-
-    return job_info[0]
-
-
-def _check_job_id(client, job_id, agreement_id, wait_time=20):
-    endpoint = BaseURLs.ASSETS_URL + '/compute'
-    cons_acc = get_consumer_account()
-
-    keeper = keeper_instance()
-    msg = f'{cons_acc.address}{job_id}{agreement_id}'
-    agreement_id_hash = add_ethereum_prefix_and_hash_msg(msg)
-    signature = sign_hash(agreement_id_hash, cons_acc)
-    payload = dict({
-        'signature': signature,
-        'serviceAgreementId': agreement_id,
-        'consumerAddress': cons_acc.address,
-        'jobId': job_id,
-    })
-
-    job_info = get_compute_job_info(client, endpoint, payload)
-    assert job_info, f'Failed to get job info for jobId {job_id}'
-    print(f'got info for compute job {job_id}: {job_info}')
-    assert job_info['statusText'] in get_possible_compute_job_status_text()
-    did = None
-    # get did of results
-    for _ in range(wait_time*4):
-        job_info = get_compute_job_info(client, endpoint, payload)
-        did = job_info['did']
-        if did:
-            break
-        time.sleep(0.25)
-
-    assert did, f'Compute job has no results, job info {job_info}.'
-    # check results ddo
-    ddo = DIDResolver(keeper.did_registry).resolve(did)
-    assert ddo, f'Failed to resolve ddo for did {did}'
-    consumer_permission = keeper.did_registry.get_permission(
-        did, cons_acc.address)
-    assert consumer_permission is True, \
-        f'Consumer address {cons_acc.address} has no permissions on the results ' \
-        f'did {did}. This is required, the consumer must be able to access the results'

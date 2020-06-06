@@ -6,7 +6,6 @@ from ocean_keeper.utils import get_account
 from ocean_keeper.web3_provider import Web3Provider
 
 from ocean_provider.config import Config
-from ocean_provider.utils.accounts import init_account_envvars
 
 
 def get_keeper_path(config):
@@ -30,6 +29,14 @@ def get_env_property(env_variable, property_name):
         env_variable,
         get_config().get('osmosis', property_name)
     )
+
+
+def init_account_envvars():
+    os.environ['PARITY_ADDRESS'] = os.getenv('PROVIDER_ADDRESS', '')
+    os.environ['PARITY_PASSWORD'] = os.getenv('PROVIDER_PASSWORD', '')
+    os.environ['PARITY_KEY'] = os.getenv('PROVIDER_KEY', '')
+    os.environ['PARITY_KEYFILE'] = os.getenv('PROVIDER_KEYFILE', '')
+    os.environ['PARITY_ENCRYPTED_KEY'] = os.getenv('PROVIDER_ENCRYPTED_KEY', '')
 
 
 def setup_network(config_file=None):

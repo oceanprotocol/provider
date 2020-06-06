@@ -53,7 +53,7 @@ test_requirements = [
     'plecos'
 ]
 
-# Possibly required by developers of ocean-brizo:
+# Possibly required by developers of ocean-provider:
 dev_requirements = [
     'bumpversion',
     'pkginfo',

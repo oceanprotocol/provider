@@ -123,7 +123,7 @@
     {
       "type": "access",
       "index": 1,
-      "serviceEndpoint": "http://localhost:8030/api/v1/brizo/services/consume",
+      "serviceEndpoint": "http://localhost:8030/api/v1/services/consume",
       "templateId": "0x1234",
       "attributes": {
         "main": {

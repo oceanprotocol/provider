@@ -1,6 +1,6 @@
 from ocean_keeper.web3_provider import Web3Provider
 
-from ocean_provider.basics import get_config
+from ocean_provider.utils.basics import get_config
 
 
 def web3():

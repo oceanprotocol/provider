@@ -7,12 +7,13 @@ from flask import jsonify
 from flask_swagger import swagger
 from flask_swagger_ui import get_swaggerui_blueprint
 
-from brizo.config import Config
-from brizo.constants import BaseURLs, ConfigSections, Metadata
-from brizo.myapp import app
-from brizo.routes import services
-from brizo.util import get_provider_account
+from ocean_provider.config import Config
+from ocean_provider.constants import BaseURLs, ConfigSections, Metadata
+from ocean_provider.myapp import app
+from ocean_provider.routes import services
+from ocean_provider.utils.accounts import get_provider_account
 
+get_provider_account()
 config = Config(filename=app.config['CONFIG_FILE'])
 provider_url = config.get(ConfigSections.RESOURCES, 'ocean_provider.url')
 

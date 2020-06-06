@@ -6,10 +6,11 @@ import pathlib
 import json
 
 import pytest
-from ocean_lib.web3_provider import Web3Provider
+from ocean_keeper.contract_handler import ContractHandler
+from ocean_keeper.web3_provider import Web3Provider
 
 from ocean_provider.run import app
-from ocean_provider.util import get_config, get_keeper_path, init_account_envvars
+from ocean_provider.utils.basics import get_config, get_keeper_path, init_account_envvars
 
 app = app
 

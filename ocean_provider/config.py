@@ -8,10 +8,11 @@ import logging
 import os
 from pathlib import Path
 
-NAME_KEEPER_URL = 'keeper.url'
+NAME_KEEPER_URL = 'network.url'
 NAME_KEEPER_PATH = 'keeper.path'
 NAME_AUTH_TOKEN_MESSAGE = 'auth_token_message'
 NAME_AUTH_TOKEN_EXPIRATION = 'auth_token_expiration'
+NAME_DATA_TOKEN_FACTORY_ADDRESS = 'factory.address'
 
 NAME_AQUARIUS_URL = 'aquarius.url'
 NAME_SECRET_STORE_URL = 'secret_store.url'
@@ -19,6 +20,8 @@ NAME_PARITY_URL = 'parity.url'
 NAME_OPERATOR_SERVICE_URL = 'operator_service.url'
 
 environ_names = {
+
+    NAME_DATA_TOKEN_FACTORY_ADDRESS: ['DATA_TOKEN_FACTORY_ADDRESS', 'Data token factory address', 'keeper-contracts'],
     NAME_KEEPER_URL: ['KEEPER_URL', 'Keeper URL', 'keeper-contracts'],
     NAME_KEEPER_PATH: ['KEEPER_PATH', 'Path to the keeper contracts', 'keeper-contracts'],
     NAME_AUTH_TOKEN_MESSAGE: ['AUTH_TOKEN_MESSAGE',
@@ -42,12 +45,12 @@ class Config(configparser.ConfigParser):
         Options available:
 
         [keeper-contracts]
-        keeper.url = http://localhost:8545                            # Keeper-contracts url.
+        network.url = http://localhost:8545                            # ocean-contracts url.
         keeper.path = artifacts                                       # Path of json abis.
         secret_store.url = http://localhost:12001                     # Secret store url.
         parity.url = http://localhost:8545                            # Parity client url.
         [resources]
-        brizo.url = http://localhost:8030                             # Brizo url.
+        ocean_provider.url = http://localhost:8030                             # provider-py.url.
 
         :param filename: Path of the config file, str.
         :param options_dict: Python dict with the config, dict.
@@ -91,6 +94,14 @@ class Config(configparser.ConfigParser):
     def keeper_url(self):
         """URL of the keeper. (e.g.): http://mykeeper:8545."""
         return self.get(self._section_name, NAME_KEEPER_URL, fallback=None)
+
+    @property
+    def factory_address(self):
+        return self.get(
+            environ_names[NAME_DATA_TOKEN_FACTORY_ADDRESS][2],
+            NAME_DATA_TOKEN_FACTORY_ADDRESS,
+            fallback=None
+        )
 
     @property
     def aquarius_url(self):

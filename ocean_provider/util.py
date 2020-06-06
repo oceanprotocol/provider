@@ -9,10 +9,11 @@ from flask import Response
 
 from osmosis_driver_interface.osmosis import Osmosis
 
+from ocean_provider.contracts.custom_contract import DataTokenContract
 from ocean_provider.utils.accounts import verify_signature
-from ocean_provider.utils.data_token import get_data_token_concise_contract, get_transfer_event, get_asset_for_data_token
+from ocean_provider.utils.data_token import get_asset_for_data_token
 from ocean_provider.utils.encryption import do_decrypt
-from ocean_provider.web3 import web3
+from ocean_provider.utils.web3 import web3
 
 logger = logging.getLogger(__name__)
 
@@ -168,16 +169,16 @@ def validate_token_transfer(sender, receiver, token_address, num_tokens, tx_id):
         )
 
     block = tx['blockNumber']
-    dt_contract = get_data_token_concise_contract(token_address)
-    transfer_event = get_transfer_event(dt_contract, block, sender, receiver)
+    dt_contract = DataTokenContract(token_address)
+    transfer_event = dt_contract.get_transfer_event(block, sender, receiver)
     if not transfer_event:
         raise AssertionError(f'Invalid transaction {tx_id}.')
 
     if transfer_event.args['from'] != sender or transfer_event.args['to'] != receiver:
         raise AssertionError(f'The transfer event from/to do not match the expected values.')
 
-    balance = dt_contract.balanceOf.call(receiver, block_identifier=block-1)
-    new_balance = dt_contract.balanceOf.call(receiver, block_identifier=block)
+    balance = dt_contract.contract_concise.balanceOf.call(receiver, block_identifier=block-1)
+    new_balance = dt_contract.contract_concise.balanceOf.call(receiver, block_identifier=block)
     total = new_balance - balance
     assert total == transfer_event.args.value, f'Balance increment does not match the Transfer event value.'
 
@@ -196,7 +197,9 @@ def process_consume_request(data, method, additional_params=None, require_signat
         'serviceType',
         'tokenAddress',
         'consumerAddress'
-    ] + additional_params or []
+    ]
+    if additional_params:
+        required_attributes += additional_params
 
     if require_signature:
         required_attributes.append('signature')
@@ -214,7 +217,7 @@ def process_consume_request(data, method, additional_params=None, require_signat
 
     # grab asset for did from the metadatastore associated with the Data Token address
     asset = get_asset_for_data_token(token_address, did)
-    service = asset.get_service(service_id)
+    service = asset.get_service_by_index(service_id)
     if service.type != service_type:
         raise AssertionError(
             f'Requested service with id {service_id} has type {service.type} which '
