@@ -3,6 +3,7 @@ import os
 
 from ocean_keeper import ContractBase
 from ocean_keeper.contract_handler import ContractHandler
+from ocean_keeper.event_filter import EventFilter
 from ocean_keeper.web3_provider import Web3Provider
 
 
@@ -54,12 +55,15 @@ class DataTokenContract(CustomContractBase):
     def get_transfer_event(self, block_number, sender, receiver):
         event = getattr(self.events, 'Transfer')
         filter_params = {'from': sender, 'to': receiver}
-        event_filter = event().createFilter(
-            fromBlock=block_number,
-            toBlock=block_number+1,
-            argument_filters=filter_params
+        event_filter = EventFilter(
+            'Transfer',
+            event,
+            filter_params,
+            from_block=block_number,
+            to_block=block_number+1
         )
-        logs = event_filter.get_all_entries()
+
+        logs = event_filter.get_all_entries(max_tries=10)
         if not logs:
             return None
 
@@ -76,7 +80,8 @@ class DataTokenContract(CustomContractBase):
              value),
             transact={'from': account.address,
                       'passphrase': account.password,
-                      'account_key': account.key},
+                      'account_key': account.key,
+                      'value': 100000},
         )
         return tx_hash
 

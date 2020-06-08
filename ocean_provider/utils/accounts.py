@@ -1,9 +1,11 @@
-import os
+import json
+import time
 from datetime import datetime
 
 import eth_keys
 from ocean_keeper import Keeper
 from ocean_keeper.utils import get_account, add_ethereum_prefix_and_hash_msg
+from ocean_utils.http_requests.requests_session import get_requests_session
 from web3 import Web3
 
 from ocean_provider.utils.basics import get_config
@@ -64,3 +66,24 @@ def generate_auth_token(account):
     _message = f'{raw_msg}\n{_time}'
     prefixed_msg_hash = add_ethereum_prefix_and_hash_msg(_message)
     return f'{Keeper.sign_hash(prefixed_msg_hash, account)}-{_time}'
+
+
+def request_ether(faucet_url, account, wait=True):
+    requests = get_requests_session()
+
+    payload = {"address": account.address}
+    response = requests.post(
+        f'{faucet_url}/faucet',
+        data=json.dumps(payload),
+        headers={'content-type': 'application/json'}
+    )
+    try:
+        response_json = json.loads(response.content)
+        success = response_json.get('success', 'false') == 'true'
+        if success and wait:
+            time.sleep(5)
+
+        return success, response_json.get('message', '')
+    except (ValueError, Exception) as err:
+        print(f'Error parsing response {response}: {err}')
+        return None, None

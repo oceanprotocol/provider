@@ -5,43 +5,32 @@ import json
 import mimetypes
 import time
 from copy import deepcopy
-from datetime import datetime
 from unittest.mock import Mock, MagicMock
-import uuid
 
-import pytest
-from eth_utils import add_0x_prefix
-from ocean_keeper.utils import add_ethereum_prefix_and_hash_msg
 from ocean_utils.agreements.service_agreement import ServiceAgreement
-from ocean_utils.agreements.service_factory import ServiceFactory
 from ocean_utils.agreements.service_types import ServiceTypes
 from ocean_utils.aquarius.aquarius import Aquarius
 from ocean_utils.http_requests.requests_session import get_requests_session
+from web3 import Web3
 from werkzeug.utils import get_content_type
 
-from ocean_utils.did import DID, did_to_id
-
 from ocean_provider.constants import BaseURLs
-from ocean_provider.contracts.custom_contract import FactoryContract, DataTokenContract
-from ocean_provider.exceptions import InvalidSignatureError, ServiceAgreementExpired
+from ocean_provider.contracts.custom_contract import DataTokenContract
+from ocean_provider.exceptions import InvalidSignatureError
 from ocean_provider.util import build_download_response, get_download_url
 from ocean_provider.utils.accounts import (
     check_auth_token,
     generate_auth_token,
-    get_provider_account,
     is_auth_token_valid,
     verify_signature,
-)
-from ocean_provider.utils.basics import get_config
+    request_ether)
 from ocean_provider.utils.encryption import do_decrypt
-from ocean_provider.utils.web3 import web3
 
-from tests.conftest import get_sample_ddo
 from tests.test_helpers import (
     get_dataset_ddo_with_access_service,
     get_consumer_account,
     get_publisher_account,
-    get_access_service_descriptor)
+)
 
 SERVICE_ENDPOINT = BaseURLs.BASE_PROVIDER_URL + '/services/download'
 
@@ -61,11 +50,30 @@ def test_download_service(client):
     pub_acc = get_publisher_account()
     cons_acc = get_consumer_account()
 
+    request_ether('https://faucet.nile.dev-ocean.com', cons_acc)
+
     ddo = get_dataset_ddo_with_access_service(pub_acc)
     dt_address = ddo.as_dictionary()['dataTokenAddress']
     dt_token = DataTokenContract(dt_address)
-    tx_id = dt_token.mint(cons_acc.address, 100, cons_acc)
+    tx_id = dt_token.mint(cons_acc.address, 50, pub_acc)
     dt_token.get_tx_receipt(tx_id)
+    time.sleep(2)
+
+    def verify_supply(mint_amount=50):
+        supply = dt_token.contract_concise.totalSupply()
+        if supply <= 0:
+            _tx_id = dt_token.mint(cons_acc.address, mint_amount, pub_acc)
+            dt_token.get_tx_receipt(_tx_id)
+            supply = dt_token.contract_concise.totalSupply()
+        return supply
+
+    while True:
+        try:
+            s = verify_supply()
+            if s > 0:
+                break
+        except (ValueError, Exception):
+            pass
 
     auth_token = generate_auth_token(cons_acc)
     index = 0
@@ -106,7 +114,7 @@ def test_download_service(client):
     # Consume using url index and signature (let the provider do the decryption)
     payload.pop('url')
     payload['signature'] = auth_token
-    payload['transferTxId'] = tx_id
+    payload['transferTxId'] = Web3.toHex(tx_id)
     payload['fileIndex'] = index
     request_url = download_endpoint + '?' + '&'.join([f'{k}={v}' for k, v in payload.items()])
     response = client.get(
@@ -131,54 +139,6 @@ def test_empty_payload(client):
     assert publish.status_code == 400
 
 
-def test_publish(client):
-    endpoint = BaseURLs.ASSETS_URL + '/publish'
-    did = DID.did({"0": str(uuid.uuid4())})
-    asset_id = did_to_id(did)
-    account = get_provider_account()
-    test_urls = [
-        'url 00',
-        'url 11',
-        'url 22'
-    ]
-    keeper = keeper_instance()
-    urls_json = json.dumps(test_urls)
-    asset_id_hash = add_ethereum_prefix_and_hash_msg(asset_id)
-    signature = keeper.sign_hash(asset_id_hash, account)
-    address = web3().eth.account.recoverHash(asset_id_hash, signature=signature)
-    assert address.lower() == account.address.lower()
-    address = keeper.personal_ec_recover(asset_id, signature)
-    assert address.lower() == account.address.lower()
-
-    payload = {
-        'documentId': asset_id,
-        'signature': signature,
-        'document': urls_json,
-        'publisherAddress': account.address
-    }
-    post_response = client.post(
-        endpoint,
-        data=json.dumps(payload),
-        content_type='application/json'
-    )
-    encrypted_url = post_response.data.decode('utf-8')
-    assert encrypted_url.startswith('0x')
-
-    # publish using auth token
-    signature = generate_auth_token(account)
-    payload['signature'] = signature
-    did = DID.did({"0": str(uuid.uuid4())})
-    asset_id = did_to_id(did)
-    payload['documentId'] = add_0x_prefix(asset_id)
-    post_response = client.post(
-        endpoint,
-        data=json.dumps(payload),
-        content_type='application/json'
-    )
-    encrypted_url = post_response.data.decode('utf-8')
-    assert encrypted_url.startswith('0x')
-
-
 def test_auth_token():
     token = "0x1d2741dee30e64989ef0203957c01b14f250f5d2f6ccb0" \
             "c88c9518816e4fcec16f84e545094eb3f377b7e214ded226" \
@@ -193,7 +153,7 @@ def test_auth_token():
                                                                f'expected {pub_address}'
 
     try:
-        verify_signature(Keeper, pub_address, token, doc_id)
+        verify_signature(pub_address, token, doc_id)
     except InvalidSignatureError as e:
         assert False, f'invalid signature/auth-token {token}, {pub_address}, {doc_id}: {e}'
 
@@ -275,19 +235,3 @@ def test_build_download_response():
     response = build_download_response(request, requests_session_with_content_type, url, url, None)
     assert response.headers["content-type"] == response_content_type
     assert response.headers.get_all('Content-Disposition')[0] == f'attachment;filename={filename}'
-
-
-def test_agreement_expiry():
-    pub_acc = get_publisher_account()
-    keeper = keeper_instance()
-    metadata = get_sample_ddo()['service'][0]['attributes']
-    metadata['main']['files'][0]['checksum'] = str(uuid.uuid4())
-    service_descriptor = get_access_service_descriptor(keeper, pub_acc, metadata)
-    service_descriptor[1]['attributes']['main']['timeout'] = 2
-    agreement = ServiceFactory.build_service(service_descriptor)
-    start_time = datetime.now().timestamp()
-    not_expired = validate_agreement_expiry(agreement, start_time)
-    assert not_expired, 'Agreement should not be expired at this point.'
-    time.sleep(3)
-    with pytest.raises(ServiceAgreementExpired):
-        validate_agreement_expiry(agreement, start_time)

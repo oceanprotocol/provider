@@ -162,6 +162,7 @@ def initialize():
         approve_params = {
             "from": consumer_address,
             "to": provider_acc.address,
+            # FIXME: Replace this constant price number
             "numTokens": 5, #service.get_price(),
             "dataTokenAddress": token_address,
         }
@@ -229,7 +230,7 @@ def download():
     try:
         asset, service, did, consumer_address, token_address = process_consume_request(
             data,
-            'initialize',
+            'download',
             additional_params=["transferTxId", "fileIndex"]
         )
         service_id = data.get('serviceId')
@@ -240,6 +241,7 @@ def download():
             consumer_address,
             provider_acc.address,
             token_address,
+            # FIXME: Replace this constant price number
             5, #service.get_price(),
             tx_id
         )

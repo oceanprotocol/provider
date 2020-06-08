@@ -3,6 +3,7 @@ import json
 import logging
 import mimetypes
 import os
+import time
 from cgi import parse_header
 
 from flask import Response
@@ -168,8 +169,14 @@ def validate_token_transfer(sender, receiver, token_address, num_tokens, tx_id):
             f'do not match the expected consumer and provider addresses.'
         )
 
+    while tx['blockNumber'] is None:
+        time.sleep(0.1)
+        tx = web3().eth.getTransaction(tx_id)
+
     block = tx['blockNumber']
+    assert block, f'invalid block number {block}'
     dt_contract = DataTokenContract(token_address)
+
     transfer_event = dt_contract.get_transfer_event(block, sender, receiver)
     if not transfer_event:
         raise AssertionError(f'Invalid transaction {tx_id}.')
@@ -177,8 +184,8 @@ def validate_token_transfer(sender, receiver, token_address, num_tokens, tx_id):
     if transfer_event.args['from'] != sender or transfer_event.args['to'] != receiver:
         raise AssertionError(f'The transfer event from/to do not match the expected values.')
 
-    balance = dt_contract.contract_concise.balanceOf.call(receiver, block_identifier=block-1)
-    new_balance = dt_contract.contract_concise.balanceOf.call(receiver, block_identifier=block)
+    balance = dt_contract.contract.functions.balanceOf(receiver).call(block_identifier=block-1)
+    new_balance = dt_contract.contract.functions.balanceOf(receiver).call(block_identifier=block)
     total = new_balance - balance
     assert total == transfer_event.args.value, f'Balance increment does not match the Transfer event value.'
 
