@@ -1,0 +1,29 @@
+language: python
+
+python:
+  - "3.6"
+  - "3.7"
+
+dist: xenial
+
+sudo: false
+
+services:
+  - docker
+
+before_install:
+
+install: pip install -U tox-travis
+script: tox
+deploy:
+  provider: pypi
+  distributions: sdist bdist_wheel
+  user: ${PYPI_USER}
+  password: ${PYPI_PASSWORD}
+  on:
+    tags: true
+    repo: oceanprotocol/provider-py
+    python: 3.6
+
+notifications:
+  email: false
