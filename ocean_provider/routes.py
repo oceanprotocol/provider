@@ -112,7 +112,11 @@ def encrypt():
         logger.info(f'encrypted urls {encrypted_document}, '
                     f'publisher {publisher_address}, '
                     f'documentId {did}')
-        return encrypted_document, 201
+        return Response(
+            json.dumps({'encryptedDocument': encrypted_document}),
+            201,
+            headers={'content-type': 'application/json'}
+        )
 
     except InvalidSignatureError as e:
         msg = f'Publisher signature failed verification: {e}'

@@ -50,7 +50,7 @@ Parameters
 ```
     documentId: String object containing document id (e.g. a DID)
     serviceId: String, representing the list of `file` objects that describe each file in the dataset
-    serviceType: String such as "download" or "compute"
+    serviceType: String such as "access" or "compute"
     consumerAddress: String object containing publisher's ethereum address
 ```
 
@@ -65,7 +65,7 @@ payload:
 {
     "documentId":"0x1111",
     "serviceId": 0,
-    "serviceType": "download",
+    "serviceType": "access",
     "tokenAddress": "",
     "consumerAddress":"0x990922334",
 ```
@@ -88,7 +88,7 @@ Parameters
 ```
     documentId: String object containing document id (e.g. a DID)
     serviceId: String, representing the list of `file` objects that describe each file in the dataset
-    serviceType: String such as "download" or "compute"
+    serviceType: String such as "access" or "compute"
     fileIndex: integer, the index of the file from the files list in the dataset
     signature: String object containg user signature (signed message)
     consumerAddress: String object containing publisher's ethereum address
@@ -107,7 +107,7 @@ payload:
 {
     "documentId":"0x1111",
     "serviceId": 0,
-    "serviceType": "download",
+    "serviceType": "access",
     "fileIndex": 0,
     "tokenAddress": "",
     "consumerAddress":"0x990922334",
