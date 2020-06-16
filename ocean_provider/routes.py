@@ -2,11 +2,12 @@
 #  SPDX-License-Identifier: Apache-2.0
 import json
 import logging
+import os
 
 from flask import Blueprint, jsonify, request, Response
 from ocean_utils.http_requests.requests_session import get_requests_session
 
-from ocean_provider.utils.basics import setup_network
+from ocean_provider.utils.basics import setup_network, LocalFileAdapter
 from ocean_provider.myapp import app
 from ocean_provider.exceptions import InvalidSignatureError
 from ocean_provider.log import setup_logging
@@ -27,8 +28,60 @@ services = Blueprint('services', __name__)
 setup_network()
 provider_acc = get_provider_account()
 requests_session = get_requests_session()
+requests_session.mount('file://', LocalFileAdapter())
 
 logger = logging.getLogger(__name__)
+
+
+@services.route('/')
+def simple_flow_consume():
+    required_attributes = [
+        'consumerAddress',
+        'tokenAddress',
+        'transferTxId'
+    ]
+    data = get_request_data(request)
+
+    msg, status = check_required_attributes(
+        required_attributes, data, 'encrypt')
+    if msg:
+        return msg, status
+
+    consumer = data.get('consumerAddress')
+    dt = data.get('tokenAddress')
+    tx_id = data.get('transferTxId')
+
+    dt_map = None
+    dt_map_str = os.getenv('CONFIG', '')
+    if dt_map_str:
+        dt_map = json.loads(dt_map_str)
+
+    if not (dt_map_str and dt_map) or dt not in dt_map:
+        return jsonify(error='This request is not supported.'), 400
+
+    try:
+        validate_token_transfer(
+            consumer,
+            provider_acc.address,
+            dt,
+            1,
+            tx_id
+        )
+
+        url = dt_map[dt]
+        download_url = get_download_url(url, app.config['CONFIG_FILE'])
+        logger.info(f'Done processing consume request for asset {did}, '
+                    f' url {download_url}')
+        return build_download_response(request, requests_session, url, download_url)
+
+    except Exception as e:
+        logger.error(
+            f'Error: {e}. \n'
+            f'Payload was: tokenAddress={dt}, '
+            f'consumerAddress={consumer}',
+            exc_info=1
+        )
+        return jsonify(error=e), 500
 
 
 @services.route('/encrypt', methods=['POST'])

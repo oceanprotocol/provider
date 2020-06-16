@@ -1,6 +1,8 @@
 import os
 import site
 
+import requests
+from requests_testadapter import Resp
 from ocean_keeper.contract_handler import ContractHandler
 from ocean_keeper.utils import get_account
 from ocean_keeper.web3_provider import Web3Provider
@@ -63,3 +65,21 @@ def setup_network(config_file=None):
                              f'or private key `PROVIDER_KEY`. Current account has password {account.password}, '
                              f'keyfile {account.key_file}, encrypted-key {account._encrypted_key} '
                              f'and private-key {account._private_key}.')
+
+
+class LocalFileAdapter(requests.adapters.HTTPAdapter):
+    def build_response_from_file(self, request):
+        file_path = request.url[7:]
+        with open(file_path, 'rb') as file:
+            buff = bytearray(os.path.getsize(file_path))
+            file.readinto(buff)
+            resp = Resp(buff)
+            r = self.build_response(request, resp)
+
+            return r
+
+    def send(self, request, stream=False, timeout=None,
+             verify=True, cert=None, proxies=None):
+
+        return self.build_response_from_file(request)
+
