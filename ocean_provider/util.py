@@ -25,7 +25,7 @@ def get_request_data(request, url_params_only=False):
     return request.args if request.args else request.json
 
 
-def build_download_response(request, requests_session, url, download_url, content_type):
+def build_download_response(request, requests_session, url, download_url, content_type=None):
     try:
         download_request_headers = {}
         download_response_headers = {}

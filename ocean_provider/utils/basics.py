@@ -2,10 +2,12 @@ import os
 import site
 
 import requests
+from ocean_keeper.web3.http_provider import CustomHTTPProvider
 from requests_testadapter import Resp
 from ocean_keeper.contract_handler import ContractHandler
 from ocean_keeper.utils import get_account
 from ocean_keeper.web3_provider import Web3Provider
+from web3 import WebsocketProvider
 
 from ocean_provider.config import Config
 
@@ -47,7 +49,14 @@ def setup_network(config_file=None):
     artifacts_path = get_keeper_path(config)
 
     ContractHandler.set_artifacts_path(artifacts_path)
-    Web3Provider.init_web3(keeper_url)
+    if keeper_url.startswith('http'):
+        provider = CustomHTTPProvider
+    elif keeper_url.startswith('wss'):
+        provider = WebsocketProvider
+    else:
+        raise AssertionError(f'Unsupported network url {keeper_url}. Must start with http or wss.')
+
+    Web3Provider.init_web3(provider=provider(keeper_url))
     init_account_envvars()
 
     account = get_account(0)

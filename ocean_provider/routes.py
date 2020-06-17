@@ -7,6 +7,7 @@ import os
 from flask import Blueprint, jsonify, request, Response
 from ocean_utils.http_requests.requests_session import get_requests_session
 
+from ocean_provider.contracts.custom_contract import DataTokenContract
 from ocean_provider.utils.basics import setup_network, LocalFileAdapter
 from ocean_provider.myapp import app
 from ocean_provider.exceptions import InvalidSignatureError
@@ -33,7 +34,7 @@ requests_session.mount('file://', LocalFileAdapter())
 logger = logging.getLogger(__name__)
 
 
-@services.route('/')
+@services.route('/', methods=['GET'])
 def simple_flow_consume():
     required_attributes = [
         'consumerAddress',
@@ -43,12 +44,12 @@ def simple_flow_consume():
     data = get_request_data(request)
 
     msg, status = check_required_attributes(
-        required_attributes, data, 'encrypt')
+        required_attributes, data, 'simple_flow_consume')
     if msg:
         return msg, status
 
     consumer = data.get('consumerAddress')
-    dt = data.get('tokenAddress')
+    dt_address = data.get('tokenAddress')
     tx_id = data.get('transferTxId')
 
     dt_map = None
@@ -56,28 +57,32 @@ def simple_flow_consume():
     if dt_map_str:
         dt_map = json.loads(dt_map_str)
 
-    if not (dt_map_str and dt_map) or dt not in dt_map:
+    if not (dt_map_str and dt_map):  # or dt not in dt_map:
         return jsonify(error='This request is not supported.'), 400
 
     try:
-        validate_token_transfer(
-            consumer,
-            provider_acc.address,
-            dt,
-            1,
-            tx_id
-        )
+        dt = DataTokenContract(dt_address)
+        # TODO: Verify that the datatoken is owned by this provider's account
 
-        url = dt_map[dt]
+        # TODO: Enable this check for the token transfer.
+        # validate_token_transfer(
+        #     consumer,
+        #     provider_acc.address,
+        #     dt_address,
+        #     1,
+        #     tx_id
+        # )
+
+        url = list(dt_map.values())[0]  # [dt_address]
         download_url = get_download_url(url, app.config['CONFIG_FILE'])
-        logger.info(f'Done processing consume request for asset {did}, '
+        logger.info(f'Done processing consume request for data token {dt_address}, '
                     f' url {download_url}')
         return build_download_response(request, requests_session, url, download_url)
 
     except Exception as e:
         logger.error(
             f'Error: {e}. \n'
-            f'Payload was: tokenAddress={dt}, '
+            f'Payload was: tokenAddress={dt_address}, '
             f'consumerAddress={consumer}',
             exc_info=1
         )
