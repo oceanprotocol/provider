@@ -8,7 +8,7 @@ class ConfigSections:
 
 
 class BaseURLs:
-    BASE_PROVIDER_URL = '/api/v1/provider'
+    BASE_PROVIDER_URL = '/api/v1'
     SWAGGER_URL = '/api/v1/docs'  # URL for exposing Swagger UI (without trailing '/')
     ASSETS_URL = BASE_PROVIDER_URL + '/services'
 

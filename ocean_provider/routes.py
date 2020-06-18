@@ -237,10 +237,7 @@ def initialize():
     except Exception as e:
         logger.error(
             f'Error: {e}. \n'
-            f'Payload was: documentId={did}, '
-            f'consumerAddress={consumer_address},'
-            f'serviceId={service_id}'
-            f'serviceType={service_type}',
+            f'Payload was: {data}',
             exc_info=1
         )
         return jsonify(error=e), 500
