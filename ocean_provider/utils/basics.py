@@ -3,6 +3,7 @@ import site
 
 import requests
 from ocean_keeper.web3.http_provider import CustomHTTPProvider
+from ocean_utils.http_requests.requests_session import get_requests_session as _get_requests_session
 from requests_testadapter import Resp
 from ocean_keeper.contract_handler import ContractHandler
 from ocean_keeper.utils import get_account
@@ -33,6 +34,12 @@ def get_env_property(env_variable, property_name):
         env_variable,
         get_config().get('osmosis', property_name)
     )
+
+
+def get_requests_session():
+    requests_session = _get_requests_session()
+    requests_session.mount('file://', LocalFileAdapter())
+    return requests_session
 
 
 def init_account_envvars():
