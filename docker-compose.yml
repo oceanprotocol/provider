@@ -1,0 +1,8 @@
+version: '3'
+services:
+  ocean-provider:
+    image: oceanprotocol/provider-py:phase2
+    ports:
+      - 8030:8030
+    env_file:
+      - ${PROVIDER_ENV_FILE}
