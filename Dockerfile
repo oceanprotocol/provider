@@ -16,8 +16,8 @@ RUN apk add --no-cache --update\
     python3-dev \
   && pip install virtualenv
 
-COPY . /ocean_provider
-WORKDIR /ocean_provider
+COPY . /ocean-provider
+WORKDIR /ocean-provider
 
 RUN pip install .
 
@@ -49,6 +49,6 @@ ENV OCEAN_PROVIDER_URL='http://0.0.0.0:8030'
 ENV OCEAN_PROVIDER_WORKERS='1'
 ENV OCEAN_PROVIDER_TIMEOUT='9000'
 
-ENTRYPOINT ["/ocean_provider/docker-entrypoint.sh"]
+ENTRYPOINT ["/ocean-provider/docker-entrypoint.sh"]
 
 EXPOSE 8030

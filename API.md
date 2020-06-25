@@ -163,7 +163,6 @@ The `output` section required in creating a new compute job looks like this:
     "brizoAddress": "0x01011010101101010993433",
     "metadata": {"name": "Workflow output"},
     "metadataUri": "https://aquarius-service.oceanprotocol.com",
-    "secretStoreUri": "https://secret-store.oceanprotocol.com",
     "owner": "0x24f432aab0e22",
     "publishOutput": 1,
     "publishAlgorithmLog": 1

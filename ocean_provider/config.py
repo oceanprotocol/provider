@@ -15,7 +15,6 @@ NAME_AUTH_TOKEN_EXPIRATION = 'auth_token_expiration'
 NAME_DATA_TOKEN_FACTORY_ADDRESS = 'factory.address'
 
 NAME_AQUARIUS_URL = 'aquarius.url'
-NAME_SECRET_STORE_URL = 'secret_store.url'
 NAME_PARITY_URL = 'parity.url'
 NAME_OPERATOR_SERVICE_URL = 'operator_service.url'
 
@@ -28,7 +27,6 @@ environ_names = {
                               'Message to use for generating user auth token', 'resources'],
     NAME_AUTH_TOKEN_EXPIRATION: ['AUTH_TOKEN_EXPIRATION',
                                  'Auth token expiration time expressed in seconds', 'resources'],
-    NAME_SECRET_STORE_URL: ['SECRET_STORE_URL', 'Secret Store URL', 'keeper-contracts'],
     NAME_AQUARIUS_URL: ['AQUARIUS_URL', 'Aquarius url (metadata store)', 'resources'],
     NAME_PARITY_URL: ['PARITY_URL', 'Parity URL', 'keeper-contracts'],
     NAME_OPERATOR_SERVICE_URL: ['OPERATOR_SERVICE_URL', 'Operator service URL', 'resources'],
@@ -47,7 +45,6 @@ class Config(configparser.ConfigParser):
         [keeper-contracts]
         network.url = http://localhost:8545                            # ocean-contracts url.
         keeper.path = artifacts                                       # Path of json abis.
-        secret_store.url = http://localhost:12001                     # Secret store url.
         parity.url = http://localhost:8545                            # Parity client url.
         [resources]
         ocean_provider.url = http://localhost:8030                             # provider-py.url.
@@ -106,11 +103,6 @@ class Config(configparser.ConfigParser):
     @property
     def aquarius_url(self):
         return self.get('resources', NAME_AQUARIUS_URL, fallback=None)
-
-    @property
-    def secret_store_url(self):
-        """URL of the secret store component. (e.g.): http://mysecretstore:12001."""
-        return self.get(self._section_name, NAME_SECRET_STORE_URL, fallback=None)
 
     @property
     def parity_url(self):

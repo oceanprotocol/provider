@@ -75,7 +75,8 @@ def setup_network(config_file=None):
                              f'ethereum account. Account address was not found in the environment'
                              f'variable `PROVIDER_ADDRESS`. Please set the following environment '
                              f'variables and try again: `PROVIDER_ADDRESS`, [`PROVIDER_PASSWORD`, '
-                             f'and `PROVIDER_KEYFILE` or `PROVIDER_ENCRYPTED_KEY`] or `PROVIDER_KEY`.')
+                             f'and `PROVIDER_KEYFILE` or `PROVIDER_ENCRYPTED_KEY`] or `PROVIDER_KEY`.'
+                             f'ENV WAS: {sorted(os.environ.items())}')
 
     if not account._private_key and not (account.password and account._encrypted_key):
         raise AssertionError(f'Ocean Provider cannot run without a valid '
