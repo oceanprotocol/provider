@@ -38,7 +38,7 @@ Ethereum network, do one of the following:
 * Run ganache-cli
 * Point to rinkeby testnet or any other ethereum network
 
-Make sure that ocean contracts (`https://github.com/oceanprotocol/contracts`) are deployed to the your network of choice. 
+Make sure that ocean contracts (https://github.com/oceanprotocol/contracts) are deployed to the your network of choice. 
 Update the `network.url` option in the `config.ini` file with the proper network URL. For now it must be a URL, a simple network name (e.g. mainnet) will be supported in the future.
 
 5. Start the provider server
