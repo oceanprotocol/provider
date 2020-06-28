@@ -29,7 +29,7 @@ pip install -r requirements_dev.txt
 4. Dependencies
 
 Metadata store (Aquarius), do one of the following:
-* Run Aquarius locally, see `https://github.com/oceanprotocol/aquarius`
+* Run Aquarius locally, see https://github.com/oceanprotocol/aquarius
 * Point to a remote instance such as `https://aquarius.marketplace.dev-ocean.com`. 
 In this case replace the `aquarius.url` option in the `config.ini` file with the appropriate URL.
 
