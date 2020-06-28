@@ -14,6 +14,7 @@ Before running it locally we recommend to set up virtual environment:
 
 ```bash
 virtualenv venv -p python3.6
+# OR: python -m venv venv
 source venv/bin/activate 
 ```
 
