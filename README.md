@@ -57,4 +57,4 @@ export PROVIDER_PASSWORD="password to allow decrypting the encrypted key"
 flask run --port=8030
 ```
 
-Refer to the API.md file for endpoints and payloads.
+Refer to the [API.md](API.md) file for endpoints and payloads.
