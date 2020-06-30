@@ -10,7 +10,7 @@ from ocean_keeper.contract_handler import ContractHandler
 from ocean_keeper.web3_provider import Web3Provider
 
 from ocean_provider.run import app
-from ocean_provider.utils.basics import get_config, get_keeper_path, init_account_envvars
+from ocean_provider.utils.basics import get_config, get_keeper_path, init_account_envvars, setup_network
 
 app = app
 
@@ -31,10 +31,7 @@ def client():
 
 @pytest.fixture(autouse=True)
 def setup_all():
-    config = get_config()
-    Web3Provider.init_web3(config.keeper_url)
-    ContractHandler.set_artifacts_path(get_keeper_path(config))
-    init_account_envvars()
+    setup_network()
 
 
 def get_sample_ddo():

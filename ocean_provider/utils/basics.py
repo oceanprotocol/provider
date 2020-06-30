@@ -65,7 +65,7 @@ def setup_network(config_file=None):
 
     Web3Provider.init_web3(provider=provider(keeper_url))
     from web3.middleware import geth_poa_middleware
-    Web3Provider.get_web3().middleware_stack.inject(geth_poa_middleware, layer=0)
+    Web3Provider.get_web3().middleware_onion.inject(geth_poa_middleware, layer=0)
 
     init_account_envvars()
 

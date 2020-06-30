@@ -50,10 +50,8 @@ def test_download_service(client):
     pub_acc = get_publisher_account()
     cons_acc = get_consumer_account()
 
-    request_ether('https://faucet.nile.dev-ocean.com', cons_acc)
-
     ddo = get_dataset_ddo_with_access_service(pub_acc)
-    dt_address = ddo.as_dictionary()['dataTokenAddress']
+    dt_address = ddo.as_dictionary()['dataToken']
     dt_token = DataTokenContract(dt_address)
     tx_id = dt_token.mint(cons_acc.address, 50, pub_acc)
     dt_token.get_tx_receipt(tx_id)
@@ -105,7 +103,7 @@ def test_download_service(client):
     num_tokens = tx_params['numTokens']
     assert tx_params['from'] == cons_acc.address
     assert tx_params['to'] == pub_acc.address
-    assert tx_params['dataTokenAddress'] == ddo.as_dictionary()['dataTokenAddress']
+    assert tx_params['dataToken'] == ddo.as_dictionary()['dataToken']
 
     # Transfer tokens to provider account
     tx_id = dt_token.transfer(tx_params['to'], num_tokens, cons_acc)

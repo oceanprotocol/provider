@@ -230,7 +230,7 @@ def initialize():
             "to": provider_acc.address,
             # FIXME: Replace this constant price number
             "numTokens": 5, #service.get_price(),
-            "dataTokenAddress": token_address,
+            "dataToken": token_address,
         }
         return Response(
             json.dumps(approve_params),
@@ -620,7 +620,7 @@ def compute_start_job():
         record_consume_request(did, service_id, tx_id, consumer_address, token_address, service.get_price())
 
         algorithm_did = data.get('algorithmDid')
-        algorithm_token_address = data.get('algorithmTokenAddress')
+        algorithm_token_address = data.get('algorithmDataToken')
         algorithm_meta = data.get('algorithmMeta')
         output_def = data.get('output', dict())
 

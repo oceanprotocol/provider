@@ -35,7 +35,6 @@ install_requirements = [
     'osmosis-ipfs-driver==0.0.1',
     'Werkzeug>=0.15.3',
     'web3==4.5.0',
-    'eciespy',
     'requests_testadapter'
 ]
 

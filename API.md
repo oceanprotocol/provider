@@ -77,7 +77,7 @@ Response:
     "from": "0x...",
     "to": "0x...",
     "numTokens": 21,
-    "dataTokenAddress": "0x21fa3ea32892091...",
+    "dataToken": "0x21fa3ea32892091...",
 }
 ```
 
