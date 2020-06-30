@@ -40,7 +40,7 @@ def get_access_service_descriptor(account, metadata):
         "main": {
             "name": "dataAssetAccessServiceAgreement",
             "creator": account.address,
-            "price": metadata[MetadataMain.KEY]['price'],
+            "cost": metadata[MetadataMain.KEY]['price'],
             "timeout": 3600,
             "datePublished": metadata[MetadataMain.KEY]['dateCreated']
         }
@@ -165,7 +165,7 @@ def get_compute_service_descriptor(keeper, account, price, metadata):
         "main": {
             "name": "dataAssetComputeServiceAgreement",
             "creator": account.address,
-            "price": price,
+            "cost": price,
             "timeout": 3600,
             "datePublished": metadata[MetadataMain.KEY]['dateCreated']
         }
@@ -184,7 +184,7 @@ def get_compute_service_descriptor_no_rawalgo(keeper, account, price, metadata):
         "main": {
             "name": "dataAssetComputeServiceAgreement",
             "creator": account.address,
-            "price": price,
+            "cost": price,
             "privacy": {
                 "allowRawAlgorithm": False,
                 "trustedAlgorithms": [],
@@ -208,7 +208,7 @@ def get_compute_service_descriptor_specific_algo_dids(keeper, account, price, me
         "main": {
             "name": "dataAssetComputeServiceAgreement",
             "creator": account.address,
-            "price": price,
+            "cost": price,
             "privacy": {
                 "allowRawAlgorithm": True,
                 "trustedAlgorithms": ['did:op:123', 'did:op:1234'],

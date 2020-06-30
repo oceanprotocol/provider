@@ -38,7 +38,7 @@
           ],
           "license": "CC-BY",
           "name": "UK Weather information 2011",
-          "price": "1",
+          "cost": "1",
           "type": "dataset"
         },
         "additionalInformation": {}
@@ -54,7 +54,7 @@
           "name": "dataAssetComputingServiceAgreement",
           "creator": "0x00Bd138aBD70e2F00903268F3Db08f2D25677C9e",
           "datePublished": "2019-04-09T19:02:11Z",
-          "price": "10",
+          "cost": "10",
           "timeout": 86400,
           "provider": {
             "type": "Azure",
@@ -80,7 +80,7 @@
                 {
                   "serverId": "1",
                   "serverType": "xlsize",
-                  "price": "50",
+                  "cost": "50",
                   "cpu": "16",
                   "gpu": "0",
                   "memory": "128gb",
@@ -90,7 +90,7 @@
                 {
                   "serverId": "2",
                   "serverType": "medium",
-                  "price": "10",
+                  "cost": "10",
                   "cpu": "2",
                   "gpu": "0",
                   "memory": "8gb",

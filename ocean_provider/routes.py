@@ -42,7 +42,7 @@ logger = logging.getLogger(__name__)
 def simple_flow_consume():
     required_attributes = [
         'consumerAddress',
-        'tokenAddress',
+        'dataToken',
         'transferTxId'
     ]
     data = get_request_data(request)
@@ -53,7 +53,7 @@ def simple_flow_consume():
         return msg, status
 
     consumer = data.get('consumerAddress')
-    dt_address = data.get('tokenAddress')
+    dt_address = data.get('dataToken')
     tx_id = data.get('transferTxId')
 
     dt_map = None
@@ -86,7 +86,7 @@ def simple_flow_consume():
     except Exception as e:
         logger.error(
             f'Error: {e}. \n'
-            f'Payload was: tokenAddress={dt_address}, '
+            f'Payload was: dataToken={dt_address}, '
             f'consumerAddress={consumer}',
             exc_info=1
         )

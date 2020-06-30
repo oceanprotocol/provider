@@ -2,34 +2,17 @@
 #  SPDX-License-Identifier: Apache-2.0
 
 import json
-import mimetypes
-import time
-from copy import deepcopy
-from unittest.mock import Mock, MagicMock
 
 from ocean_keeper import Keeper
 from ocean_keeper.utils import add_ethereum_prefix_and_hash_msg
-from ocean_utils.agreements.service_agreement import ServiceAgreement
 from ocean_utils.agreements.service_types import ServiceTypes
 from ocean_utils.aquarius.aquarius import Aquarius
-from ocean_utils.http_requests.requests_session import get_requests_session
-from web3 import Web3
-from werkzeug.utils import get_content_type
 
 from ocean_provider.constants import BaseURLs
-from ocean_provider.contracts.custom_contract import DataTokenContract
-from ocean_provider.exceptions import InvalidSignatureError
-from ocean_provider.util import build_download_response, get_download_url, build_stage_output_dict
-from ocean_provider.utils.accounts import (
-    check_auth_token,
-    generate_auth_token,
-    is_auth_token_valid,
-    verify_signature,
-    request_ether)
-from ocean_provider.utils.encryption import do_decrypt
+from ocean_provider.custom.service_agreement import CustomServiceAgreement
+from ocean_provider.util import build_stage_output_dict
 
 from tests.test_helpers import (
-    get_dataset_ddo_with_access_service,
     get_consumer_account,
     get_publisher_account,
     get_dataset_ddo_with_compute_service_no_rawalgo, get_dataset_ddo_with_compute_service_specific_algo_dids, get_algorithm_ddo,
@@ -65,7 +48,7 @@ def test_compute_norawalgo_allowed(client):
     # prepare parameter values for the compute endpoint
     # signature, documentId, consumerAddress, and algorithmDid or algorithmMeta
 
-    sa = ServiceAgreement.from_ddo(ServiceTypes.CLOUD_COMPUTE, dataset_ddo_w_compute_service)
+    sa = CustomServiceAgreement.from_ddo(ServiceTypes.CLOUD_COMPUTE, dataset_ddo_w_compute_service)
 
     # prepare consumer signature on did
     msg = f'{cons_acc.address}{did}'
@@ -118,7 +101,7 @@ def test_compute_specific_algo_dids(client):
     # initialize an agreement
     # TODO:
 
-    sa = ServiceAgreement.from_ddo(
+    sa = CustomServiceAgreement.from_ddo(
         ServiceTypes.CLOUD_COMPUTE, dataset_ddo_w_compute_service)
 
     # prepare consumer signature on did
@@ -176,7 +159,7 @@ def test_compute(client):
     # prepare parameter values for the compute endpoint
     # signature, documentId, consumerAddress, and algorithmDid or algorithmMeta
 
-    sa = ServiceAgreement.from_ddo(
+    sa = CustomServiceAgreement.from_ddo(
         ServiceTypes.CLOUD_COMPUTE, dataset_ddo_w_compute_service)
 
     # prepare consumer signature on did

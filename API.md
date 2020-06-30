@@ -66,7 +66,7 @@ payload:
     "documentId":"0x1111",
     "serviceId": 0,
     "serviceType": "access",
-    "tokenAddress": "",
+    "dataToken": "",
     "consumerAddress":"0x990922334",
 ```
 
@@ -109,7 +109,7 @@ payload:
     "serviceId": 0,
     "serviceType": "access",
     "fileIndex": 0,
-    "tokenAddress": "",
+    "dataToken": "",
     "consumerAddress":"0x990922334",
     "signature":"0x00110011",
     "transferTxId": "0xa09fc23421345532e34829"
@@ -189,7 +189,7 @@ Parameters
         amount of data tokens expressed in the `initialize` endpoint  
     serviceId: integer identifies a service in the list of services in the DDO document
     serviceType: type of service that serviceId refers to, must be `compute` in this case
-    tokenAddress: hex str the ERC20 contract address of the DataToken attached to the documentId (did)
+    dataToken: hex str the ERC20 contract address of the DataToken attached to the documentId (did)
 
     One of `algorithmDid` or `algorithmMeta` is required, `algorithmDid` takes precedence
 ```

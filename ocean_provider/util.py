@@ -220,7 +220,7 @@ def process_consume_request(data, method, additional_params=None, require_signat
         'documentId',
         'serviceId',
         'serviceType',
-        'tokenAddress',
+        'dataToken',
         'consumerAddress'
     ]
     if additional_params:
@@ -235,7 +235,7 @@ def process_consume_request(data, method, additional_params=None, require_signat
         raise AssertionError(msg)
 
     did = data.get('documentId')
-    token_address = data.get('tokenAddress')
+    token_address = data.get('dataToken')
     consumer_address = data.get('consumerAddress')
     service_id = data.get('serviceId')
     service_type = data.get('serviceType')

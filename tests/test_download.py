@@ -7,7 +7,6 @@ import time
 from copy import deepcopy
 from unittest.mock import Mock, MagicMock
 
-from ocean_utils.agreements.service_agreement import ServiceAgreement
 from ocean_utils.agreements.service_types import ServiceTypes
 from ocean_utils.aquarius.aquarius import Aquarius
 from ocean_utils.http_requests.requests_session import get_requests_session
@@ -16,6 +15,7 @@ from werkzeug.utils import get_content_type
 
 from ocean_provider.constants import BaseURLs
 from ocean_provider.contracts.custom_contract import DataTokenContract
+from ocean_provider.custom.service_agreement import CustomServiceAgreement
 from ocean_provider.exceptions import InvalidSignatureError
 from ocean_provider.util import build_download_response, get_download_url
 from ocean_provider.utils.accounts import (
@@ -23,7 +23,7 @@ from ocean_provider.utils.accounts import (
     generate_auth_token,
     is_auth_token_valid,
     verify_signature,
-    request_ether)
+)
 from ocean_provider.utils.encryption import do_decrypt
 
 from tests.test_helpers import (
@@ -76,7 +76,7 @@ def test_download_service(client):
     auth_token = generate_auth_token(cons_acc)
     index = 0
 
-    sa = ServiceAgreement.from_ddo(ServiceTypes.ASSET_ACCESS, ddo)
+    sa = CustomServiceAgreement.from_ddo(ServiceTypes.ASSET_ACCESS, ddo)
 
     # Consume using decrypted url
     files_list = json.loads(
@@ -87,7 +87,7 @@ def test_download_service(client):
         'documentId': ddo.did,
         'serviceId': sa.index,
         'serviceType': sa.type,
-        'tokenAddress': dt_address,
+        'dataToken': dt_address,
         'consumerAddress': cons_acc.address
     })
 
