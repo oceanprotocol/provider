@@ -36,7 +36,7 @@ install_requirements = [
     'Werkzeug>=0.15.3',
     'web3==4.5.0',
     'requests_testadapter',
-    'ecies'
+    'eciespy'
 ]
 
 # Required to run setup.py:
