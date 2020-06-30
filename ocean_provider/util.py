@@ -15,6 +15,7 @@ from osmosis_driver_interface.osmosis import Osmosis
 
 from ocean_provider.constants import BaseURLs
 from ocean_provider.contracts.custom_contract import DataTokenContract
+from ocean_provider.custom.service_agreement import CustomServiceAgreement
 from ocean_provider.exceptions import BadRequestError
 from ocean_provider.utils.accounts import verify_signature, get_provider_account
 from ocean_provider.utils.basics import get_config
@@ -242,7 +243,7 @@ def process_consume_request(data, method, additional_params=None, require_signat
 
     # grab asset for did from the metadatastore associated with the Data Token address
     asset = get_asset_for_data_token(token_address, did)
-    service = asset.get_service_by_index(service_id)
+    service = CustomServiceAgreement.from_ddo(ServiceTypes.ASSET_ACCESS, asset)
     if service.type != service_type:
         raise AssertionError(
             f'Requested service with id {service_id} has type {service.type} which '

@@ -59,9 +59,13 @@ def get_registered_ddo(account, metadata, service_descriptor):
     ddo = DDO()
     ddo_service_endpoint = aqua.get_service_endpoint()
 
+    metadata_store_url = json.dumps({
+        't': 1,
+        'url': ddo_service_endpoint
+    })
     # Create new data token contract
     dt_contract = FactoryContract(get_config().factory_address)\
-        .create_data_token(account, metadata_url=ddo_service_endpoint)
+        .create_data_token(account, metadata_url=metadata_store_url)
     if not dt_contract:
         raise AssertionError('Creation of data token contract failed.')
 
@@ -139,6 +143,7 @@ def get_dataset_ddo_with_access_service(account):
     metadata = get_sample_ddo()['service'][0]['attributes']
     metadata['main']['files'][0]['checksum'] = str(uuid.uuid4())
     service_descriptor = get_access_service_descriptor(account, metadata)
+    metadata[MetadataMain.KEY].pop('cost')
     return get_registered_ddo(account, metadata, service_descriptor)
 
 
@@ -230,6 +235,7 @@ def get_algorithm_ddo(account):
     metadata = get_sample_algorithm_ddo()['service'][0]['attributes']
     metadata['main']['files'][0]['checksum'] = str(uuid.uuid4())
     service_descriptor = get_access_service_descriptor(account, metadata)
+    metadata[MetadataMain.KEY].pop('cost')
     return get_registered_ddo(account, metadata, service_descriptor)
 
 
@@ -238,6 +244,7 @@ def get_dataset_ddo_with_compute_service(account):
     metadata['main']['files'][0]['checksum'] = str(uuid.uuid4())
     service_descriptor = get_compute_service_descriptor(
         Keeper, account, metadata[MetadataMain.KEY]['cost'], metadata)
+    metadata[MetadataMain.KEY].pop('cost')
     return get_registered_ddo(account, metadata, service_descriptor)
 
 
@@ -246,6 +253,7 @@ def get_dataset_ddo_with_compute_service_no_rawalgo(account):
     metadata['main']['files'][0]['checksum'] = str(uuid.uuid4())
     service_descriptor = get_compute_service_descriptor_no_rawalgo(
         Keeper, account, metadata[MetadataMain.KEY]['cost'], metadata)
+    metadata[MetadataMain.KEY].pop('cost')
     return get_registered_ddo(account, metadata, service_descriptor)
 
 
@@ -254,6 +262,7 @@ def get_dataset_ddo_with_compute_service_specific_algo_dids(account):
     metadata['main']['files'][0]['checksum'] = str(uuid.uuid4())
     service_descriptor = get_compute_service_descriptor_specific_algo_dids(
         Keeper, account, metadata[MetadataMain.KEY]['cost'], metadata)
+    metadata[MetadataMain.KEY].pop('cost')
     return get_registered_ddo(account, metadata, service_descriptor)
 
 

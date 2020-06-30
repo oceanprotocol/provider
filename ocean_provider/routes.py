@@ -304,7 +304,7 @@ def download():
             consumer_address,
             provider_acc.address,
             token_address,
-            service.get_price(),
+            int(service.get_price()),
             tx_id
         )
         record_consume_request(did, service_id, tx_id, consumer_address, token_address, service.get_price())

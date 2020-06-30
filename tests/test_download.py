@@ -41,8 +41,11 @@ def dummy_callback(*_):
 
 def test_download_service(client):
     aqua = Aquarius('http://localhost:5000')
-    for did in aqua.list_assets():
-        aqua.retire_asset_ddo(did)
+    try:
+        for did in aqua.list_assets():
+            aqua.retire_asset_ddo(did)
+    except Exception:
+        pass
 
     init_endpoint = BaseURLs.ASSETS_URL + '/initialize'
     download_endpoint = BaseURLs.ASSETS_URL + '/download'
