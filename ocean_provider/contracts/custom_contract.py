@@ -96,9 +96,19 @@ class DataTokenContract(CustomContractBase):
         )
         return tx_hash
 
+    def get_blob(self):
+        return self.contract_concise.blob()
+
     def get_metadata_url(self):
         # grab the metadatastore URL from the DataToken contract (@token_address)
-        return self.contract_concise.blob()
+        url_object = json.loads(self.get_blob())
+        assert url_object['t'] == 1, f'This datatoken does not appear to have a metadata store url.'
+        return url_object['url']
+
+    def get_simple_url(self):
+        url_object = json.loads(self.get_blob())
+        assert url_object['t'] == 0, f'This datatoken does not appear to have a direct consume url.'
+        return url_object['url']
 
 
 class FactoryContract(CustomContractBase):
