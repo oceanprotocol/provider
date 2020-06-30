@@ -20,6 +20,7 @@ install_requirements = [
     # Install ocean-utils first
     'ocean-utils==0.3.7',  # gets PyYAML, coloredlogs, web3
     'ocean-keeper==0.3.5',
+    'eciespy==0.3.6',
     'Flask==1.1.2',
     'Flask-Cors==3.0.8',
     'Flask-RESTful==0.3.8',
