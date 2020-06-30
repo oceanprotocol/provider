@@ -60,7 +60,7 @@ Json document with the token approveAndLock transaction parameters
 
 Example:
 ```
-POST /api/v1/service/download
+POST /api/v1/service/initialize
 payload:
 {
     "documentId":"0x1111",
