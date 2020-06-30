@@ -80,8 +80,7 @@ class DataTokenContract(CustomContractBase):
              value),
             transact={'from': account.address,
                       'passphrase': account.password,
-                      'account_key': account.key,
-                      'value': 100000},
+                      'account_key': account.key}
         )
         return tx_hash
 
