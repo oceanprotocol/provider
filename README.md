@@ -43,7 +43,6 @@ Update the `network.url` option in the `config.ini` file with the proper network
 
 #### 5. Start the provider server
 ```bash
-pip install -r requirements_dev.txt
 export FLASK_APP=ocean_provider/run.py
 export CONFIG_FILE=config.ini
 export PROVIDER_ADDRESS="your ethereum address goes here"
