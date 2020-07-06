@@ -197,22 +197,20 @@ def validate_token_transfer(sender, receiver, token_address, num_tokens, tx_id):
         raise AssertionError(f'The transfer event from/to do not match the expected values.')
 
     balance = dt_contract.contract.functions.balanceOf(receiver).call(block_identifier=block-1)
-    new_balance = balance
     try:
         new_balance = dt_contract.contract.functions.balanceOf(receiver).call(block_identifier=block)
         if (new_balance - balance) != transfer_event.args.value:
-            raise AssertionError(f'Balance increment {total} does not match the Transfer '
+            raise AssertionError(f'Balance increment {(new_balance - balance)} does not match the Transfer '
                                  f'event value {transfer_event.args.value}.')
 
     except BlockNumberOutofRange as e:
         print(f'Block number {block} out of range error: {e}.')
-        total = transfer_event.args.value, f'Balance increment does not match the Transfer event value.'
     except AssertionError:
         raise
 
-    if (new_balance - balance) < num_tokens:
+    if transfer_event.args.value < num_tokens:
         raise AssertionError(
-            f'The transfered number of data tokens {total} does not match '
+            f'The transfered number of data tokens {transfer_event.args.value} does not match '
             f'the expected amount of {num_tokens} tokens')
 
     return True
