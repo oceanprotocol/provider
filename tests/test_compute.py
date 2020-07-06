@@ -24,17 +24,16 @@ SERVICE_ENDPOINT = BaseURLs.BASE_PROVIDER_URL + '/services/download'
 
 
 def test_compute_norawalgo_allowed(client):
-    aqua = Aquarius('http://localhost:5000')
-    for did in aqua.list_assets():
-        aqua.retire_asset_ddo(did)
-
     pub_acc = get_publisher_account()
     cons_acc = get_consumer_account()
 
     # publish a dataset asset
     dataset_ddo_w_compute_service = get_dataset_ddo_with_compute_service_no_rawalgo(pub_acc)
-    token_address = dataset_ddo_w_compute_service._other_values['dataToken']
     did = dataset_ddo_w_compute_service.did
+    ddo = dataset_ddo_w_compute_service
+    data_token = dataset_ddo_w_compute_service.as_dictionary()['dataToken']
+    dt_contract = DataTokenContract(data_token)
+    mint_tokens_and_wait(dt_contract, cons_acc, pub_acc)
 
     # CHECKPOINT 1
     algorithm_meta = {
@@ -52,6 +51,31 @@ def test_compute_norawalgo_allowed(client):
 
     sa = CustomServiceAgreement.from_ddo(ServiceTypes.CLOUD_COMPUTE, dataset_ddo_w_compute_service)
 
+    init_endpoint = BaseURLs.ASSETS_URL + '/initialize'
+    payload = dict({
+        'documentId': ddo.did,
+        'serviceId': sa.index,
+        'serviceType': sa.type,
+        'dataToken': data_token,
+        'consumerAddress': cons_acc.address
+    })
+
+    request_url = init_endpoint + '?' + '&'.join([f'{k}={v}' for k, v in payload.items()])
+
+    response = client.get(
+        request_url
+    )
+    assert response.status == '200 OK'
+
+    tx_params = response.json
+    num_tokens = tx_params['numTokens']
+    assert tx_params['from'] == cons_acc.address
+    assert tx_params['to'] == pub_acc.address
+    assert tx_params['dataToken'] == ddo.as_dictionary()['dataToken']
+
+    tx_id = dt_contract.transfer(tx_params['to'], num_tokens, cons_acc)
+    dt_contract.get_tx_receipt(tx_id)
+
     # prepare consumer signature on did
     msg = f'{cons_acc.address}{did}'
     _hash = add_ethereum_prefix_and_hash_msg(msg)
@@ -61,20 +85,20 @@ def test_compute_norawalgo_allowed(client):
     payload = dict({
         'signature': signature,
         'documentId': did,
-        'dataToken': '',
         'serviceId': sa.index,
         'serviceType': sa.type,
         'consumerAddress': cons_acc.address,
-        'algorithmDid': None,
+        'transferTxId': Web3.toHex(tx_id),
+        'dataToken': data_token,
+        'output': build_stage_output_dict(dict(), dataset_ddo_w_compute_service, cons_acc.address, pub_acc),
+        'algorithmDid': '',
         'algorithmMeta': algorithm_meta,
-        'algorithmDataToken': '',
-        'transferTxId': '',
-        'output': build_stage_output_dict(dict(), dataset_ddo_w_compute_service, cons_acc.address, pub_acc)
+        'algorithmDataToken': ''
     })
 
-    endpoint = BaseURLs.ASSETS_URL + '/compute'
+    compute_endpoint = BaseURLs.ASSETS_URL + '/compute'
     response = client.post(
-        endpoint,
+        compute_endpoint,
         data=json.dumps(payload),
         content_type='application/json'
     )
@@ -82,29 +106,54 @@ def test_compute_norawalgo_allowed(client):
 
 
 def test_compute_specific_algo_dids(client):
-    aqua = Aquarius('http://localhost:5000')
-    for did in aqua.list_assets():
-        aqua.retire_asset_ddo(did)
-
     pub_acc = get_publisher_account()
     cons_acc = get_consumer_account()
 
     # publish a dataset asset
     dataset_ddo_w_compute_service = get_dataset_ddo_with_compute_service_specific_algo_dids(pub_acc)
     did = dataset_ddo_w_compute_service.did
+    ddo = dataset_ddo_w_compute_service
+    data_token = dataset_ddo_w_compute_service.as_dictionary()['dataToken']
+    dt_contract = DataTokenContract(data_token)
+    mint_tokens_and_wait(dt_contract, cons_acc, pub_acc)
 
     # publish an algorithm asset (asset with metadata of type `algorithm`)
     alg_ddo = get_algorithm_ddo(cons_acc)
+    alg_data_token = alg_ddo.as_dictionary()['dataToken']
+    alg_dt_contract = DataTokenContract(alg_data_token)
+    mint_tokens_and_wait(alg_dt_contract, pub_acc, cons_acc)
     # CHECKPOINT 1
 
     # prepare parameter values for the compute endpoint
     # signature, documentId, consumerAddress, and algorithmDid or algorithmMeta
 
-    # initialize an agreement
-    # TODO:
-
     sa = CustomServiceAgreement.from_ddo(
         ServiceTypes.CLOUD_COMPUTE, dataset_ddo_w_compute_service)
+
+    init_endpoint = BaseURLs.ASSETS_URL + '/initialize'
+    payload = dict({
+        'documentId': ddo.did,
+        'serviceId': sa.index,
+        'serviceType': sa.type,
+        'dataToken': data_token,
+        'consumerAddress': cons_acc.address
+    })
+
+    request_url = init_endpoint + '?' + '&'.join([f'{k}={v}' for k, v in payload.items()])
+
+    response = client.get(
+        request_url
+    )
+    assert response.status == '200 OK'
+
+    tx_params = response.json
+    num_tokens = tx_params['numTokens']
+    assert tx_params['from'] == cons_acc.address
+    assert tx_params['to'] == pub_acc.address
+    assert tx_params['dataToken'] == ddo.as_dictionary()['dataToken']
+
+    tx_id = dt_contract.transfer(tx_params['to'], num_tokens, cons_acc)
+    dt_contract.get_tx_receipt(tx_id)
 
     # prepare consumer signature on did
     msg = f'{cons_acc.address}{did}'
@@ -118,19 +167,17 @@ def test_compute_specific_algo_dids(client):
         'serviceId': sa.index,
         'serviceType': sa.type,
         'consumerAddress': cons_acc.address,
+        'transferTxId': Web3.toHex(tx_id),
+        'dataToken': data_token,
+        'output': build_stage_output_dict(dict(), dataset_ddo_w_compute_service, cons_acc.address, pub_acc),
         'algorithmDid': alg_ddo.did,
         'algorithmMeta': {},
-        'algorithmDataToken': '',
-        'transferTxId': '',
-        'dataToken': '',
-        'output': build_stage_output_dict(
-            dict(), dataset_ddo_w_compute_service, cons_acc.address, pub_acc
-        )
+        'algorithmDataToken': alg_data_token
     })
 
-    endpoint = BaseURLs.ASSETS_URL + '/compute'
+    compute_endpoint = BaseURLs.ASSETS_URL + '/compute'
     response = client.post(
-        endpoint,
+        compute_endpoint,
         data=json.dumps(payload),
         content_type='application/json'
     )
@@ -138,10 +185,6 @@ def test_compute_specific_algo_dids(client):
 
 
 def test_compute(client):
-    aqua = Aquarius('http://localhost:5000')
-    # for did in aqua.list_assets():
-    #     aqua.retire_asset_ddo(did)
-
     init_endpoint = BaseURLs.ASSETS_URL + '/initialize'
 
     pub_acc = get_publisher_account()
