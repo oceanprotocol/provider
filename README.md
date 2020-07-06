@@ -3,6 +3,33 @@ REST API for provider of data services
 
 ## Starting the server locally
 
+### Quick start
+Uses the rinkeby network with a remote metadatastore instance running at https://aquarius.marketplace.dev-ocean.com 
+
+```bash
+git clone git@github.com:oceanprotocol/provider-py.git
+cd provider-py/
+
+virtualenv venv -p python3.6
+source venv/bin/activate 
+
+pip install -r requirements_dev.txt
+export FLASK_APP=ocean_provider/run.py
+export CONFIG_FILE=config.ini
+export PROVIDER_ADDRESS="068ed00cf0441e4829d9784fcbe7b9e26d4bd8d0"
+export PROVIDER_PASSWORD="secret"
+export PROVIDER_KEYFILE="tests/resources/provider_key_file.json"
+
+export PARITY_ADDRESS1="0x00bd138abd70e2f00903268f3db08f2d25677c9e"
+export PARITY_PASSWORD1="node0"
+export PARITY_KEYFILE1="tests/resources/consumer_key_file.json"
+
+flask run --port=8030
+
+```
+
+### Detailed steps
+
 1. Clone the repo
 ```bash
 git clone git@github.com:oceanprotocol/provider-py.git
