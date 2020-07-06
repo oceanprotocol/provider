@@ -19,6 +19,7 @@ export CONFIG_FILE=config.ini
 export PROVIDER_ADDRESS="068ed00cf0441e4829d9784fcbe7b9e26d4bd8d0"
 export PROVIDER_PASSWORD="secret"
 export PROVIDER_KEYFILE="tests/resources/provider_key_file.json"
+export AQUARIUS_URL="https://aquarius.marketplace.dev-ocean.com"
 
 export PARITY_ADDRESS1="0x00bd138abd70e2f00903268f3db08f2d25677c9e"
 export PARITY_PASSWORD1="node0"
