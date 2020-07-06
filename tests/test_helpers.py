@@ -7,7 +7,6 @@ import uuid
 
 from ocean_keeper import Keeper
 from ocean_keeper.utils import get_account, add_ethereum_prefix_and_hash_msg
-from ocean_utils.agreements.service_types import ServiceTypes
 
 from ocean_provider.constants import BaseURLs
 from ocean_provider.contracts.custom_contract import FactoryContract
@@ -17,7 +16,6 @@ from ocean_provider.utils.encryption import do_encrypt
 
 from tests.conftest import get_sample_ddo, get_resource_path
 
-from plecos import plecos
 from ocean_utils.ddo.ddo import DDO
 from ocean_utils.utils.utilities import checksum
 from ocean_utils.ddo.metadata import MetadataMain
