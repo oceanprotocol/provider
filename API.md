@@ -159,8 +159,8 @@ The `output` section required in creating a new compute job looks like this:
 ```json
 {
     "nodeUri": "https://node.oceanprotocol.com",
-    "brizoUri": "https://brizo-service..oceanprotocol.com",
-    "brizoAddress": "0x01011010101101010993433",
+    "providerUri": "https://provider-service..oceanprotocol.com",
+    "providerAddress": "0x01011010101101010993433",
     "metadata": {"name": "Workflow output"},
     "metadataUri": "https://aquarius-service.oceanprotocol.com",
     "owner": "0x24f432aab0e22",
@@ -172,7 +172,7 @@ The `output` section required in creating a new compute job looks like this:
 
 ## Create new job or restart an existing stopped job
 
-### POST /api/v1/brizo/services/compute
+### POST /api/v1/services/compute
 
 Start a new job
 
@@ -220,7 +220,7 @@ Response:
 ## Status and Result
   
   
-### GET /api/v1/brizo/services/compute
+### GET /api/v1/services/compute
    
    
 Get all jobs and corresponding stats
@@ -242,7 +242,7 @@ Array of `status` objects as described above
 
 Example:
 ```
-GET /api/v1/brizo/services/compute?signature=0x00110011&documentId=did:op:1111&jobId=012023
+GET /api/v1/services/compute?signature=0x00110011&documentId=did:op:1111&jobId=012023
 ```
 
 Response:
@@ -285,7 +285,7 @@ Response:
 ## Stop
   
   
-### PUT /api/v1/brizo/services/compute
+### PUT /api/v1/services/compute
 
 Stop a running compute job.
 
@@ -305,7 +305,7 @@ Array of `status` objects as described above
 
 Example:
 ```
-PUT /api/v1/brizo/services/compute?signature=0x00110011&documentId=did:op:1111&jobId=012023
+PUT /api/v1/services/compute?signature=0x00110011&documentId=did:op:1111&jobId=012023
 ```
 
 Response:
@@ -323,7 +323,7 @@ Response:
 
 ## Delete
 
-### DELETE /api/v1/brizo/services/compute
+### DELETE /api/v1/services/compute
 
 Delete a compute job and all resources associated with the job. If job is running it will be stopped first.
 
@@ -344,7 +344,7 @@ Array of `status` objects as described above
 
 Example:
 ```
-DELETE /api/v1/brizo/services/compute?signature=0x00110011&documentId=did:op:1111&jobId=012023
+DELETE /api/v1/services/compute?signature=0x00110011&documentId=did:op:1111&jobId=012023
 ```
 
 Response:
