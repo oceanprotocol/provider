@@ -21,6 +21,7 @@ def get_keeper_path(config):
         else:
             path = os.path.join(site.PREFIXES[0], 'artifacts')
 
+    print(f'get_keeper_path: {config.keeper_path}, {path}, {site.PREFIXES[0]}')
     return path
 
 
@@ -56,6 +57,9 @@ def setup_network(config_file=None):
     artifacts_path = get_keeper_path(config)
 
     ContractHandler.set_artifacts_path(artifacts_path)
+    print(f'keeper_path: {ContractHandler.artifacts_path}')
+    print(f'cwd: {os.getcwd()}')
+
     if keeper_url.startswith('http'):
         provider = CustomHTTPProvider
     elif keeper_url.startswith('wss'):
