@@ -1,6 +1,10 @@
 # provider-py
 REST API for provider of data services
 
+This is part of the Ocean Protocol V3 tools.
+
+This is feature complete and is a BETA version.  
+
 ## Starting the server locally
 
 ### Quick start
