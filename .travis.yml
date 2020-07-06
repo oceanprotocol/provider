@@ -1,7 +1,6 @@
 language: python
 
 python:
-  - "3.6"
   - "3.7"
 
 dist: xenial
@@ -12,6 +11,12 @@ services:
   - docker
 
 before_install:
+  - git clone https://github.com/oceanprotocol/barge
+  - cd barge
+  - export AQUARIUS_VERSION=v3
+  - bash -x start_ocean.sh --no-ganache --no-dashboard --no-provider 2>&1 > start_ocean.log &
+  - cd ..
+
 
 install: pip install -U tox-travis
 script: tox

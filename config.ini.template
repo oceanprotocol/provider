@@ -1,5 +1,6 @@
 [keeper-contracts]
 network.url = ${NETWORK_URL}
+keeper.path = ${ARTIFACTS_PATH}
 
 [resources]
 ocean_provider.url = ${OCEAN_PROVIDER_URL}

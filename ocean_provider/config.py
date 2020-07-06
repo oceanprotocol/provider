@@ -45,9 +45,9 @@ class Config(configparser.ConfigParser):
         [keeper-contracts]
         network.url = http://localhost:8545                            # ocean-contracts url.
         keeper.path = artifacts                                       # Path of json abis.
-        parity.url = http://localhost:8545                            # Parity client url.
+
         [resources]
-        ocean_provider.url = http://localhost:8030                             # provider-py.url.
+        aquarius.url = http://localhost:5000
 
         :param filename: Path of the config file, str.
         :param options_dict: Python dict with the config, dict.
@@ -103,11 +103,6 @@ class Config(configparser.ConfigParser):
     @property
     def aquarius_url(self):
         return self.get('resources', NAME_AQUARIUS_URL, fallback=None)
-
-    @property
-    def parity_url(self):
-        """URL of parity client. (e.g.): http://myparity:8545."""
-        return self.get(self._section_name, NAME_PARITY_URL, fallback=None)
 
     @property
     def operator_service_url(self):

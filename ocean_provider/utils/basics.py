@@ -15,7 +15,7 @@ from ocean_provider.config import Config
 
 def get_keeper_path(config):
     path = config.keeper_path
-    if not os.path.exists(path):
+    if not path or not os.path.exists(path):
         if os.getenv('VIRTUAL_ENV'):
             path = os.path.join(os.getenv('VIRTUAL_ENV'), 'artifacts')
         else:

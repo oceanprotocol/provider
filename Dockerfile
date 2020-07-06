@@ -23,7 +23,8 @@ RUN pip install .
 
 # config.ini configuration file variables
 ENV NETWORK_URL='http://127.0.0.1:8545'
-ENV PARITY_URL='http://127.0.0.1:8545'
+ENV ARTIFACTS_PATH=''
+
 ENV PROVIDER_ADDRESS=''
 ENV PROVIDER_PASSWORD=''
 ENV PROVIDER_KEYFILE=''

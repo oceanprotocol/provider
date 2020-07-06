@@ -13,7 +13,7 @@ from ocean_utils.http_requests.requests_session import get_requests_session
 from ocean_provider.contracts.custom_contract import DataTokenContract
 from ocean_provider.utils.basics import setup_network, LocalFileAdapter, get_config
 from ocean_provider.myapp import app
-from ocean_provider.exceptions import InvalidSignatureError, ServiceAgreementUnauthorized, BadRequestError
+from ocean_provider.exceptions import InvalidSignatureError, BadRequestError
 from ocean_provider.log import setup_logging
 from ocean_provider.util import (
     get_request_data,
@@ -23,7 +23,7 @@ from ocean_provider.util import (
     get_asset_url_at_index,
     validate_token_transfer,
     process_consume_request,
-    build_stage_algorithm_dict, validate_algorithm_dict, get_asset_urls, build_stage_output_dict, build_stage_dict, get_compute_endpoint,
+    build_stage_algorithm_dict, validate_algorithm_dict, build_stage_output_dict, build_stage_dict, get_compute_endpoint,
     record_consume_request, get_asset_download_urls, validate_transfer_not_used_for_other_service, process_compute_request)
 from ocean_provider.utils.accounts import verify_signature, get_provider_account
 from ocean_provider.utils.encryption import do_encrypt
@@ -218,8 +218,6 @@ def initialize():
             'initialize',
             require_signature=False
         )
-        service_id = data.get('serviceId')
-        service_type = data.get('serviceType')
 
         # Prepare the `transfer` tokens transaction with the appropriate number of
         # tokens required for this service
@@ -228,8 +226,7 @@ def initialize():
         approve_params = {
             "from": consumer_address,
             "to": provider_acc.address,
-            # FIXME: Replace this constant price number
-            "numTokens": 5, #service.get_price(),
+            "numTokens": int(service.get_price()),
             "dataToken": token_address,
         }
         return Response(

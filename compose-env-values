@@ -1,5 +1,5 @@
 
-CONFIG_FILE=/ocean-provider/config_local.ini
+ARTIFACTS_PATH=/ocean-provider/artifacts
 
 PARITY_ADDRESS1=0x00bd138abd70e2f00903268f3db08f2d25677c9e
 PARITY_PASSWORD1=node0
@@ -14,7 +14,6 @@ DATA_TOKEN_FACTORY_ADDRESS=0xB9d406D24B310A7D821D0b782a36909e8c925471
 AQUARIUS_URL=https://aquarius.marketplace.dev-ocean.com
 OCEAN_PROVIDER_URL=http://0.0.0.0:8030
 OPERATOR_SERVICE_URL=https://operator-api.operator.dev-ocean.com/
-KEEPER_PATH=/ocean-provider/artifacts
 
 AZURE_ACCOUNT_NAME=
 AZURE_ACCOUNT_KEY=
