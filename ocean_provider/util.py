@@ -12,6 +12,7 @@ from ocean_keeper.utils import add_ethereum_prefix_and_hash_msg
 from ocean_utils.agreements.service_types import ServiceTypes
 
 from osmosis_driver_interface.osmosis import Osmosis
+from web3.exceptions import BlockNumberOutofRange
 
 from ocean_provider.constants import BaseURLs
 from ocean_provider.contracts.custom_contract import DataTokenContract
@@ -196,9 +197,18 @@ def validate_token_transfer(sender, receiver, token_address, num_tokens, tx_id):
         raise AssertionError(f'The transfer event from/to do not match the expected values.')
 
     balance = dt_contract.contract.functions.balanceOf(receiver).call(block_identifier=block-1)
-    new_balance = dt_contract.contract.functions.balanceOf(receiver).call(block_identifier=block)
-    total = new_balance - balance
-    assert total == transfer_event.args.value, f'Balance increment does not match the Transfer event value.'
+    try:
+        new_balance = dt_contract.contract.functions.balanceOf(receiver).call(block_identifier=block)
+        total = new_balance - balance
+        if total != transfer_event.args.value:
+            raise AssertionError(f'Balance increment {total} does not match the Transfer '
+                                 f'event value {transfer_event.args.value}.')
+
+    except BlockNumberOutofRange as e:
+        print(f'Block number {block} out of range error: {e}.')
+        total = transfer_event.args.value, f'Balance increment does not match the Transfer event value.'
+    except AssertionError:
+        raise
 
     if total < num_tokens:
         raise AssertionError(
@@ -243,7 +253,7 @@ def process_consume_request(data, method, additional_params=None, require_signat
 
     # grab asset for did from the metadatastore associated with the Data Token address
     asset = get_asset_for_data_token(token_address, did)
-    service = CustomServiceAgreement.from_ddo(ServiceTypes.ASSET_ACCESS, asset)
+    service = CustomServiceAgreement.from_ddo(service_type, asset)
     if service.type != service_type:
         raise AssertionError(
             f'Requested service with id {service_id} has type {service.type} which '

@@ -53,8 +53,11 @@ def get_access_service_descriptor(account, metadata):
     )
 
 
-def get_registered_ddo(account, metadata, service_descriptor):
+def get_registered_ddo(account, metadata, service_descriptor, provider_account=None):
     aqua = Aquarius('http://localhost:5000')
+
+    if not provider_account:
+        provider_account = account
 
     ddo = DDO()
     ddo_service_endpoint = aqua.get_service_endpoint()
@@ -118,7 +121,7 @@ def get_registered_ddo(account, metadata, service_descriptor):
     #     assert False, f'invalid metadata: {plecos.validate_dict_local(ddo.metadata)}'
 
     files_list = json.dumps(metadata['main']['files'])
-    encrypted_files = do_encrypt(files_list, account)
+    encrypted_files = do_encrypt(files_list, provider_account)
 
     # only assign if the encryption worked
     if encrypted_files:
@@ -164,8 +167,7 @@ def get_sample_ddo_with_compute_service():
     return json.loads(metadata)
 
 
-def get_compute_service_descriptor(keeper, account, price, metadata):
-    template_name = keeper.template_manager.SERVICE_TO_TEMPLATE_NAME[ServiceTypes.CLOUD_COMPUTE]
+def get_compute_service_descriptor(account, price, metadata):
     compute_service_attributes = {
         "main": {
             "name": "dataAssetComputeServiceAgreement",
@@ -179,12 +181,11 @@ def get_compute_service_descriptor(keeper, account, price, metadata):
     return ServiceDescriptor.compute_service_descriptor(
         compute_service_attributes,
         f'http://localhost:8030{BaseURLs.ASSETS_URL}/compute',
-        keeper.template_manager.create_template_id(template_name)
+        0
     )
 
 
-def get_compute_service_descriptor_no_rawalgo(keeper, account, price, metadata):
-    template_name = keeper.template_manager.SERVICE_TO_TEMPLATE_NAME[ServiceTypes.CLOUD_COMPUTE]
+def get_compute_service_descriptor_no_rawalgo(account, price, metadata):
     compute_service_attributes = {
         "main": {
             "name": "dataAssetComputeServiceAgreement",
@@ -203,12 +204,11 @@ def get_compute_service_descriptor_no_rawalgo(keeper, account, price, metadata):
     return ServiceDescriptor.compute_service_descriptor(
         compute_service_attributes,
         f'http://localhost:8030{BaseURLs.ASSETS_URL}/compute',
-        keeper.template_manager.create_template_id(template_name)
+        0
     )
 
 
-def get_compute_service_descriptor_specific_algo_dids(keeper, account, price, metadata):
-    template_name = keeper.template_manager.SERVICE_TO_TEMPLATE_NAME[ServiceTypes.CLOUD_COMPUTE]
+def get_compute_service_descriptor_specific_algo_dids(account, price, metadata):
     compute_service_attributes = {
         "main": {
             "name": "dataAssetComputeServiceAgreement",
@@ -227,23 +227,23 @@ def get_compute_service_descriptor_specific_algo_dids(keeper, account, price, me
     return ServiceDescriptor.compute_service_descriptor(
         compute_service_attributes,
         f'http://localhost:8030{BaseURLs.ASSETS_URL}/compute',
-        keeper.template_manager.create_template_id(template_name)
+        0
     )
 
 
-def get_algorithm_ddo(account):
+def get_algorithm_ddo(account, provider_account=None):
     metadata = get_sample_algorithm_ddo()['service'][0]['attributes']
     metadata['main']['files'][0]['checksum'] = str(uuid.uuid4())
     service_descriptor = get_access_service_descriptor(account, metadata)
     metadata[MetadataMain.KEY].pop('cost')
-    return get_registered_ddo(account, metadata, service_descriptor)
+    return get_registered_ddo(account, metadata, service_descriptor, provider_account=provider_account)
 
 
 def get_dataset_ddo_with_compute_service(account):
     metadata = get_sample_ddo_with_compute_service()['service'][0]['attributes']
     metadata['main']['files'][0]['checksum'] = str(uuid.uuid4())
     service_descriptor = get_compute_service_descriptor(
-        Keeper, account, metadata[MetadataMain.KEY]['cost'], metadata)
+        account, metadata[MetadataMain.KEY]['cost'], metadata)
     metadata[MetadataMain.KEY].pop('cost')
     return get_registered_ddo(account, metadata, service_descriptor)
 
@@ -252,7 +252,7 @@ def get_dataset_ddo_with_compute_service_no_rawalgo(account):
     metadata = get_sample_ddo_with_compute_service()['service'][0]['attributes']
     metadata['main']['files'][0]['checksum'] = str(uuid.uuid4())
     service_descriptor = get_compute_service_descriptor_no_rawalgo(
-        Keeper, account, metadata[MetadataMain.KEY]['cost'], metadata)
+        account, metadata[MetadataMain.KEY]['cost'], metadata)
     metadata[MetadataMain.KEY].pop('cost')
     return get_registered_ddo(account, metadata, service_descriptor)
 
@@ -261,7 +261,7 @@ def get_dataset_ddo_with_compute_service_specific_algo_dids(account):
     metadata = get_sample_ddo_with_compute_service()['service'][0]['attributes']
     metadata['main']['files'][0]['checksum'] = str(uuid.uuid4())
     service_descriptor = get_compute_service_descriptor_specific_algo_dids(
-        Keeper, account, metadata[MetadataMain.KEY]['cost'], metadata)
+        account, metadata[MetadataMain.KEY]['cost'], metadata)
     metadata[MetadataMain.KEY].pop('cost')
     return get_registered_ddo(account, metadata, service_descriptor)
 
@@ -302,8 +302,8 @@ def _check_job_id(client, job_id, did, token_address, wait_time=20):
     cons_acc = get_consumer_account()
 
     msg = f'{cons_acc.address}{job_id}{did}'
-    agreement_id_hash = add_ethereum_prefix_and_hash_msg(msg)
-    signature = Keeper.sign_hash(agreement_id_hash, cons_acc)
+    _id_hash = add_ethereum_prefix_and_hash_msg(msg)
+    signature = Keeper.sign_hash(_id_hash, cons_acc)
     payload = dict({
         'signature': signature,
         'documentId': did,

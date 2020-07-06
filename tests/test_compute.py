@@ -7,8 +7,10 @@ from ocean_keeper import Keeper
 from ocean_keeper.utils import add_ethereum_prefix_and_hash_msg
 from ocean_utils.agreements.service_types import ServiceTypes
 from ocean_utils.aquarius.aquarius import Aquarius
+from web3 import Web3
 
 from ocean_provider.constants import BaseURLs
+from ocean_provider.contracts.custom_contract import DataTokenContract
 from ocean_provider.custom.service_agreement import CustomServiceAgreement
 from ocean_provider.util import build_stage_output_dict
 
@@ -16,7 +18,7 @@ from tests.test_helpers import (
     get_consumer_account,
     get_publisher_account,
     get_dataset_ddo_with_compute_service_no_rawalgo, get_dataset_ddo_with_compute_service_specific_algo_dids, get_algorithm_ddo,
-    get_dataset_ddo_with_compute_service, get_compute_job_info, get_possible_compute_job_status_text)
+    get_dataset_ddo_with_compute_service, get_compute_job_info, get_possible_compute_job_status_text, mint_tokens_and_wait)
 
 SERVICE_ENDPOINT = BaseURLs.BASE_PROVIDER_URL + '/services/download'
 
@@ -137,11 +139,10 @@ def test_compute_specific_algo_dids(client):
 
 def test_compute(client):
     aqua = Aquarius('http://localhost:5000')
-    for did in aqua.list_assets():
-        aqua.retire_asset_ddo(did)
+    # for did in aqua.list_assets():
+    #     aqua.retire_asset_ddo(did)
 
     init_endpoint = BaseURLs.ASSETS_URL + '/initialize'
-    download_endpoint = BaseURLs.ASSETS_URL + '/download'
 
     pub_acc = get_publisher_account()
     cons_acc = get_consumer_account()
@@ -149,18 +150,45 @@ def test_compute(client):
     # publish a dataset asset
     dataset_ddo_w_compute_service = get_dataset_ddo_with_compute_service(pub_acc)
     did = dataset_ddo_w_compute_service.did
+    ddo = dataset_ddo_w_compute_service
     data_token = dataset_ddo_w_compute_service.as_dictionary()['dataToken']
+    dt_contract = DataTokenContract(data_token)
+    mint_tokens_and_wait(dt_contract, cons_acc, pub_acc)
 
     # publish an algorithm asset (asset with metadata of type `algorithm`)
-    alg_ddo = get_algorithm_ddo(cons_acc)
+    alg_ddo = get_algorithm_ddo(cons_acc, pub_acc)
     alg_data_token = alg_ddo.as_dictionary()['dataToken']
+    alg_dt_contract = DataTokenContract(alg_data_token)
+    mint_tokens_and_wait(alg_dt_contract, pub_acc, cons_acc)
     # CHECKPOINT 1
-
-    # prepare parameter values for the compute endpoint
-    # signature, documentId, consumerAddress, and algorithmDid or algorithmMeta
 
     sa = CustomServiceAgreement.from_ddo(
         ServiceTypes.CLOUD_COMPUTE, dataset_ddo_w_compute_service)
+
+    # initialize the service
+    payload = dict({
+        'documentId': ddo.did,
+        'serviceId': sa.index,
+        'serviceType': sa.type,
+        'dataToken': data_token,
+        'consumerAddress': cons_acc.address
+    })
+
+    request_url = init_endpoint + '?' + '&'.join([f'{k}={v}' for k, v in payload.items()])
+
+    response = client.get(
+        request_url
+    )
+    assert response.status == '200 OK'
+
+    tx_params = response.json
+    num_tokens = tx_params['numTokens']
+    assert tx_params['from'] == cons_acc.address
+    assert tx_params['to'] == pub_acc.address
+    assert tx_params['dataToken'] == ddo.as_dictionary()['dataToken']
+
+    tx_id = dt_contract.transfer(tx_params['to'], num_tokens, cons_acc)
+    dt_contract.get_tx_receipt(tx_id)
 
     # prepare consumer signature on did
     msg = f'{cons_acc.address}{did}'
@@ -171,18 +199,20 @@ def test_compute(client):
     payload = dict({
         'signature': signature,
         'documentId': did,
+        'serviceId': sa.index,
+        'serviceType': sa.type,
         'consumerAddress': cons_acc.address,
+        'transferTxId': Web3.toHex(tx_id),
+        'dataToken': data_token,
+        'output': build_stage_output_dict(dict(), dataset_ddo_w_compute_service, cons_acc.address, pub_acc),
         'algorithmDid': alg_ddo.did,
         'algorithmMeta': {},
-        'algorithmDataToken': alg_data_token,
-        'transferTxId': '',
-        'dataToken': data_token,
-        'output': build_stage_output_dict(dict(), dataset_ddo_w_compute_service, cons_acc.address, pub_acc)
+        'algorithmDataToken': alg_data_token
     })
 
-    endpoint = BaseURLs.ASSETS_URL + '/compute'
+    compute_endpoint = BaseURLs.ASSETS_URL + '/compute'
     response = client.post(
-        endpoint,
+        compute_endpoint,
         data=json.dumps(payload),
         content_type='application/json'
     )
@@ -202,7 +232,7 @@ def test_compute(client):
         'jobId': job_id,
     })
 
-    job_info = get_compute_job_info(client, endpoint, payload)
+    job_info = get_compute_job_info(client, compute_endpoint, payload)
     assert job_info, f'Failed to get job info for jobId {job_id}'
     print(f'got info for compute job {job_id}: {job_info}')
     assert job_info['statusText'] in get_possible_compute_job_status_text()

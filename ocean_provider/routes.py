@@ -259,9 +259,9 @@ def download():
         description: The consumer address.
         required: true
         type: string
-      - name: serviceAgreementId
+      - name: documentId
         in: query
-        description: The ID of the service agreement.
+        description: The ID of the asset/document (the DID).
         required: true
         type: string
       - name: url
@@ -304,6 +304,7 @@ def download():
             int(service.get_price()),
             tx_id
         )
+        validate_transfer_not_used_for_other_service(did, service_id, tx_id, consumer_address, token_address)
         record_consume_request(did, service_id, tx_id, consumer_address, token_address, service.get_price())
 
         assert service_type == ServiceTypes.ASSET_ACCESS
@@ -350,9 +351,9 @@ def compute_delete_job():
         in: query
         description: Signature of the documentId to verify that the consumer has rights to download the asset.
         type: string
-      - name: serviceAgreementId
+      - name: documentId
         in: query
-        description: The ID of the service agreement.
+        description: The ID of the asset
         required: true
         type: string
       - name: consumerAddress
@@ -412,14 +413,14 @@ def compute_stop_job():
     parameters:
       - name: signature
         in: query
-        description: Signature of (consumerAddress+jobId+serviceAgreementId) to verify the consumer of
-            this agreement/compute job. The signature uses ethereum based signing method
+        description: Signature of (consumerAddress+jobId+documentId) to verify the consumer of
+            this compute job/asset. The signature uses ethereum based signing method
             (see https://github.com/ethereum/EIPs/pull/683)
         type: string
-      - name: serviceAgreementId
+      - name: documentId
         in: query
-        description: The ID of the service agreement, must exist on-chain. If not provided, all
-            currently running compute jobs will be stopped for the specified consumerAddress
+        description: The ID of the asset. If not provided, all currently running compute
+            jobs will be stopped for the specified consumerAddress
         required: true
         type: string
       - name: consumerAddress
@@ -430,7 +431,7 @@ def compute_stop_job():
       - name: jobId
         in: query
         description: The ID of the compute job. If not provided, all running compute jobs of
-            the specified consumerAddress/serviceAgreementId are suspended
+            the specified consumerAddress/documentId are suspended
         type: string
     responses:
       200:
@@ -470,7 +471,7 @@ def compute_stop_job():
 
 @services.route('/compute', methods=['GET'])
 def compute_get_status_job():
-    """Get status for a specific jobid/agreementId/owner
+    """Get status for a specific jobId/documentId/owner
 
     ---
     tags:
@@ -480,13 +481,13 @@ def compute_get_status_job():
     parameters:
       - name: signature
         in: query
-        description: Signature of (consumerAddress+jobId+serviceAgreementId) to verify the consumer of
-            this agreement/compute job. The signature uses ethereum based signing method
+        description: Signature of (consumerAddress+jobId+documentId) to verify the consumer of
+            this asset/compute job. The signature uses ethereum based signing method
             (see https://github.com/ethereum/EIPs/pull/683)
         type: string
-      - name: serviceAgreementId
+      - name: documentId
         in: query
-        description: The ID of the service agreement, must exist on-chain. If not provided, the status of all
+        description: The ID of the asset. If not provided, the status of all
             currently running and old compute jobs for the specified consumerAddress will be returned.
         required: true
         type: string
@@ -498,7 +499,7 @@ def compute_get_status_job():
       - name: jobId
         in: query
         description: The ID of the compute job. If not provided, all running compute jobs of
-            the specified consumerAddress/serviceAgreementId are suspended
+            the specified consumerAddress/documentId are suspended
         type: string
 
     responses:
@@ -549,15 +550,9 @@ def compute_start_job():
     parameters:
       - name: signature
         in: query
-        description: Signature of (consumerAddress+jobId+serviceAgreementId) to verify the consumer of
-            this agreement/compute job. The signature uses ethereum based signing method
+        description: Signature of (consumerAddress+jobId+documentId) to verify the consumer of
+            this asset/compute job. The signature uses ethereum based signing method
             (see https://github.com/ethereum/EIPs/pull/683)
-        type: string
-      - name: serviceAgreementId
-        in: query
-        description: The ID of the service agreement, must exist on-chain. If not provided, the status of all
-            currently running and old compute jobs for the specified consumerAddress will be returned.
-        required: true
         type: string
       - name: consumerAddress
         in: query
@@ -586,7 +581,7 @@ def compute_start_job():
       400:
         description: One of the required attributes is missing.
       401:
-        description: Consumer signature is invalid or failed verification, or Service Agreement is invalid
+        description: Consumer signature is invalid or failed verification
       500:
         description: General server error
     """
@@ -610,7 +605,7 @@ def compute_start_job():
             consumer_address,
             provider_acc.address,
             token_address,
-            service.get_price(),
+            int(service.get_price()),
             tx_id
         )
         validate_transfer_not_used_for_other_service(did, service_id, tx_id, consumer_address, token_address)
@@ -663,7 +658,7 @@ def compute_start_job():
 
         #########################
         # INPUT
-        asset_urls = get_asset_download_urls(asset, provider_acc, config_file=get_config())
+        asset_urls = get_asset_download_urls(asset, provider_acc, config_file=app.config['CONFIG_FILE'])
         if not asset_urls:
             return jsonify(error=f'cannot get url(s) in input did {did}.'), 400
 
@@ -698,6 +693,7 @@ def compute_start_job():
             'workflow': workflow,
             'providerSignature': Keeper.sign_hash(msg_hash, provider_acc),
             'documentId': did,
+            'agreementId': did,
             'owner': consumer_address,
             'providerAddress': provider_acc.address
         }
