@@ -59,6 +59,8 @@ def setup_network(config_file=None):
     ContractHandler.set_artifacts_path(artifacts_path)
     print(f'keeper_path: {ContractHandler.artifacts_path}')
     print(f'cwd: {os.getcwd()}')
+    print(f'config keeper path: {config.keeper_path} -> {os.path.exists(config.keeper_path)}')
+    print(f'artifacts folder: {os.listdir(config.keeper_path)}')
 
     if keeper_url.startswith('http'):
         provider = CustomHTTPProvider
