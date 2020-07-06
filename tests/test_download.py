@@ -99,14 +99,14 @@ def test_download_service(client):
 
 def test_empty_payload(client):
     consume = client.get(
-        BaseURLs.ASSETS_URL + '/consume',
+        BaseURLs.ASSETS_URL + '/download',
         data=None,
         content_type='application/json'
     )
     assert consume.status_code == 400
 
     publish = client.post(
-        BaseURLs.ASSETS_URL + '/publish',
+        BaseURLs.ASSETS_URL + '/encrypt',
         data=None,
         content_type='application/json'
     )
