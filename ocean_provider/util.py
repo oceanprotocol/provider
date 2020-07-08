@@ -87,8 +87,11 @@ def build_download_response(request, requests_session, url, download_url, conten
 
 def get_asset_files_list(asset, account):
     try:
+        encrypted_files = asset.encrypted_files
+        if encrypted_files.startswith('{'):
+            encrypted_files = json.loads(encrypted_files)['encryptedDocument']
         files_str = do_decrypt(
-            asset.encrypted_files,
+            encrypted_files,
             account,
         )
         logger.debug(f'Got decrypted files str {files_str}')
