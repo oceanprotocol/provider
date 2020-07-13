@@ -1,0 +1,10 @@
+version: '3'
+services:
+  ocean-provider:
+    image: oceanprotocol/provider-py:local
+    ports:
+      - 8030:8030
+    env_file:
+      - ${PROVIDER_ENV_FILE}
+    volumes:
+      - ${ARTIFACTS_FOLDER}:/usr/local/:ro

@@ -7,11 +7,19 @@ import time
 from cgi import parse_header
 
 from flask import Response
+from ocean_keeper import Keeper
+from ocean_keeper.utils import add_ethereum_prefix_and_hash_msg
+from ocean_utils.agreements.service_types import ServiceTypes
 
 from osmosis_driver_interface.osmosis import Osmosis
+from web3.exceptions import BlockNumberOutofRange
 
+from ocean_provider.constants import BaseURLs
 from ocean_provider.contracts.custom_contract import DataTokenContract
-from ocean_provider.utils.accounts import verify_signature
+from ocean_provider.custom.service_agreement import CustomServiceAgreement
+from ocean_provider.exceptions import BadRequestError
+from ocean_provider.utils.accounts import verify_signature, get_provider_account
+from ocean_provider.utils.basics import get_config
 from ocean_provider.utils.data_token import get_asset_for_data_token
 from ocean_provider.utils.encryption import do_decrypt
 from ocean_provider.utils.web3 import web3
@@ -79,8 +87,11 @@ def build_download_response(request, requests_session, url, download_url, conten
 
 def get_asset_files_list(asset, account):
     try:
+        encrypted_files = asset.encrypted_files
+        if encrypted_files.startswith('{'):
+            encrypted_files = json.loads(encrypted_files)['encryptedDocument']
         files_str = do_decrypt(
-            asset.encrypted_files,
+            encrypted_files,
             account,
         )
         logger.debug(f'Got decrypted files str {files_str}')
@@ -145,6 +156,10 @@ def get_download_url(url, config_file):
         raise
 
 
+def get_compute_endpoint():
+    return get_config().operator_service_url + '/api/v1/operator/compute'
+
+
 def check_required_attributes(required_attributes, data, method):
     assert isinstance(data, dict), 'invalid payload format.'
     logger.info('got %s request: %s' % (method, data))
@@ -185,16 +200,31 @@ def validate_token_transfer(sender, receiver, token_address, num_tokens, tx_id):
         raise AssertionError(f'The transfer event from/to do not match the expected values.')
 
     balance = dt_contract.contract.functions.balanceOf(receiver).call(block_identifier=block-1)
-    new_balance = dt_contract.contract.functions.balanceOf(receiver).call(block_identifier=block)
-    total = new_balance - balance
-    assert total == transfer_event.args.value, f'Balance increment does not match the Transfer event value.'
+    try:
+        new_balance = dt_contract.contract.functions.balanceOf(receiver).call(block_identifier=block)
+        if (new_balance - balance) != transfer_event.args.value:
+            raise AssertionError(f'Balance increment {(new_balance - balance)} does not match the Transfer '
+                                 f'event value {transfer_event.args.value}.')
 
-    if total < num_tokens:
+    except BlockNumberOutofRange as e:
+        print(f'Block number {block} out of range error: {e}.')
+    except AssertionError:
+        raise
+
+    if transfer_event.args.value < num_tokens:
         raise AssertionError(
-            f'The transfered number of data tokens {total} does not match '
+            f'The transfered number of data tokens {transfer_event.args.value} does not match '
             f'the expected amount of {num_tokens} tokens')
 
     return True
+
+
+def validate_transfer_not_used_for_other_service(did, service_id, transfer_tx_id, consumer_address, token_address):
+    return
+
+
+def record_consume_request(did, service_id, transfer_tx_id, consumer_address, token_address, amount):
+    return
 
 
 def process_consume_request(data, method, additional_params=None, require_signature=True):
@@ -202,7 +232,7 @@ def process_consume_request(data, method, additional_params=None, require_signat
         'documentId',
         'serviceId',
         'serviceType',
-        'tokenAddress',
+        'dataToken',
         'consumerAddress'
     ]
     if additional_params:
@@ -217,14 +247,14 @@ def process_consume_request(data, method, additional_params=None, require_signat
         raise AssertionError(msg)
 
     did = data.get('documentId')
-    token_address = data.get('tokenAddress')
+    token_address = data.get('dataToken')
     consumer_address = data.get('consumerAddress')
     service_id = data.get('serviceId')
     service_type = data.get('serviceType')
 
     # grab asset for did from the metadatastore associated with the Data Token address
     asset = get_asset_for_data_token(token_address, did)
-    service = asset.get_service_by_index(service_id)
+    service = CustomServiceAgreement.from_ddo(service_type, asset)
     if service.type != service_type:
         raise AssertionError(
             f'Requested service with id {service_id} has type {service.type} which '
@@ -237,3 +267,114 @@ def process_consume_request(data, method, additional_params=None, require_signat
         verify_signature(consumer_address, signature, did)
 
     return asset, service, did, consumer_address, token_address
+
+
+def process_compute_request(data):
+    required_attributes = [
+        'signature',
+        'consumerAddress'
+    ]
+    msg, status = check_required_attributes(required_attributes, data, 'compute')
+    if msg:
+        raise BadRequestError(msg)
+
+    provider_acc = get_provider_account()
+    did = data.get('documentId')
+    owner = data.get('consumerAddress')
+    job_id = data.get('jobId')
+    body = dict()
+    body['providerAddress'] = provider_acc.address
+    if owner is not None:
+        body['owner'] = owner
+    if job_id is not None:
+        body['jobId'] = job_id
+    if did is not None:
+        body['documentId'] = did
+
+    # Consumer signature
+    signature = data.get('signature')
+    original_msg = f'{body.get("owner", "")}{body.get("jobId", "")}{body.get("documentId", "")}'
+    verify_signature(owner, signature, original_msg)
+
+    msg_to_sign = f'{provider_acc.address}{body.get("jobId", "")}{body.get("documentId", "")}'
+    msg_hash = add_ethereum_prefix_and_hash_msg(msg_to_sign)
+    body['providerSignature'] = Keeper.sign_hash(msg_hash, provider_acc)
+    return body
+
+
+def build_stage_algorithm_dict(algorithm_did, algorithm_token_address,
+                               algorithm_meta, provider_account):
+    if algorithm_did is not None:
+        # use the DID
+        algo_asset = get_asset_for_data_token(algorithm_token_address, algorithm_did)
+        algo_id = algorithm_did
+        raw_code = ''
+        algo_url = get_asset_url_at_index(0, algo_asset, provider_account)
+        container = algo_asset.metadata['main']['algorithm']['container']
+    else:
+        algo_id = ''
+        algo_url = algorithm_meta.get('url')
+        raw_code = algorithm_meta.get('rawcode')
+        container = algorithm_meta.get('container')
+
+    return dict({
+        'id': algo_id,
+        'url': algo_url,
+        'rawcode': raw_code,
+        'container': container
+    })
+
+
+def build_stage_output_dict(output_def, asset, owner, provider_account):
+    config = get_config()
+    service_endpoint = asset.get_service(ServiceTypes.CLOUD_COMPUTE).service_endpoint
+    if BaseURLs.ASSETS_URL in service_endpoint:
+        service_endpoint = service_endpoint.split(BaseURLs.ASSETS_URL)[0]
+
+    return dict({
+        'nodeUri': output_def.get('nodeUri', config.keeper_url),
+        'brizoUri': output_def.get('brizoUri', service_endpoint),
+        'brizoAddress': output_def.get('brizoAddress', provider_account.address),
+        'metadata': output_def.get('metadata', dict({
+            'main': {
+                'name': 'Compute job output'
+            },
+            'additionalInformation': {
+                'description': 'Output from running the compute job.'
+            }
+        })),
+        'metadataUri': output_def.get('metadataUri', config.aquarius_url),
+        'owner': output_def.get('owner', owner),
+        'publishOutput': output_def.get('publishOutput', 1),
+        'publishAlgorithmLog': output_def.get('publishAlgorithmLog', 1),
+        'whitelist': output_def.get('whitelist', [])
+    })
+
+
+def build_stage_dict(input_dict, algorithm_dict, output_dict):
+    return dict({
+        'index': 0,
+        'input': [input_dict],
+        'compute': {
+            'Instances': 1,
+            'namespace': "ocean-compute",
+            'maxtime': 3600
+        },
+        'algorithm': algorithm_dict,
+        'output': output_dict
+    })
+
+
+def validate_algorithm_dict(algorithm_dict, algorithm_did):
+    if algorithm_did and not algorithm_dict['url']:
+        return f'cannot get url for the algorithmDid {algorithm_did}', 400
+
+    if not algorithm_dict['url'] and not algorithm_dict['rawcode']:
+        return f'`algorithmMeta` must define one of `url` or `rawcode`, but both seem missing.', 400
+
+    container = algorithm_dict['container']
+    # Validate `container` data
+    if not (container.get('entrypoint') and container.get('image') and container.get('tag')):
+        return f'algorithm `container` must specify values for all of entrypoint, image and tag.', 400
+
+    return None, None

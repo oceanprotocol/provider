@@ -1,13 +1,10 @@
 #  Copyright 2018 Ocean Protocol Foundation
 #  SPDX-License-Identifier: Apache-2.0
 
-import json
 import mimetypes
-import time
 from copy import deepcopy
 from unittest.mock import Mock, MagicMock
 
-from ocean_utils.agreements.service_agreement import ServiceAgreement
 from ocean_utils.agreements.service_types import ServiceTypes
 from ocean_utils.aquarius.aquarius import Aquarius
 from ocean_utils.http_requests.requests_session import get_requests_session
@@ -16,6 +13,7 @@ from werkzeug.utils import get_content_type
 
 from ocean_provider.constants import BaseURLs
 from ocean_provider.contracts.custom_contract import DataTokenContract
+from ocean_provider.custom.service_agreement import CustomServiceAgreement
 from ocean_provider.exceptions import InvalidSignatureError
 from ocean_provider.util import build_download_response, get_download_url
 from ocean_provider.utils.accounts import (
@@ -23,14 +21,13 @@ from ocean_provider.utils.accounts import (
     generate_auth_token,
     is_auth_token_valid,
     verify_signature,
-    request_ether)
-from ocean_provider.utils.encryption import do_decrypt
+)
 
 from tests.test_helpers import (
     get_dataset_ddo_with_access_service,
     get_consumer_account,
     get_publisher_account,
-)
+    mint_tokens_and_wait)
 
 SERVICE_ENDPOINT = BaseURLs.BASE_PROVIDER_URL + '/services/download'
 
@@ -41,8 +38,11 @@ def dummy_callback(*_):
 
 def test_download_service(client):
     aqua = Aquarius('http://localhost:5000')
-    for did in aqua.list_assets():
-        aqua.retire_asset_ddo(did)
+    try:
+        for did in aqua.list_assets():
+            aqua.retire_asset_ddo(did)
+    except Exception:
+        pass
 
     init_endpoint = BaseURLs.ASSETS_URL + '/initialize'
     download_endpoint = BaseURLs.ASSETS_URL + '/download'
@@ -50,50 +50,25 @@ def test_download_service(client):
     pub_acc = get_publisher_account()
     cons_acc = get_consumer_account()
 
-    request_ether('https://faucet.nile.dev-ocean.com', cons_acc)
-
     ddo = get_dataset_ddo_with_access_service(pub_acc)
-    dt_address = ddo.as_dictionary()['dataTokenAddress']
+    dt_address = ddo.as_dictionary()['dataToken']
     dt_token = DataTokenContract(dt_address)
-    tx_id = dt_token.mint(cons_acc.address, 50, pub_acc)
-    dt_token.get_tx_receipt(tx_id)
-    time.sleep(2)
-
-    def verify_supply(mint_amount=50):
-        supply = dt_token.contract_concise.totalSupply()
-        if supply <= 0:
-            _tx_id = dt_token.mint(cons_acc.address, mint_amount, pub_acc)
-            dt_token.get_tx_receipt(_tx_id)
-            supply = dt_token.contract_concise.totalSupply()
-        return supply
-
-    while True:
-        try:
-            s = verify_supply()
-            if s > 0:
-                break
-        except (ValueError, Exception):
-            pass
+    mint_tokens_and_wait(dt_token, cons_acc, pub_acc)
 
     auth_token = generate_auth_token(cons_acc)
     index = 0
 
-    sa = ServiceAgreement.from_ddo(ServiceTypes.ASSET_ACCESS, ddo)
+    sa = CustomServiceAgreement.from_ddo(ServiceTypes.ASSET_ACCESS, ddo)
 
-    # Consume using decrypted url
-    files_list = json.loads(
-        do_decrypt(ddo.encrypted_files, pub_acc))
-
-    # initialize an agreement
+    # initialize the service
     payload = dict({
         'documentId': ddo.did,
         'serviceId': sa.index,
         'serviceType': sa.type,
-        'tokenAddress': dt_address,
+        'dataToken': dt_address,
         'consumerAddress': cons_acc.address
     })
 
-    payload['url'] = files_list[index]['url']
     request_url = init_endpoint + '?' + '&'.join([f'{k}={v}' for k, v in payload.items()])
 
     response = client.get(
@@ -105,14 +80,13 @@ def test_download_service(client):
     num_tokens = tx_params['numTokens']
     assert tx_params['from'] == cons_acc.address
     assert tx_params['to'] == pub_acc.address
-    assert tx_params['dataTokenAddress'] == ddo.as_dictionary()['dataTokenAddress']
+    assert tx_params['dataToken'] == ddo.as_dictionary()['dataToken']
 
     # Transfer tokens to provider account
     tx_id = dt_token.transfer(tx_params['to'], num_tokens, cons_acc)
     dt_token.get_tx_receipt(tx_id)
 
     # Consume using url index and signature (let the provider do the decryption)
-    payload.pop('url')
     payload['signature'] = auth_token
     payload['transferTxId'] = Web3.toHex(tx_id)
     payload['fileIndex'] = index
@@ -125,14 +99,14 @@ def test_download_service(client):
 
 def test_empty_payload(client):
     consume = client.get(
-        BaseURLs.ASSETS_URL + '/consume',
+        BaseURLs.ASSETS_URL + '/download',
         data=None,
         content_type='application/json'
     )
     assert consume.status_code == 400
 
     publish = client.post(
-        BaseURLs.ASSETS_URL + '/publish',
+        BaseURLs.ASSETS_URL + '/encrypt',
         data=None,
         content_type='application/json'
     )

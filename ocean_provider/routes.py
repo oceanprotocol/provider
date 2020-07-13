@@ -5,12 +5,15 @@ import logging
 import os
 
 from flask import Blueprint, jsonify, request, Response
+from ocean_keeper import Keeper
+from ocean_keeper.utils import add_ethereum_prefix_and_hash_msg
+from ocean_utils.agreements.service_types import ServiceTypes
 from ocean_utils.http_requests.requests_session import get_requests_session
 
 from ocean_provider.contracts.custom_contract import DataTokenContract
-from ocean_provider.utils.basics import setup_network, LocalFileAdapter
+from ocean_provider.utils.basics import setup_network, LocalFileAdapter, get_config
 from ocean_provider.myapp import app
-from ocean_provider.exceptions import InvalidSignatureError
+from ocean_provider.exceptions import InvalidSignatureError, BadRequestError
 from ocean_provider.log import setup_logging
 from ocean_provider.util import (
     get_request_data,
@@ -19,8 +22,9 @@ from ocean_provider.util import (
     get_download_url,
     get_asset_url_at_index,
     validate_token_transfer,
-    process_consume_request
-)
+    process_consume_request,
+    build_stage_algorithm_dict, validate_algorithm_dict, build_stage_output_dict, build_stage_dict, get_compute_endpoint,
+    record_consume_request, get_asset_download_urls, validate_transfer_not_used_for_other_service, process_compute_request)
 from ocean_provider.utils.accounts import verify_signature, get_provider_account
 from ocean_provider.utils.encryption import do_encrypt
 
@@ -38,7 +42,7 @@ logger = logging.getLogger(__name__)
 def simple_flow_consume():
     required_attributes = [
         'consumerAddress',
-        'tokenAddress',
+        'dataToken',
         'transferTxId'
     ]
     data = get_request_data(request)
@@ -49,7 +53,7 @@ def simple_flow_consume():
         return msg, status
 
     consumer = data.get('consumerAddress')
-    dt_address = data.get('tokenAddress')
+    dt_address = data.get('dataToken')
     tx_id = data.get('transferTxId')
 
     dt_map = None
@@ -82,7 +86,7 @@ def simple_flow_consume():
     except Exception as e:
         logger.error(
             f'Error: {e}. \n'
-            f'Payload was: tokenAddress={dt_address}, '
+            f'Payload was: dataToken={dt_address}, '
             f'consumerAddress={consumer}',
             exc_info=1
         )
@@ -214,8 +218,6 @@ def initialize():
             'initialize',
             require_signature=False
         )
-        service_id = data.get('serviceId')
-        service_type = data.get('serviceType')
 
         # Prepare the `transfer` tokens transaction with the appropriate number of
         # tokens required for this service
@@ -224,9 +226,8 @@ def initialize():
         approve_params = {
             "from": consumer_address,
             "to": provider_acc.address,
-            # FIXME: Replace this constant price number
-            "numTokens": 5, #service.get_price(),
-            "dataTokenAddress": token_address,
+            "numTokens": int(service.get_price()),
+            "dataToken": token_address,
         }
         return Response(
             json.dumps(approve_params),
@@ -258,9 +259,9 @@ def download():
         description: The consumer address.
         required: true
         type: string
-      - name: serviceAgreementId
+      - name: documentId
         in: query
-        description: The ID of the service agreement.
+        description: The ID of the asset/document (the DID).
         required: true
         type: string
       - name: url
@@ -300,10 +301,13 @@ def download():
             consumer_address,
             provider_acc.address,
             token_address,
-            # FIXME: Replace this constant price number
-            5, #service.get_price(),
+            int(service.get_price()),
             tx_id
         )
+        validate_transfer_not_used_for_other_service(did, service_id, tx_id, consumer_address, token_address)
+        record_consume_request(did, service_id, tx_id, consumer_address, token_address, service.get_price())
+
+        assert service_type == ServiceTypes.ASSET_ACCESS
 
         file_index = int(data.get('fileIndex'))
         file_attributes = asset.metadata['main']['files'][file_index]
@@ -331,3 +335,384 @@ def download():
             exc_info=1
         )
         return jsonify(error=e), 500
+
+
+@services.route('/compute', methods=['DELETE'])
+def compute_delete_job():
+    """Deletes a workflow.
+
+    ---
+    tags:
+      - services
+    consumes:
+      - application/json
+    parameters:
+      - name: signature
+        in: query
+        description: Signature of the documentId to verify that the consumer has rights to download the asset.
+        type: string
+      - name: documentId
+        in: query
+        description: The ID of the asset
+        required: true
+        type: string
+      - name: consumerAddress
+        in: query
+        description: The consumer address.
+        required: true
+        type: string
+      - name: jobId
+        in: query
+        description: JobId.
+        type: string
+    responses:
+      200:
+        description: Call to the operator-service was successful.
+      400:
+        description: One of the required attributes is missing.
+      401:
+        description: Invalid asset data.
+      500:
+        description: Error
+    """
+    data = get_request_data(request)
+    try:
+        body = process_compute_request(data)
+        response = requests_session.delete(
+            get_compute_endpoint(),
+            params=body,
+            headers={'content-type': 'application/json'})
+        return Response(
+            response.content,
+            response.status_code,
+            headers={'content-type': 'application/json'}
+        )
+
+    except BadRequestError as e:
+        return jsonify(error=e), 400
+
+    except InvalidSignatureError as e:
+        msg = f'Consumer signature failed verification: {e}'
+        logger.error(msg, exc_info=1)
+        return jsonify(error=msg), 401
+
+    except (ValueError, Exception) as e:
+        logger.error(f'Error- {str(e)}', exc_info=1)
+        return jsonify(error=f'Error : {str(e)}'), 500
+
+
+@services.route('/compute', methods=['PUT'])
+def compute_stop_job():
+    """Stop the execution of a workflow.
+
+    ---
+    tags:
+      - services
+    consumes:
+      - application/json
+    parameters:
+      - name: signature
+        in: query
+        description: Signature of (consumerAddress+jobId+documentId) to verify the consumer of
+            this compute job/asset. The signature uses ethereum based signing method
+            (see https://github.com/ethereum/EIPs/pull/683)
+        type: string
+      - name: documentId
+        in: query
+        description: The ID of the asset. If not provided, all currently running compute
+            jobs will be stopped for the specified consumerAddress
+        required: true
+        type: string
+      - name: consumerAddress
+        in: query
+        description: The consumer ethereum address.
+        required: true
+        type: string
+      - name: jobId
+        in: query
+        description: The ID of the compute job. If not provided, all running compute jobs of
+            the specified consumerAddress/documentId are suspended
+        type: string
+    responses:
+      200:
+        description: Call to the operator-service was successful.
+      400:
+        description: One of the required attributes is missing.
+      401:
+        description: Consumer signature is invalid or failed verification.
+      500:
+        description: General server error
+    """
+    data = get_request_data(request)
+    try:
+        body = process_compute_request(data)
+        response = requests_session.put(
+            get_compute_endpoint(),
+            params=body,
+            headers={'content-type': 'application/json'})
+        return Response(
+            response.content,
+            response.status_code,
+            headers={'content-type': 'application/json'}
+        )
+
+    except BadRequestError as e:
+        return jsonify(error=e), 400
+
+    except InvalidSignatureError as e:
+        msg = f'Consumer signature failed verification: {e}'
+        logger.error(msg, exc_info=1)
+        return jsonify(error=msg), 401
+
+    except (ValueError, Exception) as e:
+        logger.error(f'Error- {str(e)}', exc_info=1)
+        return jsonify(error=f'Error : {str(e)}'), 500
+
+
+@services.route('/compute', methods=['GET'])
+def compute_get_status_job():
+    """Get status for a specific jobId/documentId/owner
+
+    ---
+    tags:
+      - services
+    consumes:
+      - application/json
+    parameters:
+      - name: signature
+        in: query
+        description: Signature of (consumerAddress+jobId+documentId) to verify the consumer of
+            this asset/compute job. The signature uses ethereum based signing method
+            (see https://github.com/ethereum/EIPs/pull/683)
+        type: string
+      - name: documentId
+        in: query
+        description: The ID of the asset. If not provided, the status of all
+            currently running and old compute jobs for the specified consumerAddress will be returned.
+        required: true
+        type: string
+      - name: consumerAddress
+        in: query
+        description: The consumer ethereum address.
+        required: true
+        type: string
+      - name: jobId
+        in: query
+        description: The ID of the compute job. If not provided, all running compute jobs of
+            the specified consumerAddress/documentId are suspended
+        type: string
+
+    responses:
+      200:
+        description: Call to the operator-service was successful.
+      400:
+        description: One of the required attributes is missing.
+      401:
+        description: Consumer signature is invalid or failed verification.
+      500:
+        description: General server error
+    """
+    data = get_request_data(request)
+    try:
+        body = process_compute_request(data)
+        response = requests_session.get(
+            get_compute_endpoint(),
+            params=body,
+            headers={'content-type': 'application/json'})
+        return Response(
+            response.content,
+            response.status_code,
+            headers={'content-type': 'application/json'}
+        )
+
+    except BadRequestError as e:
+        return jsonify(error=e), 400
+
+    except InvalidSignatureError as e:
+        msg = f'Consumer signature failed verification: {e}'
+        logger.error(msg, exc_info=1)
+        return jsonify(error=msg), 401
+
+    except (ValueError, Exception) as e:
+        logger.error(f'Error- {str(e)}', exc_info=1)
+        return jsonify(error=f'Error : {str(e)}'), 500
+
+
+@services.route('/compute', methods=['POST'])
+def compute_start_job():
+    """Call the execution of a workflow.
+
+    ---
+    tags:
+      - services
+    consumes:
+      - application/json
+    parameters:
+      - name: signature
+        in: query
+        description: Signature of (consumerAddress+jobId+documentId) to verify the consumer of
+            this asset/compute job. The signature uses ethereum based signing method
+            (see https://github.com/ethereum/EIPs/pull/683)
+        type: string
+      - name: consumerAddress
+        in: query
+        description: The consumer ethereum address.
+        required: true
+        type: string
+
+      - name: algorithmDid
+        in: query
+        description: The DID of the algorithm Asset to be executed
+        required: false
+        type: string
+      - name: algorithmMeta
+        in: query
+        description: json object that define the algorithm attributes and url or raw code
+        required: false
+        type: json string
+      - name: output
+        in: query
+        description: json object that define the output section
+        required: true
+        type: json string
+    responses:
+      200:
+        description: Call to the operator-service was successful.
+      400:
+        description: One of the required attributes is missing.
+      401:
+        description: Consumer signature is invalid or failed verification
+      500:
+        description: General server error
+    """
+    data = get_request_data(request)
+
+    try:
+        asset, service, did, consumer_address, token_address = process_consume_request(
+            data,
+            'compute_start_job',
+            additional_params=["transferTxId", "output"],
+            require_signature=False
+        )
+        service_id = data.get('serviceId')
+        service_type = data.get('serviceType')
+        signature = data.get('signature')
+        tx_id = data.get("transferTxId")
+
+        # Verify that  the number of required tokens has been
+        # transferred to the provider's wallet.
+        validate_token_transfer(
+            consumer_address,
+            provider_acc.address,
+            token_address,
+            int(service.get_price()),
+            tx_id
+        )
+        validate_transfer_not_used_for_other_service(did, service_id, tx_id, consumer_address, token_address)
+        record_consume_request(did, service_id, tx_id, consumer_address, token_address, service.get_price())
+
+        algorithm_did = data.get('algorithmDid')
+        algorithm_token_address = data.get('algorithmDataToken')
+        algorithm_meta = data.get('algorithmMeta')
+        output_def = data.get('output', dict())
+
+        assert service_type == ServiceTypes.CLOUD_COMPUTE
+
+        # Validate algorithm choice
+        if not (algorithm_meta or algorithm_did):
+            msg = f'Need an `algorithmMeta` or `algorithmDid` to run, otherwise don\'t bother.'
+            logger.error(msg, exc_info=1)
+            return jsonify(error=msg), 400
+
+        # Consumer signature
+        original_msg = f'{consumer_address}{did}'
+        verify_signature(consumer_address, signature, original_msg)
+
+        ########################
+        # Valid service?
+        if service is None:
+            return jsonify(error=f'This DID has no compute service {did}.'), 400
+
+        #########################
+        # Check privacy
+        privacy_options = service.main.get('privacy', {})
+        if algorithm_meta and privacy_options.get('allowRawAlgorithm', True) is False:
+            return jsonify(error=f'cannot run raw algorithm on this did {did}.'), 400
+
+        trusted_algorithms = privacy_options.get('trustedAlgorithms', [])
+        if algorithm_did and trusted_algorithms and algorithm_did not in trusted_algorithms:
+            return jsonify(error=f'cannot run raw algorithm on this did {did}.'), 400
+
+        #########################
+        # Validate ALGORITHM meta
+        if algorithm_meta:
+            algorithm_meta = json.loads(algorithm_meta) if isinstance(
+                algorithm_meta, str) else algorithm_meta
+
+        algorithm_dict = build_stage_algorithm_dict(
+            algorithm_did, algorithm_token_address, algorithm_meta, provider_acc)
+        error_msg, status_code = validate_algorithm_dict(
+            algorithm_dict, algorithm_did)
+        if error_msg:
+            return jsonify(error=error_msg), status_code
+
+        #########################
+        # INPUT
+        asset_urls = get_asset_download_urls(asset, provider_acc, config_file=app.config['CONFIG_FILE'])
+        if not asset_urls:
+            return jsonify(error=f'cannot get url(s) in input did {did}.'), 400
+
+        input_dict = dict({
+            'index': 0,
+            'id': did,
+            'url': asset_urls
+        })
+
+        #########################
+        # OUTPUT
+        if output_def:
+            output_def = json.loads(output_def) if isinstance(
+                output_def, str) else output_def
+        output_dict = build_stage_output_dict(
+            output_def, asset, consumer_address, provider_acc)
+
+        #########################
+        # STAGE
+        stage = build_stage_dict(input_dict, algorithm_dict, output_dict)
+
+        #########################
+        # WORKFLOW
+        workflow = dict({'stages': list([stage])})
+
+        # workflow is ready, push it to operator
+        logger.info('Sending: %s', workflow)
+
+        msg_to_sign = f'{provider_acc.address}{did}'
+        msg_hash = add_ethereum_prefix_and_hash_msg(msg_to_sign)
+        payload = {
+            'workflow': workflow,
+            'providerSignature': Keeper.sign_hash(msg_hash, provider_acc),
+            'documentId': did,
+            'agreementId': did,
+            'owner': consumer_address,
+            'providerAddress': provider_acc.address
+        }
+        response = requests_session.post(
+            get_compute_endpoint(),
+            data=json.dumps(payload),
+            headers={'content-type': 'application/json'})
+
+        return Response(
+            response.content,
+            response.status_code,
+            headers={'content-type': 'application/json'}
+        )
+
+    except InvalidSignatureError as e:
+        msg = f'Consumer signature failed verification: {e}'
+        logger.error(msg, exc_info=1)
+        return jsonify(error=msg), 401
+
+    except (ValueError, KeyError, Exception) as e:
+        logger.error(f'Error- {str(e)}', exc_info=1)
+        return jsonify(error=f'Error : {str(e)}'), 500

@@ -105,5 +105,4 @@ venv.bak/
 .idea
 docker/docs
 config_local.ini
-/artifacts
 *.db

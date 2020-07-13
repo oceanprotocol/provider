@@ -3,6 +3,7 @@ import site
 
 import requests
 from ocean_keeper.web3.http_provider import CustomHTTPProvider
+from ocean_utils.http_requests.requests_session import get_requests_session as _get_requests_session
 from requests_testadapter import Resp
 from ocean_keeper.contract_handler import ContractHandler
 from ocean_keeper.utils import get_account
@@ -14,12 +15,13 @@ from ocean_provider.config import Config
 
 def get_keeper_path(config):
     path = config.keeper_path
-    if not os.path.exists(path):
+    if not path or not os.path.exists(path):
         if os.getenv('VIRTUAL_ENV'):
             path = os.path.join(os.getenv('VIRTUAL_ENV'), 'artifacts')
         else:
             path = os.path.join(site.PREFIXES[0], 'artifacts')
 
+    print(f'get_keeper_path: {config.keeper_path}, {path}, {site.PREFIXES[0]}')
     return path
 
 
@@ -33,6 +35,12 @@ def get_env_property(env_variable, property_name):
         env_variable,
         get_config().get('osmosis', property_name)
     )
+
+
+def get_requests_session():
+    requests_session = _get_requests_session()
+    requests_session.mount('file://', LocalFileAdapter())
+    return requests_session
 
 
 def init_account_envvars():
@@ -49,6 +57,7 @@ def setup_network(config_file=None):
     artifacts_path = get_keeper_path(config)
 
     ContractHandler.set_artifacts_path(artifacts_path)
+
     if keeper_url.startswith('http'):
         provider = CustomHTTPProvider
     elif keeper_url.startswith('wss'):
@@ -68,7 +77,8 @@ def setup_network(config_file=None):
                              f'ethereum account. Account address was not found in the environment'
                              f'variable `PROVIDER_ADDRESS`. Please set the following environment '
                              f'variables and try again: `PROVIDER_ADDRESS`, [`PROVIDER_PASSWORD`, '
-                             f'and `PROVIDER_KEYFILE` or `PROVIDER_ENCRYPTED_KEY`] or `PROVIDER_KEY`.')
+                             f'and `PROVIDER_KEYFILE` or `PROVIDER_ENCRYPTED_KEY`] or `PROVIDER_KEY`.'
+                             f'ENV WAS: {sorted(os.environ.items())}')
 
     if not account._private_key and not (account.password and account._encrypted_key):
         raise AssertionError(f'Ocean Provider cannot run without a valid '

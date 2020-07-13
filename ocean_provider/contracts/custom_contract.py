@@ -9,20 +9,23 @@ from ocean_keeper.web3_provider import Web3Provider
 
 class CustomContractBase(ContractBase):
     def __init__(self, address, abi_path=None, abi=None):
-        name = self.contract_name
-        assert name, 'contract_name property needs to be implemented in subclasses.'
+        self.name = self.contract_name
+        assert self.name, 'contract_name property needs to be implemented in subclasses.'
         if not abi_path and not abi:
             abi_path = ContractHandler.artifacts_path
 
         if abi_path and not abi:
             abi = CustomContractBase.read_abi_from_file(
-                name,
+                self.name,
                 abi_path
             )['abi']
 
         contract = Web3Provider.get_web3().eth.contract(address=address, abi=abi)
-        ContractHandler.set(name, contract)
-        ContractBase.__init__(self, name)
+        ContractHandler.set(self.name, contract)
+
+        self.contract_concise = ContractHandler.get_concise_contract(self.name)
+        self.contract = ContractHandler.get(self.name)
+
         assert self.contract == contract
         assert self.contract_concise is not None
         assert self.address == address
@@ -80,8 +83,7 @@ class DataTokenContract(CustomContractBase):
              value),
             transact={'from': account.address,
                       'passphrase': account.password,
-                      'account_key': account.key,
-                      'value': 100000},
+                      'account_key': account.key}
         )
         return tx_hash
 
@@ -96,9 +98,19 @@ class DataTokenContract(CustomContractBase):
         )
         return tx_hash
 
+    def get_blob(self):
+        return self.contract_concise.blob()
+
     def get_metadata_url(self):
         # grab the metadatastore URL from the DataToken contract (@token_address)
-        return self.contract_concise.blob()
+        url_object = json.loads(self.get_blob())
+        assert url_object['t'] == 1, f'This datatoken does not appear to have a metadata store url.'
+        return url_object['url']
+
+    def get_simple_url(self):
+        url_object = json.loads(self.get_blob())
+        assert url_object['t'] == 0, f'This datatoken does not appear to have a direct consume url.'
+        return url_object['url']
 
 
 class FactoryContract(CustomContractBase):
