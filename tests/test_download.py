@@ -13,7 +13,7 @@ from web3 import Web3
 from werkzeug.utils import get_content_type
 
 from ocean_provider.constants import BaseURLs
-from ocean_provider.contracts.custom_contract import DataTokenContract
+from ocean_provider.contracts.datatoken import DataTokenContract
 from ocean_provider.exceptions import InvalidSignatureError
 from ocean_provider.util import build_download_response, get_download_url
 from ocean_provider.utils.accounts import (
@@ -41,7 +41,7 @@ def test_download_service(client):
     try:
         for did in aqua.list_assets():
             aqua.retire_asset_ddo(did)
-    except Exception:
+    except (ValueError, Exception):
         pass
 
     init_endpoint = BaseURLs.ASSETS_URL + '/initialize'
@@ -88,7 +88,7 @@ def test_download_service(client):
 
     # Consume using url index and signature (let the provider do the decryption)
     payload['signature'] = auth_token
-    payload['transferTxId'] = Web3.toHex(tx_id)
+    payload['transferTxId'] = tx_id
     payload['fileIndex'] = index
     request_url = download_endpoint + '?' + '&'.join([f'{k}={v}' for k, v in payload.items()])
     response = client.get(

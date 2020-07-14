@@ -5,13 +5,13 @@ import logging
 import os
 
 from flask import Blueprint, jsonify, request, Response
-from ocean_keeper import Keeper
-from ocean_keeper.utils import add_ethereum_prefix_and_hash_msg
 from ocean_utils.agreements.service_types import ServiceTypes
 from ocean_utils.http_requests.requests_session import get_requests_session
 
-from ocean_provider.contracts.custom_contract import DataTokenContract
-from ocean_provider.utils.basics import setup_network, LocalFileAdapter, get_config
+from ocean_provider.web3_internal.utils import add_ethereum_prefix_and_hash_msg
+from ocean_provider.web3_internal.web3helper import Web3Helper
+from ocean_provider.contracts.datatoken import DataTokenContract
+from ocean_provider.utils.basics import setup_network, LocalFileAdapter
 from ocean_provider.myapp import app
 from ocean_provider.exceptions import InvalidSignatureError, BadRequestError
 from ocean_provider.log import setup_logging
@@ -705,7 +705,7 @@ def compute_start_job():
         msg_hash = add_ethereum_prefix_and_hash_msg(msg_to_sign)
         payload = {
             'workflow': workflow,
-            'providerSignature': Keeper.sign_hash(msg_hash, provider_acc),
+            'providerSignature': Web3Helper.sign_hash(msg_hash, provider_acc),
             'documentId': did,
             'agreementId': did,
             'owner': consumer_address,

@@ -2,26 +2,26 @@ import os
 import site
 
 import requests
-from ocean_keeper.web3.http_provider import CustomHTTPProvider
+from web3 import WebsocketProvider
 from ocean_utils.http_requests.requests_session import get_requests_session as _get_requests_session
 from requests_testadapter import Resp
-from ocean_keeper.contract_handler import ContractHandler
-from ocean_keeper.utils import get_account
-from ocean_keeper.web3_provider import Web3Provider
-from web3 import WebsocketProvider
 
 from ocean_provider.config import Config
+from ocean_provider.web3_internal.contract_handler import ContractHandler
+from ocean_provider.web3_internal.utils import get_account
+from ocean_provider.web3_internal.web3_overrides.http_provider import CustomHTTPProvider
+from ocean_provider.web3_internal.web3_provider import Web3Provider
 
 
-def get_keeper_path(config):
-    path = config.keeper_path
+def get_artifacts_path(config):
+    path = config.artifacts_path
     if not path or not os.path.exists(path):
         if os.getenv('VIRTUAL_ENV'):
             path = os.path.join(os.getenv('VIRTUAL_ENV'), 'artifacts')
         else:
             path = os.path.join(site.PREFIXES[0], 'artifacts')
 
-    print(f'get_keeper_path: {config.keeper_path}, {path}, {site.PREFIXES[0]}')
+    print(f'get_artifacts_path: {config.artifacts_path}, {path}, {site.PREFIXES[0]}')
     return path
 
 
@@ -53,21 +53,22 @@ def init_account_envvars():
 
 def setup_network(config_file=None):
     config = Config(filename=config_file) if config_file else get_config()
-    keeper_url = config.keeper_url
-    artifacts_path = get_keeper_path(config)
+    network_url = config.network_url
+    artifacts_path = get_artifacts_path(config)
 
     ContractHandler.set_artifacts_path(artifacts_path)
 
-    if keeper_url.startswith('http'):
+    if network_url.startswith('http'):
         provider = CustomHTTPProvider
-    elif keeper_url.startswith('wss'):
+    elif network_url.startswith('wss'):
         provider = WebsocketProvider
     else:
-        raise AssertionError(f'Unsupported network url {keeper_url}. Must start with http or wss.')
+        raise AssertionError(f'Unsupported network url {network_url}. Must start with http or wss.')
 
-    Web3Provider.init_web3(provider=provider(keeper_url))
-    from web3.middleware import geth_poa_middleware
-    Web3Provider.get_web3().middleware_stack.inject(geth_poa_middleware, layer=0)
+    Web3Provider.init_web3(provider=provider(network_url))
+    if network_url.startswith('wss'):
+        from web3.middleware import geth_poa_middleware
+        Web3Provider.get_web3().middleware_stack.inject(geth_poa_middleware, layer=0)
 
     init_account_envvars()
 

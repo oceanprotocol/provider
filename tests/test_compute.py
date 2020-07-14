@@ -3,14 +3,14 @@
 
 import json
 
-from ocean_keeper import Keeper
-from ocean_keeper.utils import add_ethereum_prefix_and_hash_msg
+from ocean_provider.web3_internal.utils import add_ethereum_prefix_and_hash_msg
+from ocean_provider.web3_internal.web3helper import Web3Helper
 from ocean_utils.agreements.service_agreement import ServiceAgreement
 from ocean_utils.agreements.service_types import ServiceTypes
 from web3 import Web3
 
 from ocean_provider.constants import BaseURLs
-from ocean_provider.contracts.custom_contract import DataTokenContract
+from ocean_provider.contracts.datatoken import DataTokenContract
 from ocean_provider.util import build_stage_output_dict
 
 from tests.test_helpers import (
@@ -78,7 +78,7 @@ def test_compute_norawalgo_allowed(client):
     # prepare consumer signature on did
     msg = f'{cons_acc.address}{did}'
     _hash = add_ethereum_prefix_and_hash_msg(msg)
-    signature = Keeper.sign_hash(_hash, cons_acc)
+    signature = Web3Helper.sign_hash(_hash, cons_acc)
 
     # Start the compute job
     payload = dict({
@@ -87,7 +87,7 @@ def test_compute_norawalgo_allowed(client):
         'serviceId': sa.index,
         'serviceType': sa.type,
         'consumerAddress': cons_acc.address,
-        'transferTxId': Web3.toHex(tx_id),
+        'transferTxId': tx_id,
         'dataToken': data_token,
         'output': build_stage_output_dict(dict(), dataset_ddo_w_compute_service, cons_acc.address, pub_acc),
         'algorithmDid': '',
@@ -157,7 +157,7 @@ def test_compute_specific_algo_dids(client):
     # prepare consumer signature on did
     msg = f'{cons_acc.address}{did}'
     _hash = add_ethereum_prefix_and_hash_msg(msg)
-    signature = Keeper.sign_hash(_hash, cons_acc)
+    signature = Web3Helper.sign_hash(_hash, cons_acc)
 
     # Start the compute job
     payload = dict({
@@ -166,7 +166,7 @@ def test_compute_specific_algo_dids(client):
         'serviceId': sa.index,
         'serviceType': sa.type,
         'consumerAddress': cons_acc.address,
-        'transferTxId': Web3.toHex(tx_id),
+        'transferTxId': tx_id,
         'dataToken': data_token,
         'output': build_stage_output_dict(dict(), dataset_ddo_w_compute_service, cons_acc.address, pub_acc),
         'algorithmDid': alg_ddo.did,
@@ -233,13 +233,13 @@ def test_compute(client):
     dt_contract.get_tx_receipt(tx_id)
 
     alg_service = ServiceAgreement.from_ddo(ServiceTypes.ASSET_ACCESS, alg_ddo)
-    alg_tx_id = alg_data_token.transfer(tx_params['to'], alg_service.get_cost(), cons_acc)
-    alg_data_token.get_tx_receipt(alg_tx_id)
+    alg_tx_id = alg_dt_contract.transfer(tx_params['to'], int(alg_service.get_cost()), cons_acc)
+    alg_dt_contract.get_tx_receipt(alg_tx_id)
 
     # prepare consumer signature on did
     msg = f'{cons_acc.address}{did}'
     _hash = add_ethereum_prefix_and_hash_msg(msg)
-    signature = Keeper.sign_hash(_hash, cons_acc)
+    signature = Web3Helper.sign_hash(_hash, cons_acc)
 
     # Start the compute job
     payload = dict({
@@ -248,7 +248,7 @@ def test_compute(client):
         'serviceId': sa.index,
         'serviceType': sa.type,
         'consumerAddress': cons_acc.address,
-        'transferTxId': Web3.toHex(tx_id),
+        'transferTxId': tx_id,
         'dataToken': data_token,
         'output': build_stage_output_dict(dict(), dataset_ddo_w_compute_service, cons_acc.address, pub_acc),
         'algorithmDid': alg_ddo.did,
@@ -270,7 +270,7 @@ def test_compute(client):
 
     msg = f'{cons_acc.address}{job_id}{did}'
     _hash = add_ethereum_prefix_and_hash_msg(msg)
-    signature = Keeper.sign_hash(_hash, cons_acc)
+    signature = Web3Helper.sign_hash(_hash, cons_acc)
 
     payload = dict({
         'signature': signature,
@@ -283,36 +283,3 @@ def test_compute(client):
     assert job_info, f'Failed to get job info for jobId {job_id}'
     print(f'got info for compute job {job_id}: {job_info}')
     assert job_info['statusText'] in get_possible_compute_job_status_text()
-    # did = None
-    # # get did of results
-    # for i in range(200):
-    #     job_info = get_compute_job_info(client, endpoint, payload)
-    #     did = job_info['did']
-    #     if did:
-    #         break
-    #     time.sleep(0.25)
-    #
-    # assert did, f'Compute job has no results, job info {job_info}.'
-    # # check results ddo
-    # ddo = DIDResolver(keeper.did_registry).resolve(did)
-    # assert ddo, f'Failed to resolve ddo for did {did}'
-    # consumer_permission = keeper.did_registry.get_permission(did, cons_acc.address)
-    # assert consumer_permission is True, \
-    #     f'Consumer address {cons_acc.address} has no permissions on the results ' \
-    #     f'did {did}. This is required, the consumer must be able to access the results'
-    #
-    # # Try the stop job endpoint
-    # response = client.put(
-    #     endpoint + '?' + '&'.join([f'{k}={v}' for k, v in payload.items()]),
-    #     data=json.dumps(payload),
-    #     content_type='application/json'
-    # )
-    # assert response.status == '200 OK', f'stop compute job failed: {response.data}'
-    #
-    # # Try the delete job endpoint
-    # response = client.delete(
-    #     endpoint + '?' + '&'.join([f'{k}={v}' for k, v in payload.items()]),
-    #     data=json.dumps(payload),
-    #     content_type='application/json'
-    # )
-    # assert response.status == '200 OK', f'delete compute job failed: {response.data}'

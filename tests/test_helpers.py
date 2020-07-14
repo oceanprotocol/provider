@@ -2,19 +2,10 @@
 #  SPDX-License-Identifier: Apache-2.0
 
 import json
+import os
+import pathlib
 import time
 import uuid
-
-from ocean_keeper import Keeper
-from ocean_keeper.utils import get_account, add_ethereum_prefix_and_hash_msg
-
-from ocean_provider.constants import BaseURLs
-from ocean_provider.contracts.custom_contract import FactoryContract
-from ocean_provider.utils.basics import get_config
-from ocean_provider.utils.data_token import get_asset_for_data_token
-from ocean_provider.utils.encryption import do_encrypt
-
-from tests.conftest import get_sample_ddo, get_resource_path
 
 from ocean_utils.ddo.ddo import DDO
 from ocean_utils.utils.utilities import checksum
@@ -23,6 +14,17 @@ from ocean_utils.aquarius.aquarius import Aquarius
 from ocean_utils.did import DID
 from ocean_utils.ddo.public_key_rsa import PUBLIC_KEY_TYPE_RSA
 from ocean_utils.agreements.service_factory import ServiceDescriptor, ServiceFactory
+from web3 import Web3
+
+from ocean_provider.web3_internal.account import Account
+from ocean_provider.web3_internal.contract_handler import ContractHandler
+from ocean_provider.web3_internal.web3_provider import Web3Provider
+from ocean_provider.web3_internal.web3helper import Web3Helper
+from ocean_provider.web3_internal.utils import get_account, add_ethereum_prefix_and_hash_msg
+from ocean_provider.constants import BaseURLs
+from ocean_provider.contracts.factory import FactoryContract
+from ocean_provider.utils.data_token import get_asset_for_data_token
+from ocean_provider.utils.encryption import do_encrypt
 
 
 def get_publisher_account():
@@ -31,6 +33,16 @@ def get_publisher_account():
 
 def get_consumer_account():
     return get_account(1)
+
+
+def new_factory_contract():
+    factory = FactoryContract(address=None)
+    address = factory.deploy(
+        ContractHandler.artifacts_path,
+        Web3.toChecksumAddress(os.environ.get('MINTER_ADDRESS', '0xe2DD09d719Da89e5a3D0F2549c7E24566e947260'))
+    )
+
+    return FactoryContract(address=address)
 
 
 def get_access_service_descriptor(account, metadata):
@@ -64,8 +76,10 @@ def get_registered_ddo(account, metadata, service_descriptor, provider_account=N
         'url': ddo_service_endpoint
     })
     # Create new data token contract
-    dt_contract = FactoryContract(get_config().factory_address)\
-        .create_data_token(account, metadata_url=metadata_store_url)
+    factory_contract = new_factory_contract()
+    dt_contract = factory_contract.create_data_token(
+        account, metadata_url=metadata_store_url
+    )
     if not dt_contract:
         raise AssertionError('Creation of data token contract failed.')
 
@@ -288,7 +302,7 @@ def get_compute_job_info(client, endpoint, params):
         print(f'There is a problem with the job info response: {response.data}')
         return None, None
 
-    return job_info[0]
+    return dict(job_info[0])
 
 
 def _check_job_id(client, job_id, did, token_address, wait_time=20):
@@ -297,7 +311,7 @@ def _check_job_id(client, job_id, did, token_address, wait_time=20):
 
     msg = f'{cons_acc.address}{job_id}{did}'
     _id_hash = add_ethereum_prefix_and_hash_msg(msg)
-    signature = Keeper.sign_hash(_id_hash, cons_acc)
+    signature = Web3Helper.sign_hash(_id_hash, cons_acc)
     payload = dict({
         'signature': signature,
         'documentId': did,
@@ -345,3 +359,19 @@ def mint_tokens_and_wait(data_token_contract, receiver_account, minter_account):
                 break
         except (ValueError, Exception):
             pass
+
+
+def get_resource_path(dir_name, file_name):
+    base = os.path.realpath(__file__).split(os.path.sep)[1:-1]
+    if dir_name:
+        return pathlib.Path(os.path.join(os.path.sep, *base, dir_name, file_name))
+    else:
+        return pathlib.Path(os.path.join(os.path.sep, *base, file_name))
+
+
+def get_sample_ddo():
+    path = get_resource_path('ddo', 'ddo_sa_sample.json')
+    assert path.exists(), f"{path} does not exist!"
+    with open(path, 'r') as file_handle:
+        metadata = file_handle.read()
+    return json.loads(metadata)
