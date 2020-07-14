@@ -46,8 +46,7 @@ def get_access_service_descriptor(account, metadata):
 
     return ServiceDescriptor.access_service_descriptor(
         access_service_attributes,
-        f'http://localhost:8030{BaseURLs.ASSETS_URL}/download',
-        0
+        f'http://localhost:8030{BaseURLs.ASSETS_URL}/download'
     )
 
 
@@ -178,8 +177,7 @@ def get_compute_service_descriptor(account, price, metadata):
 
     return ServiceDescriptor.compute_service_descriptor(
         compute_service_attributes,
-        f'http://localhost:8030{BaseURLs.ASSETS_URL}/compute',
-        0
+        f'http://localhost:8030{BaseURLs.ASSETS_URL}/compute'
     )
 
 
@@ -201,8 +199,7 @@ def get_compute_service_descriptor_no_rawalgo(account, price, metadata):
 
     return ServiceDescriptor.compute_service_descriptor(
         compute_service_attributes,
-        f'http://localhost:8030{BaseURLs.ASSETS_URL}/compute',
-        0
+        f'http://localhost:8030{BaseURLs.ASSETS_URL}/compute'
     )
 
 
@@ -224,8 +221,7 @@ def get_compute_service_descriptor_specific_algo_dids(account, price, metadata):
 
     return ServiceDescriptor.compute_service_descriptor(
         compute_service_attributes,
-        f'http://localhost:8030{BaseURLs.ASSETS_URL}/compute',
-        0
+        f'http://localhost:8030{BaseURLs.ASSETS_URL}/compute'
     )
 
 
