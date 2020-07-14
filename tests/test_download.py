@@ -9,7 +9,6 @@ from ocean_utils.agreements.service_agreement import ServiceAgreement
 from ocean_utils.agreements.service_types import ServiceTypes
 from ocean_utils.aquarius.aquarius import Aquarius
 from ocean_utils.http_requests.requests_session import get_requests_session
-from web3 import Web3
 from werkzeug.utils import get_content_type
 
 from ocean_provider.constants import BaseURLs
