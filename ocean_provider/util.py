@@ -9,6 +9,7 @@ from cgi import parse_header
 from flask import Response
 from ocean_keeper import Keeper
 from ocean_keeper.utils import add_ethereum_prefix_and_hash_msg
+from ocean_utils.agreements.service_agreement import ServiceAgreement
 from ocean_utils.agreements.service_types import ServiceTypes
 
 from osmosis_driver_interface.osmosis import Osmosis
@@ -16,7 +17,6 @@ from web3.exceptions import BlockNumberOutofRange
 
 from ocean_provider.constants import BaseURLs
 from ocean_provider.contracts.custom_contract import DataTokenContract
-from ocean_provider.custom.service_agreement import CustomServiceAgreement
 from ocean_provider.exceptions import BadRequestError
 from ocean_provider.utils.accounts import verify_signature, get_provider_account
 from ocean_provider.utils.basics import get_config
@@ -254,7 +254,7 @@ def process_consume_request(data, method, additional_params=None, require_signat
 
     # grab asset for did from the metadatastore associated with the Data Token address
     asset = get_asset_for_data_token(token_address, did)
-    service = CustomServiceAgreement.from_ddo(service_type, asset)
+    service = ServiceAgreement.from_ddo(service_type, asset)
     if service.type != service_type:
         raise AssertionError(
             f'Requested service with id {service_id} has type {service.type} which '
@@ -302,11 +302,26 @@ def process_compute_request(data):
     return body
 
 
-def build_stage_algorithm_dict(algorithm_did, algorithm_token_address,
-                               algorithm_meta, provider_account):
+def build_stage_algorithm_dict(consumer_address, algorithm_did, algorithm_token_address, algorithm_tx_id,
+                               algorithm_meta, provider_account, receiver_address=None):
     if algorithm_did is not None:
+        assert algorithm_token_address and algorithm_tx_id, \
+            'algorithm_did requires both algorithm_token_address and algorithm_tx_id.'
         # use the DID
+        if receiver_address is None:
+            receiver_address = provider_account.address
+
         algo_asset = get_asset_for_data_token(algorithm_token_address, algorithm_did)
+        service = ServiceAgreement.from_ddo(ServiceTypes.ASSET_ACCESS, algo_asset)
+        validate_token_transfer(
+            consumer_address,
+            receiver_address,
+            algorithm_token_address,
+            int(service.get_cost()),
+            algorithm_tx_id
+        )
+        validate_transfer_not_used_for_other_service(algorithm_did, service.index, algorithm_tx_id, consumer_address, algorithm_token_address)
+
         algo_id = algorithm_did
         raw_code = ''
         algo_url = get_asset_url_at_index(0, algo_asset, provider_account)

@@ -226,7 +226,7 @@ def initialize():
         approve_params = {
             "from": consumer_address,
             "to": provider_acc.address,
-            "numTokens": int(service.get_price()),
+            "numTokens": int(service.get_cost()),
             "dataToken": token_address,
         }
         return Response(
@@ -301,11 +301,11 @@ def download():
             consumer_address,
             provider_acc.address,
             token_address,
-            int(service.get_price()),
+            int(service.get_cost()),
             tx_id
         )
         validate_transfer_not_used_for_other_service(did, service_id, tx_id, consumer_address, token_address)
-        record_consume_request(did, service_id, tx_id, consumer_address, token_address, service.get_price())
+        record_consume_request(did, service_id, tx_id, consumer_address, token_address, service.get_cost())
 
         assert service_type == ServiceTypes.ASSET_ACCESS
 
@@ -605,15 +605,16 @@ def compute_start_job():
             consumer_address,
             provider_acc.address,
             token_address,
-            int(service.get_price()),
+            int(service.get_cost()),
             tx_id
         )
         validate_transfer_not_used_for_other_service(did, service_id, tx_id, consumer_address, token_address)
-        record_consume_request(did, service_id, tx_id, consumer_address, token_address, service.get_price())
+        record_consume_request(did, service_id, tx_id, consumer_address, token_address, service.get_cost())
 
         algorithm_did = data.get('algorithmDid')
         algorithm_token_address = data.get('algorithmDataToken')
         algorithm_meta = data.get('algorithmMeta')
+        algorithm_tx_id = data.get('algorithmTransferTxId')
         output_def = data.get('output', dict())
 
         assert service_type == ServiceTypes.CLOUD_COMPUTE
@@ -623,6 +624,17 @@ def compute_start_job():
             msg = f'Need an `algorithmMeta` or `algorithmDid` to run, otherwise don\'t bother.'
             logger.error(msg, exc_info=1)
             return jsonify(error=msg), 400
+
+        # algorithmDid also requires algorithmDataToken and algorithmTransferTxId
+        if algorithm_did:
+            if not (algorithm_token_address and algorithm_tx_id):
+                msg = f'Using `algorithmDid` requires the `algorithmDataToken` and ' \
+                      f'`algorithmTransferTxId` values in the request payload. ' \
+                      f'algorithmDataToken is the DataToken address for the algorithm asset. ' \
+                      f'algorithmTransferTxId is the transaction id (hash) of transferring ' \
+                      f'data tokens from consumer wallet to this providers wallet.'
+                logger.error(msg, exc_info=1)
+                return jsonify(error=msg), 400
 
         # Consumer signature
         original_msg = f'{consumer_address}{did}'
@@ -650,7 +662,9 @@ def compute_start_job():
                 algorithm_meta, str) else algorithm_meta
 
         algorithm_dict = build_stage_algorithm_dict(
-            algorithm_did, algorithm_token_address, algorithm_meta, provider_acc)
+            consumer_address, algorithm_did, algorithm_token_address,
+            algorithm_tx_id, algorithm_meta, provider_acc
+        )
         error_msg, status_code = validate_algorithm_dict(
             algorithm_dict, algorithm_did)
         if error_msg:

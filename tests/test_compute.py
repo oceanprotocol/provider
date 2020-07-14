@@ -5,13 +5,12 @@ import json
 
 from ocean_keeper import Keeper
 from ocean_keeper.utils import add_ethereum_prefix_and_hash_msg
+from ocean_utils.agreements.service_agreement import ServiceAgreement
 from ocean_utils.agreements.service_types import ServiceTypes
-from ocean_utils.aquarius.aquarius import Aquarius
 from web3 import Web3
 
 from ocean_provider.constants import BaseURLs
 from ocean_provider.contracts.custom_contract import DataTokenContract
-from ocean_provider.custom.service_agreement import CustomServiceAgreement
 from ocean_provider.util import build_stage_output_dict
 
 from tests.test_helpers import (
@@ -49,7 +48,7 @@ def test_compute_norawalgo_allowed(client):
     # prepare parameter values for the compute endpoint
     # signature, documentId, consumerAddress, and algorithmDid or algorithmMeta
 
-    sa = CustomServiceAgreement.from_ddo(ServiceTypes.CLOUD_COMPUTE, dataset_ddo_w_compute_service)
+    sa = ServiceAgreement.from_ddo(ServiceTypes.CLOUD_COMPUTE, dataset_ddo_w_compute_service)
 
     init_endpoint = BaseURLs.ASSETS_URL + '/initialize'
     payload = dict({
@@ -127,7 +126,7 @@ def test_compute_specific_algo_dids(client):
     # prepare parameter values for the compute endpoint
     # signature, documentId, consumerAddress, and algorithmDid or algorithmMeta
 
-    sa = CustomServiceAgreement.from_ddo(
+    sa = ServiceAgreement.from_ddo(
         ServiceTypes.CLOUD_COMPUTE, dataset_ddo_w_compute_service)
 
     init_endpoint = BaseURLs.ASSETS_URL + '/initialize'
@@ -202,10 +201,10 @@ def test_compute(client):
     alg_ddo = get_algorithm_ddo(cons_acc, pub_acc)
     alg_data_token = alg_ddo.as_dictionary()['dataToken']
     alg_dt_contract = DataTokenContract(alg_data_token)
-    mint_tokens_and_wait(alg_dt_contract, pub_acc, cons_acc)
+    mint_tokens_and_wait(alg_dt_contract, cons_acc, cons_acc)
     # CHECKPOINT 1
 
-    sa = CustomServiceAgreement.from_ddo(
+    sa = ServiceAgreement.from_ddo(
         ServiceTypes.CLOUD_COMPUTE, dataset_ddo_w_compute_service)
 
     # initialize the service
@@ -233,6 +232,10 @@ def test_compute(client):
     tx_id = dt_contract.transfer(tx_params['to'], num_tokens, cons_acc)
     dt_contract.get_tx_receipt(tx_id)
 
+    alg_service = ServiceAgreement.from_ddo(ServiceTypes.ASSET_ACCESS, alg_ddo)
+    alg_tx_id = alg_data_token.transfer(tx_params['to'], alg_service.get_cost(), cons_acc)
+    alg_data_token.get_tx_receipt(alg_tx_id)
+
     # prepare consumer signature on did
     msg = f'{cons_acc.address}{did}'
     _hash = add_ethereum_prefix_and_hash_msg(msg)
@@ -250,7 +253,8 @@ def test_compute(client):
         'output': build_stage_output_dict(dict(), dataset_ddo_w_compute_service, cons_acc.address, pub_acc),
         'algorithmDid': alg_ddo.did,
         'algorithmMeta': {},
-        'algorithmDataToken': alg_data_token
+        'algorithmDataToken': alg_data_token,
+        'algorithmTransferTxId': alg_tx_id
     })
 
     compute_endpoint = BaseURLs.ASSETS_URL + '/compute'
