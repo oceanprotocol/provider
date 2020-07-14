@@ -29,7 +29,7 @@ def version():
     info = dict()
     info['software'] = Metadata.TITLE
     info['version'] = get_version()
-    info['network-url'] = config.network_url
+    info['network-url'] = config.keeper_url
     info['provider-address'] = get_provider_account().address
     return jsonify(info)
 
