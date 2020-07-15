@@ -7,9 +7,9 @@ from ocean_provider.web3_internal.event_filter import EventFilter
 class DataTokenContract(ContractBase):
     CONTRACT_NAME = 'DataTokenTemplate'
 
-    def get_transfer_event(self, block_number, sender, receiver):
+    def get_transfer_event(self, block_number, sender, receiver, num_tokens):
         event = getattr(self.events, 'Transfer')
-        filter_params = {'from': sender, 'to': receiver}
+        filter_params = {'from': sender, 'to': receiver, 'value': num_tokens}
         event_filter = EventFilter(
             'Transfer',
             event,

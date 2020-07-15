@@ -191,9 +191,13 @@ def validate_token_transfer(sender, receiver, token_address, num_tokens, tx_id):
     assert block, f'invalid block number {block}'
     dt_contract = DataTokenContract(token_address)
 
-    transfer_event = dt_contract.get_transfer_event(block, sender, receiver)
-    if not transfer_event:
+    receipt = dt_contract.get_tx_receipt(tx_id)
+    transfer_events = dt_contract.events.Transfer().processReceipt(receipt)
+    if not transfer_events:
         raise AssertionError(f'Invalid transaction {tx_id}.')
+    assert len(transfer_events) == 1, \
+        f'Multiple Transfer events in the same transaction !!! {transfer_events}'
+    transfer_event = transfer_events[0]
 
     if transfer_event.args['from'] != sender or transfer_event.args['to'] != receiver:
         raise AssertionError(f'The transfer event from/to do not match the expected values.')
@@ -201,7 +205,7 @@ def validate_token_transfer(sender, receiver, token_address, num_tokens, tx_id):
     balance = dt_contract.contract.functions.balanceOf(receiver).call(block_identifier=block-1)
     try:
         new_balance = dt_contract.contract.functions.balanceOf(receiver).call(block_identifier=block)
-        if (new_balance - balance) != transfer_event.args.value:
+        if not ((new_balance - balance) >= transfer_event.args.value):
             raise AssertionError(f'Balance increment {(new_balance - balance)} does not match the Transfer '
                                  f'event value {transfer_event.args.value}.')
 

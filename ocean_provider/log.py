@@ -34,8 +34,7 @@ def setup_logging(default_path='logging.yaml', default_level=None, env_key='LOG_
                 logging.config.dictConfig(config)
                 coloredlogs.install()
             except Exception as e:
-                print(e)
-                print('Error in Logging Configuration. Using default configs')
+                print(f'Error in Logging Configuration (using default configs): {e}')
                 logging.basicConfig(level=default_level)
                 coloredlogs.install(level=default_level)
     else:
