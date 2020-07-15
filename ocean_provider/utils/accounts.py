@@ -3,14 +3,14 @@ import time
 from datetime import datetime
 
 import eth_keys
-from ocean_keeper import Keeper
-from ocean_keeper.utils import get_account, add_ethereum_prefix_and_hash_msg
-from ocean_utils.http_requests.requests_session import get_requests_session
 from web3 import Web3
+from ocean_utils.http_requests.requests_session import get_requests_session
 
-from ocean_provider.utils.basics import get_config
 from ocean_provider.exceptions import InvalidSignatureError
+from ocean_provider.utils.basics import get_config
 from ocean_provider.utils.web3 import web3
+from ocean_provider.web3_internal.utils import get_account, add_ethereum_prefix_and_hash_msg
+from ocean_provider.web3_internal.web3helper import Web3Helper
 
 
 def get_provider_account():
@@ -21,7 +21,7 @@ def verify_signature(signer_address, signature, original_msg):
     if is_auth_token_valid(signature):
         address = check_auth_token(signature)
     else:
-        address = Keeper.personal_ec_recover(original_msg, signature)
+        address = Web3Helper.personal_ec_recover(original_msg, signature)
 
     if address.lower() == signer_address.lower():
         return True
@@ -47,7 +47,7 @@ def check_auth_token(token):
     parts = token.split('-')
     if len(parts) < 2:
         return '0x0'
-    # :HACK: alert, this should be part of ocean-utils, ocean-keeper, or a stand-alone library
+    # :HACK: alert, this should be part of ocean-lib-py
     sig, timestamp = parts
     auth_token_message = get_config().auth_token_message or "Ocean Protocol Authentication"
     default_exp = 24 * 60 * 60
@@ -56,7 +56,7 @@ def check_auth_token(token):
         return '0x0'
 
     message = f'{auth_token_message}\n{timestamp}'
-    address = Keeper.personal_ec_recover(message, sig)
+    address = Web3Helper.personal_ec_recover(message, sig)
     return Web3.toChecksumAddress(address)
 
 
@@ -65,7 +65,7 @@ def generate_auth_token(account):
     _time = int(datetime.now().timestamp())
     _message = f'{raw_msg}\n{_time}'
     prefixed_msg_hash = add_ethereum_prefix_and_hash_msg(_message)
-    return f'{Keeper.sign_hash(prefixed_msg_hash, account)}-{_time}'
+    return f'{Web3Helper.sign_hash(prefixed_msg_hash, account)}-{_time}'
 
 
 def request_ether(faucet_url, account, wait=True):

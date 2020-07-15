@@ -8,8 +8,8 @@ import logging
 import os
 from pathlib import Path
 
-NAME_KEEPER_URL = 'network.url'
-NAME_KEEPER_PATH = 'keeper.path'
+NAME_NETWORK_URL = 'network.url'
+NAME_ARTIFACTS_PATH = 'artifacts.path'
 NAME_AUTH_TOKEN_MESSAGE = 'auth_token_message'
 NAME_AUTH_TOKEN_EXPIRATION = 'auth_token_expiration'
 NAME_DATA_TOKEN_FACTORY_ADDRESS = 'factory.address'
@@ -20,15 +20,15 @@ NAME_OPERATOR_SERVICE_URL = 'operator_service.url'
 
 environ_names = {
 
-    NAME_DATA_TOKEN_FACTORY_ADDRESS: ['DATA_TOKEN_FACTORY_ADDRESS', 'Data token factory address', 'keeper-contracts'],
-    NAME_KEEPER_URL: ['KEEPER_URL', 'Keeper URL', 'keeper-contracts'],
-    NAME_KEEPER_PATH: ['KEEPER_PATH', 'Path to the keeper contracts', 'keeper-contracts'],
+    NAME_DATA_TOKEN_FACTORY_ADDRESS: ['DATA_TOKEN_FACTORY_ADDRESS', 'Data token factory address', 'eth-network'],
+    NAME_NETWORK_URL: ['NETWORK_URL', 'Network URL (e.g. Main, Kovan etc.)', 'eth-network'],
+    NAME_ARTIFACTS_PATH: ['ARTIFACTS_PATH', 'Path to the ocean contracts', 'eth-network'],
     NAME_AUTH_TOKEN_MESSAGE: ['AUTH_TOKEN_MESSAGE',
                               'Message to use for generating user auth token', 'resources'],
     NAME_AUTH_TOKEN_EXPIRATION: ['AUTH_TOKEN_EXPIRATION',
                                  'Auth token expiration time expressed in seconds', 'resources'],
     NAME_AQUARIUS_URL: ['AQUARIUS_URL', 'Aquarius url (metadata store)', 'resources'],
-    NAME_PARITY_URL: ['PARITY_URL', 'Parity URL', 'keeper-contracts'],
+    NAME_PARITY_URL: ['PARITY_URL', 'Parity URL', 'eth-network'],
     NAME_OPERATOR_SERVICE_URL: ['OPERATOR_SERVICE_URL', 'Operator service URL', 'resources'],
 }
 
@@ -42,9 +42,9 @@ class Config(configparser.ConfigParser):
 
         Options available:
 
-        [keeper-contracts]
+        [eth-network]
         network.url = http://localhost:8545                            # ocean-contracts url.
-        keeper.path = artifacts                                       # Path of json abis.
+        artifacts.path = artifacts                                       # Path of json abis.
 
         [resources]
         aquarius.url = http://localhost:5000
@@ -56,7 +56,7 @@ class Config(configparser.ConfigParser):
         """
         configparser.ConfigParser.__init__(self)
 
-        self._section_name = 'keeper-contracts'
+        self._section_name = 'eth-network'
         self._logger = logging.getLogger('config')
 
         if filename:
@@ -82,15 +82,15 @@ class Config(configparser.ConfigParser):
                 self.set(environ_item[2], option_name, value)
 
     @property
-    def keeper_path(self):
-        """Path where the keeper-contracts artifacts are allocated."""
-        keeper_path_string = self.get(self._section_name, NAME_KEEPER_PATH, fallback=None)
-        return Path(keeper_path_string).expanduser().resolve() if keeper_path_string else ''
+    def artifacts_path(self):
+        """Path where the eth-network artifacts are allocated."""
+        _path_string = self.get(self._section_name, NAME_ARTIFACTS_PATH, fallback=None)
+        return Path(_path_string).expanduser().resolve() if _path_string else ''
 
     @property
-    def keeper_url(self):
-        """URL of the keeper. (e.g.): http://mykeeper:8545."""
-        return self.get(self._section_name, NAME_KEEPER_URL, fallback=None)
+    def network_url(self):
+        """URL of the evm network. (e.g.): http://localnetwork:8545."""
+        return self.get(self._section_name, NAME_NETWORK_URL, fallback=None)
 
     @property
     def factory_address(self):
