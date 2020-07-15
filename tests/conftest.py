@@ -29,8 +29,8 @@ def setup_all():
 
         provider = get_provider_account()
         if web3.fromWei(Web3Helper.get_ether_balance(provider.address), 'ether') < 10:
-            Web3Helper.send_ether(account, provider.address, web3.toWei(25, 'ether'))
+            Web3Helper.send_ether(account, provider.address, 25)
 
         consumer = get_consumer_account()
         if web3.fromWei(Web3Helper.get_ether_balance(consumer.address), 'ether') < 10:
-            Web3Helper.send_ether(account, consumer.address, web3.toWei(25, 'ether'))
+            Web3Helper.send_ether(account, consumer.address, 25)

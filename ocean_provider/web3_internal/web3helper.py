@@ -118,7 +118,7 @@ class Web3Helper(object):
         tx = {
             'from': from_account.address,
             'to': to_address,
-            'value': ether_amount,
+            'value': w3.toWei(ether_amount, 'ether'),
             'gas': 500000}
         wallet = Wallet(w3, from_account.key, from_account.password, from_account.address)
         raw_tx = wallet.sign_tx(tx)

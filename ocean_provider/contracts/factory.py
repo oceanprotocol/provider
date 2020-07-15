@@ -1,3 +1,5 @@
+import logging
+
 from ocean_provider.contracts.datatoken import DataTokenContract
 from ocean_provider.web3_internal import ContractBase
 from ocean_provider.web3_internal.contract_handler import ContractHandler
@@ -18,11 +20,11 @@ class FactoryContract(ContractBase):
         w3 = Web3Provider.get_web3()
         w3.eth.defaultAccount = w3.toChecksumAddress(minter_address)
         print(f'default account: {w3.eth.defaultAccount}')
-        factory_json = FactoryContract.read_abi_from_file(
+        factory_json = ContractHandler.read_abi_from_file(
             FactoryContract.CONTRACT_NAME,
             abi_path
         )
-        dt_contract_json = DataTokenContract.read_abi_from_file(
+        dt_contract_json = ContractHandler.read_abi_from_file(
             DataTokenContract.CONTRACT_NAME,
             abi_path
         )
@@ -50,13 +52,13 @@ class FactoryContract(ContractBase):
                       'account_key': account.key},
         )
         tx_receipt = self.get_tx_receipt(tx_hash)
+        if not tx_receipt:
+            logging.warning(f'Cannot get the transaction receipt for tx {tx_hash}.')
+            return None
+
         logs = getattr(self.events, 'TokenRegistered')().processReceipt(tx_receipt)
-        # event_log = self.get_token_registered_event(
-        #     tx_receipt.blockNumber,
-        #     metadata_url,
-        #     account.address
-        # )
         if not logs:
+            logging.warning(f'No logs where found for tx {tx_hash}.')
             return None
 
         return DataTokenContract(logs[0].args.tokenAddress)
@@ -73,5 +75,20 @@ class FactoryContract(ContractBase):
         for log in logs:
             if log.args.blob == metadata_url and sender == log.args.RegisteredBy:
                 return log
+
+        return None
+
+    def get_token_minter(self, token_address):
+        event = getattr(self.events, 'TokenRegistered')
+        filter_params = {'tokenAddress': token_address}
+        event_filter = event().createFilter(
+            fromBlock=0,
+            toBlock='latest',
+            argument_filters=filter_params
+        )
+        logs = event_filter.get_all_entries()
+        for log in logs:
+            assert log.args.tokenAddress == token_address
+            return log.args.RegisteredBy
 
         return None
