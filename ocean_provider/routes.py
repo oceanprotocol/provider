@@ -53,7 +53,7 @@ def get_user_nonce():
         return jsonify(error=msg), status
 
     address = data.get('userAddress')
-    # return
+
     return Response(
         json.dumps({'nonce': user_nonce.get_nonce(address)}),
         200,
@@ -197,6 +197,7 @@ def encrypt():
         logger.info(f'encrypted urls {encrypted_document}, '
                     f'publisher {publisher_address}, '
                     f'documentId {did}')
+        user_nonce.increment_nonce(publisher_address)
         return Response(
             json.dumps({'encryptedDocument': encrypted_document}),
             201,
