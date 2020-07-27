@@ -102,8 +102,7 @@ class ContractHandler(object):
 
         if not address:
             address = contract_definition.get('address')
-            assert address, 'Cannot find contract address in the abi file.'
-            address = Web3.toChecksumAddress(address)
+            address = Web3.toChecksumAddress(address) if address else None
 
         abi = contract_definition['abi']
         bytecode = contract_definition['bytecode']

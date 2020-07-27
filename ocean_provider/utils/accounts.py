@@ -17,17 +17,20 @@ def get_provider_account():
     return get_account(0)
 
 
-def verify_signature(signer_address, signature, original_msg):
+def verify_signature(signer_address, signature, original_msg, nonce: int=None):
     if is_auth_token_valid(signature):
         address = check_auth_token(signature)
     else:
-        address = Web3Helper.personal_ec_recover(original_msg, signature)
+        assert nonce is not None, 'nonce is required when not using user auth token.'
+        message = f'{original_msg}{str(nonce)}'
+        address = Web3Helper.personal_ec_recover(message, signature)
 
     if address.lower() == signer_address.lower():
         return True
 
     msg = f'Invalid signature {signature} for ' \
-          f'ethereum address {signer_address} and documentId {original_msg}.'
+          f'ethereum address {signer_address}, documentId {original_msg}' \
+          f'and nonce {nonce}.'
     raise InvalidSignatureError(msg)
 
 

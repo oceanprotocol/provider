@@ -12,6 +12,7 @@ from web3.exceptions import BlockNumberOutofRange
 from ocean_utils.agreements.service_agreement import ServiceAgreement
 from ocean_utils.agreements.service_types import ServiceTypes
 
+from ocean_provider.user_nonce import UserNonce
 from ocean_provider.web3_internal.utils import add_ethereum_prefix_and_hash_msg
 from ocean_provider.web3_internal.web3helper import Web3Helper
 from ocean_provider.constants import BaseURLs
@@ -241,7 +242,10 @@ def record_consume_request(did, service_id, transfer_tx_id, consumer_address, to
     return
 
 
-def process_consume_request(data, method, additional_params=None, require_signature=True):
+def process_consume_request(
+        data: dict, method: str, user_nonce: UserNonce=None,
+        additional_params: list=None, require_signature: bool=True):
+
     required_attributes = [
         'documentId',
         'serviceId',
@@ -276,14 +280,15 @@ def process_consume_request(data, method, additional_params=None, require_signat
         )
 
     if require_signature:
+        assert user_nonce, '`user_nonce` is required when signature is required.'
         # Raises ValueError when signature is invalid
         signature = data.get('signature')
-        verify_signature(consumer_address, signature, did)
+        verify_signature(consumer_address, signature, did, user_nonce.get_nonce(consumer_address))
 
     return asset, service, did, consumer_address, token_address
 
 
-def process_compute_request(data):
+def process_compute_request(data, user_nonce: UserNonce):
     required_attributes = [
         'signature',
         'consumerAddress'
@@ -308,7 +313,7 @@ def process_compute_request(data):
     # Consumer signature
     signature = data.get('signature')
     original_msg = f'{body.get("owner", "")}{body.get("jobId", "")}{body.get("documentId", "")}'
-    verify_signature(owner, signature, original_msg)
+    verify_signature(owner, signature, original_msg, user_nonce.get_nonce(owner))
 
     msg_to_sign = f'{provider_acc.address}{body.get("jobId", "")}{body.get("documentId", "")}'
     msg_hash = add_ethereum_prefix_and_hash_msg(msg_to_sign)
