@@ -80,7 +80,7 @@ Parameters
 ```
 
 Returns:
-Json document with the token approveAndLock transaction parameters
+Json document with a quote for amount of tokens to transfer to the provider account.
 
 
 Example:
@@ -103,6 +103,7 @@ Response:
     "to": "0x...",
     "numTokens": 21,
     "dataToken": "0x21fa3ea32892091...",
+    "nonce": 23
 }
 ```
 
