@@ -16,9 +16,7 @@ from ocean_utils.ddo.public_key_rsa import PUBLIC_KEY_TYPE_RSA
 from ocean_utils.agreements.service_factory import ServiceDescriptor, ServiceFactory
 from web3 import Web3
 
-from ocean_provider.web3_internal.account import Account
 from ocean_provider.web3_internal.contract_handler import ContractHandler
-from ocean_provider.web3_internal.web3_provider import Web3Provider
 from ocean_provider.web3_internal.web3helper import Web3Helper
 from ocean_provider.web3_internal.utils import get_account, add_ethereum_prefix_and_hash_msg
 from ocean_provider.constants import BaseURLs
@@ -62,7 +60,7 @@ def get_access_service_descriptor(account, metadata):
     )
 
 
-def get_registered_ddo(account, metadata, service_descriptor, provider_account=None):
+def get_registered_ddo(client, account, metadata, service_descriptor, provider_account=None):
     aqua = Aquarius('http://localhost:5000')
 
     if not provider_account:
@@ -131,8 +129,9 @@ def get_registered_ddo(account, metadata, service_descriptor, provider_account=N
     #     print(f'invalid metadata: {plecos.validate_dict_local(ddo.metadata)}')
     #     assert False, f'invalid metadata: {plecos.validate_dict_local(ddo.metadata)}'
 
-    files_list = json.dumps(metadata['main']['files'])
-    encrypted_files = do_encrypt(files_list, provider_account)
+    files_list_str = json.dumps(metadata['main']['files'])
+    encrypted_files = encrypt_document(client, did, files_list_str, account)
+    # encrypted_files = do_encrypt(files_list_str, provider_account)
 
     # only assign if the encryption worked
     if encrypted_files:
@@ -153,12 +152,12 @@ def get_registered_ddo(account, metadata, service_descriptor, provider_account=N
     return ddo
 
 
-def get_dataset_ddo_with_access_service(account):
+def get_dataset_ddo_with_access_service(client, account):
     metadata = get_sample_ddo()['service'][0]['attributes']
     metadata['main']['files'][0]['checksum'] = str(uuid.uuid4())
     service_descriptor = get_access_service_descriptor(account, metadata)
     metadata[MetadataMain.KEY].pop('cost')
-    return get_registered_ddo(account, metadata, service_descriptor)
+    return get_registered_ddo(client, account, metadata, service_descriptor)
 
 
 def get_sample_algorithm_ddo():
@@ -239,39 +238,74 @@ def get_compute_service_descriptor_specific_algo_dids(account, price, metadata):
     )
 
 
-def get_algorithm_ddo(account, provider_account=None):
+def get_algorithm_ddo(client, account, provider_account=None):
     metadata = get_sample_algorithm_ddo()['service'][0]['attributes']
     metadata['main']['files'][0]['checksum'] = str(uuid.uuid4())
     service_descriptor = get_access_service_descriptor(account, metadata)
     metadata[MetadataMain.KEY].pop('cost')
-    return get_registered_ddo(account, metadata, service_descriptor, provider_account=provider_account)
+    return get_registered_ddo(client, account, metadata, service_descriptor, provider_account=provider_account)
 
 
-def get_dataset_ddo_with_compute_service(account):
+def get_dataset_ddo_with_compute_service(client, account):
     metadata = get_sample_ddo_with_compute_service()['service'][0]['attributes']
     metadata['main']['files'][0]['checksum'] = str(uuid.uuid4())
     service_descriptor = get_compute_service_descriptor(
         account, metadata[MetadataMain.KEY]['cost'], metadata)
     metadata[MetadataMain.KEY].pop('cost')
-    return get_registered_ddo(account, metadata, service_descriptor)
+    return get_registered_ddo(client, account, metadata, service_descriptor)
 
 
-def get_dataset_ddo_with_compute_service_no_rawalgo(account):
+def get_dataset_ddo_with_compute_service_no_rawalgo(client, account):
     metadata = get_sample_ddo_with_compute_service()['service'][0]['attributes']
     metadata['main']['files'][0]['checksum'] = str(uuid.uuid4())
     service_descriptor = get_compute_service_descriptor_no_rawalgo(
         account, metadata[MetadataMain.KEY]['cost'], metadata)
     metadata[MetadataMain.KEY].pop('cost')
-    return get_registered_ddo(account, metadata, service_descriptor)
+    return get_registered_ddo(client, account, metadata, service_descriptor)
 
 
-def get_dataset_ddo_with_compute_service_specific_algo_dids(account):
+def get_dataset_ddo_with_compute_service_specific_algo_dids(client, account):
     metadata = get_sample_ddo_with_compute_service()['service'][0]['attributes']
     metadata['main']['files'][0]['checksum'] = str(uuid.uuid4())
     service_descriptor = get_compute_service_descriptor_specific_algo_dids(
         account, metadata[MetadataMain.KEY]['cost'], metadata)
     metadata[MetadataMain.KEY].pop('cost')
-    return get_registered_ddo(account, metadata, service_descriptor)
+    return get_registered_ddo(client, account, metadata, service_descriptor)
+
+
+def get_nonce(client, address):
+    endpoint = BaseURLs.ASSETS_URL + '/nonce'
+    response = client.get(
+        endpoint + '?' + f'&userAddress={address}',
+        content_type='application/json'
+    )
+    assert response.status_code == 200 and response.data, \
+        f'get nonce endpoint failed: response status {response.status}, data {response.data}'
+
+    value = response.json if response.json else json.loads(response.data)
+    return value['nonce']
+
+
+def encrypt_document(client, did, document, account):
+    nonce = get_nonce(client, account.address)
+    text = f'{did}{nonce}'
+    msg_hash = add_ethereum_prefix_and_hash_msg(text)
+    signature = Web3Helper.sign_hash(msg_hash, account)
+    payload = {
+        'documentId': did,
+        'signature': signature,
+        'document': document,
+        'publisherAddress': account.address
+    }
+    response = client.post(
+        BaseURLs.ASSETS_URL + '/encrypt',
+        data=json.dumps(payload),
+        content_type='application/json'
+    )
+    assert response.status_code == 201 and response.data, \
+        f'encrypt endpoint failed: response status {response.status}, data {response.data}'
+    encrypted_document = response.json['encryptedDocument']
+    return encrypted_document
 
 
 def get_possible_compute_job_status_text():
@@ -309,7 +343,8 @@ def _check_job_id(client, job_id, did, token_address, wait_time=20):
     endpoint = BaseURLs.ASSETS_URL + '/compute'
     cons_acc = get_consumer_account()
 
-    msg = f'{cons_acc.address}{job_id}{did}'
+    nonce = get_nonce(client, cons_acc.address)
+    msg = f'{cons_acc.address}{job_id}{did}{nonce}'
     _id_hash = add_ethereum_prefix_and_hash_msg(msg)
     signature = Web3Helper.sign_hash(_id_hash, cons_acc)
     payload = dict({

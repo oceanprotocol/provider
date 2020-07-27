@@ -21,12 +21,14 @@ from ocean_provider.utils.accounts import (
     is_auth_token_valid,
     verify_signature,
 )
+from ocean_provider.web3_internal import Web3Helper
+from ocean_provider.web3_internal.utils import add_ethereum_prefix_and_hash_msg
 
 from tests.test_helpers import (
     get_dataset_ddo_with_access_service,
     get_consumer_account,
     get_publisher_account,
-    mint_tokens_and_wait)
+    mint_tokens_and_wait, get_nonce)
 
 SERVICE_ENDPOINT = BaseURLs.BASE_PROVIDER_URL + '/services/download'
 
@@ -49,7 +51,7 @@ def test_download_service(client):
     pub_acc = get_publisher_account()
     cons_acc = get_consumer_account()
 
-    ddo = get_dataset_ddo_with_access_service(pub_acc)
+    ddo = get_dataset_ddo_with_access_service(client, pub_acc)
     dt_address = ddo.as_dictionary()['dataToken']
     dt_token = DataTokenContract(dt_address)
     mint_tokens_and_wait(dt_token, cons_acc, pub_acc)
@@ -77,15 +79,17 @@ def test_download_service(client):
 
     tx_params = response.json
     num_tokens = tx_params['numTokens']
+    nonce = tx_params.get('nonce')
     assert tx_params['from'] == cons_acc.address
     assert tx_params['to'] == pub_acc.address
     assert tx_params['dataToken'] == ddo.as_dictionary()['dataToken']
+    assert nonce is not None, f'expecting a `nonce` value in the response, got {nonce}'
 
     # Transfer tokens to provider account
     tx_id = dt_token.transfer(tx_params['to'], num_tokens, cons_acc)
     dt_token.get_tx_receipt(tx_id)
 
-    # Consume using url index and signature (let the provider do the decryption)
+    # Consume using url index and auth token (let the provider do the decryption)
     payload['signature'] = auth_token
     payload['transferTxId'] = tx_id
     payload['fileIndex'] = index
@@ -93,7 +97,28 @@ def test_download_service(client):
     response = client.get(
         request_url
     )
-    assert response.status == '200 OK'
+    assert response.status_code == 200, f'{response.data}'
+
+    # Consume using url index and signature (withOUT nonce), should fail
+    _hash = add_ethereum_prefix_and_hash_msg(ddo.did)
+    payload['signature'] = Web3Helper.sign_hash(_hash, cons_acc)
+    request_url = download_endpoint + '?' + '&'.join([f'{k}={v}' for k, v in payload.items()])
+    response = client.get(
+        request_url
+    )
+    assert response.status_code == 401, f'{response.data}'
+
+    # Consume using url index and signature (with nonce)
+    new_nonce = get_nonce(client, cons_acc.address)
+    assert new_nonce == nonce + 1
+    nonce = new_nonce
+    _hash = add_ethereum_prefix_and_hash_msg(f'{ddo.did}{nonce}')
+    payload['signature'] = Web3Helper.sign_hash(_hash, cons_acc)
+    request_url = download_endpoint + '?' + '&'.join([f'{k}={v}' for k, v in payload.items()])
+    response = client.get(
+        request_url
+    )
+    assert response.status_code == 200, f'{response.data}'
 
 
 def test_empty_payload(client):

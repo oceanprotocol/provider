@@ -5,9 +5,7 @@
 """
 #  Copyright 2018 Ocean Protocol Foundation
 #  SPDX-License-Identifier: Apache-2.0
-import json
 import logging
-import os
 
 from web3 import Web3
 
@@ -29,37 +27,12 @@ class ContractBase(object):
             abi_path = ContractHandler.artifacts_path
 
         assert abi_path, f'abi_path is required, got {abi_path}'
-        artifact_json = self.read_abi_from_file(
-            self.name,
-            abi_path
-        )
-        abi = artifact_json['abi']
-        bytecode = artifact_json['bytecode']
 
-        contract = Web3Provider.get_web3().eth.contract(address=address, abi=abi, bytecode=bytecode)
-        ContractHandler.set(self.name, contract)
+        self.contract_concise = ContractHandler.get_concise_contract(self.name, address)
+        self.contract = ContractHandler.get(self.name, address)
 
-        self.contract_concise = ContractHandler.get_concise_contract(self.name)
-        self.contract = ContractHandler.get(self.name)
-
-        assert self.contract == contract
+        assert not address or (self.contract.address == address and self.address == address)
         assert self.contract_concise is not None
-        assert self.address == address
-
-    @staticmethod
-    def read_abi_from_file(contract_name, abi_path):
-        path = None
-        contract_name = contract_name + '.json'
-        for name in os.listdir(abi_path):
-            if name.lower() == contract_name.lower():
-                path = os.path.join(abi_path, contract_name)
-                break
-
-        if path:
-            with open(path) as f:
-                return json.loads(f.read())
-
-        return None
 
     @property
     def contract_name(self):

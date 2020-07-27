@@ -8,9 +8,33 @@ accessed via:
 - [Docs: Provider API Reference](https://docs.oceanprotocol.com/references/ocean_provider/)
 
 
+## nonce endpoint 
+### GET /api/v1/services/nonce
+Parameters
+```
+    userAddress: String object containing a user's ethereum address
+```
+
+Returns:
+Json object containing the nonce value.
+
+Example:
+```
+POST /api/v1/services/nonce?userAddress=0x990922334
+
+```
+
+Response:
+
+```json
+{
+  "nonce": 23
+}
+```
+
 ## Encrypt endpoint
 
-### GET /api/v1/service/encrypt
+### GET /api/v1/services/encrypt
 Parameters
 ```
     documentId: String object containing document id (e.g. a DID)
@@ -25,13 +49,14 @@ Json object containing the encrypted document.
 
 Example:
 ```
-POST /api/v1/service/encrypt
+POST /api/v1/services/encrypt
 payload:
 {
     "signature":"0x00110011",
     "documentId":"0x1111",
     "publisherAddress":"0x990922334",
     "document":"[{index:0, url:""}, {index:1, url:""}]"
+}
 ```
 
 Response:
@@ -45,7 +70,7 @@ Response:
 
 
 ## Initial service request endpoint
-### POST /api/v1/service/initialize
+### POST /api/v1/services/initialize
 Parameters
 ```
     documentId: String object containing document id (e.g. a DID)
@@ -55,12 +80,12 @@ Parameters
 ```
 
 Returns:
-Json document with the token approveAndLock transaction parameters
+Json document with a quote for amount of tokens to transfer to the provider account.
 
 
 Example:
 ```
-POST /api/v1/service/initialize
+POST /api/v1/services/initialize
 payload:
 {
     "documentId":"0x1111",
@@ -78,12 +103,13 @@ Response:
     "to": "0x...",
     "numTokens": 21,
     "dataToken": "0x21fa3ea32892091...",
+    "nonce": 23
 }
 ```
 
 
 ## Download endpoint
-### GET /api/v1/service/download
+### GET /api/v1/services/download
 Parameters
 ```
     documentId: String object containing document id (e.g. a DID)
@@ -102,7 +128,7 @@ File stream
 
 Example:
 ```
-POST /api/v1/service/download
+POST /api/v1/services/download
 payload:
 {
     "documentId":"0x1111",

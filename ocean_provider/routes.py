@@ -8,6 +8,7 @@ from flask import Blueprint, jsonify, request, Response
 from ocean_utils.agreements.service_types import ServiceTypes
 from ocean_utils.http_requests.requests_session import get_requests_session
 
+from ocean_provider.user_nonce import UserNonce
 from ocean_provider.web3_internal.utils import add_ethereum_prefix_and_hash_msg
 from ocean_provider.web3_internal.web3helper import Web3Helper
 from ocean_provider.contracts.datatoken import DataTokenContract
@@ -34,8 +35,30 @@ setup_network()
 provider_acc = get_provider_account()
 requests_session = get_requests_session()
 requests_session.mount('file://', LocalFileAdapter())
+user_nonce = UserNonce()
 
 logger = logging.getLogger(__name__)
+
+
+@services.route('/nonce', methods=['GET'])
+def get_user_nonce():
+    required_attributes = [
+        'userAddress',
+    ]
+    data = get_request_data(request)
+
+    msg, status = check_required_attributes(
+        required_attributes, data, 'nonce')
+    if msg:
+        return jsonify(error=msg), status
+
+    address = data.get('userAddress')
+
+    return Response(
+        json.dumps({'nonce': user_nonce.get_nonce(address)}),
+        200,
+        headers={'content-type': 'application/json'}
+    )
 
 
 @services.route('/', methods=['GET'])
@@ -50,7 +73,7 @@ def simple_flow_consume():
     msg, status = check_required_attributes(
         required_attributes, data, 'simple_flow_consume')
     if msg:
-        return msg, status
+        return jsonify(error=msg), status
 
     consumer = data.get('consumerAddress')
     dt_address = data.get('dataToken')
@@ -155,7 +178,7 @@ def encrypt():
     msg, status = check_required_attributes(
         required_attributes, data, 'encrypt')
     if msg:
-        return msg, status
+        return jsonify(error=msg), status
 
     did = data.get('documentId')
     signature = data.get('signature')
@@ -165,7 +188,7 @@ def encrypt():
 
     try:
         # Raises ValueError when signature is invalid
-        verify_signature(publisher_address, signature, did)
+        verify_signature(publisher_address, signature, did, user_nonce.get_nonce(publisher_address))
 
         encrypted_document = do_encrypt(
             document,
@@ -174,6 +197,7 @@ def encrypt():
         logger.info(f'encrypted urls {encrypted_document}, '
                     f'publisher {publisher_address}, '
                     f'documentId {did}')
+        user_nonce.increment_nonce(publisher_address)
         return Response(
             json.dumps({'encryptedDocument': encrypted_document}),
             201,
@@ -210,6 +234,14 @@ def initialize():
     the number of tokens required by the service.
 
     :return:
+        json object as follows:
+        {
+            "from": <consumer-address>,
+            "to": <receiver-address>,
+            "numTokens": <tokens-amount-in-base>
+            "dataToken": <data-token-contract-address>,
+            "nonce": <nonce-used-in-consumer-signature>
+        }
     """
     data = get_request_data(request)
     try:
@@ -228,6 +260,7 @@ def initialize():
             "to": provider_acc.address,
             "numTokens": int(service.get_cost()),
             "dataToken": token_address,
+            "nonce": user_nonce.get_nonce(consumer_address)
         }
         return Response(
             json.dumps(approve_params),
@@ -291,6 +324,7 @@ def download():
         asset, service, did, consumer_address, token_address = process_consume_request(
             data,
             'download',
+            user_nonce=user_nonce,
             additional_params=["transferTxId", "fileIndex"]
         )
         service_id = data.get('serviceId')
@@ -317,6 +351,7 @@ def download():
         download_url = get_download_url(url, app.config['CONFIG_FILE'])
         logger.info(f'Done processing consume request for asset {did}, '
                     f' url {download_url}')
+        user_nonce.increment_nonce(consumer_address)
         return build_download_response(request, requests_session, url, download_url, content_type)
 
     except InvalidSignatureError as e:
@@ -377,11 +412,12 @@ def compute_delete_job():
     """
     data = get_request_data(request)
     try:
-        body = process_compute_request(data)
+        body = process_compute_request(data, user_nonce)
         response = requests_session.delete(
             get_compute_endpoint(),
             params=body,
             headers={'content-type': 'application/json'})
+        user_nonce.increment_nonce(body['owner'])
         return Response(
             response.content,
             response.status_code,
@@ -445,11 +481,12 @@ def compute_stop_job():
     """
     data = get_request_data(request)
     try:
-        body = process_compute_request(data)
+        body = process_compute_request(data, user_nonce)
         response = requests_session.put(
             get_compute_endpoint(),
             params=body,
             headers={'content-type': 'application/json'})
+        user_nonce.increment_nonce(body['owner'])
         return Response(
             response.content,
             response.status_code,
@@ -514,11 +551,12 @@ def compute_get_status_job():
     """
     data = get_request_data(request)
     try:
-        body = process_compute_request(data)
+        body = process_compute_request(data, user_nonce)
         response = requests_session.get(
             get_compute_endpoint(),
             params=body,
             headers={'content-type': 'application/json'})
+        user_nonce.increment_nonce(body['owner'])
         return Response(
             response.content,
             response.status_code,
@@ -638,7 +676,7 @@ def compute_start_job():
 
         # Consumer signature
         original_msg = f'{consumer_address}{did}'
-        verify_signature(consumer_address, signature, original_msg)
+        verify_signature(consumer_address, signature, original_msg, user_nonce.get_nonce(consumer_address))
 
         ########################
         # Valid service?
@@ -715,7 +753,7 @@ def compute_start_job():
             get_compute_endpoint(),
             data=json.dumps(payload),
             headers={'content-type': 'application/json'})
-
+        user_nonce.increment_nonce(consumer_address)
         return Response(
             response.content,
             response.status_code,
