@@ -188,6 +188,7 @@ def test_compute_specific_algo_dids(client):
 
 def test_compute(client):
     init_endpoint = BaseURLs.ASSETS_URL + '/initialize'
+    compute_endpoint = BaseURLs.ASSETS_URL + '/compute'
 
     pub_acc = get_publisher_account()
     cons_acc = get_consumer_account()
@@ -262,7 +263,20 @@ def test_compute(client):
         'algorithmTransferTxId': alg_tx_id
     })
 
-    compute_endpoint = BaseURLs.ASSETS_URL + '/compute'
+    # Start compute using invalid signature (withOUT nonce), should fail
+    msg = f'{cons_acc.address}{did}'
+    _hash = add_ethereum_prefix_and_hash_msg(msg)
+    payload['signature'] = Web3Helper.sign_hash(_hash, cons_acc)
+    response = client.post(
+        compute_endpoint,
+        data=json.dumps(payload),
+        content_type='application/json'
+    )
+
+    assert response.status_code == 401, f'{response.data}'
+
+    # Start compute with valid signature
+    payload['signature'] = signature
     response = client.post(
         compute_endpoint,
         data=json.dumps(payload),
