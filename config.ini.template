@@ -5,6 +5,7 @@ artifacts.path = ${ARTIFACTS_PATH}
 [resources]
 ocean_provider.url = ${OCEAN_PROVIDER_URL}
 operator_service.url = ${OPERATOR_SERVICE_URL}
+storage.path = ${STORAGE_PATH}
 
 [osmosis]
 azure.account.name = ${AZURE_ACCOUNT_NAME}
