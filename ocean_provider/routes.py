@@ -12,7 +12,7 @@ from ocean_provider.user_nonce import UserNonce
 from ocean_provider.web3_internal.utils import add_ethereum_prefix_and_hash_msg
 from ocean_provider.web3_internal.web3helper import Web3Helper
 from ocean_provider.contracts.datatoken import DataTokenContract
-from ocean_provider.utils.basics import setup_network, LocalFileAdapter
+from ocean_provider.utils.basics import setup_network, LocalFileAdapter, get_config
 from ocean_provider.myapp import app
 from ocean_provider.exceptions import InvalidSignatureError, BadRequestError
 from ocean_provider.log import setup_logging
@@ -35,7 +35,7 @@ setup_network()
 provider_acc = get_provider_account()
 requests_session = get_requests_session()
 requests_session.mount('file://', LocalFileAdapter())
-user_nonce = UserNonce()
+user_nonce = UserNonce(get_config().storage_path)
 
 logger = logging.getLogger(__name__)
 

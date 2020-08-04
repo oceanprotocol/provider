@@ -17,6 +17,7 @@ NAME_DATA_TOKEN_FACTORY_ADDRESS = 'factory.address'
 NAME_AQUARIUS_URL = 'aquarius.url'
 NAME_PARITY_URL = 'parity.url'
 NAME_OPERATOR_SERVICE_URL = 'operator_service.url'
+NAME_STORAGE_PATH = 'storage.path'
 
 environ_names = {
 
@@ -30,6 +31,7 @@ environ_names = {
     NAME_AQUARIUS_URL: ['AQUARIUS_URL', 'Aquarius url (metadata store)', 'resources'],
     NAME_PARITY_URL: ['PARITY_URL', 'Parity URL', 'eth-network'],
     NAME_OPERATOR_SERVICE_URL: ['OPERATOR_SERVICE_URL', 'Operator service URL', 'resources'],
+    NAME_STORAGE_PATH: ['STORAGE_PATH', 'Path to the local database file'],
 }
 
 
@@ -116,3 +118,9 @@ class Config(configparser.ConfigParser):
     @property
     def auth_token_expiration(self):
         return self.get('resources', NAME_AUTH_TOKEN_EXPIRATION, fallback=None)
+
+    @property
+    def storage_path(self):
+        """Path to local storage (database file)."""
+        return self.get('resources', NAME_STORAGE_PATH)
+
