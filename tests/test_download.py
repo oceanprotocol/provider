@@ -103,6 +103,7 @@ def test_download_service(client):
     _hash = add_ethereum_prefix_and_hash_msg(ddo.did)
     payload['signature'] = Web3Helper.sign_hash(_hash, cons_acc)
     request_url = download_endpoint + '?' + '&'.join([f'{k}={v}' for k, v in payload.items()])
+    print('>>>> Expecting InvalidSignatureError from the download endpoint <<<<')
     response = client.get(
         request_url
     )

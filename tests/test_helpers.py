@@ -20,7 +20,7 @@ from ocean_provider.web3_internal.contract_handler import ContractHandler
 from ocean_provider.web3_internal.web3helper import Web3Helper
 from ocean_provider.web3_internal.utils import get_account, add_ethereum_prefix_and_hash_msg
 from ocean_provider.constants import BaseURLs
-from ocean_provider.contracts.factory import DTFactoryContract
+from ocean_provider.contracts.dtfactory import DTFactoryContract
 from ocean_provider.utils.data_token import get_asset_for_data_token
 from ocean_provider.utils.encryption import do_encrypt
 

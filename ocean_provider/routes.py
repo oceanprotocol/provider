@@ -53,9 +53,10 @@ def get_user_nonce():
         return jsonify(error=msg), status
 
     address = data.get('userAddress')
-
+    nonce = user_nonce.get_nonce(address)
+    logger.info(f'nonce for user {address} is {nonce}')
     return Response(
-        json.dumps({'nonce': user_nonce.get_nonce(address)}),
+        json.dumps({'nonce': nonce}),
         200,
         headers={'content-type': 'application/json'}
     )
