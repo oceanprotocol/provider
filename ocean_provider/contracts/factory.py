@@ -6,8 +6,8 @@ from ocean_provider.web3_internal.contract_handler import ContractHandler
 from ocean_provider.web3_internal.web3_provider import Web3Provider
 
 
-class FactoryContract(ContractBase):
-    CONTRACT_NAME = 'Factory'
+class DTFactoryContract(ContractBase):
+    CONTRACT_NAME = 'DTFactory'
     CAP = 1400000000
     FIRST_BLOB = 'https://example.com/dataset-1'
 
@@ -21,7 +21,7 @@ class FactoryContract(ContractBase):
         w3.eth.defaultAccount = w3.toChecksumAddress(minter_address)
         print(f'default account: {w3.eth.defaultAccount}')
         factory_json = ContractHandler.read_abi_from_file(
-            FactoryContract.CONTRACT_NAME,
+            DTFactoryContract.CONTRACT_NAME,
             abi_path
         )
         dt_contract_json = ContractHandler.read_abi_from_file(
@@ -32,21 +32,22 @@ class FactoryContract(ContractBase):
         # First deploy the DataTokenTemplate contract
         dt_contract = w3.eth.contract(abi=dt_contract_json['abi'], bytecode=dt_contract_json['bytecode'])
         tx_hash = dt_contract.constructor(
-            'Template Contract', 'TEMPLATE', minter_address, FactoryContract.CAP, FactoryContract.FIRST_BLOB
+            'Template Contract', 'TEMPLATE', minter_address,
+            DTFactoryContract.CAP, DTFactoryContract.FIRST_BLOB, minter_address
         ).transact()
         dt_template_address = self.get_tx_receipt(tx_hash, timeout=60).contractAddress
 
         factory_contract = w3.eth.contract(abi=factory_json['abi'], bytecode=factory_json['bytecode'])
         tx_hash = factory_contract.constructor(
-            dt_template_address
+            dt_template_address, minter_address
         ).transact({'from': minter_address})
 
         return self.get_tx_receipt(tx_hash, timeout=60).contractAddress
 
-    def create_data_token(self, account, metadata_url):
+    def create_data_token(self, account, metadata_url, name, symbol, cap):
         tx_hash = self.send_transaction(
             'createToken',
-            (metadata_url,),
+            (metadata_url, name, symbol, cap),
             transact={'from': account.address,
                       'passphrase': account.password,
                       'account_key': account.key},

@@ -20,7 +20,7 @@ from ocean_provider.web3_internal.contract_handler import ContractHandler
 from ocean_provider.web3_internal.web3helper import Web3Helper
 from ocean_provider.web3_internal.utils import get_account, add_ethereum_prefix_and_hash_msg
 from ocean_provider.constants import BaseURLs
-from ocean_provider.contracts.factory import FactoryContract
+from ocean_provider.contracts.factory import DTFactoryContract
 from ocean_provider.utils.data_token import get_asset_for_data_token
 from ocean_provider.utils.encryption import do_encrypt
 
@@ -34,13 +34,13 @@ def get_consumer_account():
 
 
 def new_factory_contract():
-    factory = FactoryContract(address=None)
+    factory = DTFactoryContract(address=None)
     address = factory.deploy(
         ContractHandler.artifacts_path,
         Web3.toChecksumAddress(os.environ.get('MINTER_ADDRESS', '0xe2DD09d719Da89e5a3D0F2549c7E24566e947260'))
     )
 
-    return FactoryContract(address=address)
+    return DTFactoryContract(address=address)
 
 
 def get_access_service_descriptor(account, metadata):
@@ -76,7 +76,8 @@ def get_registered_ddo(client, account, metadata, service_descriptor, provider_a
     # Create new data token contract
     factory_contract = new_factory_contract()
     dt_contract = factory_contract.create_data_token(
-        account, metadata_url=metadata_store_url
+        account, metadata_store_url,
+        'DataToken1', 'DT1', 1000000
     )
     if not dt_contract:
         raise AssertionError('Creation of data token contract failed.')

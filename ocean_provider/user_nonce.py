@@ -20,6 +20,7 @@ class UserNonce:
 
     def increment_nonce(self, address):
         nonce = self.get_nonce(address)
+        logger.debug(f'increment_nonce: {address}, {nonce}, new nonce {nonce+1}')
         self.storage.write_nonce(address, nonce + 1)
 
 
@@ -37,7 +38,7 @@ class NonceStorage(StorageBase):
                      f'account={address}, nonce={nonce}')
         self._run_query(
             f'''CREATE TABLE IF NOT EXISTS {self.TABLE_NAME}
-               (address VARCHAR PRIMARY KEY, nonce VARCHAR);'''
+               (address VARCHAR PRIMARY KEY , nonce VARCHAR);'''
         )
         self._run_query(
             f'''INSERT OR REPLACE
@@ -60,7 +61,7 @@ class NonceStorage(StorageBase):
                     WHERE address=?;''',
                 (address,))
                     ]
-            (nonce, ) = rows[0] if rows else None
+            (nonce, ) = rows[0] if rows else (None,)
             logger.debug(f'Read nonce from `{self.TABLE_NAME}` storage: '
                          f'account={address}, nonce={nonce}')
             return nonce
