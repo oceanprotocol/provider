@@ -5,14 +5,16 @@ import mimetypes
 from copy import deepcopy
 from unittest.mock import Mock, MagicMock
 
+from werkzeug.utils import get_content_type
 from ocean_utils.agreements.service_agreement import ServiceAgreement
 from ocean_utils.agreements.service_types import ServiceTypes
 from ocean_utils.aquarius.aquarius import Aquarius
 from ocean_utils.http_requests.requests_session import get_requests_session
-from werkzeug.utils import get_content_type
+from ocean_lib.models.data_token import DataToken
+from ocean_lib.web3_internal.web3helper import Web3Helper
+from ocean_lib.web3_internal.utils import add_ethereum_prefix_and_hash_msg
 
 from ocean_provider.constants import BaseURLs
-from ocean_provider.contracts.datatoken import DataTokenContract
 from ocean_provider.exceptions import InvalidSignatureError
 from ocean_provider.util import build_download_response, get_download_url
 from ocean_provider.utils.accounts import (
@@ -21,8 +23,6 @@ from ocean_provider.utils.accounts import (
     is_auth_token_valid,
     verify_signature,
 )
-from ocean_provider.web3_internal import Web3Helper
-from ocean_provider.web3_internal.utils import add_ethereum_prefix_and_hash_msg
 
 from tests.test_helpers import (
     get_dataset_ddo_with_access_service,
@@ -53,7 +53,7 @@ def test_download_service(client):
 
     ddo = get_dataset_ddo_with_access_service(client, pub_acc)
     dt_address = ddo.as_dictionary()['dataToken']
-    dt_token = DataTokenContract(dt_address)
+    dt_token = DataToken(dt_address)
     mint_tokens_and_wait(dt_token, cons_acc, pub_acc)
 
     auth_token = generate_auth_token(cons_acc)

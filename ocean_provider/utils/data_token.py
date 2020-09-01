@@ -1,6 +1,6 @@
 from ocean_utils.aquarius.aquarius import Aquarius
 
-from ocean_provider.contracts.datatoken import DataTokenContract
+from ocean_lib.models.data_token import DataToken
 
 
 def get_asset_from_metadatastore(metadata_url, document_id):
@@ -10,6 +10,6 @@ def get_asset_from_metadatastore(metadata_url, document_id):
 
 def get_asset_for_data_token(token_address, document_id):
     return get_asset_from_metadatastore(
-        DataTokenContract(token_address).get_metadata_url(),
+        DataToken(token_address).get_metadata_url(),
         document_id
     )

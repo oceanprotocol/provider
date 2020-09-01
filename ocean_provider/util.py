@@ -9,17 +9,17 @@ from cgi import parse_header
 from flask import Response
 from osmosis_driver_interface.osmosis import Osmosis
 from web3.exceptions import BlockNumberOutofRange
+from ocean_lib.web3_internal.utils import add_ethereum_prefix_and_hash_msg
+from ocean_lib.web3_internal.web3helper import Web3Helper
+from ocean_lib.models.data_token import DataToken
 from ocean_utils.agreements.service_agreement import ServiceAgreement
 from ocean_utils.agreements.service_types import ServiceTypes
 
 from ocean_provider.user_nonce import UserNonce
-from ocean_provider.web3_internal.utils import add_ethereum_prefix_and_hash_msg
-from ocean_provider.web3_internal.web3helper import Web3Helper
 from ocean_provider.constants import BaseURLs
-from ocean_provider.contracts.datatoken import DataTokenContract
 from ocean_provider.exceptions import BadRequestError
-from ocean_provider.utils.accounts import verify_signature, get_provider_account
-from ocean_provider.utils.basics import get_config
+from ocean_provider.utils.accounts import verify_signature
+from ocean_provider.utils.basics import get_config, get_provider_wallet
 from ocean_provider.utils.data_token import get_asset_for_data_token
 from ocean_provider.utils.encryption import do_decrypt
 from ocean_provider.utils.web3 import web3
@@ -174,34 +174,14 @@ def check_required_attributes(required_attributes, data, method):
 
 
 def validate_token_transfer(sender, receiver, token_address, num_tokens, tx_id):
-    tx = web3().eth.getTransaction(tx_id)
-    if not tx:
-        raise AssertionError('Transaction is not found, or is not yet verified.')
-
-    if tx['from'] != sender or tx['to'] != token_address:
-        raise AssertionError(
-            f'Sender and receiver in the transaction {tx_id} '
-            f'do not match the expected consumer and provider addresses.'
-        )
-
-    while tx['blockNumber'] is None:
-        time.sleep(0.1)
-        tx = web3().eth.getTransaction(tx_id)
+    dt_contract = DataToken(token_address)
+    try:
+        tx, transfer_event = dt_contract.verify_transfer_tx(tx_id, sender, receiver)
+    except AssertionError as e:
+        raise
 
     block = tx['blockNumber']
     assert block, f'invalid block number {block}'
-    dt_contract = DataTokenContract(token_address)
-
-    receipt = dt_contract.get_tx_receipt(tx_id)
-    transfer_events = dt_contract.events.Transfer().processReceipt(receipt)
-    if not transfer_events:
-        raise AssertionError(f'Invalid transaction {tx_id}.')
-    assert len(transfer_events) == 1, \
-        f'Multiple Transfer events in the same transaction !!! {transfer_events}'
-    transfer_event = transfer_events[0]
-
-    if transfer_event.args['from'] != sender or transfer_event.args['to'] != receiver:
-        raise AssertionError(f'The transfer event from/to do not match the expected values.')
 
     balance = dt_contract.contract.functions.balanceOf(receiver).call(block_identifier=block-1)
     try:
@@ -297,7 +277,7 @@ def process_compute_request(data, user_nonce: UserNonce):
     if msg:
         raise BadRequestError(msg)
 
-    provider_acc = get_provider_account()
+    provider_acc = get_provider_wallet()
     did = data.get('documentId')
     owner = data.get('consumerAddress')
     job_id = data.get('jobId')

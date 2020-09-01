@@ -1,4 +1,5 @@
 import json
+import os
 import time
 from datetime import datetime
 
@@ -9,12 +10,8 @@ from ocean_utils.http_requests.requests_session import get_requests_session
 from ocean_provider.exceptions import InvalidSignatureError
 from ocean_provider.utils.basics import get_config
 from ocean_provider.utils.web3 import web3
-from ocean_provider.web3_internal.utils import get_account, add_ethereum_prefix_and_hash_msg
-from ocean_provider.web3_internal.web3helper import Web3Helper
-
-
-def get_provider_account():
-    return get_account(0)
+from ocean_lib.web3_internal.utils import add_ethereum_prefix_and_hash_msg
+from ocean_lib.web3_internal.web3helper import Web3Helper
 
 
 def verify_signature(signer_address, signature, original_msg, nonce: int=None):

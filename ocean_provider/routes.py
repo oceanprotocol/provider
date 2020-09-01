@@ -5,14 +5,19 @@ import logging
 import os
 
 from flask import Blueprint, jsonify, request, Response
+from ocean_lib.web3_internal.utils import add_ethereum_prefix_and_hash_msg
+from ocean_lib.web3_internal.web3helper import Web3Helper
+from ocean_lib.models.data_token import DataToken
 from ocean_utils.agreements.service_types import ServiceTypes
 from ocean_utils.http_requests.requests_session import get_requests_session
 
 from ocean_provider.user_nonce import UserNonce
-from ocean_provider.web3_internal.utils import add_ethereum_prefix_and_hash_msg
-from ocean_provider.web3_internal.web3helper import Web3Helper
-from ocean_provider.contracts.datatoken import DataTokenContract
-from ocean_provider.utils.basics import setup_network, LocalFileAdapter, get_config
+from ocean_provider.utils.basics import (
+    setup_network,
+    LocalFileAdapter,
+    get_config,
+    get_provider_wallet
+)
 from ocean_provider.myapp import app
 from ocean_provider.exceptions import InvalidSignatureError, BadRequestError
 from ocean_provider.log import setup_logging
@@ -24,15 +29,23 @@ from ocean_provider.util import (
     get_asset_url_at_index,
     validate_token_transfer,
     process_consume_request,
-    build_stage_algorithm_dict, validate_algorithm_dict, build_stage_output_dict, build_stage_dict, get_compute_endpoint,
-    record_consume_request, get_asset_download_urls, validate_transfer_not_used_for_other_service, process_compute_request)
-from ocean_provider.utils.accounts import verify_signature, get_provider_account
+    build_stage_algorithm_dict,
+    validate_algorithm_dict,
+    build_stage_output_dict,
+    build_stage_dict,
+    get_compute_endpoint,
+    record_consume_request,
+    get_asset_download_urls,
+    validate_transfer_not_used_for_other_service,
+    process_compute_request
+)
+from ocean_provider.utils.accounts import verify_signature
 from ocean_provider.utils.encryption import do_encrypt
 
 setup_logging()
 services = Blueprint('services', __name__)
 setup_network()
-provider_acc = get_provider_account()
+provider_acc = get_provider_wallet()
 requests_session = get_requests_session()
 requests_session.mount('file://', LocalFileAdapter())
 user_nonce = UserNonce(get_config().storage_path)
@@ -89,7 +102,7 @@ def simple_flow_consume():
         return jsonify(error='This request is not supported.'), 400
 
     try:
-        dt = DataTokenContract(dt_address)
+        dt = DataToken(dt_address)
         # TODO: Verify that the datatoken is owned by this provider's account
 
         # TODO: Enable this check for the token transfer.

@@ -11,9 +11,8 @@ from ocean_provider.config import Config
 from ocean_provider.constants import BaseURLs, ConfigSections, Metadata
 from ocean_provider.myapp import app
 from ocean_provider.routes import services
-from ocean_provider.utils.accounts import get_provider_account
+from ocean_provider.utils.basics import get_provider_wallet
 
-get_provider_account()
 config = Config(filename=app.config['CONFIG_FILE'])
 provider_url = config.get(ConfigSections.RESOURCES, 'ocean_provider.url')
 
@@ -30,7 +29,7 @@ def version():
     info['software'] = Metadata.TITLE
     info['version'] = get_version()
     info['network-url'] = config.network_url
-    info['provider-address'] = get_provider_account().address
+    info['provider-address'] = get_provider_wallet().address
     return jsonify(info)
 
 

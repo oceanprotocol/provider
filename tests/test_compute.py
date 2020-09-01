@@ -3,13 +3,13 @@
 
 import json
 
-from ocean_provider.web3_internal.utils import add_ethereum_prefix_and_hash_msg
-from ocean_provider.web3_internal.web3helper import Web3Helper
+from ocean_lib.web3_internal.utils import add_ethereum_prefix_and_hash_msg
+from ocean_lib.web3_internal.web3helper import Web3Helper
+from ocean_lib.models.data_token import DataToken
 from ocean_utils.agreements.service_agreement import ServiceAgreement
 from ocean_utils.agreements.service_types import ServiceTypes
 
 from ocean_provider.constants import BaseURLs
-from ocean_provider.contracts.datatoken import DataTokenContract
 from ocean_provider.util import build_stage_output_dict
 
 from tests.test_helpers import (
@@ -30,7 +30,7 @@ def test_compute_norawalgo_allowed(client):
     did = dataset_ddo_w_compute_service.did
     ddo = dataset_ddo_w_compute_service
     data_token = dataset_ddo_w_compute_service.as_dictionary()['dataToken']
-    dt_contract = DataTokenContract(data_token)
+    dt_contract = DataToken(data_token)
     mint_tokens_and_wait(dt_contract, cons_acc, pub_acc)
 
     # CHECKPOINT 1
@@ -114,13 +114,13 @@ def test_compute_specific_algo_dids(client):
     did = dataset_ddo_w_compute_service.did
     ddo = dataset_ddo_w_compute_service
     data_token = dataset_ddo_w_compute_service.as_dictionary()['dataToken']
-    dt_contract = DataTokenContract(data_token)
+    dt_contract = DataToken(data_token)
     mint_tokens_and_wait(dt_contract, cons_acc, pub_acc)
 
     # publish an algorithm asset (asset with metadata of type `algorithm`)
     alg_ddo = get_algorithm_ddo(client, cons_acc)
     alg_data_token = alg_ddo.as_dictionary()['dataToken']
-    alg_dt_contract = DataTokenContract(alg_data_token)
+    alg_dt_contract = DataToken(alg_data_token)
     mint_tokens_and_wait(alg_dt_contract, pub_acc, cons_acc)
     # CHECKPOINT 1
 
@@ -198,13 +198,13 @@ def test_compute(client):
     did = dataset_ddo_w_compute_service.did
     ddo = dataset_ddo_w_compute_service
     data_token = dataset_ddo_w_compute_service.as_dictionary()['dataToken']
-    dt_contract = DataTokenContract(data_token)
+    dt_contract = DataToken(data_token)
     mint_tokens_and_wait(dt_contract, cons_acc, pub_acc)
 
     # publish an algorithm asset (asset with metadata of type `algorithm`)
     alg_ddo = get_algorithm_ddo(client, cons_acc, pub_acc)
     alg_data_token = alg_ddo.as_dictionary()['dataToken']
-    alg_dt_contract = DataTokenContract(alg_data_token)
+    alg_dt_contract = DataToken(alg_data_token)
     mint_tokens_and_wait(alg_dt_contract, cons_acc, cons_acc)
     # CHECKPOINT 1
 
