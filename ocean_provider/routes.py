@@ -45,7 +45,7 @@ from ocean_provider.utils.encryption import do_encrypt
 setup_logging()
 services = Blueprint('services', __name__)
 setup_network()
-provider_acc = get_provider_wallet()
+provider_wallet = get_provider_wallet()
 requests_session = get_requests_session()
 requests_session.mount('file://', LocalFileAdapter())
 user_nonce = UserNonce(get_config().storage_path)
@@ -206,7 +206,7 @@ def encrypt():
 
         encrypted_document = do_encrypt(
             document,
-            provider_acc,
+            provider_wallet,
         )
         logger.info(f'encrypted urls {encrypted_document}, '
                     f'publisher {publisher_address}, '
@@ -226,7 +226,7 @@ def encrypt():
     except Exception as e:
         logger.error(
             f'Error: {e}. \n'
-            f'providerAddress={provider_acc.address}\n'
+            f'providerAddress={provider_wallet.address}\n'
             f'Payload was: documentId={did}, '
             f'publisherAddress={publisher_address},'
             f'signature={signature}',
@@ -271,7 +271,7 @@ def initialize():
         # consume the service
         approve_params = {
             "from": consumer_address,
-            "to": provider_acc.address,
+            "to": provider_wallet.address,
             "numTokens": int(service.get_cost()),
             "dataToken": token_address,
             "nonce": user_nonce.get_nonce(consumer_address)
@@ -347,7 +347,7 @@ def download():
         tx_id = data.get("transferTxId")
         validate_token_transfer(
             consumer_address,
-            provider_acc.address,
+            provider_wallet.address,
             token_address,
             int(service.get_cost()),
             tx_id
@@ -360,7 +360,7 @@ def download():
         file_index = int(data.get('fileIndex'))
         file_attributes = asset.metadata['main']['files'][file_index]
         content_type = file_attributes.get('contentType', None)
-        url = get_asset_url_at_index(file_index, asset, provider_acc)
+        url = get_asset_url_at_index(file_index, asset, provider_wallet)
 
         download_url = get_download_url(url, app.config['CONFIG_FILE'])
         logger.info(f'Done processing consume request for asset {did}, '
@@ -655,7 +655,7 @@ def compute_start_job():
         # transferred to the provider's wallet.
         validate_token_transfer(
             consumer_address,
-            provider_acc.address,
+            provider_wallet.address,
             token_address,
             int(service.get_cost()),
             tx_id
@@ -715,7 +715,7 @@ def compute_start_job():
 
         algorithm_dict = build_stage_algorithm_dict(
             consumer_address, algorithm_did, algorithm_token_address,
-            algorithm_tx_id, algorithm_meta, provider_acc
+            algorithm_tx_id, algorithm_meta, provider_wallet
         )
         error_msg, status_code = validate_algorithm_dict(
             algorithm_dict, algorithm_did)
@@ -724,7 +724,7 @@ def compute_start_job():
 
         #########################
         # INPUT
-        asset_urls = get_asset_download_urls(asset, provider_acc, config_file=app.config['CONFIG_FILE'])
+        asset_urls = get_asset_download_urls(asset, provider_wallet, config_file=app.config['CONFIG_FILE'])
         if not asset_urls:
             return jsonify(error=f'cannot get url(s) in input did {did}.'), 400
 
@@ -740,7 +740,7 @@ def compute_start_job():
             output_def = json.loads(output_def) if isinstance(
                 output_def, str) else output_def
         output_dict = build_stage_output_dict(
-            output_def, asset, consumer_address, provider_acc)
+            output_def, asset, consumer_address, provider_wallet)
 
         #########################
         # STAGE
@@ -753,15 +753,15 @@ def compute_start_job():
         # workflow is ready, push it to operator
         logger.info('Sending: %s', workflow)
 
-        msg_to_sign = f'{provider_acc.address}{did}'
+        msg_to_sign = f'{provider_wallet.address}{did}'
         msg_hash = add_ethereum_prefix_and_hash_msg(msg_to_sign)
         payload = {
             'workflow': workflow,
-            'providerSignature': Web3Helper.sign_hash(msg_hash, provider_acc),
+            'providerSignature': Web3Helper.sign_hash(msg_hash, provider_wallet),
             'documentId': did,
             'agreementId': did,
             'owner': consumer_address,
-            'providerAddress': provider_acc.address
+            'providerAddress': provider_wallet.address
         }
         response = requests_session.post(
             get_compute_endpoint(),

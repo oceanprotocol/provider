@@ -22,7 +22,6 @@ from ocean_provider.utils.accounts import verify_signature
 from ocean_provider.utils.basics import get_config, get_provider_wallet
 from ocean_provider.utils.data_token import get_asset_for_data_token
 from ocean_provider.utils.encryption import do_decrypt
-from ocean_provider.utils.web3 import web3
 
 logger = logging.getLogger(__name__)
 
@@ -85,14 +84,14 @@ def build_download_response(request, requests_session, url, download_url, conten
         raise
 
 
-def get_asset_files_list(asset, account):
+def get_asset_files_list(asset, wallet):
     try:
         encrypted_files = asset.encrypted_files
         if encrypted_files.startswith('{'):
             encrypted_files = json.loads(encrypted_files)['encryptedDocument']
         files_str = do_decrypt(
             encrypted_files,
-            account,
+            wallet,
         )
         logger.debug(f'Got decrypted files str {files_str}')
         files_list = json.loads(files_str)
@@ -105,10 +104,10 @@ def get_asset_files_list(asset, account):
         raise
 
 
-def get_asset_url_at_index(url_index, asset, account):
-    logger.debug(f'get_asset_url_at_index(): url_index={url_index}, did={asset.did}, provider={account.address}')
+def get_asset_url_at_index(url_index, asset, wallet):
+    logger.debug(f'get_asset_url_at_index(): url_index={url_index}, did={asset.did}, provider={wallet.address}')
     try:
-        files_list = get_asset_urls(asset, account)
+        files_list = get_asset_urls(asset, wallet)
         if url_index >= len(files_list):
             raise ValueError(f'url index "{url_index}"" is invalid.')
         return files_list[url_index]
@@ -118,10 +117,10 @@ def get_asset_url_at_index(url_index, asset, account):
         raise
 
 
-def get_asset_urls(asset, account):
-    logger.debug(f'get_asset_urls(): did={asset.did}, provider={account.address}')
+def get_asset_urls(asset, wallet):
+    logger.debug(f'get_asset_urls(): did={asset.did}, provider={wallet.address}')
     try:
-        files_list = get_asset_files_list(asset, account)
+        files_list = get_asset_files_list(asset, wallet)
         input_urls = []
         for i, file_meta_dict in enumerate(files_list):
             if not file_meta_dict or not isinstance(file_meta_dict, dict):
@@ -139,9 +138,9 @@ def get_asset_urls(asset, account):
         raise
 
 
-def get_asset_download_urls(asset, account, config_file):
+def get_asset_download_urls(asset, wallet, config_file):
     return [get_download_url(url, config_file)
-            for url in get_asset_urls(asset, account)]
+            for url in get_asset_urls(asset, wallet)]
 
 
 def get_download_url(url, config_file):
@@ -277,12 +276,12 @@ def process_compute_request(data, user_nonce: UserNonce):
     if msg:
         raise BadRequestError(msg)
 
-    provider_acc = get_provider_wallet()
+    provider_wallet = get_provider_wallet()
     did = data.get('documentId')
     owner = data.get('consumerAddress')
     job_id = data.get('jobId')
     body = dict()
-    body['providerAddress'] = provider_acc.address
+    body['providerAddress'] = provider_wallet.address
     if owner is not None:
         body['owner'] = owner
     if job_id is not None:
@@ -295,20 +294,20 @@ def process_compute_request(data, user_nonce: UserNonce):
     original_msg = f'{body.get("owner", "")}{body.get("jobId", "")}{body.get("documentId", "")}'
     verify_signature(owner, signature, original_msg, user_nonce.get_nonce(owner))
 
-    msg_to_sign = f'{provider_acc.address}{body.get("jobId", "")}{body.get("documentId", "")}'
+    msg_to_sign = f'{provider_wallet.address}{body.get("jobId", "")}{body.get("documentId", "")}'
     msg_hash = add_ethereum_prefix_and_hash_msg(msg_to_sign)
-    body['providerSignature'] = Web3Helper.sign_hash(msg_hash, provider_acc)
+    body['providerSignature'] = Web3Helper.sign_hash(msg_hash, provider_wallet)
     return body
 
 
 def build_stage_algorithm_dict(consumer_address, algorithm_did, algorithm_token_address, algorithm_tx_id,
-                               algorithm_meta, provider_account, receiver_address=None):
+                               algorithm_meta, provider_wallet, receiver_address=None):
     if algorithm_did is not None:
         assert algorithm_token_address and algorithm_tx_id, \
             'algorithm_did requires both algorithm_token_address and algorithm_tx_id.'
         # use the DID
         if receiver_address is None:
-            receiver_address = provider_account.address
+            receiver_address = provider_wallet.address
 
         algo_asset = get_asset_for_data_token(algorithm_token_address, algorithm_did)
         service = ServiceAgreement.from_ddo(ServiceTypes.ASSET_ACCESS, algo_asset)
@@ -323,7 +322,7 @@ def build_stage_algorithm_dict(consumer_address, algorithm_did, algorithm_token_
 
         algo_id = algorithm_did
         raw_code = ''
-        algo_url = get_asset_url_at_index(0, algo_asset, provider_account)
+        algo_url = get_asset_url_at_index(0, algo_asset, provider_wallet)
         container = algo_asset.metadata['main']['algorithm']['container']
     else:
         algo_id = ''
@@ -339,7 +338,7 @@ def build_stage_algorithm_dict(consumer_address, algorithm_did, algorithm_token_
     })
 
 
-def build_stage_output_dict(output_def, asset, owner, provider_account):
+def build_stage_output_dict(output_def, asset, owner, provider_wallet):
     config = get_config()
     service_endpoint = asset.get_service(ServiceTypes.CLOUD_COMPUTE).service_endpoint
     if BaseURLs.ASSETS_URL in service_endpoint:
@@ -348,7 +347,7 @@ def build_stage_output_dict(output_def, asset, owner, provider_account):
     return dict({
         'nodeUri': output_def.get('nodeUri', config.network_url),
         'brizoUri': output_def.get('brizoUri', service_endpoint),
-        'brizoAddress': output_def.get('brizoAddress', provider_account.address),
+        'brizoAddress': output_def.get('brizoAddress', provider_wallet.address),
         'metadata': output_def.get('metadata', dict({
             'main': {
                 'name': 'Compute job output'
