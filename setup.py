@@ -11,22 +11,16 @@ from setuptools import setup, find_packages
 with open('README.md') as readme_file:
     readme = readme_file.read()
 
-with open('CHANGELOG.md') as history_file:
-    history = history_file.read()
-
 # Installed by pip install ocean-provider
 # or pip install -e .
 install_requirements = [
     # Install ocean-utils first
-    'ocean-lib',
-    'ocean-utils==0.4.1',  # gets PyYAML, coloredlogs, web3
     'Flask==1.1.2',
     'Flask-Cors==3.0.8',
     'Flask-RESTful==0.3.8',
     'flask-swagger==0.2.14',
     'flask-swagger-ui==3.25.0',
     'Jinja2>=2.10.1',
-    'requests>=2.21.0',
     'gunicorn==20.0.4',
     'osmosis-azure-driver==0.0.4',
     'osmosis-aws-driver==0.0.4',
@@ -34,7 +28,7 @@ install_requirements = [
     'osmosis-on-premise-driver==0.0.6',
     'osmosis-ipfs-driver==0.0.1',
     'Werkzeug>=0.15.3',
-    'web3==4.5.0',
+    'ocean-lib',
     'requests_testadapter',
     'eciespy'
 ]
@@ -70,8 +64,7 @@ setup(
         'Intended Audience :: Developers',
         'License :: OSI Approved :: Apache Software License',
         'Natural Language :: English',
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.6'
     ],
     description="🐳 Ocean Provider.",
     extras_require={
