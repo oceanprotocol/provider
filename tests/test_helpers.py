@@ -7,47 +7,65 @@ import pathlib
 import time
 import uuid
 
-from ocean_utils.ddo.ddo import DDO
+from ocean_lib.assets.asset import Asset
+from ocean_lib.models.data_token import DataToken
+from ocean_lib.ocean.util import to_base_18
+from ocean_lib.web3_internal.wallet import Wallet
+from ocean_lib.web3_internal.web3_provider import Web3Provider
+from ocean_lib.models.dtfactory import DTFactory
+from ocean_lib.web3_internal.contract_handler import ContractHandler
+from ocean_lib.web3_internal.web3helper import Web3Helper
+from ocean_lib.web3_internal.utils import get_wallet, add_ethereum_prefix_and_hash_msg
 from ocean_utils.utils.utilities import checksum
 from ocean_utils.ddo.metadata import MetadataMain
 from ocean_utils.aquarius.aquarius import Aquarius
 from ocean_utils.did import DID
 from ocean_utils.ddo.public_key_rsa import PUBLIC_KEY_TYPE_RSA
 from ocean_utils.agreements.service_factory import ServiceDescriptor, ServiceFactory
-from web3 import Web3
 
-from ocean_provider.web3_internal.contract_handler import ContractHandler
-from ocean_provider.web3_internal.web3helper import Web3Helper
-from ocean_provider.web3_internal.utils import get_account, add_ethereum_prefix_and_hash_msg
 from ocean_provider.constants import BaseURLs
-from ocean_provider.contracts.factory import FactoryContract
 from ocean_provider.utils.data_token import get_asset_for_data_token
-from ocean_provider.utils.encryption import do_encrypt
 
 
-def get_publisher_account():
-    return get_account(0)
+def get_publisher_wallet():
+    return get_wallet(0)
 
 
-def get_consumer_account():
-    return get_account(1)
+def get_consumer_wallet():
+    return get_wallet(1)
+
+
+def get_ganache_wallet():
+    web3 = Web3Provider.get_web3()
+    if web3.eth.accounts and web3.eth.accounts[0].lower() == '0xe2DD09d719Da89e5a3D0F2549c7E24566e947260'.lower():
+        return Wallet(web3, private_key='0xc594c6e5def4bab63ac29eed19a134c130388f74f019bc74b8f4389df2837a58')
+
+    return None
 
 
 def new_factory_contract():
-    factory = FactoryContract(address=None)
-    address = factory.deploy(
-        ContractHandler.artifacts_path,
-        Web3.toChecksumAddress(os.environ.get('MINTER_ADDRESS', '0xe2DD09d719Da89e5a3D0F2549c7E24566e947260'))
+    web3 = Web3Provider.get_web3()
+    deployer_wallet = get_ganache_wallet()
+    dt_address = DataToken.deploy(
+        web3, deployer_wallet, ContractHandler.artifacts_path,
+        'Template Contract', 'TEMPLATE', deployer_wallet.address,
+        DataToken.DEFAULT_CAP_BASE, DTFactory.FIRST_BLOB, deployer_wallet.address
     )
 
-    return FactoryContract(address=address)
+    return DTFactory(DTFactory.deploy(
+        web3,
+        deployer_wallet,
+        ContractHandler.artifacts_path,
+        dt_address,
+        deployer_wallet.address
+    ))
 
 
-def get_access_service_descriptor(account, metadata):
+def get_access_service_descriptor(address, metadata):
     access_service_attributes = {
         "main": {
             "name": "dataAssetAccessServiceAgreement",
-            "creator": account.address,
+            "creator": address,
             "cost": metadata[MetadataMain.KEY]['cost'],
             "timeout": 3600,
             "datePublished": metadata[MetadataMain.KEY]['dateCreated']
@@ -60,13 +78,10 @@ def get_access_service_descriptor(account, metadata):
     )
 
 
-def get_registered_ddo(client, account, metadata, service_descriptor, provider_account=None):
+def get_registered_ddo(client, wallet, metadata, service_descriptor):
     aqua = Aquarius('http://localhost:5000')
 
-    if not provider_account:
-        provider_account = account
-
-    ddo = DDO()
+    ddo = Asset()
     ddo_service_endpoint = aqua.get_service_endpoint()
 
     metadata_store_url = json.dumps({
@@ -75,13 +90,14 @@ def get_registered_ddo(client, account, metadata, service_descriptor, provider_a
     })
     # Create new data token contract
     factory_contract = new_factory_contract()
-    dt_contract = factory_contract.create_data_token(
-        account, metadata_url=metadata_store_url
+    tx_id = factory_contract.createToken(
+        metadata_store_url, 'DataToken1', 'DT1', to_base_18(1000000), wallet
     )
+    dt_contract = DataToken(factory_contract.get_token_address(tx_id))
     if not dt_contract:
         raise AssertionError('Creation of data token contract failed.')
 
-    ddo._other_values = {'dataToken': dt_contract.address}
+    ddo.data_token_address = dt_contract.address
 
     metadata_service_desc = ServiceDescriptor.metadata_service_descriptor(
         metadata, ddo_service_endpoint
@@ -99,7 +115,7 @@ def get_registered_ddo(client, account, metadata, service_descriptor, provider_a
         checksums[str(service.index)] = checksum(service.main)
 
     # Adding proof to the ddo.
-    ddo.add_proof(checksums, account)
+    ddo.add_proof(checksums, wallet)
 
     did = ddo.assign_did(DID.did(ddo.proof['checksum']))
     ddo_service_endpoint.replace('{did}', did)
@@ -114,7 +130,7 @@ def get_registered_ddo(client, account, metadata, service_descriptor, provider_a
     # ddo.proof['signatureValue'] = ocean_lib.sign_hash(
     #     did_to_id_bytes(did), account)
 
-    ddo.add_public_key(did, account.address)
+    ddo.add_public_key(did, wallet.address)
 
     ddo.add_authentication(did, PUBLIC_KEY_TYPE_RSA)
 
@@ -130,8 +146,8 @@ def get_registered_ddo(client, account, metadata, service_descriptor, provider_a
     #     assert False, f'invalid metadata: {plecos.validate_dict_local(ddo.metadata)}'
 
     files_list_str = json.dumps(metadata['main']['files'])
-    encrypted_files = encrypt_document(client, did, files_list_str, account)
-    # encrypted_files = do_encrypt(files_list_str, provider_account)
+    encrypted_files = encrypt_document(client, did, files_list_str, wallet)
+    # encrypted_files = do_encrypt(files_list_str, provider_wallet)
 
     # only assign if the encryption worked
     if encrypted_files:
@@ -142,7 +158,6 @@ def get_registered_ddo(client, account, metadata, service_descriptor, provider_a
             del file['url']
         metadata['encryptedFiles'] = encrypted_files
 
-    # ddo._other_values
     try:
         aqua.publish_asset_ddo(ddo)
     except Exception as e:
@@ -152,12 +167,12 @@ def get_registered_ddo(client, account, metadata, service_descriptor, provider_a
     return ddo
 
 
-def get_dataset_ddo_with_access_service(client, account):
+def get_dataset_ddo_with_access_service(client, wallet):
     metadata = get_sample_ddo()['service'][0]['attributes']
     metadata['main']['files'][0]['checksum'] = str(uuid.uuid4())
-    service_descriptor = get_access_service_descriptor(account, metadata)
+    service_descriptor = get_access_service_descriptor(wallet.address, metadata)
     metadata[MetadataMain.KEY].pop('cost')
-    return get_registered_ddo(client, account, metadata, service_descriptor)
+    return get_registered_ddo(client, wallet, metadata, service_descriptor)
 
 
 def get_sample_algorithm_ddo():
@@ -177,11 +192,11 @@ def get_sample_ddo_with_compute_service():
     return json.loads(metadata)
 
 
-def get_compute_service_descriptor(account, price, metadata):
+def get_compute_service_descriptor(address, price, metadata):
     compute_service_attributes = {
         "main": {
             "name": "dataAssetComputeServiceAgreement",
-            "creator": account.address,
+            "creator": address,
             "cost": price,
             "timeout": 3600,
             "datePublished": metadata[MetadataMain.KEY]['dateCreated']
@@ -194,11 +209,11 @@ def get_compute_service_descriptor(account, price, metadata):
     )
 
 
-def get_compute_service_descriptor_no_rawalgo(account, price, metadata):
+def get_compute_service_descriptor_no_rawalgo(address, price, metadata):
     compute_service_attributes = {
         "main": {
             "name": "dataAssetComputeServiceAgreement",
-            "creator": account.address,
+            "creator": address,
             "cost": price,
             "privacy": {
                 "allowRawAlgorithm": False,
@@ -216,11 +231,11 @@ def get_compute_service_descriptor_no_rawalgo(account, price, metadata):
     )
 
 
-def get_compute_service_descriptor_specific_algo_dids(account, price, metadata):
+def get_compute_service_descriptor_specific_algo_dids(address, price, metadata):
     compute_service_attributes = {
         "main": {
             "name": "dataAssetComputeServiceAgreement",
-            "creator": account.address,
+            "creator": address,
             "cost": price,
             "privacy": {
                 "allowRawAlgorithm": True,
@@ -238,39 +253,39 @@ def get_compute_service_descriptor_specific_algo_dids(account, price, metadata):
     )
 
 
-def get_algorithm_ddo(client, account, provider_account=None):
+def get_algorithm_ddo(client, wallet):
     metadata = get_sample_algorithm_ddo()['service'][0]['attributes']
     metadata['main']['files'][0]['checksum'] = str(uuid.uuid4())
-    service_descriptor = get_access_service_descriptor(account, metadata)
+    service_descriptor = get_access_service_descriptor(wallet.address, metadata)
     metadata[MetadataMain.KEY].pop('cost')
-    return get_registered_ddo(client, account, metadata, service_descriptor, provider_account=provider_account)
+    return get_registered_ddo(client, wallet, metadata, service_descriptor)
 
 
-def get_dataset_ddo_with_compute_service(client, account):
+def get_dataset_ddo_with_compute_service(client, wallet):
     metadata = get_sample_ddo_with_compute_service()['service'][0]['attributes']
     metadata['main']['files'][0]['checksum'] = str(uuid.uuid4())
     service_descriptor = get_compute_service_descriptor(
-        account, metadata[MetadataMain.KEY]['cost'], metadata)
+        wallet.address, metadata[MetadataMain.KEY]['cost'], metadata)
     metadata[MetadataMain.KEY].pop('cost')
-    return get_registered_ddo(client, account, metadata, service_descriptor)
+    return get_registered_ddo(client, wallet, metadata, service_descriptor)
 
 
-def get_dataset_ddo_with_compute_service_no_rawalgo(client, account):
+def get_dataset_ddo_with_compute_service_no_rawalgo(client, wallet):
     metadata = get_sample_ddo_with_compute_service()['service'][0]['attributes']
     metadata['main']['files'][0]['checksum'] = str(uuid.uuid4())
     service_descriptor = get_compute_service_descriptor_no_rawalgo(
-        account, metadata[MetadataMain.KEY]['cost'], metadata)
+        wallet.address, metadata[MetadataMain.KEY]['cost'], metadata)
     metadata[MetadataMain.KEY].pop('cost')
-    return get_registered_ddo(client, account, metadata, service_descriptor)
+    return get_registered_ddo(client, wallet, metadata, service_descriptor)
 
 
-def get_dataset_ddo_with_compute_service_specific_algo_dids(client, account):
+def get_dataset_ddo_with_compute_service_specific_algo_dids(client, wallet):
     metadata = get_sample_ddo_with_compute_service()['service'][0]['attributes']
     metadata['main']['files'][0]['checksum'] = str(uuid.uuid4())
     service_descriptor = get_compute_service_descriptor_specific_algo_dids(
-        account, metadata[MetadataMain.KEY]['cost'], metadata)
+        wallet.address, metadata[MetadataMain.KEY]['cost'], metadata)
     metadata[MetadataMain.KEY].pop('cost')
-    return get_registered_ddo(client, account, metadata, service_descriptor)
+    return get_registered_ddo(client, wallet, metadata, service_descriptor)
 
 
 def get_nonce(client, address):
@@ -286,16 +301,16 @@ def get_nonce(client, address):
     return value['nonce']
 
 
-def encrypt_document(client, did, document, account):
-    nonce = get_nonce(client, account.address)
+def encrypt_document(client, did, document, wallet):
+    nonce = get_nonce(client, wallet.address)
     text = f'{did}{nonce}'
     msg_hash = add_ethereum_prefix_and_hash_msg(text)
-    signature = Web3Helper.sign_hash(msg_hash, account)
+    signature = Web3Helper.sign_hash(msg_hash, wallet)
     payload = {
         'documentId': did,
         'signature': signature,
         'document': document,
-        'publisherAddress': account.address
+        'publisherAddress': wallet.address
     }
     response = client.post(
         BaseURLs.ASSETS_URL + '/encrypt',
@@ -341,16 +356,16 @@ def get_compute_job_info(client, endpoint, params):
 
 def _check_job_id(client, job_id, did, token_address, wait_time=20):
     endpoint = BaseURLs.ASSETS_URL + '/compute'
-    cons_acc = get_consumer_account()
+    cons_wallet = get_consumer_wallet()
 
-    nonce = get_nonce(client, cons_acc.address)
-    msg = f'{cons_acc.address}{job_id}{did}{nonce}'
+    nonce = get_nonce(client, cons_wallet.address)
+    msg = f'{cons_wallet.address}{job_id}{did}{nonce}'
     _id_hash = add_ethereum_prefix_and_hash_msg(msg)
-    signature = Web3Helper.sign_hash(_id_hash, cons_acc)
+    signature = Web3Helper.sign_hash(_id_hash, cons_wallet)
     payload = dict({
         'signature': signature,
         'documentId': did,
-        'consumerAddress': cons_acc.address,
+        'consumerAddress': cons_wallet.address,
         'jobId': job_id,
     })
 
@@ -373,16 +388,16 @@ def _check_job_id(client, job_id, did, token_address, wait_time=20):
     assert ddo, f'Failed to resolve ddo for did {did}'
 
 
-def mint_tokens_and_wait(data_token_contract, receiver_account, minter_account):
+def mint_tokens_and_wait(data_token_contract, receiver_wallet, minter_wallet):
     dtc = data_token_contract
-    tx_id = dtc.mint(receiver_account.address, 50, minter_account)
+    tx_id = dtc.mint(receiver_wallet.address, 50, minter_wallet)
     dtc.get_tx_receipt(tx_id)
     time.sleep(2)
 
     def verify_supply(mint_amount=50):
         supply = dtc.contract_concise.totalSupply()
         if supply <= 0:
-            _tx_id = dtc.mint(receiver_account.address, mint_amount, minter_account)
+            _tx_id = dtc.mint(receiver_wallet.address, mint_amount, minter_wallet)
             dtc.get_tx_receipt(_tx_id)
             supply = dtc.contract_concise.totalSupply()
         return supply

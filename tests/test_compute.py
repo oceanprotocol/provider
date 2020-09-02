@@ -3,18 +3,18 @@
 
 import json
 
-from ocean_provider.web3_internal.utils import add_ethereum_prefix_and_hash_msg
-from ocean_provider.web3_internal.web3helper import Web3Helper
+from ocean_lib.web3_internal.utils import add_ethereum_prefix_and_hash_msg
+from ocean_lib.web3_internal.web3helper import Web3Helper
+from ocean_lib.models.data_token import DataToken
 from ocean_utils.agreements.service_agreement import ServiceAgreement
 from ocean_utils.agreements.service_types import ServiceTypes
 
 from ocean_provider.constants import BaseURLs
-from ocean_provider.contracts.datatoken import DataTokenContract
 from ocean_provider.util import build_stage_output_dict
 
 from tests.test_helpers import (
-    get_consumer_account,
-    get_publisher_account,
+    get_consumer_wallet,
+    get_publisher_wallet,
     get_dataset_ddo_with_compute_service_no_rawalgo, get_dataset_ddo_with_compute_service_specific_algo_dids, get_algorithm_ddo,
     get_dataset_ddo_with_compute_service, get_compute_job_info, get_possible_compute_job_status_text, mint_tokens_and_wait, get_nonce)
 
@@ -22,16 +22,16 @@ SERVICE_ENDPOINT = BaseURLs.BASE_PROVIDER_URL + '/services/download'
 
 
 def test_compute_norawalgo_allowed(client):
-    pub_acc = get_publisher_account()
-    cons_acc = get_consumer_account()
+    pub_wallet = get_publisher_wallet()
+    cons_wallet = get_consumer_wallet()
 
     # publish a dataset asset
-    dataset_ddo_w_compute_service = get_dataset_ddo_with_compute_service_no_rawalgo(client, pub_acc)
+    dataset_ddo_w_compute_service = get_dataset_ddo_with_compute_service_no_rawalgo(client, pub_wallet)
     did = dataset_ddo_w_compute_service.did
     ddo = dataset_ddo_w_compute_service
     data_token = dataset_ddo_w_compute_service.as_dictionary()['dataToken']
-    dt_contract = DataTokenContract(data_token)
-    mint_tokens_and_wait(dt_contract, cons_acc, pub_acc)
+    dt_contract = DataToken(data_token)
+    mint_tokens_and_wait(dt_contract, cons_wallet, pub_wallet)
 
     # CHECKPOINT 1
     algorithm_meta = {
@@ -55,7 +55,7 @@ def test_compute_norawalgo_allowed(client):
         'serviceId': sa.index,
         'serviceType': sa.type,
         'dataToken': data_token,
-        'consumerAddress': cons_acc.address
+        'consumerAddress': cons_wallet.address
     })
 
     request_url = init_endpoint + '?' + '&'.join([f'{k}={v}' for k, v in payload.items()])
@@ -68,18 +68,18 @@ def test_compute_norawalgo_allowed(client):
     tx_params = response.json
     num_tokens = tx_params['numTokens']
     nonce = tx_params.get('nonce')
-    assert tx_params['from'] == cons_acc.address
-    assert tx_params['to'] == pub_acc.address
+    assert tx_params['from'] == cons_wallet.address
+    assert tx_params['to'] == pub_wallet.address
     assert tx_params['dataToken'] == ddo.as_dictionary()['dataToken']
     assert nonce is not None, f'expecting a `nonce` value in the response, got {nonce}'
 
-    tx_id = dt_contract.transfer(tx_params['to'], num_tokens, cons_acc)
+    tx_id = dt_contract.transfer(tx_params['to'], num_tokens, cons_wallet)
     dt_contract.get_tx_receipt(tx_id)
 
     # prepare consumer signature on did
-    msg = f'{cons_acc.address}{did}{nonce}'
+    msg = f'{cons_wallet.address}{did}{nonce}'
     _hash = add_ethereum_prefix_and_hash_msg(msg)
-    signature = Web3Helper.sign_hash(_hash, cons_acc)
+    signature = Web3Helper.sign_hash(_hash, cons_wallet)
 
     # Start the compute job
     payload = dict({
@@ -87,10 +87,10 @@ def test_compute_norawalgo_allowed(client):
         'documentId': did,
         'serviceId': sa.index,
         'serviceType': sa.type,
-        'consumerAddress': cons_acc.address,
+        'consumerAddress': cons_wallet.address,
         'transferTxId': tx_id,
         'dataToken': data_token,
-        'output': build_stage_output_dict(dict(), dataset_ddo_w_compute_service, cons_acc.address, pub_acc),
+        'output': build_stage_output_dict(dict(), dataset_ddo_w_compute_service, cons_wallet.address, pub_wallet),
         'algorithmDid': '',
         'algorithmMeta': algorithm_meta,
         'algorithmDataToken': ''
@@ -106,22 +106,22 @@ def test_compute_norawalgo_allowed(client):
 
 
 def test_compute_specific_algo_dids(client):
-    pub_acc = get_publisher_account()
-    cons_acc = get_consumer_account()
+    pub_wallet = get_publisher_wallet()
+    cons_wallet = get_consumer_wallet()
 
     # publish a dataset asset
-    dataset_ddo_w_compute_service = get_dataset_ddo_with_compute_service_specific_algo_dids(client, pub_acc)
+    dataset_ddo_w_compute_service = get_dataset_ddo_with_compute_service_specific_algo_dids(client, pub_wallet)
     did = dataset_ddo_w_compute_service.did
     ddo = dataset_ddo_w_compute_service
     data_token = dataset_ddo_w_compute_service.as_dictionary()['dataToken']
-    dt_contract = DataTokenContract(data_token)
-    mint_tokens_and_wait(dt_contract, cons_acc, pub_acc)
+    dt_contract = DataToken(data_token)
+    mint_tokens_and_wait(dt_contract, cons_wallet, pub_wallet)
 
     # publish an algorithm asset (asset with metadata of type `algorithm`)
-    alg_ddo = get_algorithm_ddo(client, cons_acc)
+    alg_ddo = get_algorithm_ddo(client, cons_wallet)
     alg_data_token = alg_ddo.as_dictionary()['dataToken']
-    alg_dt_contract = DataTokenContract(alg_data_token)
-    mint_tokens_and_wait(alg_dt_contract, pub_acc, cons_acc)
+    alg_dt_contract = DataToken(alg_data_token)
+    mint_tokens_and_wait(alg_dt_contract, pub_wallet, cons_wallet)
     # CHECKPOINT 1
 
     # prepare parameter values for the compute endpoint
@@ -136,7 +136,7 @@ def test_compute_specific_algo_dids(client):
         'serviceId': sa.index,
         'serviceType': sa.type,
         'dataToken': data_token,
-        'consumerAddress': cons_acc.address
+        'consumerAddress': cons_wallet.address
     })
 
     request_url = init_endpoint + '?' + '&'.join([f'{k}={v}' for k, v in payload.items()])
@@ -149,18 +149,18 @@ def test_compute_specific_algo_dids(client):
     tx_params = response.json
     num_tokens = tx_params['numTokens']
     nonce = tx_params.get('nonce')
-    assert tx_params['from'] == cons_acc.address
-    assert tx_params['to'] == pub_acc.address
+    assert tx_params['from'] == cons_wallet.address
+    assert tx_params['to'] == pub_wallet.address
     assert tx_params['dataToken'] == ddo.as_dictionary()['dataToken']
     assert nonce is not None, f'expecting a `nonce` value in the response, got {nonce}'
 
-    tx_id = dt_contract.transfer(tx_params['to'], num_tokens, cons_acc)
+    tx_id = dt_contract.transfer(tx_params['to'], num_tokens, cons_wallet)
     dt_contract.get_tx_receipt(tx_id)
 
     # prepare consumer signature on did
-    msg = f'{cons_acc.address}{did}{nonce}'
+    msg = f'{cons_wallet.address}{did}{nonce}'
     _hash = add_ethereum_prefix_and_hash_msg(msg)
-    signature = Web3Helper.sign_hash(_hash, cons_acc)
+    signature = Web3Helper.sign_hash(_hash, cons_wallet)
 
     # Start the compute job
     payload = dict({
@@ -168,10 +168,10 @@ def test_compute_specific_algo_dids(client):
         'documentId': did,
         'serviceId': sa.index,
         'serviceType': sa.type,
-        'consumerAddress': cons_acc.address,
+        'consumerAddress': cons_wallet.address,
         'transferTxId': tx_id,
         'dataToken': data_token,
-        'output': build_stage_output_dict(dict(), dataset_ddo_w_compute_service, cons_acc.address, pub_acc),
+        'output': build_stage_output_dict(dict(), dataset_ddo_w_compute_service, cons_wallet.address, pub_wallet),
         'algorithmDid': alg_ddo.did,
         'algorithmMeta': {},
         'algorithmDataToken': alg_data_token
@@ -190,22 +190,22 @@ def test_compute(client):
     init_endpoint = BaseURLs.ASSETS_URL + '/initialize'
     compute_endpoint = BaseURLs.ASSETS_URL + '/compute'
 
-    pub_acc = get_publisher_account()
-    cons_acc = get_consumer_account()
+    pub_wallet = get_publisher_wallet()
+    cons_wallet = get_consumer_wallet()
 
     # publish a dataset asset
-    dataset_ddo_w_compute_service = get_dataset_ddo_with_compute_service(client, pub_acc)
+    dataset_ddo_w_compute_service = get_dataset_ddo_with_compute_service(client, pub_wallet)
     did = dataset_ddo_w_compute_service.did
     ddo = dataset_ddo_w_compute_service
     data_token = dataset_ddo_w_compute_service.as_dictionary()['dataToken']
-    dt_contract = DataTokenContract(data_token)
-    mint_tokens_and_wait(dt_contract, cons_acc, pub_acc)
+    dt_contract = DataToken(data_token)
+    mint_tokens_and_wait(dt_contract, cons_wallet, pub_wallet)
 
     # publish an algorithm asset (asset with metadata of type `algorithm`)
-    alg_ddo = get_algorithm_ddo(client, cons_acc, pub_acc)
+    alg_ddo = get_algorithm_ddo(client, cons_wallet)
     alg_data_token = alg_ddo.as_dictionary()['dataToken']
-    alg_dt_contract = DataTokenContract(alg_data_token)
-    mint_tokens_and_wait(alg_dt_contract, cons_acc, cons_acc)
+    alg_dt_contract = DataToken(alg_data_token)
+    mint_tokens_and_wait(alg_dt_contract, cons_wallet, cons_wallet)
     # CHECKPOINT 1
 
     sa = ServiceAgreement.from_ddo(
@@ -217,7 +217,7 @@ def test_compute(client):
         'serviceId': sa.index,
         'serviceType': sa.type,
         'dataToken': data_token,
-        'consumerAddress': cons_acc.address
+        'consumerAddress': cons_wallet.address
     })
 
     request_url = init_endpoint + '?' + '&'.join([f'{k}={v}' for k, v in payload.items()])
@@ -230,22 +230,22 @@ def test_compute(client):
     tx_params = response.json
     num_tokens = tx_params['numTokens']
     nonce = tx_params.get('nonce')
-    assert tx_params['from'] == cons_acc.address
-    assert tx_params['to'] == pub_acc.address
+    assert tx_params['from'] == cons_wallet.address
+    assert tx_params['to'] == pub_wallet.address
     assert tx_params['dataToken'] == ddo.as_dictionary()['dataToken']
     assert nonce is not None, f'expecting a `nonce` value in the response, got {nonce}'
 
-    tx_id = dt_contract.transfer(tx_params['to'], num_tokens, cons_acc)
+    tx_id = dt_contract.transfer(tx_params['to'], num_tokens, cons_wallet)
     dt_contract.get_tx_receipt(tx_id)
 
     alg_service = ServiceAgreement.from_ddo(ServiceTypes.ASSET_ACCESS, alg_ddo)
-    alg_tx_id = alg_dt_contract.transfer(tx_params['to'], int(alg_service.get_cost()), cons_acc)
+    alg_tx_id = alg_dt_contract.transfer(tx_params['to'], int(alg_service.get_cost()), cons_wallet)
     alg_dt_contract.get_tx_receipt(alg_tx_id)
 
     # prepare consumer signature on did
-    msg = f'{cons_acc.address}{did}{str(nonce)}'
+    msg = f'{cons_wallet.address}{did}{str(nonce)}'
     _hash = add_ethereum_prefix_and_hash_msg(msg)
-    signature = Web3Helper.sign_hash(_hash, cons_acc)
+    signature = Web3Helper.sign_hash(_hash, cons_wallet)
 
     # Start the compute job
     payload = dict({
@@ -253,10 +253,10 @@ def test_compute(client):
         'documentId': did,
         'serviceId': sa.index,
         'serviceType': sa.type,
-        'consumerAddress': cons_acc.address,
+        'consumerAddress': cons_wallet.address,
         'transferTxId': tx_id,
         'dataToken': data_token,
-        'output': build_stage_output_dict(dict(), dataset_ddo_w_compute_service, cons_acc.address, pub_acc),
+        'output': build_stage_output_dict(dict(), dataset_ddo_w_compute_service, cons_wallet.address, pub_wallet),
         'algorithmDid': alg_ddo.did,
         'algorithmMeta': {},
         'algorithmDataToken': alg_data_token,
@@ -264,9 +264,9 @@ def test_compute(client):
     })
 
     # Start compute using invalid signature (withOUT nonce), should fail
-    msg = f'{cons_acc.address}{did}'
+    msg = f'{cons_wallet.address}{did}'
     _hash = add_ethereum_prefix_and_hash_msg(msg)
-    payload['signature'] = Web3Helper.sign_hash(_hash, cons_acc)
+    payload['signature'] = Web3Helper.sign_hash(_hash, cons_wallet)
     response = client.post(
         compute_endpoint,
         data=json.dumps(payload),
@@ -287,15 +287,15 @@ def test_compute(client):
     print(f'got response from starting compute job: {job_info}')
     job_id = job_info.get('jobId', '')
 
-    nonce = get_nonce(client, cons_acc.address)
-    msg = f'{cons_acc.address}{job_id}{did}{nonce}'
+    nonce = get_nonce(client, cons_wallet.address)
+    msg = f'{cons_wallet.address}{job_id}{did}{nonce}'
     _hash = add_ethereum_prefix_and_hash_msg(msg)
-    signature = Web3Helper.sign_hash(_hash, cons_acc)
+    signature = Web3Helper.sign_hash(_hash, cons_wallet)
 
     payload = dict({
         'signature': signature,
         'documentId': did,
-        'consumerAddress': cons_acc.address,
+        'consumerAddress': cons_wallet.address,
         'jobId': job_id,
     })
 

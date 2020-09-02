@@ -1,5 +1,5 @@
 [eth-network]
-network.url = ${NETWORK_URL}
+network = ${NETWORK_URL}
 artifacts.path = ${ARTIFACTS_PATH}
 
 [resources]

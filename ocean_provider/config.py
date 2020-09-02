@@ -8,11 +8,10 @@ import logging
 import os
 from pathlib import Path
 
-NAME_NETWORK_URL = 'network.url'
+NAME_NETWORK_URL = 'network'
 NAME_ARTIFACTS_PATH = 'artifacts.path'
 NAME_AUTH_TOKEN_MESSAGE = 'auth_token_message'
 NAME_AUTH_TOKEN_EXPIRATION = 'auth_token_expiration'
-NAME_DATA_TOKEN_FACTORY_ADDRESS = 'factory.address'
 
 NAME_AQUARIUS_URL = 'aquarius.url'
 NAME_PARITY_URL = 'parity.url'
@@ -21,7 +20,6 @@ NAME_STORAGE_PATH = 'storage.path'
 
 environ_names = {
 
-    NAME_DATA_TOKEN_FACTORY_ADDRESS: ['DATA_TOKEN_FACTORY_ADDRESS', 'Data token factory address', 'eth-network'],
     NAME_NETWORK_URL: ['NETWORK_URL', 'Network URL (e.g. Main, Kovan etc.)', 'eth-network'],
     NAME_ARTIFACTS_PATH: ['ARTIFACTS_PATH', 'Path to the ocean contracts', 'eth-network'],
     NAME_AUTH_TOKEN_MESSAGE: ['AUTH_TOKEN_MESSAGE',
@@ -45,7 +43,7 @@ class Config(configparser.ConfigParser):
         Options available:
 
         [eth-network]
-        network.url = http://localhost:8545                            # ocean-contracts url.
+        network = http://localhost:8545                            # ocean-contracts url.
         artifacts.path = artifacts                                       # Path of json abis.
 
         [resources]
@@ -93,14 +91,6 @@ class Config(configparser.ConfigParser):
     def network_url(self):
         """URL of the evm network. (e.g.): http://localnetwork:8545."""
         return self.get(self._section_name, NAME_NETWORK_URL, fallback=None)
-
-    @property
-    def factory_address(self):
-        return self.get(
-            environ_names[NAME_DATA_TOKEN_FACTORY_ADDRESS][2],
-            NAME_DATA_TOKEN_FACTORY_ADDRESS,
-            fallback=None
-        )
 
     @property
     def aquarius_url(self):

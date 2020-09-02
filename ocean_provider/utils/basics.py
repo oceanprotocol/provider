@@ -2,15 +2,16 @@ import os
 import site
 
 import requests
+from ocean_lib.web3_internal.utils import get_wallet
+from ocean_lib.web3_internal.wallet import Wallet
 from web3 import WebsocketProvider
 from ocean_utils.http_requests.requests_session import get_requests_session as _get_requests_session
 from requests_testadapter import Resp
 
 from ocean_provider.config import Config
-from ocean_provider.web3_internal.contract_handler import ContractHandler
-from ocean_provider.web3_internal.utils import get_account
-from ocean_provider.web3_internal.web3_overrides.http_provider import CustomHTTPProvider
-from ocean_provider.web3_internal.web3_provider import Web3Provider
+from ocean_lib.web3_internal.contract_handler import ContractHandler
+from ocean_lib.web3_internal.web3_overrides.http_provider import CustomHTTPProvider
+from ocean_lib.web3_internal.web3_provider import Web3Provider
 
 
 def get_artifacts_path(config):
@@ -51,6 +52,14 @@ def init_account_envvars():
     os.environ['PARITY_ENCRYPTED_KEY'] = os.getenv('PROVIDER_ENCRYPTED_KEY', '')
 
 
+def get_provider_wallet():
+    pk = os.environ.get('PROVIDER_PRIVATE_KEY')
+    if pk:
+        return Wallet(Web3Provider.get_web3(), private_key=pk)
+
+    return get_wallet(0)
+
+
 def setup_network(config_file=None):
     config = Config(filename=config_file) if config_file else get_config()
     network_url = config.network_url
@@ -72,22 +81,15 @@ def setup_network(config_file=None):
 
     init_account_envvars()
 
-    account = get_account(0)
-    if account is None:
+    wallet = get_provider_wallet()
+    if wallet is None:
         raise AssertionError(f'Ocean Provider cannot run without a valid '
-                             f'ethereum account. Account address was not found in the environment'
-                             f'variable `PROVIDER_ADDRESS`. Please set the following environment '
-                             f'variables and try again: `PROVIDER_ADDRESS`, [`PROVIDER_PASSWORD`, '
-                             f'and `PROVIDER_KEYFILE` or `PROVIDER_ENCRYPTED_KEY`] or `PROVIDER_KEY`.'
-                             f'ENV WAS: {sorted(os.environ.items())}')
+                             f'ethereum account. `PROVIDER_PRIVATE_KEY` was not found in the environment '
+                             f'variables. \nENV WAS: {sorted(os.environ.items())}')
 
-    if not account._private_key and not (account.password and account._encrypted_key):
+    if not wallet.private_key:
         raise AssertionError(f'Ocean Provider cannot run without a valid '
-                             f'ethereum account with either a `PROVIDER_PASSWORD` '
-                             f'and `PROVIDER_KEYFILE`/`PROVIDER_ENCRYPTED_KEY` '
-                             f'or private key `PROVIDER_KEY`. Current account has password {account.password}, '
-                             f'keyfile {account.key_file}, encrypted-key {account._encrypted_key} '
-                             f'and private-key {account._private_key}.')
+                             f'ethereum private key..')
 
 
 class LocalFileAdapter(requests.adapters.HTTPAdapter):

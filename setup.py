@@ -18,6 +18,7 @@ with open('CHANGELOG.md') as history_file:
 # or pip install -e .
 install_requirements = [
     # Install ocean-utils first
+    'ocean-lib',
     'ocean-utils==0.4.1',  # gets PyYAML, coloredlogs, web3
     'Flask==1.1.2',
     'Flask-Cors==3.0.8',
