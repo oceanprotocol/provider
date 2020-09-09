@@ -78,7 +78,7 @@ setup(
     include_package_data=True,
     keywords='ocean-provider',
     name='ocean-provider',
-    packages=find_packages(include=['ocean_provider', 'ocean_provider.app']),
+    packages=find_packages(include=['ocean_provider', 'ocean_provider.utils', 'ocean_provider.app']),
     setup_requires=setup_requirements,
     test_suite='tests',
     tests_require=test_requirements,
