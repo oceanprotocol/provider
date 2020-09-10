@@ -26,6 +26,13 @@ class UserNonce:
 
 class NonceStorage(StorageBase):
     TABLE_NAME = 'user_nonce'
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._run_query(
+            f'''CREATE TABLE IF NOT EXISTS {self.TABLE_NAME}
+               (address VARCHAR PRIMARY KEY , nonce VARCHAR);'''
+        ) 
 
     def write_nonce(self, address, nonce):
         """
@@ -36,10 +43,6 @@ class NonceStorage(StorageBase):
         """
         logger.debug(f'Writing nonce value to {self.TABLE_NAME} storage: '
                      f'account={address}, nonce={nonce}')
-        self._run_query(
-            f'''CREATE TABLE IF NOT EXISTS {self.TABLE_NAME}
-               (address VARCHAR PRIMARY KEY , nonce VARCHAR);'''
-        )
         self._run_query(
             f'''INSERT OR REPLACE
                 INTO {self.TABLE_NAME}
