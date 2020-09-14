@@ -10,10 +10,10 @@ from ocean_utils.agreements.service_agreement import ServiceAgreement
 from ocean_utils.agreements.service_types import ServiceTypes
 from ocean_utils.aquarius.aquarius import Aquarius
 from ocean_utils.http_requests.requests_session import get_requests_session
-from ocean_lib.models.data_token import DataToken
 from ocean_lib.web3_internal.web3helper import Web3Helper
 from ocean_lib.web3_internal.utils import add_ethereum_prefix_and_hash_msg
 
+from ocean_provider.custom_data_token import CustomDataToken
 from ocean_provider.constants import BaseURLs
 from ocean_provider.exceptions import InvalidSignatureError
 from ocean_provider.util import build_download_response, get_download_url
@@ -28,7 +28,7 @@ from tests.test_helpers import (
     get_dataset_ddo_with_access_service,
     get_consumer_wallet,
     get_publisher_wallet,
-    mint_tokens_and_wait, get_nonce)
+    mint_tokens_and_wait, get_nonce, send_order)
 
 SERVICE_ENDPOINT = BaseURLs.BASE_PROVIDER_URL + '/services/download'
 
@@ -45,23 +45,19 @@ def test_download_service(client):
     except (ValueError, Exception):
         pass
 
-    init_endpoint = BaseURLs.ASSETS_URL + '/initialize'
-    download_endpoint = BaseURLs.ASSETS_URL + '/download'
-
     pub_wallet = get_publisher_wallet()
     cons_wallet = get_consumer_wallet()
 
     ddo = get_dataset_ddo_with_access_service(client, pub_wallet)
     dt_address = ddo.as_dictionary()['dataToken']
-    dt_token = DataToken(dt_address)
+    dt_token = CustomDataToken(dt_address)
     mint_tokens_and_wait(dt_token, cons_wallet, pub_wallet)
 
-    auth_token = generate_auth_token(cons_wallet)
-    index = 0
-
     sa = ServiceAgreement.from_ddo(ServiceTypes.ASSET_ACCESS, ddo)
-
-    # initialize the service
+    tx_id = send_order(client, ddo, dt_token, sa, cons_wallet, pub_wallet)
+    index = 0
+    download_endpoint = BaseURLs.ASSETS_URL + '/download'
+    # Consume using url index and auth token (let the provider do the decryption)
     payload = dict({
         'documentId': ddo.did,
         'serviceId': sa.index,
@@ -69,28 +65,7 @@ def test_download_service(client):
         'dataToken': dt_address,
         'consumerAddress': cons_wallet.address
     })
-
-    request_url = init_endpoint + '?' + '&'.join([f'{k}={v}' for k, v in payload.items()])
-
-    response = client.get(
-        request_url
-    )
-    assert response.status == '200 OK'
-
-    tx_params = response.json
-    num_tokens = tx_params['numTokens']
-    nonce = tx_params.get('nonce')
-    assert tx_params['from'] == cons_wallet.address
-    assert tx_params['to'] == pub_wallet.address
-    assert tx_params['dataToken'] == ddo.as_dictionary()['dataToken']
-    assert nonce is not None, f'expecting a `nonce` value in the response, got {nonce}'
-
-    # Transfer tokens to provider account
-    tx_id = dt_token.transfer(tx_params['to'], num_tokens, cons_wallet)
-    dt_token.get_tx_receipt(tx_id)
-
-    # Consume using url index and auth token (let the provider do the decryption)
-    payload['signature'] = auth_token
+    payload['signature'] = generate_auth_token(cons_wallet)
     payload['transferTxId'] = tx_id
     payload['fileIndex'] = index
     request_url = download_endpoint + '?' + '&'.join([f'{k}={v}' for k, v in payload.items()])
@@ -110,9 +85,7 @@ def test_download_service(client):
     assert response.status_code == 401, f'{response.data}'
 
     # Consume using url index and signature (with nonce)
-    new_nonce = get_nonce(client, cons_wallet.address)
-    assert new_nonce == nonce + 1
-    nonce = new_nonce
+    nonce = get_nonce(client, cons_wallet.address)
     _hash = add_ethereum_prefix_and_hash_msg(f'{ddo.did}{nonce}')
     payload['signature'] = Web3Helper.sign_hash(_hash, cons_wallet)
     request_url = download_endpoint + '?' + '&'.join([f'{k}={v}' for k, v in payload.items()])

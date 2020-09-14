@@ -3,18 +3,19 @@ import json
 import logging
 import mimetypes
 import os
-import time
 from cgi import parse_header
 
 from flask import Response
+from ocean_lib.ocean.util import from_base_18
+from ocean_lib.web3_internal.web3_provider import Web3Provider
 from osmosis_driver_interface.osmosis import Osmosis
 from web3.exceptions import BlockNumberOutofRange
 from ocean_lib.web3_internal.utils import add_ethereum_prefix_and_hash_msg
 from ocean_lib.web3_internal.web3helper import Web3Helper
-from ocean_lib.models.data_token import DataToken
 from ocean_utils.agreements.service_agreement import ServiceAgreement
 from ocean_utils.agreements.service_types import ServiceTypes
 
+from ocean_provider.custom_data_token import CustomDataToken
 from ocean_provider.user_nonce import UserNonce
 from ocean_provider.constants import BaseURLs
 from ocean_provider.exceptions import BadRequestError
@@ -172,11 +173,12 @@ def check_required_attributes(required_attributes, data, method):
     return None, None
 
 
-def validate_token_transfer(sender, receiver, token_address, num_tokens, tx_id):
-    dt_contract = DataToken(token_address)
+def validate_order(sender, receiver, token_address, num_tokens, tx_id, did, service_id):
+    dt_contract = CustomDataToken(token_address)
     try:
-        tx, transfer_event = dt_contract.verify_transfer_tx(tx_id, sender, receiver)
-    except AssertionError as e:
+        tx, order_event, transfer_event = dt_contract.verify_order_tx(
+            Web3Provider.get_web3(), tx_id, did, service_id, num_tokens, sender, receiver, 0.001)
+    except AssertionError:
         raise
 
     block = tx['blockNumber']
@@ -186,20 +188,15 @@ def validate_token_transfer(sender, receiver, token_address, num_tokens, tx_id):
     try:
         new_balance = dt_contract.contract.functions.balanceOf(receiver).call(block_identifier=block)
         if not ((new_balance - balance) >= transfer_event.args.value):
-            raise AssertionError(f'Balance increment {(new_balance - balance)} does not match the Transfer '
-                                 f'event value {transfer_event.args.value}.')
+            raise AssertionError(f'Balance increment {from_base_18(new_balance - balance)} does not match the Transfer '
+                                 f'event value {from_base_18(transfer_event.args.value)}.')
 
     except BlockNumberOutofRange as e:
         print(f'Block number {block} out of range error: {e}.')
     except AssertionError:
         raise
 
-    if transfer_event.args.value < num_tokens:
-        raise AssertionError(
-            f'The transfered number of data tokens {transfer_event.args.value} does not match '
-            f'the expected amount of {num_tokens} tokens')
-
-    return True
+    return tx, order_event, transfer_event
 
 
 def validate_transfer_not_used_for_other_service(did, service_id, transfer_tx_id, consumer_address, token_address):
@@ -211,10 +208,10 @@ def validate_transfer_not_used_for_other_service(did, service_id, transfer_tx_id
     return
 
 
-def record_consume_request(did, service_id, transfer_tx_id, consumer_address, token_address, amount):
+def record_consume_request(did, service_id, order_tx_id, consumer_address, token_address, amount):
     logger.debug(
         f'record_consume_request: '
-        f'did={did}, service_id={service_id}, transfer_tx_id={transfer_tx_id}, '
+        f'did={did}, service_id={service_id}, transfer_tx_id={order_tx_id}, '
         f'consumer_address={consumer_address}, token_address={token_address}, '
         f'amount={amount}'
     )
@@ -311,14 +308,17 @@ def build_stage_algorithm_dict(consumer_address, algorithm_did, algorithm_token_
 
         algo_asset = get_asset_for_data_token(algorithm_token_address, algorithm_did)
         service = ServiceAgreement.from_ddo(ServiceTypes.ASSET_ACCESS, algo_asset)
-        validate_token_transfer(
+        _tx, _order_log, _transfer_log = validate_order(
             consumer_address,
             receiver_address,
             algorithm_token_address,
             int(service.get_cost()),
-            algorithm_tx_id
+            algorithm_tx_id,
+            algorithm_did,
+            service.index
         )
         validate_transfer_not_used_for_other_service(algorithm_did, service.index, algorithm_tx_id, consumer_address, algorithm_token_address)
+        record_consume_request(algorithm_did, service.index, algorithm_tx_id, consumer_address, algorithm_token_address, service.get_cost())
 
         algo_id = algorithm_did
         raw_code = ''

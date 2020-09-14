@@ -27,7 +27,7 @@ from ocean_provider.util import (
     build_download_response,
     get_download_url,
     get_asset_url_at_index,
-    validate_token_transfer,
+    validate_order,
     process_consume_request,
     build_stage_algorithm_dict,
     validate_algorithm_dict,
@@ -106,7 +106,7 @@ def simple_flow_consume():
         # TODO: Verify that the datatoken is owned by this provider's account
 
         # TODO: Enable this check for the token transfer.
-        # validate_token_transfer(
+        # validate_order(
         #     consumer,
         #     provider_acc.address,
         #     dt_address,
@@ -345,12 +345,14 @@ def download():
         service_type = data.get('serviceType')
         signature = data.get('signature')
         tx_id = data.get("transferTxId")
-        validate_token_transfer(
+        _tx, _order_log, _transfer_log = validate_order(
             consumer_address,
             provider_wallet.address,
             token_address,
             int(service.get_cost()),
-            tx_id
+            tx_id,
+            did,
+            service_id
         )
         validate_transfer_not_used_for_other_service(did, service_id, tx_id, consumer_address, token_address)
         record_consume_request(did, service_id, tx_id, consumer_address, token_address, service.get_cost())
@@ -653,12 +655,14 @@ def compute_start_job():
 
         # Verify that  the number of required tokens has been
         # transferred to the provider's wallet.
-        validate_token_transfer(
+        _tx, _order_log, _transfer_log = validate_order(
             consumer_address,
             provider_wallet.address,
             token_address,
             int(service.get_cost()),
-            tx_id
+            tx_id,
+            did,
+            service_id
         )
         validate_transfer_not_used_for_other_service(did, service_id, tx_id, consumer_address, token_address)
         record_consume_request(did, service_id, tx_id, consumer_address, token_address, service.get_cost())
