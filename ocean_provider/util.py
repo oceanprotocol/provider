@@ -5,9 +5,11 @@ import mimetypes
 import os
 from cgi import parse_header
 
+from eth_utils import add_0x_prefix
 from flask import Response
 from ocean_lib.ocean.util import from_base_18
 from ocean_lib.web3_internal.web3_provider import Web3Provider
+from ocean_utils.did import did_to_id
 from osmosis_driver_interface.osmosis import Osmosis
 from web3.exceptions import BlockNumberOutofRange
 from ocean_lib.web3_internal.utils import add_ethereum_prefix_and_hash_msg
@@ -314,7 +316,7 @@ def build_stage_algorithm_dict(consumer_address, algorithm_did, algorithm_token_
             algorithm_token_address,
             int(service.get_cost()),
             algorithm_tx_id,
-            algorithm_did,
+            add_0x_prefix(did_to_id(algorithm_did)) if algorithm_did.startswith('did:') else algorithm_did,
             service.index
         )
         validate_transfer_not_used_for_other_service(algorithm_did, service.index, algorithm_tx_id, consumer_address, algorithm_token_address)

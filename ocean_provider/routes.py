@@ -660,13 +660,14 @@ def compute_start_job():
 
         # Verify that  the number of required tokens has been
         # transferred to the provider's wallet.
+
         _tx, _order_log, _transfer_log = validate_order(
             consumer_address,
             provider_wallet.address,
             token_address,
             int(service.get_cost()),
             tx_id,
-            did,
+            add_0x_prefix(did_to_id(did)) if did.startswith('did:') else did,
             service_id
         )
         validate_transfer_not_used_for_other_service(did, service_id, tx_id, consumer_address, token_address)
