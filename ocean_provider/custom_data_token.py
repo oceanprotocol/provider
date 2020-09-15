@@ -61,16 +61,22 @@ class CustomDataToken(DataToken):
             raise AssertionError(f'sender of order transaction is not the same as the requesting account.')
 
         transfer_logs = self.events.Transfer().processReceipt(tx_receipt)
-        receiver_to_tr = {tr.args.to: tr for tr in transfer_logs}
-        if receiver not in receiver_to_tr:
-            raise AssertionError(f'receiver {receiver} is not found in the transfer events.')
+        receiver_to_transfers = {}
+        for tr in transfer_logs:
+            if tr.args.to not in receiver_to_transfers:
+                receiver_to_transfers[tr.args.to] = []
 
-        transfer = receiver_to_tr[receiver]
-        if transfer.args.value < (amount_base - 5):
+            receiver_to_transfers[tr.args.to].append(tr)
+
+        if receiver not in receiver_to_transfers:
+            raise AssertionError(f'receiver {receiver} is not found in the transfer events.')
+        transfers = sorted(receiver_to_transfers[receiver], key=lambda x: x.args.value)
+        total = sum(tr.args.value for tr in transfers)
+        if total < (amount_base - 5):
             raise ValueError(f'transferred value does meet the service cost: '
                              f'service.cost-fee={from_base_18(amount_base)}, '
-                             f'transferred value={from_base_18(transfer.args.value)}')
-        return tx, order_log, transfer
+                             f'transferred value={from_base_18(total)}')
+        return tx, order_log, transfers[-1]
 
     def startOrder(self, receiver: str, amount: int, did: str, serviceId: int,
                    feeCollector: str, feePercentage: int, from_wallet: Wallet):
