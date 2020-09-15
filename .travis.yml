@@ -13,7 +13,7 @@ services:
 before_install:
   - git clone https://github.com/oceanprotocol/barge
   - cd barge
-  - git checkout v3
+  - git checkout feature/ocean-contracts
   - export AQUARIUS_VERSION=decentralized
   - bash -x start_ocean.sh --no-dashboard --no-provider 2>&1 > start_ocean.log &
   - cd ..
