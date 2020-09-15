@@ -177,9 +177,11 @@ def check_required_attributes(required_attributes, data, method):
 
 def validate_order(sender, receiver, token_address, num_tokens, tx_id, did, service_id):
     dt_contract = CustomDataToken(token_address)
+    target_value = num_tokens - dt_contract.calculate_max_fee(num_tokens)
+
     try:
         tx, order_event, transfer_event = dt_contract.verify_order_tx(
-            Web3Provider.get_web3(), tx_id, did, service_id, num_tokens, sender, receiver, 0.001)
+            Web3Provider.get_web3(), tx_id, did, service_id, target_value, sender, receiver)
     except AssertionError:
         raise
 

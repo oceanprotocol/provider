@@ -509,7 +509,7 @@ def send_order(client, ddo, datatoken, service, cons_wallet, pub_wallet):
     assert tx_params['dataToken'] == ddo.as_dictionary()['dataToken']
     assert nonce is not None, f'expecting a `nonce` value in the response, got {nonce}'
     # Transfer tokens to provider account
-    fee_percent = 0.001
     tx_id = datatoken.startOrder(receiver, num_tokens, ddo.asset_id, service.index, '0xF9f2DB837b3db03Be72252fAeD2f6E0b73E428b9', 0, cons_wallet)
-    datatoken.verify_order_tx(web3, tx_id, ddo.asset_id, service.index, num_tokens, cons_wallet.address, receiver, fee_percent)
+    target_value = num_tokens - datatoken.calculate_max_fee(num_tokens)
+    datatoken.verify_order_tx(web3, tx_id, ddo.asset_id, service.index, target_value, cons_wallet.address, receiver)
     return tx_id

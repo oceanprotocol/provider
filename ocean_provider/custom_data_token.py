@@ -12,6 +12,9 @@ class CustomDataToken(DataToken):
     # orderTxId, consumer, amount, did, serviceId, provider
     ORDER_FINISHED_EVENT = 'OrderFinished'
 
+    OPF_FEE_PERCENTAGE = 0.001
+    MAX_MARKET_FEE_PERCENTAGE = 0.001
+
     def get_event_logs(self, event_name, filter_args=None, from_block=0, to_block='latest'):
         event = getattr(self.events, event_name)
         filter_params = filter_args or {}
@@ -29,7 +32,7 @@ class CustomDataToken(DataToken):
 
         return logs[0]
 
-    def verify_order_tx(self, web3, tx_id, did, service_id, amount_base, sender, receiver, fee_percentage):
+    def verify_order_tx(self, web3, tx_id, did, service_id, amount_base, sender, receiver):
         event = getattr(self.events, self.ORDER_STARTED_EVENT)
         tx_receipt = self.get_tx_receipt(tx_id)
         if tx_receipt.status == 0:
@@ -63,11 +66,9 @@ class CustomDataToken(DataToken):
             raise AssertionError(f'receiver {receiver} is not found in the transfer events.')
 
         transfer = receiver_to_tr[receiver]
-        fee = to_base_18(fee_percentage)
-        target_value = amount_base - int(amount_base * fee / to_base_18(1.0))
-        if abs(transfer.args.value - target_value) > 5:
+        if abs(transfer.args.value - amount_base) > 5:
             raise ValueError(f'transferred value does meet the service cost: '
-                             f'service.cost-fee={from_base_18(target_value)}, '
+                             f'service.cost-fee={from_base_18(amount_base)}, '
                              f'transferred value={from_base_18(transfer.args.value)}')
         return tx, order_log, transfer
 
@@ -86,3 +87,11 @@ class CustomDataToken(DataToken):
             (orderTxId, consumer, amount, did, serviceId),
             from_wallet
         )
+
+    @staticmethod
+    def get_max_fee_percentage():
+        return CustomDataToken.OPF_FEE_PERCENTAGE + CustomDataToken.MAX_MARKET_FEE_PERCENTAGE
+
+    @staticmethod
+    def calculate_max_fee(amount):
+        return int(amount * to_base_18(CustomDataToken.get_max_fee_percentage()) / to_base_18(1.0))
