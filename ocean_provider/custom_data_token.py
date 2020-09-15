@@ -66,7 +66,7 @@ class CustomDataToken(DataToken):
             raise AssertionError(f'receiver {receiver} is not found in the transfer events.')
 
         transfer = receiver_to_tr[receiver]
-        if abs(transfer.args.value - amount_base) > 5:
+        if transfer.args.value < (amount_base - 5):
             raise ValueError(f'transferred value does meet the service cost: '
                              f'service.cost-fee={from_base_18(amount_base)}, '
                              f'transferred value={from_base_18(transfer.args.value)}')
