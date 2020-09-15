@@ -1,3 +1,4 @@
+from eth_utils import remove_0x_prefix
 from ocean_lib.models.data_token import DataToken
 from ocean_lib.ocean.util import from_base_18, to_base_18
 from ocean_lib.web3_internal.event_filter import EventFilter
@@ -41,7 +42,7 @@ class CustomDataToken(DataToken):
         assert len(event_logs) == 1, \
             f'Multiple order events in the same transaction !!! {event_logs}'
 
-        asset_id = did
+        asset_id = remove_0x_prefix(did)
         if order_log.args.did.hex() != asset_id or str(order_log.args.serviceId) != str(service_id):
             raise AssertionError(f'The asset id (DID) or service id in the event does '
                                  f'not match the requested asset. \n'

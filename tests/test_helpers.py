@@ -511,5 +511,5 @@ def send_order(client, ddo, datatoken, service, cons_wallet, pub_wallet):
     # Transfer tokens to provider account
     fee_percent = 0.001
     tx_id = datatoken.startOrder(receiver, num_tokens, ddo.asset_id, service.index, '0xF9f2DB837b3db03Be72252fAeD2f6E0b73E428b9', 0, cons_wallet)
-    datatoken.verify_order_tx(web3, tx_id, ddo.did, service.index, num_tokens, cons_wallet.address, receiver, fee_percent)
+    datatoken.verify_order_tx(web3, tx_id, ddo.asset_id, service.index, num_tokens, cons_wallet.address, receiver, fee_percent)
     return tx_id
