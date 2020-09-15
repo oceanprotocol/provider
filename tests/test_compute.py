@@ -49,7 +49,7 @@ def test_compute_norawalgo_allowed(client):
     # signature, documentId, consumerAddress, and algorithmDid or algorithmMeta
 
     sa = ServiceAgreement.from_ddo(ServiceTypes.CLOUD_COMPUTE, dataset_ddo_w_compute_service)
-    tx_id = send_order(client, ddo, dt_contract, sa, cons_wallet, pub_wallet)
+    tx_id = send_order(client, ddo, dt_contract, sa, cons_wallet)
     nonce = get_nonce(client, cons_wallet.address)
 
     # prepare consumer signature on did
@@ -101,7 +101,7 @@ def test_compute_specific_algo_dids(client):
     # CHECKPOINT 1
 
     sa = ServiceAgreement.from_ddo(ServiceTypes.CLOUD_COMPUTE, dataset_ddo_w_compute_service)
-    tx_id = send_order(client, ddo, dt_contract, sa, cons_wallet, pub_wallet)
+    tx_id = send_order(client, ddo, dt_contract, sa, cons_wallet)
     nonce = get_nonce(client, cons_wallet.address)
 
     # prepare consumer signature on did
@@ -153,10 +153,10 @@ def test_compute(client):
     mint_tokens_and_wait(alg_dt_contract, cons_wallet, cons_wallet)
 
     sa = ServiceAgreement.from_ddo(ServiceTypes.CLOUD_COMPUTE, dataset_ddo_w_compute_service)
-    tx_id = send_order(client, ddo, dt_contract, sa, cons_wallet, pub_wallet)
+    tx_id = send_order(client, ddo, dt_contract, sa, cons_wallet)
 
     alg_service = ServiceAgreement.from_ddo(ServiceTypes.ASSET_ACCESS, alg_ddo)
-    alg_tx_id = send_order(client, alg_ddo, alg_dt_contract, alg_service, cons_wallet, pub_wallet)
+    alg_tx_id = send_order(client, alg_ddo, alg_dt_contract, alg_service, cons_wallet)
 
     nonce = get_nonce(client, cons_wallet.address)
     # prepare consumer signature on did

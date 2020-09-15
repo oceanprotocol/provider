@@ -18,7 +18,8 @@ from ocean_provider.utils.basics import (
     setup_network,
     LocalFileAdapter,
     get_config,
-    get_provider_wallet
+    get_provider_wallet,
+    get_datatoken_minter,
 )
 from ocean_provider.myapp import app
 from ocean_provider.exceptions import InvalidSignatureError, BadRequestError
@@ -267,13 +268,15 @@ def initialize():
             require_signature=False
         )
 
+        minter = get_datatoken_minter(asset, token_address)
+
         # Prepare the `transfer` tokens transaction with the appropriate number of
         # tokens required for this service
         # The consumer must sign and execute this transaction in order to be able to
         # consume the service
         approve_params = {
             "from": consumer_address,
-            "to": provider_wallet.address,
+            "to": minter,
             "numTokens": int(service.get_cost()),
             "dataToken": token_address,
             "nonce": user_nonce.get_nonce(consumer_address)
@@ -350,9 +353,10 @@ def download():
         if did.startswith('did:'):
             did = add_0x_prefix(did_to_id(did))
 
+        minter = get_datatoken_minter(asset, token_address)
         _tx, _order_log, _transfer_log = validate_order(
             consumer_address,
-            provider_wallet.address,
+            minter,
             token_address,
             int(service.get_cost()),
             tx_id,
@@ -661,9 +665,10 @@ def compute_start_job():
         # Verify that  the number of required tokens has been
         # transferred to the provider's wallet.
 
+        minter = get_datatoken_minter(asset, token_address)
         _tx, _order_log, _transfer_log = validate_order(
             consumer_address,
-            provider_wallet.address,
+            minter,
             token_address,
             int(service.get_cost()),
             tx_id,

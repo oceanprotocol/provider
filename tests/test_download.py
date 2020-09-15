@@ -54,7 +54,7 @@ def test_download_service(client):
     mint_tokens_and_wait(dt_token, cons_wallet, pub_wallet)
 
     sa = ServiceAgreement.from_ddo(ServiceTypes.ASSET_ACCESS, ddo)
-    tx_id = send_order(client, ddo, dt_token, sa, cons_wallet, pub_wallet)
+    tx_id = send_order(client, ddo, dt_token, sa, cons_wallet)
     index = 0
     download_endpoint = BaseURLs.ASSETS_URL + '/download'
     # Consume using url index and auth token (let the provider do the decryption)

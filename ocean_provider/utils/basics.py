@@ -2,6 +2,7 @@ import os
 import site
 
 import requests
+from ocean_lib.models.data_token import DataToken
 from ocean_lib.web3_internal.utils import get_wallet
 from ocean_lib.web3_internal.wallet import Wallet
 from web3 import WebsocketProvider
@@ -58,6 +59,15 @@ def get_provider_wallet():
         return Wallet(Web3Provider.get_web3(), private_key=pk)
 
     return get_wallet(0)
+
+
+def get_datatoken_minter(asset, datatoken_address):
+    publisher = Web3Provider.get_web3().toChecksumAddress(asset.publisher)
+    dt = DataToken(datatoken_address)
+    if not dt.contract_concise.isMinter(publisher):
+        raise AssertionError(f'ddo publisher {publisher} is not the current '
+                             f'minter for the DataToken contract at {datatoken_address}.')
+    return publisher
 
 
 def setup_network(config_file=None):

@@ -18,7 +18,7 @@ from ocean_lib.web3_internal.web3_provider import Web3Provider
 from ocean_lib.models.dtfactory import DTFactory
 from ocean_lib.web3_internal.contract_handler import ContractHandler
 from ocean_lib.web3_internal.web3helper import Web3Helper
-from ocean_lib.web3_internal.utils import get_wallet, add_ethereum_prefix_and_hash_msg
+from ocean_lib.web3_internal.utils import add_ethereum_prefix_and_hash_msg
 from ocean_utils.utils.utilities import checksum
 from ocean_utils.ddo.metadata import MetadataMain
 from ocean_utils.aquarius.aquarius import Aquarius
@@ -27,15 +27,16 @@ from ocean_utils.ddo.public_key_rsa import PUBLIC_KEY_TYPE_RSA
 from ocean_utils.agreements.service_factory import ServiceDescriptor, ServiceFactory
 
 from ocean_provider.constants import BaseURLs
+from ocean_provider.utils.basics import get_datatoken_minter
 from ocean_provider.utils.data_token import get_asset_for_data_token
 
 
 def get_publisher_wallet():
-    return get_wallet(0)
+    return Wallet(Web3Provider.get_web3(), private_key=os.getenv('TEST_PRIVATE_KEY1'))
 
 
 def get_consumer_wallet():
-    return get_wallet(1)
+    return Wallet(Web3Provider.get_web3(), private_key=os.getenv('TEST_PRIVATE_KEY2'))
 
 
 def get_ganache_wallet():
@@ -481,7 +482,7 @@ def wait_for_ddo(ddo_store, did, timeout=30):
     return Asset(dictionary=ddo.as_dictionary())
 
 
-def send_order(client, ddo, datatoken, service, cons_wallet, pub_wallet):
+def send_order(client, ddo, datatoken, service, cons_wallet):
     web3 = Web3Provider.get_web3()
     init_endpoint = BaseURLs.ASSETS_URL + '/initialize'
     # initialize the service
@@ -505,7 +506,7 @@ def send_order(client, ddo, datatoken, service, cons_wallet, pub_wallet):
     nonce = tx_params.get('nonce')
     receiver = tx_params['to']
     assert tx_params['from'] == cons_wallet.address
-    assert receiver == pub_wallet.address
+    assert receiver == get_datatoken_minter(ddo, datatoken.address)
     assert tx_params['dataToken'] == ddo.as_dictionary()['dataToken']
     assert nonce is not None, f'expecting a `nonce` value in the response, got {nonce}'
     # Transfer tokens to provider account

@@ -22,7 +22,7 @@ from ocean_provider.user_nonce import UserNonce
 from ocean_provider.constants import BaseURLs
 from ocean_provider.exceptions import BadRequestError
 from ocean_provider.utils.accounts import verify_signature
-from ocean_provider.utils.basics import get_config, get_provider_wallet
+from ocean_provider.utils.basics import get_config, get_provider_wallet, get_datatoken_minter
 from ocean_provider.utils.data_token import get_asset_for_data_token
 from ocean_provider.utils.encryption import do_decrypt
 
@@ -191,7 +191,7 @@ def validate_order(sender, receiver, token_address, num_tokens, tx_id, did, serv
     balance = dt_contract.contract.functions.balanceOf(receiver).call(block_identifier=block-1)
     try:
         new_balance = dt_contract.contract.functions.balanceOf(receiver).call(block_identifier=block)
-        if not ((new_balance - balance) >= transfer_event.args.value):
+        if not ((new_balance - balance) >= transfer_event.args.value) and sender != receiver:
             raise AssertionError(f'Balance increment {from_base_18(new_balance - balance)} does not match the Transfer '
                                  f'event value {from_base_18(transfer_event.args.value)}.')
 
@@ -306,11 +306,11 @@ def build_stage_algorithm_dict(consumer_address, algorithm_did, algorithm_token_
     if algorithm_did is not None:
         assert algorithm_token_address and algorithm_tx_id, \
             'algorithm_did requires both algorithm_token_address and algorithm_tx_id.'
-        # use the DID
-        if receiver_address is None:
-            receiver_address = provider_wallet.address
 
         algo_asset = get_asset_for_data_token(algorithm_token_address, algorithm_did)
+        if receiver_address is None:
+            receiver_address = get_datatoken_minter(algo_asset, algorithm_token_address)
+
         service = ServiceAgreement.from_ddo(ServiceTypes.ASSET_ACCESS, algo_asset)
         _tx, _order_log, _transfer_log = validate_order(
             consumer_address,
