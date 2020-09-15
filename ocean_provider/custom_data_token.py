@@ -1,6 +1,7 @@
 from ocean_lib.models.data_token import DataToken
 from ocean_lib.ocean.util import from_base_18, to_base_18
 from ocean_lib.web3_internal.event_filter import EventFilter
+from ocean_lib.web3_internal.wallet import Wallet
 from ocean_utils.did import did_to_id_bytes
 
 
@@ -68,3 +69,19 @@ class CustomDataToken(DataToken):
                              f'service.cost-fee={from_base_18(target_value)}, '
                              f'transferred value={from_base_18(transfer.args.value)}')
         return tx, order_log, transfer
+
+    def startOrder(self, receiver: str, amount: int, did: str, serviceId: int,
+                   feeCollector: str, feePercentage: int, from_wallet: Wallet):
+        return self.send_transaction(
+            'startOrder',
+            (receiver, amount, did, serviceId, feeCollector, feePercentage),
+            from_wallet
+        )
+
+    def finishOrder(self, orderTxId: str, consumer: str, amount: int, did: str,
+                    serviceId: int, from_wallet: Wallet):
+        return self.send_transaction(
+            'finishOrder',
+            (orderTxId, consumer, amount, did, serviceId),
+            from_wallet
+        )
