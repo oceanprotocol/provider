@@ -4,11 +4,13 @@ import json
 import logging
 import os
 
+from eth_utils import add_0x_prefix
 from flask import Blueprint, jsonify, request, Response
 from ocean_lib.web3_internal.utils import add_ethereum_prefix_and_hash_msg
 from ocean_lib.web3_internal.web3helper import Web3Helper
 from ocean_lib.models.data_token import DataToken
 from ocean_utils.agreements.service_types import ServiceTypes
+from ocean_utils.did import did_to_id
 from ocean_utils.http_requests.requests_session import get_requests_session
 
 from ocean_provider.user_nonce import UserNonce
@@ -37,7 +39,7 @@ from ocean_provider.util import (
     record_consume_request,
     get_asset_download_urls,
     validate_transfer_not_used_for_other_service,
-    process_compute_request
+    process_compute_request,
 )
 from ocean_provider.utils.accounts import verify_signature
 from ocean_provider.utils.encryption import do_encrypt
@@ -345,6 +347,9 @@ def download():
         service_type = data.get('serviceType')
         signature = data.get('signature')
         tx_id = data.get("transferTxId")
+        if did.startswith('did:'):
+            did = add_0x_prefix(did_to_id(did))
+
         _tx, _order_log, _transfer_log = validate_order(
             consumer_address,
             provider_wallet.address,
