@@ -2,6 +2,7 @@ import os
 import site
 
 import requests
+from ocean_lib.models.data_token import DataToken
 from ocean_lib.web3_internal.utils import get_wallet
 from ocean_lib.web3_internal.wallet import Wallet
 from web3 import WebsocketProvider
@@ -20,7 +21,7 @@ def get_artifacts_path(config):
         if os.getenv('VIRTUAL_ENV'):
             path = os.path.join(os.getenv('VIRTUAL_ENV'), 'artifacts')
         else:
-            path = os.path.join(site.PREFIXES[0], 'artifacts')
+            plath = os.path.join(site.PREFIXES[0], 'artifacts')
 
     print(f'get_artifacts_path: {config.artifacts_path}, {path}, {site.PREFIXES[0]}')
     return path
@@ -58,6 +59,15 @@ def get_provider_wallet():
         return Wallet(Web3Provider.get_web3(), private_key=pk)
 
     return get_wallet(0)
+
+
+def get_datatoken_minter(asset, datatoken_address):
+    publisher = Web3Provider.get_web3().toChecksumAddress(asset.publisher)
+    dt = DataToken(datatoken_address)
+    if not dt.contract_concise.isMinter(publisher):
+        raise AssertionError(f'ddo publisher {publisher} is not the current '
+                             f'minter for the DataToken contract at {datatoken_address}.')
+    return publisher
 
 
 def setup_network(config_file=None):

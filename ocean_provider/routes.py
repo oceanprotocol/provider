@@ -4,11 +4,13 @@ import json
 import logging
 import os
 
+from eth_utils import add_0x_prefix
 from flask import Blueprint, jsonify, request, Response
 from ocean_lib.web3_internal.utils import add_ethereum_prefix_and_hash_msg
 from ocean_lib.web3_internal.web3helper import Web3Helper
 from ocean_lib.models.data_token import DataToken
 from ocean_utils.agreements.service_types import ServiceTypes
+from ocean_utils.did import did_to_id
 from ocean_utils.http_requests.requests_session import get_requests_session
 
 from ocean_provider.user_nonce import UserNonce
@@ -16,7 +18,8 @@ from ocean_provider.utils.basics import (
     setup_network,
     LocalFileAdapter,
     get_config,
-    get_provider_wallet
+    get_provider_wallet,
+    get_datatoken_minter,
 )
 from ocean_provider.myapp import app
 from ocean_provider.exceptions import InvalidSignatureError, BadRequestError
@@ -27,7 +30,7 @@ from ocean_provider.util import (
     build_download_response,
     get_download_url,
     get_asset_url_at_index,
-    validate_token_transfer,
+    validate_order,
     process_consume_request,
     build_stage_algorithm_dict,
     validate_algorithm_dict,
@@ -37,7 +40,7 @@ from ocean_provider.util import (
     record_consume_request,
     get_asset_download_urls,
     validate_transfer_not_used_for_other_service,
-    process_compute_request
+    process_compute_request,
 )
 from ocean_provider.utils.accounts import verify_signature
 from ocean_provider.utils.encryption import do_encrypt
@@ -106,9 +109,8 @@ def simple_flow_consume():
         # TODO: Verify that the datatoken is owned by this provider's account
 
         # TODO: Enable this check for the token transfer.
-        # validate_token_transfer(
+        # validate_order(
         #     consumer,
-        #     provider_acc.address,
         #     dt_address,
         #     1,
         #     tx_id
@@ -265,13 +267,15 @@ def initialize():
             require_signature=False
         )
 
+        minter = get_datatoken_minter(asset, token_address)
+
         # Prepare the `transfer` tokens transaction with the appropriate number of
         # tokens required for this service
         # The consumer must sign and execute this transaction in order to be able to
         # consume the service
         approve_params = {
             "from": consumer_address,
-            "to": provider_wallet.address,
+            "to": minter,
             "numTokens": int(service.get_cost()),
             "dataToken": token_address,
             "nonce": user_nonce.get_nonce(consumer_address)
@@ -345,12 +349,16 @@ def download():
         service_type = data.get('serviceType')
         signature = data.get('signature')
         tx_id = data.get("transferTxId")
-        validate_token_transfer(
+        if did.startswith('did:'):
+            did = add_0x_prefix(did_to_id(did))
+
+        _tx, _order_log, _transfer_log = validate_order(
             consumer_address,
-            provider_wallet.address,
             token_address,
             int(service.get_cost()),
-            tx_id
+            tx_id,
+            did,
+            service_id
         )
         validate_transfer_not_used_for_other_service(did, service_id, tx_id, consumer_address, token_address)
         record_consume_request(did, service_id, tx_id, consumer_address, token_address, service.get_cost())
@@ -653,12 +661,14 @@ def compute_start_job():
 
         # Verify that  the number of required tokens has been
         # transferred to the provider's wallet.
-        validate_token_transfer(
+
+        _tx, _order_log, _transfer_log = validate_order(
             consumer_address,
-            provider_wallet.address,
             token_address,
             int(service.get_cost()),
-            tx_id
+            tx_id,
+            add_0x_prefix(did_to_id(did)) if did.startswith('did:') else did,
+            service_id
         )
         validate_transfer_not_used_for_other_service(did, service_id, tx_id, consumer_address, token_address)
         record_consume_request(did, service_id, tx_id, consumer_address, token_address, service.get_cost())

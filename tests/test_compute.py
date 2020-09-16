@@ -3,9 +3,9 @@
 
 import json
 
+from ocean_lib.models.data_token import DataToken
 from ocean_lib.web3_internal.utils import add_ethereum_prefix_and_hash_msg
 from ocean_lib.web3_internal.web3helper import Web3Helper
-from ocean_lib.models.data_token import DataToken
 from ocean_utils.agreements.service_agreement import ServiceAgreement
 from ocean_utils.agreements.service_types import ServiceTypes
 
@@ -16,7 +16,8 @@ from tests.test_helpers import (
     get_consumer_wallet,
     get_publisher_wallet,
     get_dataset_ddo_with_compute_service_no_rawalgo, get_dataset_ddo_with_compute_service_specific_algo_dids, get_algorithm_ddo,
-    get_dataset_ddo_with_compute_service, get_compute_job_info, get_possible_compute_job_status_text, mint_tokens_and_wait, get_nonce)
+    get_dataset_ddo_with_compute_service, get_compute_job_info, get_possible_compute_job_status_text, mint_tokens_and_wait, get_nonce,
+    send_order)
 
 SERVICE_ENDPOINT = BaseURLs.BASE_PROVIDER_URL + '/services/download'
 
@@ -29,7 +30,7 @@ def test_compute_norawalgo_allowed(client):
     dataset_ddo_w_compute_service = get_dataset_ddo_with_compute_service_no_rawalgo(client, pub_wallet)
     did = dataset_ddo_w_compute_service.did
     ddo = dataset_ddo_w_compute_service
-    data_token = dataset_ddo_w_compute_service.as_dictionary()['dataToken']
+    data_token = dataset_ddo_w_compute_service.data_token_address
     dt_contract = DataToken(data_token)
     mint_tokens_and_wait(dt_contract, cons_wallet, pub_wallet)
 
@@ -48,33 +49,8 @@ def test_compute_norawalgo_allowed(client):
     # signature, documentId, consumerAddress, and algorithmDid or algorithmMeta
 
     sa = ServiceAgreement.from_ddo(ServiceTypes.CLOUD_COMPUTE, dataset_ddo_w_compute_service)
-
-    init_endpoint = BaseURLs.ASSETS_URL + '/initialize'
-    payload = dict({
-        'documentId': ddo.did,
-        'serviceId': sa.index,
-        'serviceType': sa.type,
-        'dataToken': data_token,
-        'consumerAddress': cons_wallet.address
-    })
-
-    request_url = init_endpoint + '?' + '&'.join([f'{k}={v}' for k, v in payload.items()])
-
-    response = client.get(
-        request_url
-    )
-    assert response.status == '200 OK'
-
-    tx_params = response.json
-    num_tokens = tx_params['numTokens']
-    nonce = tx_params.get('nonce')
-    assert tx_params['from'] == cons_wallet.address
-    assert tx_params['to'] == pub_wallet.address
-    assert tx_params['dataToken'] == ddo.as_dictionary()['dataToken']
-    assert nonce is not None, f'expecting a `nonce` value in the response, got {nonce}'
-
-    tx_id = dt_contract.transfer(tx_params['to'], num_tokens, cons_wallet)
-    dt_contract.get_tx_receipt(tx_id)
+    tx_id = send_order(client, ddo, dt_contract, sa, cons_wallet)
+    nonce = get_nonce(client, cons_wallet.address)
 
     # prepare consumer signature on did
     msg = f'{cons_wallet.address}{did}{nonce}'
@@ -124,38 +100,9 @@ def test_compute_specific_algo_dids(client):
     mint_tokens_and_wait(alg_dt_contract, pub_wallet, cons_wallet)
     # CHECKPOINT 1
 
-    # prepare parameter values for the compute endpoint
-    # signature, documentId, consumerAddress, and algorithmDid or algorithmMeta
-
-    sa = ServiceAgreement.from_ddo(
-        ServiceTypes.CLOUD_COMPUTE, dataset_ddo_w_compute_service)
-
-    init_endpoint = BaseURLs.ASSETS_URL + '/initialize'
-    payload = dict({
-        'documentId': ddo.did,
-        'serviceId': sa.index,
-        'serviceType': sa.type,
-        'dataToken': data_token,
-        'consumerAddress': cons_wallet.address
-    })
-
-    request_url = init_endpoint + '?' + '&'.join([f'{k}={v}' for k, v in payload.items()])
-
-    response = client.get(
-        request_url
-    )
-    assert response.status == '200 OK'
-
-    tx_params = response.json
-    num_tokens = tx_params['numTokens']
-    nonce = tx_params.get('nonce')
-    assert tx_params['from'] == cons_wallet.address
-    assert tx_params['to'] == pub_wallet.address
-    assert tx_params['dataToken'] == ddo.as_dictionary()['dataToken']
-    assert nonce is not None, f'expecting a `nonce` value in the response, got {nonce}'
-
-    tx_id = dt_contract.transfer(tx_params['to'], num_tokens, cons_wallet)
-    dt_contract.get_tx_receipt(tx_id)
+    sa = ServiceAgreement.from_ddo(ServiceTypes.CLOUD_COMPUTE, dataset_ddo_w_compute_service)
+    tx_id = send_order(client, ddo, dt_contract, sa, cons_wallet)
+    nonce = get_nonce(client, cons_wallet.address)
 
     # prepare consumer signature on did
     msg = f'{cons_wallet.address}{did}{nonce}'
@@ -187,8 +134,6 @@ def test_compute_specific_algo_dids(client):
 
 
 def test_compute(client):
-    init_endpoint = BaseURLs.ASSETS_URL + '/initialize'
-    compute_endpoint = BaseURLs.ASSETS_URL + '/compute'
 
     pub_wallet = get_publisher_wallet()
     cons_wallet = get_consumer_wallet()
@@ -197,7 +142,7 @@ def test_compute(client):
     dataset_ddo_w_compute_service = get_dataset_ddo_with_compute_service(client, pub_wallet)
     did = dataset_ddo_w_compute_service.did
     ddo = dataset_ddo_w_compute_service
-    data_token = dataset_ddo_w_compute_service.as_dictionary()['dataToken']
+    data_token = dataset_ddo_w_compute_service.data_token_address
     dt_contract = DataToken(data_token)
     mint_tokens_and_wait(dt_contract, cons_wallet, pub_wallet)
 
@@ -206,42 +151,14 @@ def test_compute(client):
     alg_data_token = alg_ddo.as_dictionary()['dataToken']
     alg_dt_contract = DataToken(alg_data_token)
     mint_tokens_and_wait(alg_dt_contract, cons_wallet, cons_wallet)
-    # CHECKPOINT 1
 
-    sa = ServiceAgreement.from_ddo(
-        ServiceTypes.CLOUD_COMPUTE, dataset_ddo_w_compute_service)
-
-    # initialize the service
-    payload = dict({
-        'documentId': ddo.did,
-        'serviceId': sa.index,
-        'serviceType': sa.type,
-        'dataToken': data_token,
-        'consumerAddress': cons_wallet.address
-    })
-
-    request_url = init_endpoint + '?' + '&'.join([f'{k}={v}' for k, v in payload.items()])
-
-    response = client.get(
-        request_url
-    )
-    assert response.status == '200 OK'
-
-    tx_params = response.json
-    num_tokens = tx_params['numTokens']
-    nonce = tx_params.get('nonce')
-    assert tx_params['from'] == cons_wallet.address
-    assert tx_params['to'] == pub_wallet.address
-    assert tx_params['dataToken'] == ddo.as_dictionary()['dataToken']
-    assert nonce is not None, f'expecting a `nonce` value in the response, got {nonce}'
-
-    tx_id = dt_contract.transfer(tx_params['to'], num_tokens, cons_wallet)
-    dt_contract.get_tx_receipt(tx_id)
+    sa = ServiceAgreement.from_ddo(ServiceTypes.CLOUD_COMPUTE, dataset_ddo_w_compute_service)
+    tx_id = send_order(client, ddo, dt_contract, sa, cons_wallet)
 
     alg_service = ServiceAgreement.from_ddo(ServiceTypes.ASSET_ACCESS, alg_ddo)
-    alg_tx_id = alg_dt_contract.transfer(tx_params['to'], int(alg_service.get_cost()), cons_wallet)
-    alg_dt_contract.get_tx_receipt(alg_tx_id)
+    alg_tx_id = send_order(client, alg_ddo, alg_dt_contract, alg_service, cons_wallet)
 
+    nonce = get_nonce(client, cons_wallet.address)
     # prepare consumer signature on did
     msg = f'{cons_wallet.address}{did}{str(nonce)}'
     _hash = add_ethereum_prefix_and_hash_msg(msg)
@@ -267,6 +184,7 @@ def test_compute(client):
     msg = f'{cons_wallet.address}{did}'
     _hash = add_ethereum_prefix_and_hash_msg(msg)
     payload['signature'] = Web3Helper.sign_hash(_hash, cons_wallet)
+    compute_endpoint = BaseURLs.ASSETS_URL + '/compute'
     response = client.post(
         compute_endpoint,
         data=json.dumps(payload),

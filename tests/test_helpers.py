@@ -2,20 +2,23 @@
 #  SPDX-License-Identifier: Apache-2.0
 
 import json
+import lzma
 import os
 import pathlib
 import time
 import uuid
+from pathlib import Path
 
 from ocean_lib.assets.asset import Asset
 from ocean_lib.models.data_token import DataToken
+from ocean_lib.models.ddo import DDOContract
 from ocean_lib.ocean.util import to_base_18
 from ocean_lib.web3_internal.wallet import Wallet
 from ocean_lib.web3_internal.web3_provider import Web3Provider
 from ocean_lib.models.dtfactory import DTFactory
 from ocean_lib.web3_internal.contract_handler import ContractHandler
 from ocean_lib.web3_internal.web3helper import Web3Helper
-from ocean_lib.web3_internal.utils import get_wallet, add_ethereum_prefix_and_hash_msg
+from ocean_lib.web3_internal.utils import add_ethereum_prefix_and_hash_msg
 from ocean_utils.utils.utilities import checksum
 from ocean_utils.ddo.metadata import MetadataMain
 from ocean_utils.aquarius.aquarius import Aquarius
@@ -24,15 +27,16 @@ from ocean_utils.ddo.public_key_rsa import PUBLIC_KEY_TYPE_RSA
 from ocean_utils.agreements.service_factory import ServiceDescriptor, ServiceFactory
 
 from ocean_provider.constants import BaseURLs
+from ocean_provider.utils.basics import get_datatoken_minter
 from ocean_provider.utils.data_token import get_asset_for_data_token
 
 
 def get_publisher_wallet():
-    return get_wallet(0)
+    return Wallet(Web3Provider.get_web3(), private_key=os.getenv('TEST_PRIVATE_KEY1'))
 
 
 def get_consumer_wallet():
-    return get_wallet(1)
+    return Wallet(Web3Provider.get_web3(), private_key=os.getenv('TEST_PRIVATE_KEY2'))
 
 
 def get_ganache_wallet():
@@ -41,6 +45,20 @@ def get_ganache_wallet():
         return Wallet(web3, private_key='0xc594c6e5def4bab63ac29eed19a134c130388f74f019bc74b8f4389df2837a58')
 
     return None
+
+
+def get_address_file():
+    return Path(os.getenv('ADDRESS_FILE')).expanduser().resolve()
+
+
+def get_dtfactory_address():
+    addresses = get_contracts_addresses(get_address_file())
+    return addresses.get(DTFactory.CONTRACT_NAME) if addresses else None
+
+
+def get_contracts_addresses(address_file):
+    addresses = ContractHandler.get_contracts_addresses('ganache', address_file)
+    return addresses
 
 
 def new_factory_contract():
@@ -80,8 +98,6 @@ def get_access_service_descriptor(address, metadata):
 
 def get_registered_ddo(client, wallet, metadata, service_descriptor):
     aqua = Aquarius('http://localhost:5000')
-
-    ddo = Asset()
     ddo_service_endpoint = aqua.get_service_endpoint()
 
     metadata_store_url = json.dumps({
@@ -89,7 +105,16 @@ def get_registered_ddo(client, wallet, metadata, service_descriptor):
         'url': ddo_service_endpoint
     })
     # Create new data token contract
-    factory_contract = new_factory_contract()
+    addresses = get_contracts_addresses(get_address_file())
+    dt_address = addresses.get(DTFactory.CONTRACT_NAME)
+    if dt_address:
+        factory_contract = DTFactory(dt_address)
+    else:
+        factory_contract = new_factory_contract()
+
+    ddo_contract_address = addresses.get(DDOContract.CONTRACT_NAME)
+    ddo_contract = DDOContract(ddo_contract_address)
+
     tx_id = factory_contract.createToken(
         metadata_store_url, 'DataToken1', 'DT1', to_base_18(1000000), wallet
     )
@@ -97,6 +122,7 @@ def get_registered_ddo(client, wallet, metadata, service_descriptor):
     if not dt_contract:
         raise AssertionError('Creation of data token contract failed.')
 
+    ddo = Asset()
     ddo.data_token_address = dt_contract.address
 
     metadata_service_desc = ServiceDescriptor.metadata_service_descriptor(
@@ -158,11 +184,22 @@ def get_registered_ddo(client, wallet, metadata, service_descriptor):
             del file['url']
         metadata['encryptedFiles'] = encrypted_files
 
+    web3 = Web3Provider.get_web3()
+    block = web3.eth.blockNumber
     try:
-        aqua.publish_asset_ddo(ddo)
+        data = lzma.compress(web3.toBytes(text=ddo.as_text()))
+        tx_id = ddo_contract.create(ddo.asset_id, bytes([1]), data, wallet)
+        if not ddo_contract.verify_tx(tx_id):
+            raise AssertionError(f'create DDO on-chain failed, transaction status is 0. Transaction hash is {tx_id}')
     except Exception as e:
         print(f'error publishing ddo {ddo.did} in Aquarius: {e}')
         raise
+
+    log = ddo_contract.get_event_log(ddo_contract.EVENT_DDO_CREATED, block, ddo.asset_id, 30)
+    assert log, f'no ddo created event.'
+
+    ddo = wait_for_ddo(aqua, ddo.did, 15)
+    assert ddo, f'resolve did {ddo.did} failed.'
 
     return ddo
 
@@ -390,7 +427,7 @@ def _check_job_id(client, job_id, did, token_address, wait_time=20):
 
 def mint_tokens_and_wait(data_token_contract, receiver_wallet, minter_wallet):
     dtc = data_token_contract
-    tx_id = dtc.mint(receiver_wallet.address, 50, minter_wallet)
+    tx_id = dtc.mint_tokens(receiver_wallet.address, 50, minter_wallet)
     dtc.get_tx_receipt(tx_id)
     time.sleep(2)
 
@@ -425,3 +462,54 @@ def get_sample_ddo():
     with open(path, 'r') as file_handle:
         metadata = file_handle.read()
     return json.loads(metadata)
+
+
+def wait_for_ddo(ddo_store, did, timeout=30):
+    start = time.time()
+    ddo = None
+    while not ddo:
+        try:
+            ddo = ddo_store.get_asset_ddo(did)
+        except ValueError:
+            pass
+
+        if not ddo:
+            time.sleep(0.2)
+
+        if time.time() - start > timeout:
+            break
+
+    return Asset(dictionary=ddo.as_dictionary())
+
+
+def send_order(client, ddo, datatoken, service, cons_wallet):
+    web3 = Web3Provider.get_web3()
+    init_endpoint = BaseURLs.ASSETS_URL + '/initialize'
+    # initialize the service
+    payload = dict({
+        'documentId': ddo.did,
+        'serviceId': service.index,
+        'serviceType': service.type,
+        'dataToken': datatoken.address,
+        'consumerAddress': cons_wallet.address
+    })
+
+    request_url = init_endpoint + '?' + '&'.join([f'{k}={v}' for k, v in payload.items()])
+
+    response = client.get(
+        request_url
+    )
+    assert response.status == '200 OK'
+
+    tx_params = response.json
+    num_tokens = tx_params['numTokens']
+    nonce = tx_params.get('nonce')
+    receiver = tx_params['to']
+    assert tx_params['from'] == cons_wallet.address
+    assert receiver == get_datatoken_minter(ddo, datatoken.address)
+    assert tx_params['dataToken'] == ddo.as_dictionary()['dataToken']
+    assert nonce is not None, f'expecting a `nonce` value in the response, got {nonce}'
+    # Transfer tokens to provider account
+    tx_id = datatoken.startOrder(num_tokens, ddo.asset_id, service.index, '0xF9f2DB837b3db03Be72252fAeD2f6E0b73E428b9', cons_wallet)
+    datatoken.verify_order_tx(web3, tx_id, ddo.asset_id, service.index, num_tokens, cons_wallet.address)
+    return tx_id
