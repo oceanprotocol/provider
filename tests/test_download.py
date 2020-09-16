@@ -5,6 +5,7 @@ import mimetypes
 from copy import deepcopy
 from unittest.mock import Mock, MagicMock
 
+from ocean_lib.models.data_token import DataToken
 from werkzeug.utils import get_content_type
 from ocean_utils.agreements.service_agreement import ServiceAgreement
 from ocean_utils.agreements.service_types import ServiceTypes
@@ -13,7 +14,6 @@ from ocean_utils.http_requests.requests_session import get_requests_session
 from ocean_lib.web3_internal.web3helper import Web3Helper
 from ocean_lib.web3_internal.utils import add_ethereum_prefix_and_hash_msg
 
-from ocean_provider.custom_data_token import CustomDataToken
 from ocean_provider.constants import BaseURLs
 from ocean_provider.exceptions import InvalidSignatureError
 from ocean_provider.util import build_download_response, get_download_url
@@ -50,7 +50,7 @@ def test_download_service(client):
 
     ddo = get_dataset_ddo_with_access_service(client, pub_wallet)
     dt_address = ddo.as_dictionary()['dataToken']
-    dt_token = CustomDataToken(dt_address)
+    dt_token = DataToken(dt_address)
     mint_tokens_and_wait(dt_token, cons_wallet, pub_wallet)
 
     sa = ServiceAgreement.from_ddo(ServiceTypes.ASSET_ACCESS, ddo)

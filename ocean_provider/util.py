@@ -7,17 +7,15 @@ from cgi import parse_header
 
 from eth_utils import add_0x_prefix
 from flask import Response
-from ocean_lib.ocean.util import from_base_18
+from ocean_lib.models.data_token import DataToken
 from ocean_lib.web3_internal.web3_provider import Web3Provider
 from ocean_utils.did import did_to_id
 from osmosis_driver_interface.osmosis import Osmosis
-from web3.exceptions import BlockNumberOutofRange
 from ocean_lib.web3_internal.utils import add_ethereum_prefix_and_hash_msg
 from ocean_lib.web3_internal.web3helper import Web3Helper
 from ocean_utils.agreements.service_agreement import ServiceAgreement
 from ocean_utils.agreements.service_types import ServiceTypes
 
-from ocean_provider.custom_data_token import CustomDataToken
 from ocean_provider.user_nonce import UserNonce
 from ocean_provider.constants import BaseURLs
 from ocean_provider.exceptions import BadRequestError
@@ -176,7 +174,7 @@ def check_required_attributes(required_attributes, data, method):
 
 
 def validate_order(sender, token_address, num_tokens, tx_id, did, service_id):
-    dt_contract = CustomDataToken(token_address)
+    dt_contract = DataToken(token_address)
 
     try:
         tx, order_event, transfer_event = dt_contract.verify_order_tx(
