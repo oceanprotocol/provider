@@ -21,7 +21,7 @@ def get_artifacts_path(config):
         if os.getenv('VIRTUAL_ENV'):
             path = os.path.join(os.getenv('VIRTUAL_ENV'), 'artifacts')
         else:
-            path = os.path.join(site.PREFIXES[0], 'artifacts')
+            plath = os.path.join(site.PREFIXES[0], 'artifacts')
 
     print(f'get_artifacts_path: {config.artifacts_path}, {path}, {site.PREFIXES[0]}')
     return path

@@ -111,7 +111,6 @@ def simple_flow_consume():
         # TODO: Enable this check for the token transfer.
         # validate_order(
         #     consumer,
-        #     provider_acc.address,
         #     dt_address,
         #     1,
         #     tx_id
@@ -353,10 +352,8 @@ def download():
         if did.startswith('did:'):
             did = add_0x_prefix(did_to_id(did))
 
-        minter = get_datatoken_minter(asset, token_address)
         _tx, _order_log, _transfer_log = validate_order(
             consumer_address,
-            minter,
             token_address,
             int(service.get_cost()),
             tx_id,
@@ -665,10 +662,8 @@ def compute_start_job():
         # Verify that  the number of required tokens has been
         # transferred to the provider's wallet.
 
-        minter = get_datatoken_minter(asset, token_address)
         _tx, _order_log, _transfer_log = validate_order(
             consumer_address,
-            minter,
             token_address,
             int(service.get_cost()),
             tx_id,

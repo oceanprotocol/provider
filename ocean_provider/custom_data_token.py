@@ -3,7 +3,6 @@ from ocean_lib.models.data_token import DataToken
 from ocean_lib.ocean.util import from_base_18, to_base_18
 from ocean_lib.web3_internal.event_filter import EventFilter
 from ocean_lib.web3_internal.wallet import Wallet
-from ocean_utils.did import did_to_id_bytes
 
 
 class CustomDataToken(DataToken):
@@ -32,12 +31,13 @@ class CustomDataToken(DataToken):
 
         return logs[0]
 
-    def verify_order_tx(self, web3, tx_id, did, service_id, amount_base, sender, receiver):
+    def verify_order_tx(self, web3, tx_id, did, service_id, amount_base, sender):
         event = getattr(self.events, self.ORDER_STARTED_EVENT)
         tx_receipt = self.get_tx_receipt(tx_id)
         if tx_receipt.status == 0:
             raise AssertionError(f'order transaction failed.')
 
+        receiver = self.contract_concise.minter()
         event_logs = event().processReceipt(tx_receipt)
         order_log = event_logs[0] if event_logs else None
         if not order_log:
@@ -52,8 +52,10 @@ class CustomDataToken(DataToken):
                                  f'requested: (did={did}, serviceId={service_id}\n'
                                  f'event: (did={order_log.args.did.hex()}, serviceId={order_log.args.serviceId}')
 
-        if order_log.args.receiver != receiver:
-            raise AssertionError(f'The order event receiver does not match the expected value.')
+        target_amount = amount_base - self.calculate_fee(amount_base, self.OPF_FEE_PERCENTAGE)
+        if order_log.args.mrktFeeCollector and order_log.args.marketFee > 0:
+            assert order_log.args.marketFee <= (self.calculate_fee(amount_base, self.MAX_MARKET_FEE_PERCENTAGE) + 5)
+            target_amount = target_amount - order_log.args.marketFee
 
         # verify sender of the tx using the Tx record
         tx = web3.eth.getTransaction(tx_id)
@@ -72,17 +74,16 @@ class CustomDataToken(DataToken):
             raise AssertionError(f'receiver {receiver} is not found in the transfer events.')
         transfers = sorted(receiver_to_transfers[receiver], key=lambda x: x.args.value)
         total = sum(tr.args.value for tr in transfers)
-        if total < (amount_base - 5):
+        if total < (target_amount - 5):
             raise ValueError(f'transferred value does meet the service cost: '
-                             f'service.cost-fee={from_base_18(amount_base)}, '
+                             f'service.cost - fees={from_base_18(target_amount)}, '
                              f'transferred value={from_base_18(total)}')
         return tx, order_log, transfers[-1]
 
-    def startOrder(self, receiver: str, amount: int, did: str, serviceId: int,
-                   feeCollector: str, feePercentage: int, from_wallet: Wallet):
+    def startOrder(self, amount: int, did: str, serviceId: int, mrktFeeCollector: str, from_wallet: Wallet):
         return self.send_transaction(
             'startOrder',
-            (receiver, amount, did, serviceId, feeCollector, feePercentage),
+            (amount, did, serviceId, mrktFeeCollector),
             from_wallet
         )
 
@@ -100,4 +101,8 @@ class CustomDataToken(DataToken):
 
     @staticmethod
     def calculate_max_fee(amount):
-        return int(amount * to_base_18(CustomDataToken.get_max_fee_percentage()) / to_base_18(1.0))
+        return CustomDataToken.calculate_fee(amount, CustomDataToken.get_max_fee_percentage())
+
+    @staticmethod
+    def calculate_fee(amount, percentage):
+        return int(amount * to_base_18(percentage) / to_base_18(1.0))

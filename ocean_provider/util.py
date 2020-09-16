@@ -175,32 +175,15 @@ def check_required_attributes(required_attributes, data, method):
     return None, None
 
 
-def validate_order(sender, receiver, token_address, num_tokens, tx_id, did, service_id):
+def validate_order(sender, token_address, num_tokens, tx_id, did, service_id):
     dt_contract = CustomDataToken(token_address)
-    target_value = num_tokens - dt_contract.calculate_max_fee(num_tokens)
 
     try:
         tx, order_event, transfer_event = dt_contract.verify_order_tx(
-            Web3Provider.get_web3(), tx_id, did, service_id, target_value, sender, receiver)
+            Web3Provider.get_web3(), tx_id, did, service_id, num_tokens, sender)
+        return tx, order_event, transfer_event
     except AssertionError:
         raise
-
-    block = tx['blockNumber']
-    assert block, f'invalid block number {block}'
-
-    balance = dt_contract.contract.functions.balanceOf(receiver).call(block_identifier=block-1)
-    try:
-        new_balance = dt_contract.contract.functions.balanceOf(receiver).call(block_identifier=block)
-        if not ((new_balance - balance) >= transfer_event.args.value) and sender != receiver:
-            raise AssertionError(f'Balance increment {from_base_18(new_balance - balance)} does not match the Transfer '
-                                 f'event value {from_base_18(transfer_event.args.value)}.')
-
-    except BlockNumberOutofRange as e:
-        print(f'Block number {block} out of range error: {e}.')
-    except AssertionError:
-        raise
-
-    return tx, order_event, transfer_event
 
 
 def validate_transfer_not_used_for_other_service(did, service_id, transfer_tx_id, consumer_address, token_address):
@@ -308,13 +291,10 @@ def build_stage_algorithm_dict(consumer_address, algorithm_did, algorithm_token_
             'algorithm_did requires both algorithm_token_address and algorithm_tx_id.'
 
         algo_asset = get_asset_for_data_token(algorithm_token_address, algorithm_did)
-        if receiver_address is None:
-            receiver_address = get_datatoken_minter(algo_asset, algorithm_token_address)
 
         service = ServiceAgreement.from_ddo(ServiceTypes.ASSET_ACCESS, algo_asset)
         _tx, _order_log, _transfer_log = validate_order(
             consumer_address,
-            receiver_address,
             algorithm_token_address,
             int(service.get_cost()),
             algorithm_tx_id,
