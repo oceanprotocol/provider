@@ -28,7 +28,7 @@ install_requirements = [
     'osmosis-on-premise-driver==0.1.0',
     'osmosis-ipfs-driver==0.1.0',
     'Werkzeug>=0.15.3',
-    'ocean-lib>=0.3.6',
+    'ocean-lib>=0.4.0',
     'requests_testadapter',
     'eciespy'
 ]
