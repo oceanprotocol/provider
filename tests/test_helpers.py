@@ -11,7 +11,7 @@ from pathlib import Path
 
 from ocean_lib.assets.asset import Asset
 from ocean_lib.models.data_token import DataToken
-from ocean_lib.models.ddo import DDOContract
+from ocean_lib.models.metadata import MetadataContract
 from ocean_lib.ocean.util import to_base_18
 from ocean_lib.web3_internal.wallet import Wallet
 from ocean_lib.web3_internal.web3_provider import Web3Provider
@@ -22,13 +22,12 @@ from ocean_lib.web3_internal.utils import add_ethereum_prefix_and_hash_msg
 from ocean_utils.utils.utilities import checksum
 from ocean_utils.ddo.metadata import MetadataMain
 from ocean_utils.aquarius.aquarius import Aquarius
-from ocean_utils.did import DID
 from ocean_utils.ddo.public_key_rsa import PUBLIC_KEY_TYPE_RSA
 from ocean_utils.agreements.service_factory import ServiceDescriptor, ServiceFactory
 
 from ocean_provider.constants import BaseURLs
-from ocean_provider.utils.basics import get_datatoken_minter
-from ocean_provider.utils.data_token import get_asset_for_data_token
+from ocean_provider.util import get_metadata_url
+from ocean_provider.utils.basics import get_datatoken_minter, get_asset_from_metadatastore
 
 
 def get_publisher_wallet():
@@ -112,8 +111,8 @@ def get_registered_ddo(client, wallet, metadata, service_descriptor):
     else:
         factory_contract = new_factory_contract()
 
-    ddo_contract_address = addresses.get(DDOContract.CONTRACT_NAME)
-    ddo_contract = DDOContract(ddo_contract_address)
+    ddo_contract_address = addresses.get(MetadataContract.CONTRACT_NAME)
+    metadata_contract = MetadataContract(ddo_contract_address)
 
     tx_id = factory_contract.createToken(
         metadata_store_url, 'DataToken1', 'DT1', to_base_18(1000000), wallet
@@ -143,7 +142,7 @@ def get_registered_ddo(client, wallet, metadata, service_descriptor):
     # Adding proof to the ddo.
     ddo.add_proof(checksums, wallet)
 
-    did = ddo.assign_did(DID.did(ddo.proof['checksum']))
+    did = ddo.assign_did(f'did:op:{ddo.data_token_address}')
     ddo_service_endpoint.replace('{did}', did)
     services[0].set_service_endpoint(ddo_service_endpoint)
 
@@ -159,13 +158,6 @@ def get_registered_ddo(client, wallet, metadata, service_descriptor):
     ddo.add_public_key(did, wallet.address)
 
     ddo.add_authentication(did, PUBLIC_KEY_TYPE_RSA)
-
-    try:
-        _oldddo = aqua.get_asset_ddo(ddo.did)
-        if _oldddo:
-            aqua.retire_asset_ddo(ddo.did)
-    except ValueError:
-        pass
 
     # if not plecos.is_valid_dict_local(ddo.metadata):
     #     print(f'invalid metadata: {plecos.validate_dict_local(ddo.metadata)}')
@@ -188,14 +180,14 @@ def get_registered_ddo(client, wallet, metadata, service_descriptor):
     block = web3.eth.blockNumber
     try:
         data = lzma.compress(web3.toBytes(text=ddo.as_text()))
-        tx_id = ddo_contract.create(ddo.asset_id, bytes([1]), data, wallet)
-        if not ddo_contract.verify_tx(tx_id):
+        tx_id = metadata_contract.create(ddo.asset_id, bytes([1]), data, wallet)
+        if not metadata_contract.verify_tx(tx_id):
             raise AssertionError(f'create DDO on-chain failed, transaction status is 0. Transaction hash is {tx_id}')
     except Exception as e:
         print(f'error publishing ddo {ddo.did} in Aquarius: {e}')
         raise
 
-    log = ddo_contract.get_event_log(ddo_contract.EVENT_DDO_CREATED, block, ddo.asset_id, 30)
+    log = metadata_contract.get_event_log(metadata_contract.EVENT_METADATA_CREATED, block, ddo.asset_id, 30)
     assert log, f'no ddo created event.'
 
     ddo = wait_for_ddo(aqua, ddo.did, 15)
@@ -421,7 +413,7 @@ def _check_job_id(client, job_id, did, token_address, wait_time=20):
 
     assert did, f'Compute job has no results, job info {job_info}.'
     # check results ddo
-    ddo = get_asset_for_data_token(token_address, did)
+    ddo = get_asset_from_metadatastore(get_metadata_url(), did)
     assert ddo, f'Failed to resolve ddo for did {did}'
 
 
@@ -510,6 +502,7 @@ def send_order(client, ddo, datatoken, service, cons_wallet):
     assert tx_params['dataToken'] == ddo.as_dictionary()['dataToken']
     assert nonce is not None, f'expecting a `nonce` value in the response, got {nonce}'
     # Transfer tokens to provider account
-    tx_id = datatoken.startOrder(num_tokens, ddo.asset_id, service.index, '0xF9f2DB837b3db03Be72252fAeD2f6E0b73E428b9', cons_wallet)
-    datatoken.verify_order_tx(web3, tx_id, ddo.asset_id, service.index, num_tokens, cons_wallet.address)
+    amount = to_base_18(num_tokens)
+    tx_id = datatoken.startOrder(amount, ddo.asset_id, service.index, '0xF9f2DB837b3db03Be72252fAeD2f6E0b73E428b9', cons_wallet)
+    datatoken.verify_order_tx(web3, tx_id, ddo.asset_id, service.index, amount, cons_wallet.address)
     return tx_id

@@ -276,7 +276,7 @@ def initialize():
         approve_params = {
             "from": consumer_address,
             "to": minter,
-            "numTokens": int(service.get_cost()),
+            "numTokens": float(service.get_cost()),
             "dataToken": token_address,
             "nonce": user_nonce.get_nonce(consumer_address)
         }
@@ -355,7 +355,7 @@ def download():
         _tx, _order_log, _transfer_log = validate_order(
             consumer_address,
             token_address,
-            int(service.get_cost()),
+            float(service.get_cost()),
             tx_id,
             did,
             service_id
@@ -665,7 +665,7 @@ def compute_start_job():
         _tx, _order_log, _transfer_log = validate_order(
             consumer_address,
             token_address,
-            int(service.get_cost()),
+            float(service.get_cost()),
             tx_id,
             add_0x_prefix(did_to_id(did)) if did.startswith('did:') else did,
             service_id

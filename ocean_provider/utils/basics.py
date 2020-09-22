@@ -5,6 +5,7 @@ import requests
 from ocean_lib.models.data_token import DataToken
 from ocean_lib.web3_internal.utils import get_wallet
 from ocean_lib.web3_internal.wallet import Wallet
+from ocean_utils.aquarius.aquarius import Aquarius
 from web3 import WebsocketProvider
 from ocean_utils.http_requests.requests_session import get_requests_session as _get_requests_session
 from requests_testadapter import Resp
@@ -118,3 +119,7 @@ class LocalFileAdapter(requests.adapters.HTTPAdapter):
 
         return self.build_response_from_file(request)
 
+
+def get_asset_from_metadatastore(metadata_url, document_id):
+    aqua = Aquarius(metadata_url)
+    return aqua.get_asset_ddo(document_id)
