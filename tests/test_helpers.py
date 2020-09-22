@@ -9,6 +9,7 @@ import time
 import uuid
 from pathlib import Path
 
+from eth_utils import remove_0x_prefix
 from ocean_lib.assets.asset import Asset
 from ocean_lib.models.data_token import DataToken
 from ocean_lib.models.metadata import MetadataContract
@@ -142,7 +143,7 @@ def get_registered_ddo(client, wallet, metadata, service_descriptor):
     # Adding proof to the ddo.
     ddo.add_proof(checksums, wallet)
 
-    did = ddo.assign_did(f'did:op:{ddo.data_token_address}')
+    did = ddo.assign_did(f'did:op:{remove_0x_prefix(ddo.data_token_address)}')
     ddo_service_endpoint.replace('{did}', did)
     services[0].set_service_endpoint(ddo_service_endpoint)
 
