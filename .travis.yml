@@ -15,6 +15,7 @@ before_install:
   - cd barge
   - git checkout v3
   - export AQUARIUS_VERSION=decentralized
+  - export CONTRACTS_VERSION=v0.4.3
   - bash -x start_ocean.sh --no-dashboard --no-provider 2>&1 > start_ocean.log &
   - cd ..
   - |
