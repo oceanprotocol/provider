@@ -8,6 +8,7 @@ from cgi import parse_header
 from eth_utils import add_0x_prefix
 from flask import Response
 from ocean_lib.models.data_token import DataToken
+from ocean_lib.ocean.util import to_base_18
 from ocean_lib.web3_internal.web3_provider import Web3Provider
 from ocean_utils.did import did_to_id
 from osmosis_driver_interface.osmosis import Osmosis
@@ -20,11 +21,14 @@ from ocean_provider.user_nonce import UserNonce
 from ocean_provider.constants import BaseURLs
 from ocean_provider.exceptions import BadRequestError
 from ocean_provider.utils.accounts import verify_signature
-from ocean_provider.utils.basics import get_config, get_provider_wallet, get_datatoken_minter
-from ocean_provider.utils.data_token import get_asset_for_data_token
+from ocean_provider.utils.basics import get_config, get_provider_wallet, get_asset_from_metadatastore
 from ocean_provider.utils.encryption import do_decrypt
 
 logger = logging.getLogger(__name__)
+
+
+def get_metadata_url():
+    return get_config().aquarius_url
 
 
 def get_request_data(request, url_params_only=False):
@@ -177,8 +181,9 @@ def validate_order(sender, token_address, num_tokens, tx_id, did, service_id):
     dt_contract = DataToken(token_address)
 
     try:
+        amount = to_base_18(num_tokens)
         tx, order_event, transfer_event = dt_contract.verify_order_tx(
-            Web3Provider.get_web3(), tx_id, did, service_id, num_tokens, sender)
+            Web3Provider.get_web3(), tx_id, did, service_id, amount, sender)
         return tx, order_event, transfer_event
     except AssertionError:
         raise
@@ -232,7 +237,7 @@ def process_consume_request(
     service_type = data.get('serviceType')
 
     # grab asset for did from the metadatastore associated with the Data Token address
-    asset = get_asset_for_data_token(token_address, did)
+    asset = get_asset_from_metadatastore(get_metadata_url(), did)
     service = ServiceAgreement.from_ddo(service_type, asset)
     if service.type != service_type:
         raise AssertionError(
@@ -288,13 +293,13 @@ def build_stage_algorithm_dict(consumer_address, algorithm_did, algorithm_token_
         assert algorithm_token_address and algorithm_tx_id, \
             'algorithm_did requires both algorithm_token_address and algorithm_tx_id.'
 
-        algo_asset = get_asset_for_data_token(algorithm_token_address, algorithm_did)
+        algo_asset = get_asset_from_metadatastore(get_metadata_url(), algorithm_did)
 
         service = ServiceAgreement.from_ddo(ServiceTypes.ASSET_ACCESS, algo_asset)
         _tx, _order_log, _transfer_log = validate_order(
             consumer_address,
             algorithm_token_address,
-            int(service.get_cost()),
+            float(service.get_cost()),
             algorithm_tx_id,
             add_0x_prefix(did_to_id(algorithm_did)) if algorithm_did.startswith('did:') else algorithm_did,
             service.index
