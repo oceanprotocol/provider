@@ -504,6 +504,6 @@ def send_order(client, ddo, datatoken, service, cons_wallet):
     assert nonce is not None, f'expecting a `nonce` value in the response, got {nonce}'
     # Transfer tokens to provider account
     amount = to_base_18(num_tokens)
-    tx_id = datatoken.startOrder(amount, service.index, '0xF9f2DB837b3db03Be72252fAeD2f6E0b73E428b9', cons_wallet)
+    tx_id = datatoken.startOrder(cons_wallet.address, amount, service.index, '0xF9f2DB837b3db03Be72252fAeD2f6E0b73E428b9', cons_wallet)
     datatoken.verify_order_tx(web3, tx_id, ddo.asset_id, service.index, amount, cons_wallet.address)
     return tx_id
