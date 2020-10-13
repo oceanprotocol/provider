@@ -155,7 +155,6 @@ def encrypt():
           type: object
           required:
             - documentId
-            - signature
             - document
             - publisherAddress:
           properties:
@@ -163,10 +162,6 @@ def encrypt():
               description: Identifier of the asset to be registered in ocean.
               type: string
               example: 'did:op:08a429b8529856d59867503f8056903a680935a76950bb9649785cc97869a43d'
-            signature:
-              description: Publisher signature of the documentId
-              type: string
-              example: ''
             document:
               description: document
               type: string
@@ -185,7 +180,6 @@ def encrypt():
     """
     required_attributes = [
         'documentId',
-        'signature',
         'document',
         'publisherAddress'
     ]
@@ -197,15 +191,11 @@ def encrypt():
         return jsonify(error=msg), status
 
     did = data.get('documentId')
-    signature = data.get('signature')
     document = json.dumps(json.loads(
         data.get('document')), separators=(',', ':'))
     publisher_address = data.get('publisherAddress')
 
     try:
-        # Raises ValueError when signature is invalid
-        verify_signature(publisher_address, signature, did, user_nonce.get_nonce(publisher_address))
-
         encrypted_document = do_encrypt(
             document,
             provider_wallet,
@@ -220,18 +210,12 @@ def encrypt():
             headers={'content-type': 'application/json'}
         )
 
-    except InvalidSignatureError as e:
-        msg = f'Publisher signature failed verification: {e}'
-        logger.error(msg, exc_info=1)
-        return jsonify(error=msg), 401
-
     except Exception as e:
         logger.error(
             f'Error: {e}. \n'
             f'providerAddress={provider_wallet.address}\n'
             f'Payload was: documentId={did}, '
-            f'publisherAddress={publisher_address},'
-            f'signature={signature}',
+            f'publisherAddress={publisher_address}',
             exc_info=1
         )
         return jsonify(error=e), 500
