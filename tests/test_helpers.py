@@ -191,7 +191,7 @@ def get_registered_ddo(client, wallet, metadata, service_descriptor):
     log = metadata_contract.get_event_log(metadata_contract.EVENT_METADATA_CREATED, block, ddo.asset_id, 30)
     assert log, f'no ddo created event.'
 
-    ddo = wait_for_ddo(aqua, ddo.did, 15)
+    ddo = wait_for_ddo(aqua, ddo.did)
     assert ddo, f'resolve did {ddo.did} failed.'
 
     return ddo
