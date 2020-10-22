@@ -266,12 +266,15 @@ def process_compute_request(data, user_nonce: UserNonce, require_signature: bool
     did = data.get('documentId')
     owner = data.get('consumerAddress')
     job_id = data.get('jobId')
+    tx_id = data.get('transferTxId')
     body = dict()
     body['providerAddress'] = provider_wallet.address
     if owner is not None:
         body['owner'] = owner
     if job_id is not None:
         body['jobId'] = job_id
+    if tx_id is not None:
+        body['agreementId'] = tx_id
     if did is not None:
         body['documentId'] = did
 
