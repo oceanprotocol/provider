@@ -774,7 +774,7 @@ def compute_start_job():
             'workflow': workflow,
             'providerSignature': Web3Helper.sign_hash(msg_hash, provider_wallet),
             'documentId': did,
-            'agreementId': did,
+            'agreementId': tx_id,
             'owner': consumer_address,
             'providerAddress': provider_wallet.address
         }
