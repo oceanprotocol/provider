@@ -129,7 +129,7 @@ def simple_flow_consume():
             f'consumerAddress={consumer}',
             exc_info=1
         )
-        return jsonify(error=e), 500
+        return jsonify(error=str(e)), 500
 
 
 @services.route('/encrypt', methods=['POST'])
@@ -218,7 +218,7 @@ def encrypt():
             f'publisherAddress={publisher_address}',
             exc_info=1
         )
-        return jsonify(error=e), 500
+        return jsonify(error=str(e)), 500
 
 
 @services.route('/initialize', methods=['GET'])
@@ -276,7 +276,7 @@ def initialize():
             f'Payload was: {data}',
             exc_info=1
         )
-        return jsonify(error=e), 500
+        return jsonify(error=str(e)), 500
 
 
 @services.route('/download', methods=['GET'])
@@ -375,7 +375,7 @@ def download():
             f'serviceType={service_type}',
             exc_info=1
         )
-        return jsonify(error=e), 500
+        return jsonify(error=str(e)), 500
 
 
 @services.route('/compute', methods=['DELETE'])
@@ -431,7 +431,7 @@ def compute_delete_job():
         )
 
     except BadRequestError as e:
-        return jsonify(error=e), 400
+        return jsonify(error=str(e)), 400
 
     except InvalidSignatureError as e:
         msg = f'Consumer signature failed verification: {e}'
@@ -500,7 +500,7 @@ def compute_stop_job():
         )
 
     except BadRequestError as e:
-        return jsonify(error=e), 400
+        return jsonify(error=str(e)), 400
 
     except InvalidSignatureError as e:
         msg = f'Consumer signature failed verification: {e}'
@@ -557,20 +557,41 @@ def compute_get_status_job():
     """
     data = get_request_data(request)
     try:
-        body = process_compute_request(data, user_nonce)
+        signed_request = False
+        try:
+            body = process_compute_request(data, user_nonce)
+            signed_request = True
+        except Exception:
+            body = process_compute_request(data, user_nonce, require_signature=False)
+
         response = requests_session.get(
             get_compute_endpoint(),
             params=body,
             headers={'content-type': 'application/json'})
         user_nonce.increment_nonce(body['owner'])
+        _response = response.content
+        # Filter status info if signature is not given or failed validation
+        if not signed_request:
+            resp_content = json.loads(response.content.decode('utf-8'))
+            if not isinstance(resp_content, list):
+                resp_content = [resp_content]
+            _response = []
+            keys_to_filter = ['resultsUrl', 'algorithmLogUrl', 'resultsDid', 'owner', ]
+            for job_info in resp_content:
+                for k in keys_to_filter:
+                    job_info.pop(k)
+                _response.append(job_info)
+
+            _response = json.dumps(_response)
+
         return Response(
-            response.content,
+            _response,
             response.status_code,
             headers={'content-type': 'application/json'}
         )
 
     except BadRequestError as e:
-        return jsonify(error=e), 400
+        return jsonify(error=str(e)), 400
 
     except InvalidSignatureError as e:
         msg = f'Consumer signature failed verification: {e}'
