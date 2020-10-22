@@ -254,11 +254,10 @@ def process_consume_request(
     return asset, service, did, consumer_address, token_address
 
 
-def process_compute_request(data, user_nonce: UserNonce):
-    required_attributes = [
-        'signature',
-        'consumerAddress'
-    ]
+def process_compute_request(data, user_nonce: UserNonce, require_signature: bool=True):
+    required_attributes = ['consumerAddress']
+    if require_signature:
+        required_attributes.append('signature')
     msg, status = check_required_attributes(required_attributes, data, 'compute')
     if msg:
         raise BadRequestError(msg)
@@ -277,9 +276,10 @@ def process_compute_request(data, user_nonce: UserNonce):
         body['documentId'] = did
 
     # Consumer signature
-    signature = data.get('signature')
-    original_msg = f'{body.get("owner", "")}{body.get("jobId", "")}{body.get("documentId", "")}'
-    verify_signature(owner, signature, original_msg, user_nonce.get_nonce(owner))
+    if require_signature:
+        signature = data.get('signature')
+        original_msg = f'{body.get("owner", "")}{body.get("jobId", "")}{body.get("documentId", "")}'
+        verify_signature(owner, signature, original_msg, user_nonce.get_nonce(owner))
 
     msg_to_sign = f'{provider_wallet.address}{body.get("jobId", "")}{body.get("documentId", "")}'
     msg_hash = add_ethereum_prefix_and_hash_msg(msg_to_sign)

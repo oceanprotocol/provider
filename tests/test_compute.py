@@ -221,3 +221,20 @@ def test_compute(client):
     assert job_info, f'Failed to get job info for jobId {job_id}'
     print(f'got info for compute job {job_id}: {job_info}')
     assert job_info['statusText'] in get_possible_compute_job_status_text()
+
+    # get compute job status without signature should return limited status info
+    payload.pop('signature')
+    job_info = get_compute_job_info(client, compute_endpoint, payload)
+    assert job_info, f'Failed to get job status without signature: payload={payload}'
+    assert 'owner' not in job_info, 'owner should not be in this status response'
+    assert 'resultsUrl' not in job_info, 'resultsUrl should not be in this status response'
+    assert 'algorithmLogUrl' not in job_info, 'algorithmLogUrl should not be in this status response'
+    assert 'resultsDid' not in job_info, 'resultsDid should not be in this status response'
+
+    payload['signature'] = ''
+    job_info = get_compute_job_info(client, compute_endpoint, payload)
+    assert job_info, f'Failed to get job status without signature: payload={payload}'
+    assert 'owner' not in job_info, 'owner should not be in this status response'
+    assert 'resultsUrl' not in job_info, 'resultsUrl should not be in this status response'
+    assert 'algorithmLogUrl' not in job_info, 'algorithmLogUrl should not be in this status response'
+    assert 'resultsDid' not in job_info, 'resultsDid should not be in this status response'
