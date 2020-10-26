@@ -3,16 +3,15 @@ import site
 
 import requests
 from ocean_lib.models.data_token import DataToken
+from ocean_lib.ocean.util import get_web3_connection_provider
 from ocean_lib.web3_internal.utils import get_wallet
 from ocean_lib.web3_internal.wallet import Wallet
 from ocean_utils.aquarius.aquarius import Aquarius
-from web3 import WebsocketProvider
 from ocean_utils.http_requests.requests_session import get_requests_session as _get_requests_session
 from requests_testadapter import Resp
 
 from ocean_provider.config import Config
 from ocean_lib.web3_internal.contract_handler import ContractHandler
-from ocean_lib.web3_internal.web3_overrides.http_provider import CustomHTTPProvider
 from ocean_lib.web3_internal.web3_provider import Web3Provider
 
 
@@ -77,15 +76,8 @@ def setup_network(config_file=None):
     artifacts_path = get_artifacts_path(config)
 
     ContractHandler.set_artifacts_path(artifacts_path)
-
-    if network_url.startswith('http'):
-        provider = CustomHTTPProvider
-    elif network_url.startswith('wss'):
-        provider = WebsocketProvider
-    else:
-        raise AssertionError(f'Unsupported network url {network_url}. Must start with http or wss.')
-
-    Web3Provider.init_web3(provider=provider(network_url))
+    w3_connection_provider = get_web3_connection_provider(network_url)
+    Web3Provider.init_web3(provider=w3_connection_provider)
     if network_url.startswith('wss'):
         from web3.middleware import geth_poa_middleware
         Web3Provider.get_web3().middleware_stack.inject(geth_poa_middleware, layer=0)
