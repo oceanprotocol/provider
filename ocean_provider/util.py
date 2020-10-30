@@ -16,6 +16,7 @@ from ocean_lib.web3_internal.utils import add_ethereum_prefix_and_hash_msg
 from ocean_lib.web3_internal.web3helper import Web3Helper
 from ocean_utils.agreements.service_agreement import ServiceAgreement
 from ocean_utils.agreements.service_types import ServiceTypes
+from websockets import ConnectionClosed
 
 from ocean_provider.user_nonce import UserNonce
 from ocean_provider.constants import BaseURLs
@@ -180,13 +181,18 @@ def check_required_attributes(required_attributes, data, method):
 def validate_order(sender, token_address, num_tokens, tx_id, did, service_id):
     dt_contract = DataToken(token_address)
 
-    try:
-        amount = to_base_18(num_tokens)
-        tx, order_event, transfer_event = dt_contract.verify_order_tx(
-            Web3Provider.get_web3(), tx_id, did, service_id, amount, sender)
-        return tx, order_event, transfer_event
-    except AssertionError:
-        raise
+    amount = to_base_18(num_tokens)
+    num_tries = 3
+    i = 0
+    while i < num_tries:
+        i += 1
+        try:
+            tx, order_event, transfer_event = dt_contract.verify_order_tx(
+                Web3Provider.get_web3(), tx_id, did, service_id, amount, sender)
+            return tx, order_event, transfer_event
+        except ConnectionClosed:
+            if i == num_tries:
+                raise
 
 
 def validate_transfer_not_used_for_other_service(did, service_id, transfer_tx_id, consumer_address, token_address):
