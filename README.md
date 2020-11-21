@@ -1,4 +1,4 @@
-# provider-py
+# provider
 REST API for provider of data services
 
 This is part of the Ocean Protocol V3 tools.
@@ -12,7 +12,7 @@ Uses the rinkeby network with a remote metadatastore instance running at https:/
 
 ```bash
 git clone git@github.com:oceanprotocol/provider.git
-cd provider-py/
+cd provider/
 
 virtualenv venv -p python3.6
 source venv/bin/activate 
@@ -37,8 +37,8 @@ flask run --port=8030
 
 #### 1. Clone the repo
 ```bash
-git clone git@github.com:oceanprotocol/provider-py.git
-cd provider-py/
+git clone git@github.com:oceanprotocol/provider.git
+cd provider/
 ```
 
 #### 2. Virtual env (optional)
