@@ -11,7 +11,7 @@ This is feature complete and is a BETA version.
 Uses the rinkeby network with a remote metadatastore instance running at https://aquarius.marketplace.dev-ocean.com 
 
 ```bash
-git clone git@github.com:oceanprotocol/provider-py.git
+git clone git@github.com:oceanprotocol/provider.git
 cd provider-py/
 
 virtualenv venv -p python3.6
