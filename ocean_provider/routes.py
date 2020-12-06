@@ -3,6 +3,8 @@
 import json
 import logging
 import os
+import string
+import requests
 
 from eth_utils import add_0x_prefix
 from flask import Blueprint, jsonify, request, Response
@@ -277,6 +279,33 @@ def initialize():
             exc_info=1
         )
         return jsonify(error=str(e)), 500
+
+
+@services.route('/checkURL', methods=['GET'])
+def checkURL(url: string):
+    """Retrives the Content type and the
+    Content length of a file sent through an URL.
+
+    """
+    r = requests.get(url)
+    try:
+        if r.status_code != 200:
+            print(r.status_code)
+            error_res = {"status": "error",
+                         "result": {"contentType": "",
+                                    "contentLength": ""
+                                    }
+                         }
+            return error_res
+    except requests.exceptions.HTTPError as e:
+        return "Error: " + str(e)
+
+    success_res = {"status": "success",
+                   "result": {"contentType": r.headers["Content-Type"],
+                              "contentLength": r.headers["Content-Length"]
+                              }
+                   }
+    return success_res
 
 
 @services.route('/download', methods=['GET'])
