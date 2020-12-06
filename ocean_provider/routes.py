@@ -3,6 +3,7 @@
 import json
 import logging
 import os
+import requests
 
 from eth_utils import add_0x_prefix
 from flask import Blueprint, jsonify, request, Response
@@ -219,6 +220,73 @@ def encrypt():
             exc_info=1
         )
         return jsonify(error=str(e)), 500
+
+
+@services.route('/checkURL', methods=['POST'])
+def checkURL():
+    """Retrieves Content-Type and Content-Length from the given URL.
+
+    This can be used by the publisher of an asset to check basic information
+    about the URL. For now, this information consists of the Content-Type
+    and Content-Length of the request, using primarily OPTIONS, with fallback
+    to GET. In the future, we will add a hash to make sure that the file was
+    not tampered with at consumption time.
+
+    tags:
+      - services
+
+    responses:
+      200:
+        description: the URL could be analysed (returns the result).
+      204:
+        description: the URL could be analysed, no data was found (no result).
+      400:
+        description: the URL could not be analysed (no result).
+
+    return: the URL's Content-type and ContentLength
+    """
+    required_attributes = ['url', ]
+    data = get_request_data(request)
+
+    msg, status = check_required_attributes(
+        required_attributes, data, 'checkURL'
+    )
+    if msg:
+        return jsonify(error=msg), status
+
+    url = data['url']
+    error_json = jsonify(
+        status="error",
+        result={"contentLength":"", "contentType":""}
+    )
+
+    try:
+        result = requests.options(url)
+    except requests.exceptions.MissingSchema:
+        return error_json, 400
+    except requests.exceptions.ConnectionError:
+        return error_json, 400
+
+    if result.status_code != 200:
+        # fallback on GET request
+        result = requests.get(url)
+
+    if result.status_code != 200:
+        return error_json, 400
+
+    contentType = result.headers.get('Content-Type')
+    contentLength = result.headers.get('Content-Length')
+
+    if not contentType and not contentLength:
+        return error_json, 204
+
+    return jsonify(
+        status="success",
+        result={
+            "contentLength": contentLength,
+            "contentType": contentType
+        }
+    )
 
 
 @services.route('/initialize', methods=['GET'])
