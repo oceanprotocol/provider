@@ -287,25 +287,27 @@ def checkURL(url: string):
     Content length of a file sent through an URL.
 
     """
-    r = requests.get(url)
+    response = requests.get(url)
     try:
-        if r.status_code != 200:
-            print(r.status_code)
-            error_res = {"status": "error",
-                         "result": {"contentType": "",
-                                    "contentLength": ""
-                                    }
-                         }
-            return error_res
-    except requests.exceptions.HTTPError as e:
-        return "Error: " + str(e)
+        success_res = {"status": "success",
+                       "result": {"contentType": response.headers["Content-Type"],
+                                  "contentLength": response.headers["Content-Length"]
+                                  }
+                       }
 
-    success_res = {"status": "success",
-                   "result": {"contentType": r.headers["Content-Type"],
-                              "contentLength": r.headers["Content-Length"]
-                              }
-                   }
-    return success_res
+        return Response(json.dumps(success_res),
+                        200,
+                        headers={'content-type': 'application/json'})
+
+    except requests.exceptions.HTTPError:
+        error_res = {"status": "error",
+                     "result": {"contentType": "",
+                                "contentLength": ""
+                                }
+                     }
+        return Response(json.dumps(error_res),
+                        response.status_code,
+                        headers={'content-type': 'application/json'})
 
 
 @services.route('/download', methods=['GET'])
