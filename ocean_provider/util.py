@@ -78,8 +78,11 @@ def build_download_response(request, requests_session, url, download_url, conten
                 "Content-Disposition": f'attachment;filename={filename}',
                 "Access-Control-Expose-Headers": f'Content-Disposition'
             }
-
+            def generate(content):
+               yield io.BytesIO(response.content).read(4096)
+               
         return Response(
+            #generate(response.content),
             io.BytesIO(response.content).read(),
             response.status_code,
             headers=download_response_headers,
