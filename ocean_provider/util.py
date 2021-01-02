@@ -79,7 +79,7 @@ def build_download_response(request, requests_session, url, download_url, conten
                 "Access-Control-Expose-Headers": f'Content-Disposition'
             }
             def generate(content):
-               yield io.BytesIO(response.content).read(4096)
+               yield io.BytesIO(content).read(4096)
 
         return Response(
             generate(response.content),
