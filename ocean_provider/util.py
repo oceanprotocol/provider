@@ -6,7 +6,7 @@ import os
 from cgi import parse_header
 
 from eth_utils import add_0x_prefix
-from flask import stream_with_context, Response
+from flask import Response
 from ocean_lib.models.data_token import DataToken
 from ocean_lib.ocean.util import to_base_18
 from ocean_lib.web3_internal.web3_provider import Web3Provider
@@ -78,15 +78,13 @@ def build_download_response(request, requests_session, url, download_url, conten
                 "Content-Disposition": f'attachment;filename={filename}',
                 "Access-Control-Expose-Headers": f'Content-Disposition'
             }
-            def generate(content):
-                while True:
-                    chunk = io.BytesIO(content).read(4096)
-                    if not chunk:
-                       break
-                    yield chunk
+            def generate(response):
+                for chunk in response.iter_content(chunk_size=4096):
+                    if chunk:
+                        yield chunk
 
         return Response(
-            stream_with_context(generate(response.content)),
+            generate(response),
             response.status_code,
             headers=download_response_headers,
             content_type=content_type
