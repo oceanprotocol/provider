@@ -79,7 +79,11 @@ def build_download_response(request, requests_session, url, download_url, conten
                 "Access-Control-Expose-Headers": f'Content-Disposition'
             }
             def generate(content):
-               yield io.BytesIO(content).read(4096)
+                while True:
+                    chunk = io.BytesIO(content).read(4096)
+                    if not chunk:
+                       break
+                    yield chunk
 
         return Response(
             generate(response.content),
