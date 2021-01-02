@@ -6,7 +6,7 @@ import os
 from cgi import parse_header
 
 from eth_utils import add_0x_prefix
-from flask import Response
+from flask import stream_with_context, Response
 from ocean_lib.models.data_token import DataToken
 from ocean_lib.ocean.util import to_base_18
 from ocean_lib.web3_internal.web3_provider import Web3Provider
@@ -86,7 +86,7 @@ def build_download_response(request, requests_session, url, download_url, conten
                     yield chunk
 
         return Response(
-            generate(response.content),
+            stream_with_context(generate(response.content)),
             response.status_code,
             headers=download_response_headers,
             content_type=content_type
