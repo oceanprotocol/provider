@@ -80,10 +80,9 @@ def build_download_response(request, requests_session, url, download_url, conten
             }
             def generate(content):
                yield io.BytesIO(response.content).read(4096)
-               
+
         return Response(
-            #generate(response.content),
-            io.BytesIO(response.content).read(),
+            generate(response.content),
             response.status_code,
             headers=download_response_headers,
             content_type=content_type
