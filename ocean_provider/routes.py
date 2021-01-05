@@ -269,7 +269,7 @@ def checkURL():
 
     if result.status_code != 200:
         # fallback on GET request
-        result = requests.get(url)
+        result = requests.get(url, stream=True)
 
     if result.status_code != 200:
         return error_json, 400
