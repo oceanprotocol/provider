@@ -3,6 +3,7 @@
 import json
 import logging
 import os
+import requests
 
 from eth_utils import add_0x_prefix
 from flask import Blueprint, jsonify, request, Response
@@ -250,6 +251,16 @@ def initialize():
             'initialize',
             require_signature=False
         )
+
+        result = requests.get(asset, stream=True)
+
+        if result.status_code != 200:
+            logger.error(
+                f'Error: Asset does not exist. \n'
+                f'Payload was: {data}',
+                exc_info=1
+            )
+            return jsonify(error=str(e)), 500
 
         minter = get_datatoken_minter(asset, token_address)
 
