@@ -13,11 +13,19 @@ from ocean_provider.constants import BaseURLs
 from ocean_provider.util import build_stage_output_dict
 
 from tests.test_helpers import (
+    get_algorithm_ddo,
     get_consumer_wallet,
+    get_compute_job_info,
+    get_dataset_ddo_with_compute_service_no_rawalgo,
+    get_dataset_ddo_with_compute_service_specific_algo_dids,
+    get_dataset_ddo_with_compute_service,
+    get_dataset_with_invalid_url_ddo,
+    get_possible_compute_job_status_text,
     get_publisher_wallet,
-    get_dataset_ddo_with_compute_service_no_rawalgo, get_dataset_ddo_with_compute_service_specific_algo_dids, get_algorithm_ddo,
-    get_dataset_ddo_with_compute_service, get_compute_job_info, get_possible_compute_job_status_text, mint_tokens_and_wait, get_nonce,
-    send_order)
+    get_nonce,
+    mint_tokens_and_wait,
+    send_order
+)
 
 SERVICE_ENDPOINT = BaseURLs.BASE_PROVIDER_URL + '/services/download'
 
@@ -30,6 +38,7 @@ def test_compute_norawalgo_allowed(client):
     dataset_ddo_w_compute_service = get_dataset_ddo_with_compute_service_no_rawalgo(client, pub_wallet)
     did = dataset_ddo_w_compute_service.did
     ddo = dataset_ddo_w_compute_service
+
     data_token = dataset_ddo_w_compute_service.data_token_address
     dt_contract = DataToken(data_token)
     mint_tokens_and_wait(dt_contract, cons_wallet, pub_wallet)
@@ -260,3 +269,15 @@ def test_check_url_bad(client):
     assert response.status == '400 BAD REQUEST'
     assert result['contentLength'] == ''
     assert result['contentType'] == ''
+
+
+def test_initialize_on_bad_url(client):
+    pub_wallet = get_publisher_wallet()
+    cons_wallet = get_consumer_wallet()
+
+    ddo = get_dataset_with_invalid_url_ddo(client, pub_wallet)
+    data_token = ddo.data_token_address
+    dt_contract = DataToken(data_token)
+    sa = ServiceAgreement.from_ddo(ServiceTypes.ASSET_ACCESS, ddo)
+
+    send_order(client, ddo, dt_contract, sa, cons_wallet, expect_failure=True)

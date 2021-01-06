@@ -310,7 +310,7 @@ def initialize():
                 f'Payload was: {data}',
                 exc_info=1
             )
-            return jsonify(error=str(e)), 500
+            return jsonify(error="Asset URL not found or not available."), 400
 
         minter = get_datatoken_minter(asset, token_address)
 
