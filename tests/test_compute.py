@@ -238,3 +238,25 @@ def test_compute(client):
     assert 'resultsUrl' not in job_info, 'resultsUrl should not be in this status response'
     assert 'algorithmLogUrl' not in job_info, 'algorithmLogUrl should not be in this status response'
     assert 'resultsDid' not in job_info, 'resultsDid should not be in this status response'
+
+
+def test_check_url_good(client):
+    request_url = BaseURLs.ASSETS_URL + '/checkURL'
+    data = { 'url': "http://xkcd.com/349/info.0.json" }
+    response = client.post(request_url, json=data)
+    result = response.get_json()['result']
+
+    assert response.status == '200 OK'
+    assert result['contentLength'] == '629'
+    assert result['contentType'] == 'application/json'
+
+
+def test_check_url_bad(client):
+    request_url = BaseURLs.ASSETS_URL + '/checkURL'
+    data = { 'url': "http://127.0.0.1/not_valid" }
+    response = client.post(request_url, json=data)
+    result = response.get_json()['result']
+
+    assert response.status == '400 BAD REQUEST'
+    assert result['contentLength'] == ''
+    assert result['contentType'] == ''

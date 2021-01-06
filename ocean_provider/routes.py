@@ -262,7 +262,7 @@ def checkURL():
         return jsonify(
             status="error",
             result={"contentLength":"", "contentType":""}
-        )
+        ), 400
 
     return jsonify(
         status="success",
