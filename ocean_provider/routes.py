@@ -3,7 +3,6 @@
 import json
 import logging
 import os
-import requests
 
 from eth_utils import add_0x_prefix
 from flask import Blueprint, jsonify, request, Response
@@ -42,6 +41,7 @@ from ocean_provider.util import (
     get_asset_download_urls,
     validate_transfer_not_used_for_other_service,
     process_compute_request,
+    check_url_details
 )
 from ocean_provider.utils.accounts import verify_signature
 from ocean_provider.utils.encryption import do_encrypt
@@ -255,37 +255,18 @@ def checkURL():
         return jsonify(error=msg), status
 
     url = data['url']
-    error_json = jsonify(
-        status="error",
-        result={"contentLength":"", "contentType":""}
-    )
 
-    try:
-        result = requests.options(url)
-    except requests.exceptions.MissingSchema:
-        return error_json, 400
-    except requests.exceptions.ConnectionError:
-        return error_json, 400
+    valid, details = check_url_details(url)
 
-    if result.status_code != 200:
-        # fallback on GET request
-        result = requests.get(url, stream=True)
-
-    if result.status_code != 200:
-        return error_json, 400
-
-    contentType = result.headers.get('Content-Type')
-    contentLength = result.headers.get('Content-Length')
-
-    if not contentType and not contentLength:
-        return error_json, 204
+    if not valid:
+        return jsonify(
+            status="error",
+            result={"contentLength":"", "contentType":""}
+        )
 
     return jsonify(
         status="success",
-        result={
-            "contentLength": contentLength,
-            "contentType": contentType
-        }
+        result=details
     )
 
 
@@ -312,12 +293,24 @@ def initialize():
         }
     """
     data = get_request_data(request)
+
     try:
         asset, service, did, consumer_address, token_address = process_consume_request(
             data,
             'initialize',
             require_signature=False
         )
+
+        url = get_asset_url_at_index(0, asset, provider_wallet)
+        valid, details = check_url_details(url)
+
+        if not valid:
+            logger.error(
+                f'Error: Asset URL not found or not available. \n'
+                f'Payload was: {data}',
+                exc_info=1
+            )
+            return jsonify(error=str(e)), 500
 
         minter = get_datatoken_minter(asset, token_address)
 
