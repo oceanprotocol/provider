@@ -397,6 +397,8 @@ def check_url_details(url):
     """
     try:
         result = requests.options(url)
+    except requests.exceptions.InvalidSchema:
+        return False, {}
     except requests.exceptions.MissingSchema:
         return False, {}
     except requests.exceptions.ConnectionError:
