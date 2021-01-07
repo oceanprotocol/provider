@@ -86,7 +86,6 @@ def simple_flow_consume():
         'transferTxId'
     ]
     data = get_request_data(request)
-
     msg, status = check_required_attributes(
         required_attributes, data, 'simple_flow_consume')
     if msg:

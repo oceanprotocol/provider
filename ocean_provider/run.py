@@ -3,7 +3,7 @@
 
 import configparser
 
-from flask import jsonify
+from flask import jsonify, url_for
 from flask_swagger import swagger
 from flask_swagger_ui import get_swaggerui_blueprint
 
@@ -25,11 +25,27 @@ def get_version():
 
 @app.route("/")
 def version():
+    """
+    Created a global dictionary
+    to store the services' routes.
+    It is open for modifications, by simply adding the service
+    name and the url for it.    """
+
     info = dict()
     info['software'] = Metadata.TITLE
     info['version'] = get_version()
     info['network-url'] = config.network_url
     info['provider-address'] = get_provider_wallet().address
+    # Added the expose endpoint. Here are the URLs to the
+    # existed endpoints. Check test_compute.py, in function
+    # test_compute_expose_endpoint.
+    info['servicesEndpoints'] = {
+        "access": url_for('services.download'),
+        "compute": url_for('services.compute_get_status_job'),
+        "nonce": url_for('services.get_user_nonce'),
+        "encrypt": url_for('services.encrypt'),
+        "initialize": url_for('services.initialize'),
+    }
     return jsonify(info)
 
 
