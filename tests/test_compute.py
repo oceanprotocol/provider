@@ -33,10 +33,6 @@ def test_compute_expose_endpoint(client):
     assert 'network-url' in result
     assert 'provider-address' in result
     assert res.status == '200 OK'
-    # The length of the result['servicesEndpoints']
-    # is hardcoded by now. If we will add another
-    # services, we need to increase the value of the
-    # length.
     assert len(result['servicesEndpoints']) == 5
 
 
@@ -96,7 +92,7 @@ def test_compute_norawalgo_allowed(client):
         data=json.dumps(payload),
         content_type='application/json'
     )
-    assert response.status == '400 BAD REQUEST', f'start compute job failed: {response.status} , {response.data}'
+    assert response.status == '400 BAD REQUEST', f'start compute job failed: {response.status} , { response.data}'
 
 
 def test_compute_specific_algo_dids(client):
@@ -152,6 +148,7 @@ def test_compute_specific_algo_dids(client):
 
 
 def test_compute(client):
+    
     pub_wallet = get_publisher_wallet()
     cons_wallet = get_consumer_wallet()
 

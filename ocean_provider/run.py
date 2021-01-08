@@ -26,10 +26,14 @@ def get_version():
 @app.route("/")
 def version():
     """
-    Created a global dictionary
-    to store the services' routes.
-    It is open for modifications, by simply adding the service
-    name and the url for it.    """
+    Contains the data necessary for user provider:
+        - software;
+        - version;
+        - network url;
+        - provider address;
+        - a dictionary with the existing endpoints
+        from routes.py;
+    """
 
     info = dict()
     info['software'] = Metadata.TITLE
