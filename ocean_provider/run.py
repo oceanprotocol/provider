@@ -3,7 +3,7 @@
 
 import configparser
 
-from flask import jsonify
+from flask import jsonify, url_for
 from flask_swagger import swagger
 from flask_swagger_ui import get_swaggerui_blueprint
 
@@ -25,11 +25,30 @@ def get_version():
 
 @app.route("/")
 def version():
+    """
+    Contains the provider data for an user:
+        - software;
+        - version;
+        - network url;
+        - provider address;
+        - services endpoints, which has all
+        the existing endpoints from route.py.
+    """
     info = dict()
     info['software'] = Metadata.TITLE
     info['version'] = get_version()
     info['network-url'] = config.network_url
     info['provider-address'] = get_provider_wallet().address
+    info['servicesEndpoints'] = {
+        'access': url_for('services.download'),
+        'compute': url_for('services.compute_get_status_job'),
+        'delete_job': url_for('services.compute_delete_job'),
+        'stop_job': url_for('services.compute_stop_job'),
+        'start_job': url_for('services.compute_start_job'),
+        'nonce': url_for('services.get_user_nonce'),
+        'encrypt': url_for('services.encrypt'),
+        'initialize': url_for('services.initialize'),
+    }
     return jsonify(info)
 
 

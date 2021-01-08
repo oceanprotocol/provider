@@ -15,11 +15,25 @@ from ocean_provider.util import build_stage_output_dict
 from tests.test_helpers import (
     get_consumer_wallet,
     get_publisher_wallet,
-    get_dataset_ddo_with_compute_service_no_rawalgo, get_dataset_ddo_with_compute_service_specific_algo_dids, get_algorithm_ddo,
-    get_dataset_ddo_with_compute_service, get_compute_job_info, get_possible_compute_job_status_text, mint_tokens_and_wait, get_nonce,
+    get_dataset_ddo_with_compute_service_no_rawalgo, get_dataset_ddo_with_compute_service_specific_algo_dids,
+    get_algorithm_ddo,
+    get_dataset_ddo_with_compute_service, get_compute_job_info, get_possible_compute_job_status_text,
+    mint_tokens_and_wait, get_nonce,
     send_order)
 
 SERVICE_ENDPOINT = BaseURLs.BASE_PROVIDER_URL + '/services/download'
+
+
+def test_compute_expose_endpoints(client):
+    get_response = client.get('/')
+    result = get_response.get_json()
+    assert 'servicesEndpoints' in result
+    assert 'software' in result
+    assert 'version' in result
+    assert 'network-url' in result
+    assert 'provider-address' in result
+    assert get_response.status == '200 OK'
+    assert len(result['servicesEndpoints']) == 8
 
 
 def test_compute_norawalgo_allowed(client):
@@ -78,7 +92,7 @@ def test_compute_norawalgo_allowed(client):
         data=json.dumps(payload),
         content_type='application/json'
     )
-    assert response.status == '400 BAD REQUEST', f'start compute job failed: {response.status} , { response.data}'
+    assert response.status == '400 BAD REQUEST', f'start compute job failed: {response.status} , {response.data}'
 
 
 def test_compute_specific_algo_dids(client):
@@ -130,11 +144,10 @@ def test_compute_specific_algo_dids(client):
         data=json.dumps(payload),
         content_type='application/json'
     )
-    assert response.status == '400 BAD REQUEST', f'start compute job failed: {response.status} , { response.data}'
+    assert response.status == '400 BAD REQUEST', f'start compute job failed: {response.status} , {response.data}'
 
 
 def test_compute(client):
-
     pub_wallet = get_publisher_wallet()
     cons_wallet = get_consumer_wallet()
 
