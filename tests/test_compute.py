@@ -148,7 +148,7 @@ def test_compute_specific_algo_dids(client):
 
 
 def test_compute(client):
-    
+
     pub_wallet = get_publisher_wallet()
     cons_wallet = get_consumer_wallet()
 
