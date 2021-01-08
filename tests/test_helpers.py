@@ -230,6 +230,14 @@ def get_dataset_with_invalid_url_ddo(client, wallet):
     return get_registered_ddo(client, wallet, metadata, service_descriptor)
 
 
+def get_dataset_with_ipfs_url_ddo(client, wallet):
+    metadata = get_ipfs_url_ddo()['service'][0]['attributes']
+    metadata['main']['files'][0]['checksum'] = str(uuid.uuid4())
+    service_descriptor = get_access_service_descriptor(wallet.address, metadata)
+    metadata[MetadataMain.KEY].pop('cost')
+    return get_registered_ddo(client, wallet, metadata, service_descriptor)
+
+
 def get_compute_service_descriptor(address, price, metadata):
     compute_service_attributes = {
         "main": {
@@ -467,6 +475,14 @@ def get_sample_ddo():
 
 def get_invalid_url_ddo():
     path = get_resource_path('ddo', 'ddo_sample_invalid_url.json')
+    assert path.exists(), f"{path} does not exist!"
+    with open(path, 'r') as file_handle:
+        metadata = file_handle.read()
+    return json.loads(metadata)
+
+
+def get_ipfs_url_ddo():
+    path = get_resource_path('ddo', 'ddo_sample_ipfs_url.json')
     assert path.exists(), f"{path} does not exist!"
     with open(path, 'r') as file_handle:
         metadata = file_handle.read()

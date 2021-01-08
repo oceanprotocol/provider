@@ -19,6 +19,7 @@ from tests.test_helpers import (
     get_dataset_ddo_with_compute_service_no_rawalgo,
     get_dataset_ddo_with_compute_service_specific_algo_dids,
     get_dataset_ddo_with_compute_service,
+    get_dataset_with_ipfs_url_ddo,
     get_dataset_with_invalid_url_ddo,
     get_possible_compute_job_status_text,
     get_publisher_wallet,
@@ -281,3 +282,15 @@ def test_initialize_on_bad_url(client):
     sa = ServiceAgreement.from_ddo(ServiceTypes.ASSET_ACCESS, ddo)
 
     send_order(client, ddo, dt_contract, sa, cons_wallet, expect_failure=True)
+
+
+def test_initialize_on_ipfs_url(client):
+    pub_wallet = get_publisher_wallet()
+    cons_wallet = get_consumer_wallet()
+
+    ddo = get_dataset_with_ipfs_url_ddo(client, pub_wallet)
+    data_token = ddo.data_token_address
+    dt_contract = DataToken(data_token)
+    sa = ServiceAgreement.from_ddo(ServiceTypes.ASSET_ACCESS, ddo)
+
+    send_order(client, ddo, dt_contract, sa, cons_wallet)
