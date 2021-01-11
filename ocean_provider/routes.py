@@ -41,6 +41,7 @@ from ocean_provider.util import (
     get_asset_download_urls,
     validate_transfer_not_used_for_other_service,
     process_compute_request,
+    check_url_details
 )
 from ocean_provider.utils.accounts import verify_signature
 from ocean_provider.utils.encryption import do_encrypt
@@ -221,6 +222,55 @@ def encrypt():
         return jsonify(error=str(e)), 500
 
 
+@services.route('/checkURL', methods=['POST'])
+def checkURL():
+    """Retrieves Content-Type and Content-Length from the given URL.
+
+    This can be used by the publisher of an asset to check basic information
+    about the URL. For now, this information consists of the Content-Type
+    and Content-Length of the request, using primarily OPTIONS, with fallback
+    to GET. In the future, we will add a hash to make sure that the file was
+    not tampered with at consumption time.
+
+    tags:
+      - services
+
+    responses:
+      200:
+        description: the URL could be analysed (returns the result).
+      204:
+        description: the URL could be analysed, no data was found (no result).
+      400:
+        description: the URL could not be analysed (no result).
+
+    return: the URL's Content-type and ContentLength
+    """
+    required_attributes = ['url', ]
+    data = get_request_data(request)
+
+    msg, status = check_required_attributes(
+        required_attributes, data, 'checkURL'
+    )
+    if msg:
+        return jsonify(error=msg), status
+
+    url = data['url']
+
+    download_url = get_download_url(url, app.config['CONFIG_FILE'])
+    valid, details = check_url_details(download_url)
+
+    if not valid:
+        return jsonify(
+            status="error",
+            result={"contentLength":"", "contentType":""}
+        ), 400
+
+    return jsonify(
+        status="success",
+        result=details
+    )
+
+
 @services.route('/initialize', methods=['GET'])
 def initialize():
     """Initialize a service request.
@@ -244,12 +294,25 @@ def initialize():
         }
     """
     data = get_request_data(request)
+
     try:
         asset, service, did, consumer_address, token_address = process_consume_request(
             data,
             'initialize',
             require_signature=False
         )
+
+        url = get_asset_url_at_index(0, asset, provider_wallet)
+        download_url = get_download_url(url, app.config['CONFIG_FILE'])
+        valid, details = check_url_details(download_url)
+
+        if not valid:
+            logger.error(
+                f'Error: Asset URL not found or not available. \n'
+                f'Payload was: {data}',
+                exc_info=1
+            )
+            return jsonify(error="Asset URL not found or not available."), 400
 
         minter = get_datatoken_minter(asset, token_address)
 

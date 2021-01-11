@@ -222,6 +222,22 @@ def get_sample_ddo_with_compute_service():
     return json.loads(metadata)
 
 
+def get_dataset_with_invalid_url_ddo(client, wallet):
+    metadata = get_invalid_url_ddo()['service'][0]['attributes']
+    metadata['main']['files'][0]['checksum'] = str(uuid.uuid4())
+    service_descriptor = get_access_service_descriptor(wallet.address, metadata)
+    metadata[MetadataMain.KEY].pop('cost')
+    return get_registered_ddo(client, wallet, metadata, service_descriptor)
+
+
+def get_dataset_with_ipfs_url_ddo(client, wallet):
+    metadata = get_ipfs_url_ddo()['service'][0]['attributes']
+    metadata['main']['files'][0]['checksum'] = str(uuid.uuid4())
+    service_descriptor = get_access_service_descriptor(wallet.address, metadata)
+    metadata[MetadataMain.KEY].pop('cost')
+    return get_registered_ddo(client, wallet, metadata, service_descriptor)
+
+
 def get_compute_service_descriptor(address, price, metadata):
     compute_service_attributes = {
         "main": {
@@ -457,6 +473,22 @@ def get_sample_ddo():
     return json.loads(metadata)
 
 
+def get_invalid_url_ddo():
+    path = get_resource_path('ddo', 'ddo_sample_invalid_url.json')
+    assert path.exists(), f"{path} does not exist!"
+    with open(path, 'r') as file_handle:
+        metadata = file_handle.read()
+    return json.loads(metadata)
+
+
+def get_ipfs_url_ddo():
+    path = get_resource_path('ddo', 'ddo_sample_ipfs_url.json')
+    assert path.exists(), f"{path} does not exist!"
+    with open(path, 'r') as file_handle:
+        metadata = file_handle.read()
+    return json.loads(metadata)
+
+
 def wait_for_ddo(ddo_store, did, timeout=30):
     start = time.time()
     ddo = None
@@ -475,7 +507,9 @@ def wait_for_ddo(ddo_store, did, timeout=30):
     return Asset(dictionary=ddo.as_dictionary())
 
 
-def send_order(client, ddo, datatoken, service, cons_wallet):
+def send_order(
+    client, ddo, datatoken, service, cons_wallet, expect_failure=False
+):
     web3 = Web3Provider.get_web3()
     init_endpoint = BaseURLs.ASSETS_URL + '/initialize'
     # initialize the service
@@ -489,9 +523,12 @@ def send_order(client, ddo, datatoken, service, cons_wallet):
 
     request_url = init_endpoint + '?' + '&'.join([f'{k}={v}' for k, v in payload.items()])
 
-    response = client.get(
-        request_url
-    )
+    response = client.get(request_url)
+
+    if expect_failure:
+        assert response.status == '400 BAD REQUEST'
+        return
+
     assert response.status == '200 OK'
 
     tx_params = response.json
