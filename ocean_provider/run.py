@@ -3,7 +3,7 @@
 
 import configparser
 
-from flask import jsonify, url_for
+from flask import jsonify
 from flask_swagger import swagger
 from flask_swagger_ui import get_swaggerui_blueprint
 
@@ -33,10 +33,10 @@ def version():
         - provider address;
         - services endpoints, which has all
         the existing endpoints from routes.py with
-        GET method only which are not in black_list_url.
+        GET method only which are not in blocked_url.
     """
     # not included URLs
-    black_list_url = ['services.simple_flow_consume']
+    blocked_url = ['services.simple_flow_consume']
     info = dict()
     info['software'] = Metadata.TITLE
     info['version'] = get_version()
@@ -45,7 +45,7 @@ def version():
     info['servicesEndpoints'] = dict(map(lambda url: (url.endpoint.replace('services.', ''), '%s' % url),
                                          filter(lambda url: url.endpoint.startswith('services.')
                                                             and 'GET' in url.methods
-                                                            and url.endpoint not in black_list_url,
+                                                            and url.endpoint not in blocked_url,
                                                 app.url_map.iter_rules())))
     return jsonify(info)
 
