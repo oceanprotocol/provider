@@ -32,23 +32,21 @@ def version():
         - network url;
         - provider address;
         - services endpoints, which has all
-        the existing endpoints from route.py.
+        the existing endpoints from routes.py with
+        GET method only which are not in black_list_url.
     """
+    # not included URLs
+    black_list_url = ['services.simple_flow_consume']
     info = dict()
     info['software'] = Metadata.TITLE
     info['version'] = get_version()
     info['network-url'] = config.network_url
     info['provider-address'] = get_provider_wallet().address
-    info['servicesEndpoints'] = {
-        'access': url_for('services.download'),
-        'compute': url_for('services.compute_get_status_job'),
-        'delete_job': url_for('services.compute_delete_job'),
-        'stop_job': url_for('services.compute_stop_job'),
-        'start_job': url_for('services.compute_start_job'),
-        'nonce': url_for('services.get_user_nonce'),
-        'encrypt': url_for('services.encrypt'),
-        'initialize': url_for('services.initialize'),
-    }
+    info['servicesEndpoints'] = dict(map(lambda url: (url.endpoint.replace('services.', ''), '%s' % url),
+                                         filter(lambda url: url.endpoint.startswith('services.')
+                                                            and 'GET' in url.methods
+                                                            and url.endpoint not in black_list_url,
+                                                app.url_map.iter_rules())))
     return jsonify(info)
 
 

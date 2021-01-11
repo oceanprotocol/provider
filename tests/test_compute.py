@@ -33,7 +33,7 @@ def test_compute_expose_endpoints(client):
     assert 'network-url' in result
     assert 'provider-address' in result
     assert get_response.status == '200 OK'
-    assert len(result['servicesEndpoints']) == 8
+    assert len(result['servicesEndpoints']) == 4
 
 
 def test_compute_norawalgo_allowed(client):

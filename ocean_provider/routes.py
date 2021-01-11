@@ -57,7 +57,7 @@ logger = logging.getLogger(__name__)
 
 
 @services.route('/nonce', methods=['GET'])
-def get_user_nonce():
+def nonce():
     required_attributes = [
         'userAddress',
     ]
@@ -280,7 +280,7 @@ def initialize():
 
 
 @services.route('/download', methods=['GET'])
-def download():
+def access():
     """Allows download of asset data file.
 
     ---
@@ -513,7 +513,7 @@ def compute_stop_job():
 
 
 @services.route('/compute', methods=['GET'])
-def compute_get_status_job():
+def compute():
     """Get status for a specific jobId/documentId/owner
 
     ---
