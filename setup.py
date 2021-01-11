@@ -54,6 +54,8 @@ dev_requirements = [
     'pkginfo',
     'twine',
     'watchdog',
+    'flake8',
+    'isort'
 ]
 
 setup(
