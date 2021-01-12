@@ -15,6 +15,8 @@ from ocean_provider.utils.basics import get_provider_wallet
 
 config = Config(filename=app.config['CONFIG_FILE'])
 provider_url = config.get(ConfigSections.RESOURCES, 'ocean_provider.url')
+# not included URLs
+blocked_url = ['services.simple_flow_consume']
 
 
 def get_version():
@@ -35,8 +37,7 @@ def version():
         the existing endpoints from routes.py with
         GET method only which are not in blocked_url.
     """
-    # not included URLs
-    blocked_url = ['services.simple_flow_consume']
+
     info = dict()
     info['software'] = Metadata.TITLE
     info['version'] = get_version()

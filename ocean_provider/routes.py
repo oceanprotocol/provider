@@ -280,7 +280,7 @@ def initialize():
 
 
 @services.route('/download', methods=['GET'])
-def access():
+def download():
     """Allows download of asset data file.
 
     ---
