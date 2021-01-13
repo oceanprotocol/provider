@@ -5,45 +5,36 @@ import logging
 import os
 
 from eth_utils import add_0x_prefix
-from flask import Blueprint, jsonify, request, Response
+from flask import Blueprint, Response, jsonify, request
+from ocean_lib.models.data_token import DataToken
 from ocean_lib.web3_internal.utils import add_ethereum_prefix_and_hash_msg
 from ocean_lib.web3_internal.web3helper import Web3Helper
-from ocean_lib.models.data_token import DataToken
 from ocean_utils.agreements.service_types import ServiceTypes
 from ocean_utils.did import did_to_id
 from ocean_utils.http_requests.requests_session import get_requests_session
 
-from ocean_provider.user_nonce import UserNonce
-from ocean_provider.utils.basics import (
-    setup_network,
-    LocalFileAdapter,
-    get_config,
-    get_provider_wallet,
-    get_datatoken_minter,
-    get_asset_from_metadatastore)
-from ocean_provider.myapp import app
-from ocean_provider.exceptions import InvalidSignatureError, BadRequestError
+from ocean_provider.exceptions import BadRequestError, InvalidSignatureError
 from ocean_provider.log import setup_logging
-from ocean_provider.util import (
-    get_request_data,
-    check_required_attributes,
-    build_download_response,
-    get_download_url,
-    get_asset_url_at_index,
-    validate_order,
-    process_consume_request,
-    build_stage_algorithm_dict,
-    validate_algorithm_dict,
-    build_stage_output_dict,
-    build_stage_dict,
-    get_compute_endpoint,
-    record_consume_request,
-    get_asset_download_urls,
-    validate_transfer_not_used_for_other_service,
-    process_compute_request,
-    check_url_details,
-    get_metadata_url, get_asset_urls)
+from ocean_provider.myapp import app
+from ocean_provider.user_nonce import UserNonce
+from ocean_provider.util import (build_download_response,
+                                 build_stage_algorithm_dict, build_stage_dict,
+                                 build_stage_output_dict,
+                                 check_required_attributes, check_url_details,
+                                 get_asset_download_urls,
+                                 get_asset_url_at_index, get_asset_urls,
+                                 get_compute_endpoint, get_download_url,
+                                 get_metadata_url, get_request_data,
+                                 process_compute_request,
+                                 process_consume_request,
+                                 record_consume_request,
+                                 validate_algorithm_dict, validate_order,
+                                 validate_transfer_not_used_for_other_service)
 from ocean_provider.utils.accounts import verify_signature
+from ocean_provider.utils.basics import (LocalFileAdapter,
+                                         get_asset_from_metadatastore,
+                                         get_config, get_datatoken_minter,
+                                         get_provider_wallet, setup_network)
 from ocean_provider.utils.encryption import do_encrypt
 
 setup_logging()
@@ -307,20 +298,19 @@ def assetInfo():
 
     did = data['documentId']
     asset = get_asset_from_metadatastore(get_metadata_url(), did)
-    url_list = get_asset_urls(asset, provider_wallet)
+    url_list = get_asset_download_urls(asset, provider_wallet, config_file=app.config['CONFIG_FILE'])
     files_info = []
     for i, url in enumerate(url_list):
-        download_url = get_download_url(url, app.config['CONFIG_FILE'])
-        valid, details = check_url_details(download_url)
+        valid, details = check_url_details(url)
         info = {'index': i, 'valid': valid}
         info.update(details)
         files_info.append(info)
 
     return Response(
-            json.dumps(files_info),
-            200,
-            headers={'content-type': 'application/json'}
-        )
+        json.dumps(files_info),
+        200,
+        headers={'content-type': 'application/json'}
+    )
 
 
 @services.route('/initialize', methods=['GET'])
