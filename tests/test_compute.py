@@ -36,13 +36,13 @@ def test_compute_expose_endpoints(client):
     get_response = client.get('/')
     result = get_response.get_json()
     services_endpoints = get_services_endpoints()
-    assert 'servicesEndpoints' in result
+    assert 'serviceEndpoints' in result
     assert 'software' in result
     assert 'version' in result
     assert 'network-url' in result
     assert 'provider-address' in result
     assert get_response.status == '200 OK'
-    assert len(result['servicesEndpoints']) == len(services_endpoints)
+    assert len(result['serviceEndpoints']) == len(services_endpoints)
 
 
 def test_compute_norawalgo_allowed(client):
