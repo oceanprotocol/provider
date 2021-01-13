@@ -255,7 +255,6 @@ def test_check_url_good(client):
     data = { 'url': "https://s3.amazonaws.com/testfiles.oceanprotocol.com/info.0.json" }
     response = client.post(request_url, json=data)
     result = response.get_json()
-
     assert response.status == '200 OK'
     assert result['contentLength'] == '629'
     assert result['valid'] == True

@@ -268,7 +268,7 @@ def checkURL():
 
     return jsonify(
         valid=True,
-        contentLength=details['contentType'],
+        contentLength=details['contentLength'],
         contentType=details['contentType']
     )
 
