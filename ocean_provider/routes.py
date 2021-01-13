@@ -379,7 +379,7 @@ def download():
 
 
 @services.route('/compute', methods=['DELETE'])
-def compute_delete_job():
+def computeDelete():
     """Deletes a workflow.
 
     ---
@@ -444,7 +444,7 @@ def compute_delete_job():
 
 
 @services.route('/compute', methods=['PUT'])
-def compute_stop_job():
+def computeStop():
     """Stop the execution of a workflow.
 
     ---
@@ -513,7 +513,7 @@ def compute_stop_job():
 
 
 @services.route('/compute', methods=['GET'])
-def compute():
+def computeStatus():
     """Get status for a specific jobId/documentId/owner
 
     ---
@@ -604,7 +604,7 @@ def compute():
 
 
 @services.route('/compute', methods=['POST'])
-def compute_start_job():
+def computeStart():
     """Call the execution of a workflow.
 
     ---

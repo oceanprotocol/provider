@@ -10,8 +10,7 @@ from ocean_utils.agreements.service_agreement import ServiceAgreement
 from ocean_utils.agreements.service_types import ServiceTypes
 
 from ocean_provider.constants import BaseURLs
-from ocean_provider.myapp import app
-from ocean_provider.run import blocked_url
+from ocean_provider.run import get_services_endpoints
 from ocean_provider.util import build_stage_output_dict
 
 from tests.test_helpers import (
@@ -29,18 +28,14 @@ SERVICE_ENDPOINT = BaseURLs.BASE_PROVIDER_URL + '/services/download'
 def test_compute_expose_endpoints(client):
     get_response = client.get('/')
     result = get_response.get_json()
+    services_endpoints = get_services_endpoints()
     assert 'servicesEndpoints' in result
     assert 'software' in result
     assert 'version' in result
     assert 'network-url' in result
     assert 'provider-address' in result
     assert get_response.status == '200 OK'
-    assert len(result['servicesEndpoints']) == len(
-        dict(map(lambda url: (url.endpoint.replace('services.', ''), '%s' % url),
-                 filter(lambda url: url.endpoint.startswith('services.')
-                                    and 'GET' in url.methods
-                                    and url.endpoint not in blocked_url,
-                        app.url_map.iter_rules()))))
+    assert len(result['servicesEndpoints']) == len(services_endpoints)
 
 
 def test_compute_norawalgo_allowed(client):

@@ -19,6 +19,17 @@ provider_url = config.get(ConfigSections.RESOURCES, 'ocean_provider.url')
 blocked_url = ['services.simple_flow_consume']
 
 
+def get_services_endpoints():
+    services_endpoints = dict(map(lambda url: (url.endpoint.replace('services.', ''), url),
+                                  filter(lambda url: url.endpoint.startswith('services.')
+                                                     and url.endpoint not in blocked_url,
+                                         app.url_map.iter_rules())))
+    for (key, value) in services_endpoints.items():
+        services_endpoints[key] = (list(map(str, filter(lambda method: str(method) not in ["OPTIONS", "HEAD"],
+                                                        value.methods)))[0], str(value))
+    return services_endpoints
+
+
 def get_version():
     conf = configparser.ConfigParser()
     conf.read('.bumpversion.cfg')
@@ -34,8 +45,8 @@ def version():
         - network url;
         - provider address;
         - services endpoints, which has all
-        the existing endpoints from routes.py with
-        GET method only which are not in blocked_url.
+        the existing endpoints from routes.py
+        which are not in blocked_url.
     """
 
     info = dict()
@@ -43,11 +54,7 @@ def version():
     info['version'] = get_version()
     info['network-url'] = config.network_url
     info['provider-address'] = get_provider_wallet().address
-    info['servicesEndpoints'] = dict(map(lambda url: (url.endpoint.replace('services.', ''), '%s' % url),
-                                         filter(lambda url: url.endpoint.startswith('services.')
-                                                            and 'GET' in url.methods
-                                                            and url.endpoint not in blocked_url,
-                                                app.url_map.iter_rules())))
+    info['servicesEndpoints'] = get_services_endpoints()
     return jsonify(info)
 
 
