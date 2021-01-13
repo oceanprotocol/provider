@@ -261,7 +261,7 @@ def checkURL():
 
     if not valid:
         return jsonify(
-            valid = false,
+            valid=false,
             result={"contentLength":"", "contentType":""}
         ), 400
 
