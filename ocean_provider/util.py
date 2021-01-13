@@ -129,6 +129,8 @@ def get_asset_url_at_index(url_index, asset, wallet):
 
 
 def get_asset_urls(asset, wallet):
+    """return list of urls of the files included in this `asset` in order
+    """
     logger.debug(f'get_asset_urls(): did={asset.did}, provider={wallet.address}')
     try:
         files_list = get_asset_files_list(asset, wallet)
@@ -401,24 +403,22 @@ def check_url_details(url):
     """
     try:
         result = requests.options(url)
+        if result.status_code != 200:
+            # fallback on GET request
+            result = requests.get(url, stream=True)
+
+        if result.status_code == 200:
+            content_type = result.headers.get('Content-Type')
+            content_length = result.headers.get('Content-Length')
+
+            if content_type and content_length:
+                return True, {"contentLength": content_length, "contentType": content_type}
+
     except requests.exceptions.InvalidSchema:
-        return False, {}
+        pass
     except requests.exceptions.MissingSchema:
-        return False, {}
+        pass
     except requests.exceptions.ConnectionError:
-        return False, {}
+        pass
 
-    if result.status_code != 200:
-        # fallback on GET request
-        result = requests.get(url, stream=True)
-
-    if result.status_code != 200:
-        return False, {}
-
-    contentType = result.headers.get('Content-Type')
-    contentLength = result.headers.get('Content-Length')
-
-    if not contentType and not contentLength:
-        return False , {}
-
-    return True, {"contentLength": contentLength, "contentType": contentType}
+    return False, {}

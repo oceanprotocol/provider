@@ -20,7 +20,7 @@ from ocean_provider.utils.basics import (
     get_config,
     get_provider_wallet,
     get_datatoken_minter,
-)
+    get_asset_from_metadatastore)
 from ocean_provider.myapp import app
 from ocean_provider.exceptions import InvalidSignatureError, BadRequestError
 from ocean_provider.log import setup_logging
@@ -41,8 +41,8 @@ from ocean_provider.util import (
     get_asset_download_urls,
     validate_transfer_not_used_for_other_service,
     process_compute_request,
-    check_url_details
-)
+    check_url_details,
+    get_metadata_url, get_asset_urls)
 from ocean_provider.utils.accounts import verify_signature
 from ocean_provider.utils.encryption import do_encrypt
 
@@ -271,6 +271,56 @@ def checkURL():
         contentLength=details['contentLength'],
         contentType=details['contentType']
     )
+
+
+@services.route('/assetInfo', methods=['POST'])
+def assetInfo():
+    """Return info about each file in the asset (index, valid, contentLength, contentType)
+
+    This can be used by the publisher of an asset to check basic information
+    about the URL. For now, this information consists of the Content-Type
+    and Content-Length of the request, using primarily OPTIONS, with fallback
+    to GET. In the future, we will add a hash to make sure that the file was
+    not tampered with at consumption time.
+
+    tags:
+      - services
+
+    responses:
+      200:
+        description: the URL could be analysed (returns the result).
+      204:
+        description: the URL could be analysed, no data was found (no result).
+      400:
+        description: the URL could not be analysed (no result).
+
+    return: the URL's Content-type and ContentLength
+    """
+    required_attributes = ['documentId', ]
+    data = get_request_data(request)
+
+    msg, status = check_required_attributes(
+        required_attributes, data, 'assetInfo'
+    )
+    if msg:
+        return jsonify(error=msg), status
+
+    did = data['documentId']
+    asset = get_asset_from_metadatastore(get_metadata_url(), did)
+    url_list = get_asset_urls(asset, provider_wallet)
+    files_info = []
+    for i, url in enumerate(url_list):
+        download_url = get_download_url(url, app.config['CONFIG_FILE'])
+        valid, details = check_url_details(download_url)
+        info = {'index': i, 'valid': valid}
+        info.update(details)
+        files_info.append(info)
+
+    return Response(
+            json.dumps(files_info),
+            200,
+            headers={'content-type': 'application/json'}
+        )
 
 
 @services.route('/initialize', methods=['GET'])
