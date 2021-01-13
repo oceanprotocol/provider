@@ -409,10 +409,8 @@ def download():
             did,
             service_id
         )
-        validate_transfer_not_used_for_other_service(
-            did, service_id, tx_id, consumer_address, token_address)
-        record_consume_request(
-            did, service_id, tx_id, consumer_address, token_address, service.get_cost())
+        validate_transfer_not_used_for_other_service(did, service_id, tx_id, consumer_address, token_address)
+        record_consume_request(did, service_id, tx_id, consumer_address, token_address, service.get_cost())
 
         assert service_type == ServiceTypes.ASSET_ACCESS
 
@@ -629,8 +627,7 @@ def compute_get_status_job():
             body = process_compute_request(data, user_nonce)
             signed_request = True
         except Exception:
-            body = process_compute_request(
-                data, user_nonce, require_signature=False)
+            body = process_compute_request(data, user_nonce, require_signature=False)
 
         response = requests_session.get(
             get_compute_endpoint(),
@@ -644,8 +641,7 @@ def compute_get_status_job():
             if not isinstance(resp_content, list):
                 resp_content = [resp_content]
             _response = []
-            keys_to_filter = ['resultsUrl',
-                              'algorithmLogUrl', 'resultsDid', 'owner', ]
+            keys_to_filter = ['resultsUrl', 'algorithmLogUrl', 'resultsDid', 'owner', ]
             for job_info in resp_content:
                 for k in keys_to_filter:
                     job_info.pop(k)
@@ -744,10 +740,8 @@ def compute_start_job():
             add_0x_prefix(did_to_id(did)) if did.startswith('did:') else did,
             service_id
         )
-        validate_transfer_not_used_for_other_service(
-            did, service_id, tx_id, consumer_address, token_address)
-        record_consume_request(
-            did, service_id, tx_id, consumer_address, token_address, service.get_cost())
+        validate_transfer_not_used_for_other_service(did, service_id, tx_id, consumer_address, token_address)
+        record_consume_request(did, service_id, tx_id, consumer_address, token_address, service.get_cost())
 
         algorithm_did = data.get('algorithmDid')
         algorithm_token_address = data.get('algorithmDataToken')
@@ -811,8 +805,7 @@ def compute_start_job():
 
         #########################
         # INPUT
-        asset_urls = get_asset_download_urls(
-            asset, provider_wallet, config_file=app.config['CONFIG_FILE'])
+        asset_urls = get_asset_download_urls(asset, provider_wallet, config_file=app.config['CONFIG_FILE'])
         if not asset_urls:
             return jsonify(error=f'cannot get url(s) in input did {did}.'), 400
 
