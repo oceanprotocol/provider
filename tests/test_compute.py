@@ -252,13 +252,13 @@ def test_compute(client):
 
 def test_check_url_good(client):
     request_url = BaseURLs.ASSETS_URL + '/checkURL'
-    data = { 'url': "http://xkcd.com/349/info.0.json" }
+    data = { 'url': "https://s3.amazonaws.com/testfiles.oceanprotocol.com/info.0.json" }
     response = client.post(request_url, json=data)
     result = response.get_json()
 
     assert response.status == '200 OK'
     assert result['contentLength'] == '629'
-    assert result['valid'] == true
+    assert result['valid'] == True
     assert result['contentType'] == 'application/json'
 
 
@@ -268,7 +268,7 @@ def test_check_url_bad(client):
     response = client.post(request_url, json=data)
     result = response.get_json()
     assert response.status == '400 BAD REQUEST'
-    assert result['valid'] == false
+    assert result['valid'] == False
     
 
 
