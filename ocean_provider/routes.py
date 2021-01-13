@@ -261,12 +261,12 @@ def checkURL():
 
     if not valid:
         return jsonify(
-            valid=false,
+            valid = False,
             result={"contentLength":"", "contentType":""}
         ), 400
 
     return jsonify(
-        valid=true,
+        valid = True,
         result=details
     )
 
