@@ -44,7 +44,7 @@ def version():
         - version;
         - network url;
         - provider address;
-        - services endpoints, which has all
+        - service endpoints, which has all
         the existing endpoints from routes.py
         which are not in blocked_url.
     """
@@ -54,7 +54,7 @@ def version():
     info['version'] = get_version()
     info['network-url'] = config.network_url
     info['provider-address'] = get_provider_wallet().address
-    info['servicesEndpoints'] = get_services_endpoints()
+    info['serviceEndpoints'] = get_services_endpoints()
     return jsonify(info)
 
 

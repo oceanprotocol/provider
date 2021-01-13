@@ -3,6 +3,7 @@ import json
 import logging
 import mimetypes
 import os
+import requests
 from cgi import parse_header
 
 from eth_utils import add_0x_prefix
@@ -78,9 +79,13 @@ def build_download_response(request, requests_session, url, download_url, conten
                 "Content-Disposition": f'attachment;filename={filename}',
                 "Access-Control-Expose-Headers": f'Content-Disposition'
             }
+            def generate(response):
+                for chunk in response.iter_content(chunk_size=4096):
+                    if chunk:
+                        yield chunk
 
         return Response(
-            io.BytesIO(response.content).read(),
+            generate(response),
             response.status_code,
             headers=download_response_headers,
             content_type=content_type
@@ -387,3 +392,33 @@ def validate_algorithm_dict(algorithm_dict, algorithm_did):
         return f'algorithm `container` must specify values for all of entrypoint, image and tag.', 400
 
     return None, None
+
+
+def check_url_details(url):
+    """
+    If the url argument is invalid, returns False and empty dictionary.
+    Otherwise it returns True and a dictionary containing contentType and contentLength.
+    """
+    try:
+        result = requests.options(url)
+    except requests.exceptions.InvalidSchema:
+        return False, {}
+    except requests.exceptions.MissingSchema:
+        return False, {}
+    except requests.exceptions.ConnectionError:
+        return False, {}
+
+    if result.status_code != 200:
+        # fallback on GET request
+        result = requests.get(url, stream=True)
+
+    if result.status_code != 200:
+        return False, {}
+
+    contentType = result.headers.get('Content-Type')
+    contentLength = result.headers.get('Content-Length')
+
+    if not contentType and not contentLength:
+        return False , {}
+
+    return True, {"contentLength": contentLength, "contentType": contentType}
