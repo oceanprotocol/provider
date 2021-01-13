@@ -224,7 +224,7 @@ def test_asset_info(client):
     assert len(result) == 1
     for file_info in result:
         assert file_info['contentLength']
-        assert file_info['contentType'] == 'text/csv'
+        assert file_info['contentType'] == 'text/plain; charset=utf-8'
         assert file_info['valid'] is True
 
     asset = get_dataset_with_invalid_url_ddo(client, pub_wallet)
