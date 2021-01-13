@@ -256,7 +256,7 @@ def test_check_url_good(client):
     response = client.post(request_url, json=data)
     result = response.get_json()
     assert response.status == '200 OK'
-    assert result['contentLength'] == '629'
+    assert result['contentLength'] == '1161'
     assert result['valid'] == True
     assert result['contentType'] == 'application/json'
 
