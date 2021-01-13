@@ -770,8 +770,7 @@ def compute_start_job():
 
         # Consumer signature
         original_msg = f'{consumer_address}{did}'
-        verify_signature(consumer_address, signature, original_msg,
-                         user_nonce.get_nonce(consumer_address))
+        verify_signature(consumer_address, signature, original_msg, user_nonce.get_nonce(consumer_address))
 
         ########################
         # Valid service?
