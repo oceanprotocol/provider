@@ -403,7 +403,11 @@ def check_url_details(url):
     """
     try:
         result = requests.options(url)
-        if result.status_code != 200:
+        if (
+            result.status_code != 200 or
+            not result.headers.get('Content-Type') or
+            not result.headers.get('Content-Length')
+        ):
             # fallback on GET request
             result = requests.get(url, stream=True)
 
