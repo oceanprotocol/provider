@@ -213,8 +213,8 @@ def encrypt():
         return jsonify(error=str(e)), 500
 
 
-@services.route('/checkURL', methods=['POST'])
-def checkURL():
+@services.route('/fileinfo', methods=['GET'])
+def fileInfo():
     """Retrieves Content-Type and Content-Length from the given URL.
 
     This can be used by the publisher of an asset to check basic information
@@ -264,8 +264,8 @@ def checkURL():
     )
 
 
-@services.route('/assetInfo', methods=['POST'])
-def assetInfo():
+@services.route('/fileinfo/<did>', methods=['GET'])
+def assetFilesInfo(did: str):
     """Return info about each file in the asset (index, valid, contentLength, contentType)
 
     This can be used by the publisher of an asset to check basic information
@@ -273,6 +273,8 @@ def assetInfo():
     and Content-Length of the request, using primarily OPTIONS, with fallback
     to GET. In the future, we will add a hash to make sure that the file was
     not tampered with at consumption time.
+
+    :param did: str the id of the asset
 
     tags:
       - services
@@ -285,18 +287,11 @@ def assetInfo():
       400:
         description: the URL could not be analysed (no result).
 
-    return: the URL's Content-type and ContentLength
+    return: list of file info (index, valid, contentLength, contentType)
     """
-    required_attributes = ['documentId', ]
-    data = get_request_data(request)
+    if not did or not did.startswith('did:op:'):
+        return jsonify(error=f'Invalid `did` {did}.'), 400
 
-    msg, status = check_required_attributes(
-        required_attributes, data, 'assetInfo'
-    )
-    if msg:
-        return jsonify(error=msg), status
-
-    did = data['documentId']
     asset = get_asset_from_metadatastore(get_metadata_url(), did)
     url_list = get_asset_download_urls(asset, provider_wallet, config_file=app.config['CONFIG_FILE'])
     files_info = []
