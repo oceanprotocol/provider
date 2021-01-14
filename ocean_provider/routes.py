@@ -47,7 +47,7 @@ logger = logging.getLogger(__name__)
 
 
 @services.route('/nonce', methods=['GET'])
-def get_user_nonce():
+def nonce():
     required_attributes = [
         'userAddress',
     ]
@@ -256,13 +256,15 @@ def checkURL():
 
     if not valid:
         return jsonify(
-            status="error",
-            result={"contentLength": "", "contentType": ""}
+            valid=False,
+            contentLength="",
+            contentType=""
         ), 400
 
     return jsonify(
-        status="success",
-        result=details
+        valid=True,
+        contentLength=details['contentLength'],
+        contentType=details['contentType']
     )
 
 
@@ -444,7 +446,7 @@ def download():
 
 
 @services.route('/compute', methods=['DELETE'])
-def compute_delete_job():
+def computeDelete():
     """Deletes a workflow.
 
     ---
@@ -509,7 +511,7 @@ def compute_delete_job():
 
 
 @services.route('/compute', methods=['PUT'])
-def compute_stop_job():
+def computeStop():
     """Stop the execution of a workflow.
 
     ---
@@ -578,7 +580,7 @@ def compute_stop_job():
 
 
 @services.route('/compute', methods=['GET'])
-def compute_get_status_job():
+def computeStatus():
     """Get status for a specific jobId/documentId/owner
 
     ---
@@ -673,7 +675,7 @@ def compute_get_status_job():
 
 
 @services.route('/compute', methods=['POST'])
-def compute_start_job():
+def computeStart():
     """Call the execution of a workflow.
 
     ---

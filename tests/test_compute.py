@@ -10,6 +10,7 @@ from ocean_utils.agreements.service_agreement import ServiceAgreement
 from ocean_utils.agreements.service_types import ServiceTypes
 
 from ocean_provider.constants import BaseURLs
+from ocean_provider.run import get_services_endpoints
 from ocean_provider.util import build_stage_output_dict
 
 from tests.test_helpers import (
@@ -29,6 +30,19 @@ from tests.test_helpers import (
 )
 
 SERVICE_ENDPOINT = BaseURLs.BASE_PROVIDER_URL + '/services/download'
+
+
+def test_compute_expose_endpoints(client):
+    get_response = client.get('/')
+    result = get_response.get_json()
+    services_endpoints = get_services_endpoints()
+    assert 'serviceEndpoints' in result
+    assert 'software' in result
+    assert 'version' in result
+    assert 'network-url' in result
+    assert 'provider-address' in result
+    assert get_response.status == '200 OK'
+    assert len(result['serviceEndpoints']) == len(services_endpoints)
 
 
 def test_compute_norawalgo_allowed(client):
@@ -88,7 +102,7 @@ def test_compute_norawalgo_allowed(client):
         data=json.dumps(payload),
         content_type='application/json'
     )
-    assert response.status == '400 BAD REQUEST', f'start compute job failed: {response.status} , { response.data}'
+    assert response.status == '400 BAD REQUEST', f'start compute job failed: {response.status} , {response.data}'
 
 
 def test_compute_specific_algo_dids(client):
@@ -140,11 +154,10 @@ def test_compute_specific_algo_dids(client):
         data=json.dumps(payload),
         content_type='application/json'
     )
-    assert response.status == '400 BAD REQUEST', f'start compute job failed: {response.status} , { response.data}'
+    assert response.status == '400 BAD REQUEST', f'start compute job failed: {response.status} , {response.data}'
 
 
 def test_compute(client):
-
     pub_wallet = get_publisher_wallet()
     cons_wallet = get_consumer_wallet()
 
@@ -252,12 +265,12 @@ def test_compute(client):
 
 def test_check_url_good(client):
     request_url = BaseURLs.ASSETS_URL + '/checkURL'
-    data = { 'url': "http://xkcd.com/349/info.0.json" }
+    data = { 'url': "https://s3.amazonaws.com/testfiles.oceanprotocol.com/info.0.json" }
     response = client.post(request_url, json=data)
-    result = response.get_json()['result']
-
+    result = response.get_json()
     assert response.status == '200 OK'
-    assert result['contentLength'] == '629'
+    assert result['contentLength'] == '1161'
+    assert result['valid'] == True
     assert result['contentType'] == 'application/json'
 
 
@@ -265,11 +278,10 @@ def test_check_url_bad(client):
     request_url = BaseURLs.ASSETS_URL + '/checkURL'
     data = { 'url': "http://127.0.0.1/not_valid" }
     response = client.post(request_url, json=data)
-    result = response.get_json()['result']
-
+    result = response.get_json()
     assert response.status == '400 BAD REQUEST'
-    assert result['contentLength'] == ''
-    assert result['contentType'] == ''
+    assert result['valid'] == False
+    
 
 
 def test_initialize_on_bad_url(client):

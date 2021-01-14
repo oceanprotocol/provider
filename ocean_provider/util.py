@@ -79,9 +79,13 @@ def build_download_response(request, requests_session, url, download_url, conten
                 "Content-Disposition": f'attachment;filename={filename}',
                 "Access-Control-Expose-Headers": f'Content-Disposition'
             }
+            def generate(response):
+                for chunk in response.iter_content(chunk_size=4096):
+                    if chunk:
+                        yield chunk
 
         return Response(
-            io.BytesIO(response.content).read(),
+            generate(response),
             response.status_code,
             headers=download_response_headers,
             content_type=content_type
