@@ -43,7 +43,6 @@ def build_download_response(request, requests_session, url, download_url, conten
     try:
         download_request_headers = {}
         download_response_headers = {}
-
         is_range_request = bool(request.range)
 
         if is_range_request:
@@ -51,7 +50,6 @@ def build_download_response(request, requests_session, url, download_url, conten
             download_response_headers = download_request_headers
 
         response = requests_session.get(download_url, headers=download_request_headers, stream=True)
-
         if not is_range_request:
             filename = url.split("/")[-1]
 
@@ -79,13 +77,14 @@ def build_download_response(request, requests_session, url, download_url, conten
                 "Content-Disposition": f'attachment;filename={filename}',
                 "Access-Control-Expose-Headers": f'Content-Disposition'
             }
-            def generate(response):
-                for chunk in response.iter_content(chunk_size=4096):
-                    if chunk:
-                        yield chunk
+
+        def _generate(_response):
+            for chunk in _response.iter_content(chunk_size=4096):
+                if chunk:
+                    yield chunk
 
         return Response(
-            generate(response),
+            _generate(response),
             response.status_code,
             headers=download_response_headers,
             content_type=content_type
