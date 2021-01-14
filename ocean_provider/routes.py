@@ -50,7 +50,7 @@ logger = logging.getLogger(__name__)
 
 
 @services.route('/nonce', methods=['GET'])
-def get_user_nonce():
+def nonce():
     required_attributes = [
         'userAddress',
     ]
@@ -111,9 +111,13 @@ def simple_flow_consume():
 
         url = list(dt_map.values())[0]  # [dt_address]
         download_url = get_download_url(url, app.config['CONFIG_FILE'])
-        logger.info(f'Done processing consume request for data token {dt_address}, '
-                    f' url {download_url}')
-        return build_download_response(request, requests_session, url, download_url)
+        logger.info(
+            f'Done processing consume request for data token {dt_address}, '
+            f' url {download_url}'
+        )
+        return build_download_response(
+            request, requests_session, url, download_url
+        )
 
     except Exception as e:
         logger.error(
@@ -127,7 +131,9 @@ def simple_flow_consume():
 
 @services.route('/encrypt', methods=['POST'])
 def encrypt():
-    """Encrypt document using the Provider's own symmetric key (symmetric encryption).
+    """
+    Encrypt document using the Provider's own symmetric key
+    (symmetric encryption).
 
     This can be used by the publisher of an asset to encrypt the urls of the
     asset data files before publishing the asset ddo. The publisher to use this
@@ -299,7 +305,7 @@ def initialize():
     data = get_request_data(request)
 
     try:
-        asset, service, did, consumer_address, token_address = process_consume_request(
+        asset, service, did, consumer_address, token_address = process_consume_request(  # noqa
             data,
             'initialize',
             require_signature=False
@@ -319,10 +325,10 @@ def initialize():
 
         minter = get_datatoken_minter(asset, token_address)
 
-        # Prepare the `transfer` tokens transaction with the appropriate number of
-        # tokens required for this service
-        # The consumer must sign and execute this transaction in order to be able to
-        # consume the service
+        # Prepare the `transfer` tokens transaction with the appropriate number
+        # of tokens required for this service
+        # The consumer must sign and execute this transaction in order to be
+        # able to consume the service
         approve_params = {
             "from": consumer_address,
             "to": minter,
@@ -389,7 +395,7 @@ def download():
     """
     data = get_request_data(request)
     try:
-        asset, service, did, consumer_address, token_address = process_consume_request(
+        asset, service, did, consumer_address, token_address = process_consume_request(  # noqa
             data,
             'download',
             user_nonce=user_nonce,
@@ -410,8 +416,13 @@ def download():
             did,
             service_id
         )
-        validate_transfer_not_used_for_other_service(did, service_id, tx_id, consumer_address, token_address)
-        record_consume_request(did, service_id, tx_id, consumer_address, token_address, service.get_cost())
+        validate_transfer_not_used_for_other_service(
+            did, service_id, tx_id, consumer_address, token_address
+        )
+        record_consume_request(
+            did, service_id, tx_id, consumer_address, token_address,
+            service.get_cost()
+        )
 
         assert service_type == ServiceTypes.ASSET_ACCESS
 
@@ -424,7 +435,9 @@ def download():
         logger.info(f'Done processing consume request for asset {did}, '
                     f' url {download_url}')
         user_nonce.increment_nonce(consumer_address)
-        return build_download_response(request, requests_session, url, download_url, content_type)
+        return build_download_response(
+            request, requests_session, url, download_url, content_type
+        )
 
     except InvalidSignatureError as e:
         msg = f'Consumer signature failed verification: {e}'
@@ -445,7 +458,7 @@ def download():
 
 
 @services.route('/compute', methods=['DELETE'])
-def compute_delete_job():
+def computeDelete():
     """Deletes a workflow.
 
     ---
@@ -510,7 +523,7 @@ def compute_delete_job():
 
 
 @services.route('/compute', methods=['PUT'])
-def compute_stop_job():
+def computeStop():
     """Stop the execution of a workflow.
 
     ---
@@ -579,7 +592,7 @@ def compute_stop_job():
 
 
 @services.route('/compute', methods=['GET'])
-def compute_get_status_job():
+def computeStatus():
     """Get status for a specific jobId/documentId/owner
 
     ---
@@ -628,7 +641,9 @@ def compute_get_status_job():
             body = process_compute_request(data, user_nonce)
             signed_request = True
         except Exception:
-            body = process_compute_request(data, user_nonce, require_signature=False)
+            body = process_compute_request(
+                data, user_nonce, require_signature=False
+            )
 
         response = requests_session.get(
             get_compute_endpoint(),
@@ -642,7 +657,9 @@ def compute_get_status_job():
             if not isinstance(resp_content, list):
                 resp_content = [resp_content]
             _response = []
-            keys_to_filter = ['resultsUrl', 'algorithmLogUrl', 'resultsDid', 'owner', ]
+            keys_to_filter = [
+                'resultsUrl', 'algorithmLogUrl', 'resultsDid', 'owner',
+            ]
             for job_info in resp_content:
                 for k in keys_to_filter:
                     job_info.pop(k)
@@ -670,7 +687,7 @@ def compute_get_status_job():
 
 
 @services.route('/compute', methods=['POST'])
-def compute_start_job():
+def computeStart():
     """Call the execution of a workflow.
 
     ---
@@ -719,7 +736,7 @@ def compute_start_job():
     data = get_request_data(request)
 
     try:
-        asset, service, did, consumer_address, token_address = process_consume_request(
+        asset, service, did, consumer_address, token_address = process_consume_request(  # noqa
             data,
             'compute_start_job',
             additional_params=["transferTxId", "output"],
@@ -741,8 +758,13 @@ def compute_start_job():
             add_0x_prefix(did_to_id(did)) if did.startswith('did:') else did,
             service_id
         )
-        validate_transfer_not_used_for_other_service(did, service_id, tx_id, consumer_address, token_address)
-        record_consume_request(did, service_id, tx_id, consumer_address, token_address, service.get_cost())
+        validate_transfer_not_used_for_other_service(
+            did, service_id, tx_id, consumer_address, token_address
+        )
+        record_consume_request(
+            did, service_id, tx_id, consumer_address, token_address,
+            service.get_cost()
+        )
 
         algorithm_did = data.get('algorithmDid')
         algorithm_token_address = data.get('algorithmDataToken')
@@ -754,39 +776,58 @@ def compute_start_job():
 
         # Validate algorithm choice
         if not (algorithm_meta or algorithm_did):
-            msg = f'Need an `algorithmMeta` or `algorithmDid` to run, otherwise don\'t bother.'
+            msg = f'Need an `algorithmMeta` or `algorithmDid` to run, otherwise don\'t bother.'  # noqa
             logger.error(msg, exc_info=1)
             return jsonify(error=msg), 400
 
-        # algorithmDid also requires algorithmDataToken and algorithmTransferTxId
+        # algorithmDid also requires algorithmDataToken
+        # and algorithmTransferTxId
         if algorithm_did:
             if not (algorithm_token_address and algorithm_tx_id):
-                msg = f'Using `algorithmDid` requires the `algorithmDataToken` and ' \
-                      f'`algorithmTransferTxId` values in the request payload. ' \
-                      f'algorithmDataToken is the DataToken address for the algorithm asset. ' \
-                      f'algorithmTransferTxId is the transaction id (hash) of transferring ' \
-                      f'data tokens from consumer wallet to this providers wallet.'
+                msg = (
+                    f'Using `algorithmDid` requires the `algorithmDataToken` and '  # noqa
+                    f'`algorithmTransferTxId` values in the request payload. '
+                    f'algorithmDataToken is the DataToken address for the algorithm asset. '  # noqa
+                    f'algorithmTransferTxId is the transaction id (hash) of transferring '  # noqa
+                    f'data tokens from consumer wallet to this providers wallet.'
+                )
                 logger.error(msg, exc_info=1)
                 return jsonify(error=msg), 400
 
         # Consumer signature
         original_msg = f'{consumer_address}{did}'
-        verify_signature(consumer_address, signature, original_msg, user_nonce.get_nonce(consumer_address))
+        verify_signature(
+            consumer_address, signature, original_msg,
+            user_nonce.get_nonce(consumer_address)
+        )
 
         ########################
         # Valid service?
         if service is None:
-            return jsonify(error=f'This DID has no compute service {did}.'), 400
+            return jsonify(
+                error=f'This DID has no compute service {did}.'
+            ), 400
 
         #########################
         # Check privacy
         privacy_options = service.main.get('privacy', {})
-        if algorithm_meta and privacy_options.get('allowRawAlgorithm', True) is False:
-            return jsonify(error=f'cannot run raw algorithm on this did {did}.'), 400
+        if (
+            algorithm_meta and
+            privacy_options.get('allowRawAlgorithm', True) is False
+        ):
+            return jsonify(
+                error=f'cannot run raw algorithm on this did {did}.'
+            ), 400
 
         trusted_algorithms = privacy_options.get('trustedAlgorithms', [])
-        if algorithm_did and trusted_algorithms and algorithm_did not in trusted_algorithms:
-            return jsonify(error=f'cannot run raw algorithm on this did {did}.'), 400
+        if (
+            algorithm_did and
+            trusted_algorithms and
+            algorithm_did not in trusted_algorithms
+        ):
+            return jsonify(
+                error=f'cannot run raw algorithm on this did {did}.'
+            ), 400
 
         #########################
         # Validate ALGORITHM meta
@@ -805,7 +846,9 @@ def compute_start_job():
 
         #########################
         # INPUT
-        asset_urls = get_asset_download_urls(asset, provider_wallet, config_file=app.config['CONFIG_FILE'])
+        asset_urls = get_asset_download_urls(
+            asset, provider_wallet, config_file=app.config['CONFIG_FILE']
+        )
         if not asset_urls:
             return jsonify(error=f'cannot get url(s) in input did {did}.'), 400
 
@@ -838,7 +881,9 @@ def compute_start_job():
         msg_hash = add_ethereum_prefix_and_hash_msg(msg_to_sign)
         payload = {
             'workflow': workflow,
-            'providerSignature': Web3Helper.sign_hash(msg_hash, provider_wallet),
+            'providerSignature': Web3Helper.sign_hash(
+                msg_hash, provider_wallet
+            ),
             'documentId': did,
             'agreementId': tx_id,
             'owner': consumer_address,
