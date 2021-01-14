@@ -215,8 +215,9 @@ def test_build_download_response():
 def test_asset_info(client):
     pub_wallet = get_publisher_wallet()
     asset = get_dataset_ddo_with_access_service(client, pub_wallet)
-    request_url = BaseURLs.ASSETS_URL + f'/fileinfo/{asset.did}'
-    response = client.get(request_url)
+    request_url = BaseURLs.ASSETS_URL + f'/fileinfo'
+    data = { 'did': asset.did }
+    response = client.post(request_url, json=data)
     result = response.get_json()
     assert response.status == '200 OK'
     assert isinstance(result, list)
@@ -227,8 +228,9 @@ def test_asset_info(client):
         assert file_info['valid'] is True
 
     asset = get_dataset_with_invalid_url_ddo(client, pub_wallet)
-    request_url = BaseURLs.ASSETS_URL + f'/fileinfo/{asset.did}'
-    response = client.get(request_url)
+    request_url = BaseURLs.ASSETS_URL + f'/fileinfo'
+    data = { 'did': asset.did }
+    response = client.post(request_url, json=data)
     result = response.get_json()
     assert response.status == '200 OK'
     assert isinstance(result, list)
@@ -241,21 +243,23 @@ def test_asset_info(client):
 def test_check_url_good(client):
     request_url = BaseURLs.ASSETS_URL + '/fileinfo'
     data = {'url': "https://s3.amazonaws.com/testfiles.oceanprotocol.com/info.0.json"}
-    response = client.get(request_url, json=data)
+    response = client.post(request_url, json=data)
     result = response.get_json()
     assert response.status == '200 OK'
-    assert result['contentLength'] == '1161'
-    assert result['contentType'] == 'application/json'
-    assert result['valid'] is True
+    for file_info in result:
+        assert file_info['contentLength'] == '1161'
+        assert file_info['contentType'] == 'application/json'
+        assert file_info['valid'] is True
 
 
 def test_check_url_bad(client):
     request_url = BaseURLs.ASSETS_URL + '/fileinfo'
     data = {'url': "http://127.0.0.1/not_valid"}
-    response = client.get(request_url, json=data)
+    response = client.post(request_url, json=data)
     result = response.get_json()
-    assert response.status == '400 BAD REQUEST'
-    assert result['valid'] is False
+    assert response.status == '200 OK'
+    for file_info in result:
+        assert file_info['valid'] is False
 
 
 def test_initialize_on_bad_url(client):

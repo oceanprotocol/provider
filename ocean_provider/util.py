@@ -184,6 +184,27 @@ def check_required_attributes(required_attributes, data, method):
     return None, None
 
 
+def check_at_least_one_attribute(required_attributes, data, method):
+    assert isinstance(data, dict), 'invalid payload format.'
+    logger.info('got %s request: %s' % (method, data))
+    if not data:
+        logger.error('%s request failed: data is empty.' % method)
+        return 'payload seems empty.', 400
+    for attr in required_attributes:
+        if attr in data:
+            return None, None
+
+    logger.error('%s request failed: at least one of %s attrs is required.' % (
+        method,
+        ', '.join(required_attributes)
+    ))
+
+    return 'At least one of "%s" is required in the call to %s' % (
+        ', '.join(required_attributes),
+        method
+    ), 400
+
+
 def validate_order(sender, token_address, num_tokens, tx_id, did, service_id):
     dt_contract = DataToken(token_address)
 

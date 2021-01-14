@@ -20,6 +20,7 @@ from ocean_provider.user_nonce import UserNonce
 from ocean_provider.util import (build_download_response,
                                  build_stage_algorithm_dict, build_stage_dict,
                                  build_stage_output_dict,
+                                 check_at_least_one_attribute,
                                  check_required_attributes, check_url_details,
                                  get_asset_download_urls,
                                  get_asset_url_at_index, get_asset_urls,
@@ -213,12 +214,13 @@ def encrypt():
         return jsonify(error=str(e)), 500
 
 
-@services.route('/fileinfo', methods=['GET'])
-def fileInfo():
-    """Retrieves Content-Type and Content-Length from the given URL.
+@services.route('/fileinfo', methods=['POST'])
+def fileinfo():
+    """Retrieves Content-Type and Content-Length from the given URL or
+    asset. Supports a payload of either url or did.
 
     This can be used by the publisher of an asset to check basic information
-    about the URL. For now, this information consists of the Content-Type
+    about the URL(s). For now, this information consists of the Content-Type
     and Content-Length of the request, using primarily OPTIONS, with fallback
     to GET. In the future, we will add a hash to make sure that the file was
     not tampered with at consumption time.
@@ -228,72 +230,36 @@ def fileInfo():
 
     responses:
       200:
-        description: the URL could be analysed (returns the result).
-      204:
-        description: the URL could be analysed, no data was found (no result).
+        description: the URL(s) could be analysed (returns the result).
       400:
-        description: the URL could not be analysed (no result).
+        description: the URL(s) could not be analysed (bad request).
 
-    return: the URL's Content-type and ContentLength
+    return: list of file info (index, valid, contentLength, contentType)
     """
-    required_attributes = ['url', ]
+    required_attributes = ['url', 'did']
     data = get_request_data(request)
 
-    msg, status = check_required_attributes(
+    msg, status = check_at_least_one_attribute(
         required_attributes, data, 'checkURL'
     )
     if msg:
         return jsonify(error=msg), status
 
-    url = data['url']
+    did = data.get('did')
 
-    download_url = get_download_url(url, app.config['CONFIG_FILE'])
-    valid, details = check_url_details(download_url)
-
-    if not valid:
-        return jsonify(
-            valid=False,
-            contentLength="",
-            contentType=""
-        ), 400
-
-    return jsonify(
-        valid=True,
-        contentLength=details['contentLength'],
-        contentType=details['contentType']
-    )
-
-
-@services.route('/fileinfo/<did>', methods=['GET'])
-def assetFilesInfo(did: str):
-    """Return info about each file in the asset (index, valid, contentLength, contentType)
-
-    This can be used by the publisher of an asset to check basic information
-    about the URL. For now, this information consists of the Content-Type
-    and Content-Length of the request, using primarily OPTIONS, with fallback
-    to GET. In the future, we will add a hash to make sure that the file was
-    not tampered with at consumption time.
-
-    :param did: str the id of the asset
-
-    tags:
-      - services
-
-    responses:
-      200:
-        description: the URL could be analysed (returns the result).
-      204:
-        description: the URL could be analysed, no data was found (no result).
-      400:
-        description: the URL could not be analysed (no result).
-
-    return: list of file info (index, valid, contentLength, contentType)
-    """
-    if not did or not did.startswith('did:op:'):
+    if did and not did.startswith('did:op:'):
         return jsonify(error=f'Invalid `did` {did}.'), 400
 
-    asset = get_asset_from_metadatastore(get_metadata_url(), did)
-    url_list = get_asset_download_urls(asset, provider_wallet, config_file=app.config['CONFIG_FILE'])
+    url = data.get('url')
+
+    if did:
+        asset = get_asset_from_metadatastore(get_metadata_url(), did)
+        url_list = get_asset_download_urls(
+            asset, provider_wallet, config_file=app.config['CONFIG_FILE']
+        )
+    else:
+        url_list = [get_download_url(url, app.config['CONFIG_FILE']), ]
+
     files_info = []
     for i, url in enumerate(url_list):
         valid, details = check_url_details(url)
