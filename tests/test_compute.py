@@ -20,16 +20,12 @@ from tests.test_helpers import (
     get_dataset_ddo_with_compute_service_no_rawalgo,
     get_dataset_ddo_with_compute_service_specific_algo_dids,
     get_dataset_ddo_with_compute_service,
-    get_dataset_with_ipfs_url_ddo,
-    get_dataset_with_invalid_url_ddo,
     get_possible_compute_job_status_text,
     get_publisher_wallet,
     get_nonce,
     mint_tokens_and_wait,
-    send_order
+    send_order,
 )
-
-SERVICE_ENDPOINT = BaseURLs.BASE_PROVIDER_URL + '/services/download'
 
 
 def test_compute_expose_endpoints(client):
@@ -261,48 +257,3 @@ def test_compute(client):
     assert 'resultsUrl' not in job_info, 'resultsUrl should not be in this status response'
     assert 'algorithmLogUrl' not in job_info, 'algorithmLogUrl should not be in this status response'
     assert 'resultsDid' not in job_info, 'resultsDid should not be in this status response'
-
-
-def test_check_url_good(client):
-    request_url = BaseURLs.ASSETS_URL + '/checkURL'
-    data = { 'url': "https://s3.amazonaws.com/testfiles.oceanprotocol.com/info.0.json" }
-    response = client.post(request_url, json=data)
-    result = response.get_json()
-    assert response.status == '200 OK'
-    assert result['contentLength'] == '1161'
-    assert result['valid'] == True
-    assert result['contentType'] == 'application/json'
-
-
-def test_check_url_bad(client):
-    request_url = BaseURLs.ASSETS_URL + '/checkURL'
-    data = { 'url': "http://127.0.0.1/not_valid" }
-    response = client.post(request_url, json=data)
-    result = response.get_json()
-    assert response.status == '400 BAD REQUEST'
-    assert result['valid'] == False
-    
-
-
-def test_initialize_on_bad_url(client):
-    pub_wallet = get_publisher_wallet()
-    cons_wallet = get_consumer_wallet()
-
-    ddo = get_dataset_with_invalid_url_ddo(client, pub_wallet)
-    data_token = ddo.data_token_address
-    dt_contract = DataToken(data_token)
-    sa = ServiceAgreement.from_ddo(ServiceTypes.ASSET_ACCESS, ddo)
-
-    send_order(client, ddo, dt_contract, sa, cons_wallet, expect_failure=True)
-
-
-def test_initialize_on_ipfs_url(client):
-    pub_wallet = get_publisher_wallet()
-    cons_wallet = get_consumer_wallet()
-
-    ddo = get_dataset_with_ipfs_url_ddo(client, pub_wallet)
-    data_token = ddo.data_token_address
-    dt_contract = DataToken(data_token)
-    sa = ServiceAgreement.from_ddo(ServiceTypes.ASSET_ACCESS, ddo)
-
-    send_order(client, ddo, dt_contract, sa, cons_wallet)

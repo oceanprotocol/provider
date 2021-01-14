@@ -25,12 +25,15 @@ from ocean_provider.utils.accounts import (
 )
 
 from tests.test_helpers import (
-    get_dataset_ddo_with_access_service,
     get_consumer_wallet,
+    get_dataset_ddo_with_access_service,
+    get_dataset_with_invalid_url_ddo,
+    get_dataset_with_ipfs_url_ddo,
+    get_nonce,
     get_publisher_wallet,
-    mint_tokens_and_wait, get_nonce, send_order)
-
-SERVICE_ENDPOINT = BaseURLs.BASE_PROVIDER_URL + '/services/download'
+    mint_tokens_and_wait,
+    send_order,
+)
 
 
 def dummy_callback(*_):
@@ -207,3 +210,77 @@ def test_build_download_response():
     response = build_download_response(request, requests_session_with_content_type, url, url, None)
     assert response.headers["content-type"] == response_content_type
     assert response.headers.get_all('Content-Disposition')[0] == f'attachment;filename={filename}'
+
+
+def test_asset_info(client):
+    pub_wallet = get_publisher_wallet()
+    asset = get_dataset_ddo_with_access_service(client, pub_wallet)
+    request_url = BaseURLs.ASSETS_URL + f'/fileinfo'
+    data = { 'did': asset.did }
+    response = client.post(request_url, json=data)
+    result = response.get_json()
+    assert response.status == '200 OK'
+    assert isinstance(result, list)
+    assert len(result) == 1
+    for file_info in result:
+        assert file_info['contentLength']
+        assert file_info['contentType'] == 'text/plain; charset=utf-8'
+        assert file_info['valid'] is True
+
+    asset = get_dataset_with_invalid_url_ddo(client, pub_wallet)
+    request_url = BaseURLs.ASSETS_URL + f'/fileinfo'
+    data = { 'did': asset.did }
+    response = client.post(request_url, json=data)
+    result = response.get_json()
+    assert response.status == '200 OK'
+    assert isinstance(result, list)
+    assert len(result) == 1
+    for file_info in result:
+        assert 'contentLength' not in file_info or not file_info['contentLength']
+        assert file_info['valid'] is False
+
+
+def test_check_url_good(client):
+    request_url = BaseURLs.ASSETS_URL + '/fileinfo'
+    data = {'url': "https://s3.amazonaws.com/testfiles.oceanprotocol.com/info.0.json"}
+    response = client.post(request_url, json=data)
+    result = response.get_json()
+    assert response.status == '200 OK'
+    for file_info in result:
+        assert file_info['contentLength'] == '1161'
+        assert file_info['contentType'] == 'application/json'
+        assert file_info['valid'] is True
+
+
+def test_check_url_bad(client):
+    request_url = BaseURLs.ASSETS_URL + '/fileinfo'
+    data = {'url': "http://127.0.0.1/not_valid"}
+    response = client.post(request_url, json=data)
+    result = response.get_json()
+    assert response.status == '200 OK'
+    for file_info in result:
+        assert file_info['valid'] is False
+
+
+def test_initialize_on_bad_url(client):
+    pub_wallet = get_publisher_wallet()
+    cons_wallet = get_consumer_wallet()
+
+    ddo = get_dataset_with_invalid_url_ddo(client, pub_wallet)
+    data_token = ddo.data_token_address
+    dt_contract = DataToken(data_token)
+    sa = ServiceAgreement.from_ddo(ServiceTypes.ASSET_ACCESS, ddo)
+
+    send_order(client, ddo, dt_contract, sa, cons_wallet, expect_failure=True)
+
+
+def test_initialize_on_ipfs_url(client):
+    pub_wallet = get_publisher_wallet()
+    cons_wallet = get_consumer_wallet()
+
+    ddo = get_dataset_with_ipfs_url_ddo(client, pub_wallet)
+    data_token = ddo.data_token_address
+    dt_contract = DataToken(data_token)
+    sa = ServiceAgreement.from_ddo(ServiceTypes.ASSET_ACCESS, ddo)
+
+    send_order(client, ddo, dt_contract, sa, cons_wallet)
