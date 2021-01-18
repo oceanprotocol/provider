@@ -30,7 +30,8 @@ install_requirements = [
     'Werkzeug>=0.15.3',
     'ocean-lib>=0.5.3',
     'requests_testadapter',
-    'eciespy'
+    'eciespy',
+    'flask-sieve==1.2.2'
 ]
 
 # Required to run setup.py:

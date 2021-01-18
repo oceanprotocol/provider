@@ -6,6 +6,7 @@ import os
 
 from eth_utils import add_0x_prefix
 from flask import Blueprint, Response, jsonify, request
+from flask_sieve import validate
 from ocean_lib.models.data_token import DataToken
 from ocean_lib.web3_internal.utils import add_ethereum_prefix_and_hash_msg
 from ocean_lib.web3_internal.web3helper import Web3Helper
@@ -17,12 +18,12 @@ from ocean_provider.access_token import AccessToken
 from ocean_provider.exceptions import BadRequestError, InvalidSignatureError
 from ocean_provider.log import setup_logging
 from ocean_provider.myapp import app
+from ocean_provider.requests import (EncryptRequest, FileInfoRequest,
+                                     NonceRequest, SimpleFlowConsumeRequest)
 from ocean_provider.user_nonce import UserNonce
 from ocean_provider.util import (build_download_response,
                                  build_stage_algorithm_dict, build_stage_dict,
-                                 build_stage_output_dict,
-                                 check_at_least_one_attribute,
-                                 check_required_attributes, check_url_details,
+                                 build_stage_output_dict, check_url_details,
                                  get_asset_download_urls,
                                  get_asset_url_at_index, get_compute_endpoint,
                                  get_download_url, get_metadata_url,
@@ -51,17 +52,9 @@ logger = logging.getLogger(__name__)
 
 
 @services.route('/nonce', methods=['GET'])
+@validate(NonceRequest)
 def nonce():
-    required_attributes = [
-        'userAddress',
-    ]
     data = get_request_data(request)
-
-    msg, status = check_required_attributes(
-        required_attributes, data, 'nonce')
-    if msg:
-        return jsonify(error=msg), status
-
     address = data.get('userAddress')
     nonce = user_nonce.get_nonce(address)
     logger.info(f'nonce for user {address} is {nonce}')
@@ -73,19 +66,9 @@ def nonce():
 
 
 @services.route('/', methods=['GET'])
+@validate(SimpleFlowConsumeRequest)
 def simple_flow_consume():
-    required_attributes = [
-        'consumerAddress',
-        'dataToken',
-        'transferTxId'
-    ]
     data = get_request_data(request)
-
-    msg, status = check_required_attributes(
-        required_attributes, data, 'simple_flow_consume')
-    if msg:
-        return jsonify(error=msg), status
-
     consumer = data.get('consumerAddress')
     dt_address = data.get('dataToken')
     tx_id = data.get('transferTxId')
@@ -131,6 +114,7 @@ def simple_flow_consume():
 
 
 @services.route('/encrypt', methods=['POST'])
+@validate(EncryptRequest)
 def encrypt():
     """
     Encrypt document using the Provider's own symmetric key
@@ -178,18 +162,7 @@ def encrypt():
 
     return: the encrypted document (hex str)
     """
-    required_attributes = [
-        'documentId',
-        'document',
-        'publisherAddress'
-    ]
     data = get_request_data(request)
-
-    msg, status = check_required_attributes(
-        required_attributes, data, 'encrypt')
-    if msg:
-        return jsonify(error=msg), status
-
     did = data.get('documentId')
     document = json.dumps(json.loads(
         data.get('document')), separators=(',', ':'))
@@ -222,6 +195,7 @@ def encrypt():
 
 
 @services.route('/fileinfo', methods=['POST'])
+@validate(FileInfoRequest)
 def fileinfo():
     """Retrieves Content-Type and Content-Length from the given URL or
     asset. Supports a payload of either url or did.
@@ -243,20 +217,8 @@ def fileinfo():
 
     return: list of file info (index, valid, contentLength, contentType)
     """
-    required_attributes = ['url', 'did']
     data = get_request_data(request)
-
-    msg, status = check_at_least_one_attribute(
-        required_attributes, data, 'checkURL'
-    )
-    if msg:
-        return jsonify(error=msg), status
-
     did = data.get('did')
-
-    if did and not did.startswith('did:op:'):
-        return jsonify(error=f'Invalid `did` {did}.'), 400
-
     url = data.get('url')
 
     if did:

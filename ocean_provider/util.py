@@ -1,29 +1,29 @@
-import io
 import json
 import logging
 import mimetypes
 import os
-import requests
 from cgi import parse_header
 
+import requests
 from eth_utils import add_0x_prefix
 from flask import Response
 from ocean_lib.models.data_token import DataToken
 from ocean_lib.ocean.util import to_base_18
-from ocean_lib.web3_internal.web3_provider import Web3Provider
-from ocean_utils.did import did_to_id
-from osmosis_driver_interface.osmosis import Osmosis
 from ocean_lib.web3_internal.utils import add_ethereum_prefix_and_hash_msg
+from ocean_lib.web3_internal.web3_provider import Web3Provider
 from ocean_lib.web3_internal.web3helper import Web3Helper
 from ocean_utils.agreements.service_agreement import ServiceAgreement
 from ocean_utils.agreements.service_types import ServiceTypes
+from ocean_utils.did import did_to_id
+from osmosis_driver_interface.osmosis import Osmosis
 from websockets import ConnectionClosed
 
-from ocean_provider.user_nonce import UserNonce
 from ocean_provider.constants import BaseURLs
 from ocean_provider.exceptions import BadRequestError
+from ocean_provider.user_nonce import UserNonce
 from ocean_provider.utils.accounts import verify_signature
-from ocean_provider.utils.basics import get_config, get_provider_wallet, get_asset_from_metadatastore
+from ocean_provider.utils.basics import (get_asset_from_metadatastore,
+                                         get_config, get_provider_wallet)
 from ocean_provider.utils.encryption import do_decrypt
 
 logger = logging.getLogger(__name__)
@@ -184,27 +184,6 @@ def check_required_attributes(required_attributes, data, method):
     return None, None
 
 
-def check_at_least_one_attribute(required_attributes, data, method):
-    assert isinstance(data, dict), 'invalid payload format.'
-    logger.info('got %s request: %s' % (method, data))
-    if not data:
-        logger.error('%s request failed: data is empty.' % method)
-        return 'payload seems empty.', 400
-    for attr in required_attributes:
-        if attr in data:
-            return None, None
-
-    logger.error('%s request failed: at least one of %s attrs is required.' % (
-        method,
-        ', '.join(required_attributes)
-    ))
-
-    return 'At least one of "%s" is required in the call to %s' % (
-        ', '.join(required_attributes),
-        method
-    ), 400
-
-
 def validate_order(sender, token_address, num_tokens, tx_id, did, service_id):
     dt_contract = DataToken(token_address)
 
@@ -243,9 +222,9 @@ def record_consume_request(did, service_id, order_tx_id, consumer_address, token
 
 
 def process_consume_request(
-        data: dict, method: str, user_nonce: UserNonce=None,
-        additional_params: list=None, require_signature: bool=True):
-
+    data: dict, method: str, user_nonce: UserNonce=None,
+    additional_params: list=None, require_signature: bool=True
+):
     required_attributes = [
         'documentId',
         'serviceId',
@@ -288,7 +267,9 @@ def process_consume_request(
     return asset, service, did, consumer_address, token_address
 
 
-def process_compute_request(data, user_nonce: UserNonce, require_signature: bool=True):
+def process_compute_request(
+    data, user_nonce: UserNonce, require_signature: bool=True
+):
     required_attributes = ['consumerAddress']
     if require_signature:
         required_attributes.append('signature')
