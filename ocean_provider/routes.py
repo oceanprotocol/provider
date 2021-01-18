@@ -13,6 +13,7 @@ from ocean_utils.agreements.service_types import ServiceTypes
 from ocean_utils.did import did_to_id
 from ocean_utils.http_requests.requests_session import get_requests_session
 
+from ocean_provider.access_token import AccessToken
 from ocean_provider.exceptions import BadRequestError, InvalidSignatureError
 from ocean_provider.log import setup_logging
 from ocean_provider.myapp import app
@@ -23,10 +24,9 @@ from ocean_provider.util import (build_download_response,
                                  check_at_least_one_attribute,
                                  check_required_attributes, check_url_details,
                                  get_asset_download_urls,
-                                 get_asset_url_at_index, get_asset_urls,
-                                 get_compute_endpoint, get_download_url,
-                                 get_metadata_url, get_request_data,
-                                 process_compute_request,
+                                 get_asset_url_at_index, get_compute_endpoint,
+                                 get_download_url, get_metadata_url,
+                                 get_request_data, process_compute_request,
                                  process_consume_request,
                                  record_consume_request,
                                  validate_algorithm_dict, validate_order,
@@ -45,6 +45,7 @@ provider_wallet = get_provider_wallet()
 requests_session = get_requests_session()
 requests_session.mount('file://', LocalFileAdapter())
 user_nonce = UserNonce(get_config().storage_path)
+user_access_token = AccessToken(get_config().storage_path)
 
 logger = logging.getLogger(__name__)
 
@@ -440,6 +441,101 @@ def download():
         )
 
     except InvalidSignatureError as e:
+        msg = f'Consumer signature failed verification: {e}'
+        logger.error(msg, exc_info=1)
+        return jsonify(error=msg), 401
+
+    except Exception as e:
+        logger.error(
+            f'Error: {e}. \n'
+            f'Payload was: documentId={did}, '
+            f'consumerAddress={consumer_address},'
+            f'signature={signature}'
+            f'serviceId={service_id}'
+            f'serviceType={service_type}',
+            exc_info=1
+        )
+        return jsonify(error=str(e)), 500
+
+
+@services.route('/access-token', methods=['GET'])
+def access_token():
+    """Generates a one-time access token for file download.
+
+    ---
+    tags:
+      - services
+    consumes:
+      - application/json
+    parameters:
+      - name: consumerAddress
+        in: query
+        description: The consumer address.
+        required: true
+        type: string
+      - name: documentId
+        in: query
+        description: The ID of the asset/document (the DID).
+        required: true
+        type: string
+      - name: url
+        in: query
+        description: This URL is only valid if Provider acts as a proxy.
+                     Consumer can't download using the URL if it's not
+                     through the Provider.
+        required: true
+        type: string
+      - name: signature
+        in: query
+        description: Signature of the documentId to verify that the consumer
+                     has rights to download the asset.
+      - name: index
+        in: query
+        description: Index of the file in the array of files.
+    responses:
+      200:
+        access_token: Generated access token.
+      400:
+        description: One of the required attributes is missing.
+      401:
+        description: Invalid asset data.
+      500:
+        description: Error
+    """
+    data = get_request_data(request)
+    try:
+        asset, service, did, consumer_address, token_address = process_consume_request(  # noqa
+            data,
+            'download',
+            user_nonce=user_nonce,  # TODO: required or not
+            additional_params=["transferTxId", "fileIndex"]
+        )
+        service_id = data.get('serviceId')
+        service_type = data.get('serviceType')
+        signature = data.get('signature')
+        tx_id = data.get("transferTxId")
+
+        if did.startswith('did:'):
+            did = add_0x_prefix(did_to_id(did))
+
+        _tx, _order_log, _transfer_log = validate_order(
+            consumer_address,
+            token_address,
+            float(service.get_cost()),
+            tx_id,
+            did,
+            service_id
+        )
+
+        assert service_type == ServiceTypes.ASSET_ACCESS
+
+        access_token = user_access_token.generate_access_token(
+            did, consumer_address  # TODO: maybe serviceType too?
+        )
+
+        return {'access_token': str(access_token)}, 200
+
+    except InvalidSignatureError as e:  # TODO: maybe not this error
         msg = f'Consumer signature failed verification: {e}'
         logger.error(msg, exc_info=1)
         return jsonify(error=msg), 401

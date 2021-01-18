@@ -215,7 +215,8 @@ def validate_order(sender, token_address, num_tokens, tx_id, did, service_id):
         i += 1
         try:
             tx, order_event, transfer_event = dt_contract.verify_order_tx(
-                Web3Provider.get_web3(), tx_id, did, service_id, amount, sender)
+                Web3Provider.get_web3(), tx_id, did, service_id, amount, sender
+            )
             return tx, order_event, transfer_event
         except ConnectionClosed:
             if i == num_tries:
