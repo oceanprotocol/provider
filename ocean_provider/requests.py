@@ -34,10 +34,11 @@ class CustomValidator(Validator):
 
 class CustomRulesProcessor(RulesProcessor):
     def validate_signature(self, value, params, **kwargs):
-        self._assert_params_size(size=2, params=params, rule='signature')
+        self._assert_params_size(size=3, params=params, rule='signature')
         owner = self._attribute_value(params[0])
         did = self._attribute_value(params[1])
-        original_msg = f'{owner}{did}'
+        rule = params[2]
+        original_msg = f'{owner}{did}' if rule == 'customer_did' else f'{did}'
         try:
             verify_signature(
                 owner, value, original_msg, user_nonce.get_nonce(owner)
@@ -86,7 +87,10 @@ class ComputeRequest(CustomJsonRequest):
     def rules(self):
         return {
             'consumerAddress': ['required'],
-            'signature': ['required', 'signature:consumerAddress,documentId']
+            'signature': [
+                'required',
+                'signature:consumerAddress,documentId,only_did'
+            ]
         }
 
 
@@ -105,7 +109,10 @@ class ComputeStartRequest(CustomJsonRequest):
                 'required_without:algorithmMeta',
                 'required_with_all:algorithmDataToken,algorithmTransferTxId'
             ],
-            'signature': ['required', 'signature:consumerAddress,documentId'],
+            'signature': [
+                'required',
+                'signature:consumerAddress,documentId,customer_did'
+            ],
         }
 
 
@@ -120,7 +127,10 @@ class AccessTokenRequest(CustomJsonRequest):
             'secondsToExpiration': ['required', 'integer'],
             'transferTxId': ['required'],
             'fileIndex': ['required'],
-            'signature': ['required', 'signature:consumerAddress,documentId'],
+            'signature': [
+                'required',
+                'signature:consumerAddress,documentId,only_did'
+            ],
         }
 
 
@@ -134,7 +144,10 @@ class DownloadRequest(CustomJsonRequest):
             'consumerAddress': ['required'],
             'transferTxId': ['required'],
             'fileIndex': ['required'],
-            'signature': ['required', 'signature:consumerAddress,documentId'],
+            'signature': [
+                'required',
+                'signature:consumerAddress,documentId,only_did'
+            ],
         }
 
 
