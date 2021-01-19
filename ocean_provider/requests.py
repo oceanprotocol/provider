@@ -92,11 +92,19 @@ class ComputeRequest(CustomJsonRequest):
 class ComputeStartRequest(CustomJsonRequest):
     def rules(self):
         return {
+            'documentId': ['required'],
+            'serviceId': ['required'],
+            'serviceType': ['required'],
+            'dataToken': ['required'],
+            'consumerAddress': ['required'],
+            'transferTxId': ['required'],
+            'output': ['required'],
             'algorithmMeta': ['required_without:algorithmDid'],
             'algorithmDid': [
                 'required_without:algorithmMeta',
                 'required_with_all:algorithmDataToken,algorithmTransferTxId'
             ],
+            'signature': ['required', 'signature:consumerAddress'],
         }
 
 
@@ -112,4 +120,29 @@ class AccessTokenRequest(CustomJsonRequest):
             'transferTxId': ['required'],
             'fileIndex': ['required'],
             'signature': ['required', 'signature:consumerAddress'],
+        }
+
+
+class DownloadRequest(CustomJsonRequest):
+    def rules(self):
+        return {
+            'documentId': ['required'],
+            'serviceId': ['required'],
+            'serviceType': ['required'],
+            'dataToken': ['required'],
+            'consumerAddress': ['required'],
+            'transferTxId': ['required'],
+            'fileIndex': ['required'],
+            'signature': ['required', 'signature:consumerAddress'],
+        }
+
+
+class InitializeRequest(CustomJsonRequest):
+    def rules(self):
+        return {
+            'documentId': ['required'],
+            'serviceId': ['required'],
+            'serviceType': ['required'],
+            'dataToken': ['required'],
+            'consumerAddress': ['required'],
         }

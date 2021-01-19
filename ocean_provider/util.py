@@ -221,30 +221,7 @@ def record_consume_request(did, service_id, order_tx_id, consumer_address, token
     return
 
 
-def process_consume_request(
-    data: dict, method: str, user_nonce: UserNonce=None,
-    additional_params: list=None, require_signature: bool=True,
-    with_validation=True
-):
-    if with_validation:
-        required_attributes = [
-            'documentId',
-            'serviceId',
-            'serviceType',
-            'dataToken',
-            'consumerAddress'
-        ]
-        if additional_params:
-            required_attributes += additional_params
-
-        if require_signature:
-            required_attributes.append('signature')
-
-        msg, status = check_required_attributes(
-            required_attributes, data, method)
-        if msg:
-            raise AssertionError(msg)
-
+def process_consume_request(data: dict, method: str):
     did = data.get('documentId')
     token_address = data.get('dataToken')
     consumer_address = data.get('consumerAddress')
@@ -260,11 +237,11 @@ def process_consume_request(
             f'does not match the requested service type {service_type}.'
         )
 
-    if require_signature:
-        assert user_nonce, '`user_nonce` is required when signature is required.'
-        # Raises ValueError when signature is invalid
-        signature = data.get('signature')
-        verify_signature(consumer_address, signature, did, user_nonce.get_nonce(consumer_address))
+    # if require_signature:
+    #     assert user_nonce, '`user_nonce` is required when signature is required.'
+    #     # Raises ValueError when signature is invalid
+    #     signature = data.get('signature')
+    #     verify_signature(consumer_address, signature, did, user_nonce.get_nonce(consumer_address))
 
     return asset, service, did, consumer_address, token_address
 

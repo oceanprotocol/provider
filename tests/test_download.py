@@ -83,7 +83,7 @@ def test_download_service(client):
     response = client.get(
         request_url
     )
-    assert response.status_code == 401, f'{response.data}'
+    assert response.status_code == 400, f'{response.data}'
 
     # Consume using url index and signature (with nonce)
     nonce = get_nonce(client, cons_wallet.address)
@@ -150,6 +150,18 @@ def test_access_token(client):
         request_url
     )
     assert response.status_code == 400, f'{response.data}'
+
+    # Consume using url index and signature (with nonce)
+    nonce = get_nonce(client, cons_wallet.address)
+    _hash = add_ethereum_prefix_and_hash_msg(f'{ddo.did}{nonce}')
+    payload['signature'] = Web3Helper.sign_hash(_hash, cons_wallet)
+    request_url = at_endpoint + '?' + '&'.join(
+        [f'{k}={v}' for k, v in payload.items()]
+    )
+    response = client.get(
+        request_url
+    )
+    assert response.status_code == 200, f'{response.data}'
 
 
 def test_empty_payload(client):

@@ -19,8 +19,9 @@ from ocean_provider.exceptions import BadRequestError, InvalidSignatureError
 from ocean_provider.log import setup_logging
 from ocean_provider.myapp import app
 from ocean_provider.requests import (AccessTokenRequest, ComputeRequest,
-                                     ComputeStartRequest, EncryptRequest,
-                                     FileInfoRequest, NonceRequest,
+                                     ComputeStartRequest, DownloadRequest,
+                                     EncryptRequest, FileInfoRequest,
+                                     InitializeRequest, NonceRequest,
                                      SimpleFlowConsumeRequest)
 from ocean_provider.user_nonce import UserNonce
 from ocean_provider.util import (build_download_response,
@@ -246,6 +247,7 @@ def fileinfo():
 
 
 @services.route('/initialize', methods=['GET'])
+@validate(InitializeRequest)
 def initialize():
     """Initialize a service request.
     In order to consume a data service the user is required to send
@@ -272,8 +274,7 @@ def initialize():
     try:
         asset, service, did, consumer_address, token_address = process_consume_request(  # noqa
             data,
-            'initialize',
-            require_signature=False
+            'initialize'
         )
 
         url = get_asset_url_at_index(0, asset, provider_wallet)
@@ -317,6 +318,7 @@ def initialize():
 
 
 @services.route('/download', methods=['GET'])
+@validate(DownloadRequest)
 def download():
     """Allows download of asset data file.
 
@@ -362,13 +364,10 @@ def download():
     try:
         asset, service, did, consumer_address, token_address = process_consume_request(  # noqa
             data,
-            'download',
-            user_nonce=user_nonce,
-            additional_params=["transferTxId", "fileIndex"]
+            'download'
         )
         service_id = data.get('serviceId')
         service_type = data.get('serviceType')
-        signature = data.get('signature')
         tx_id = data.get("transferTxId")
         if did.startswith('did:'):
             did = add_0x_prefix(did_to_id(did))
@@ -404,19 +403,13 @@ def download():
             request, requests_session, url, download_url, content_type
         )
 
-    except InvalidSignatureError as e:
-        msg = f'Consumer signature failed verification: {e}'
-        logger.error(msg, exc_info=1)
-        return jsonify(error=msg), 401
-
     except Exception as e:
         logger.error(
-            f'Error: {e}. \n'
-            f'Payload was: documentId={did}, '
-            f'consumerAddress={consumer_address},'
-            f'signature={signature}'
-            f'serviceId={service_id}'
-            f'serviceType={service_type}',
+            f"Error: {e}. \n"
+            f"Payload was: documentId={data.get('did')}, "
+            f"consumerAddress={data.get('consumerAddress')},"
+            f"serviceId={data.get('serviceId')}"
+            f"serviceType={data.get('serviceType')}",
             exc_info=1
         )
         return jsonify(error=str(e)), 500
@@ -471,9 +464,7 @@ def access_token():
     try:
         asset, service, did, consumer_address, token_address = process_consume_request(  # noqa
             data,
-            'access_token',
-            user_nonce=user_nonce,
-            with_validation=False
+            'access_token'
         )
         service_id = data.get('serviceId')
         service_type = data.get('serviceType')
@@ -780,9 +771,7 @@ def computeStart():
     try:
         asset, service, did, consumer_address, token_address = process_consume_request(  # noqa
             data,
-            'compute_start_job',
-            additional_params=["transferTxId", "output"],
-            require_signature=False
+            'compute_start_job'
         )
         service_id = data.get('serviceId')
         service_type = data.get('serviceType')
@@ -921,12 +910,6 @@ def computeStart():
             response.status_code,
             headers={'content-type': 'application/json'}
         )
-
-    except InvalidSignatureError as e:
-        msg = f'Consumer signature failed verification: {e}'
-        logger.error(msg, exc_info=1)
-        return jsonify(error=msg), 401
-
     except (ValueError, KeyError, Exception) as e:
         logger.error(f'Error- {str(e)}', exc_info=1)
         return jsonify(error=f'Error : {str(e)}'), 500
