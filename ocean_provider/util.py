@@ -3,6 +3,7 @@ import json
 import logging
 import mimetypes
 import os
+import requests
 from cgi import parse_header
 
 from eth_utils import add_0x_prefix
@@ -42,7 +43,6 @@ def build_download_response(request, requests_session, url, download_url, conten
     try:
         download_request_headers = {}
         download_response_headers = {}
-
         is_range_request = bool(request.range)
 
         if is_range_request:
@@ -50,7 +50,6 @@ def build_download_response(request, requests_session, url, download_url, conten
             download_response_headers = download_request_headers
 
         response = requests_session.get(download_url, headers=download_request_headers, stream=True)
-
         if not is_range_request:
             filename = url.split("/")[-1]
 
@@ -79,8 +78,13 @@ def build_download_response(request, requests_session, url, download_url, conten
                 "Access-Control-Expose-Headers": f'Content-Disposition'
             }
 
+        def _generate(_response):
+            for chunk in _response.iter_content(chunk_size=4096):
+                if chunk:
+                    yield chunk
+
         return Response(
-            io.BytesIO(response.content).read(),
+            _generate(response),
             response.status_code,
             headers=download_response_headers,
             content_type=content_type
@@ -124,6 +128,8 @@ def get_asset_url_at_index(url_index, asset, wallet):
 
 
 def get_asset_urls(asset, wallet):
+    """return list of urls of the files included in this `asset` in order
+    """
     logger.debug(f'get_asset_urls(): did={asset.did}, provider={wallet.address}')
     try:
         files_list = get_asset_files_list(asset, wallet)
@@ -176,6 +182,27 @@ def check_required_attributes(required_attributes, data, method):
             logger.error('%s request failed: required attr %s missing.' % (method, attr))
             return '"%s" is required in the call to %s' % (attr, method), 400
     return None, None
+
+
+def check_at_least_one_attribute(required_attributes, data, method):
+    assert isinstance(data, dict), 'invalid payload format.'
+    logger.info('got %s request: %s' % (method, data))
+    if not data:
+        logger.error('%s request failed: data is empty.' % method)
+        return 'payload seems empty.', 400
+    for attr in required_attributes:
+        if attr in data:
+            return None, None
+
+    logger.error('%s request failed: at least one of %s attrs is required.' % (
+        method,
+        ', '.join(required_attributes)
+    ))
+
+    return 'At least one of "%s" is required in the call to %s' % (
+        ', '.join(required_attributes),
+        method
+    ), 400
 
 
 def validate_order(sender, token_address, num_tokens, tx_id, did, service_id):
@@ -387,3 +414,35 @@ def validate_algorithm_dict(algorithm_dict, algorithm_did):
         return f'algorithm `container` must specify values for all of entrypoint, image and tag.', 400
 
     return None, None
+
+
+def check_url_details(url):
+    """
+    If the url argument is invalid, returns False and empty dictionary.
+    Otherwise it returns True and a dictionary containing contentType and contentLength.
+    """
+    try:
+        result = requests.options(url)
+        if (
+            result.status_code != 200 or
+            not result.headers.get('Content-Type') or
+            not result.headers.get('Content-Length')
+        ):
+            # fallback on GET request
+            result = requests.get(url, stream=True)
+
+        if result.status_code == 200:
+            content_type = result.headers.get('Content-Type')
+            content_length = result.headers.get('Content-Length')
+
+            if content_type and content_length:
+                return True, {"contentLength": content_length, "contentType": content_type}
+
+    except requests.exceptions.InvalidSchema:
+        pass
+    except requests.exceptions.MissingSchema:
+        pass
+    except requests.exceptions.ConnectionError:
+        pass
+
+    return False, {}

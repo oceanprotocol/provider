@@ -82,3 +82,9 @@ PROVIDER_PASSWORD=password to allow decrypting the encrypted key
 You might also want to set `FLASK_ENV=development`. Then run ```flask run --port=8030```
 
 Refer to the [API.md](API.md) file for endpoints and payloads.
+
+#### Installing the git pre-commit hook (recommended)
+`flake8 --install-hook git`
+`git config --bool flake8.strict true`
+
+You can also run isort to order imports `isort {file_path}`

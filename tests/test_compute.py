@@ -10,16 +10,35 @@ from ocean_utils.agreements.service_agreement import ServiceAgreement
 from ocean_utils.agreements.service_types import ServiceTypes
 
 from ocean_provider.constants import BaseURLs
+from ocean_provider.run import get_services_endpoints
 from ocean_provider.util import build_stage_output_dict
 
 from tests.test_helpers import (
+    get_algorithm_ddo,
     get_consumer_wallet,
+    get_compute_job_info,
+    get_dataset_ddo_with_compute_service_no_rawalgo,
+    get_dataset_ddo_with_compute_service_specific_algo_dids,
+    get_dataset_ddo_with_compute_service,
+    get_possible_compute_job_status_text,
     get_publisher_wallet,
-    get_dataset_ddo_with_compute_service_no_rawalgo, get_dataset_ddo_with_compute_service_specific_algo_dids, get_algorithm_ddo,
-    get_dataset_ddo_with_compute_service, get_compute_job_info, get_possible_compute_job_status_text, mint_tokens_and_wait, get_nonce,
-    send_order)
+    get_nonce,
+    mint_tokens_and_wait,
+    send_order,
+)
 
-SERVICE_ENDPOINT = BaseURLs.BASE_PROVIDER_URL + '/services/download'
+
+def test_compute_expose_endpoints(client):
+    get_response = client.get('/')
+    result = get_response.get_json()
+    services_endpoints = get_services_endpoints()
+    assert 'serviceEndpoints' in result
+    assert 'software' in result
+    assert 'version' in result
+    assert 'network-url' in result
+    assert 'provider-address' in result
+    assert get_response.status == '200 OK'
+    assert len(result['serviceEndpoints']) == len(services_endpoints)
 
 
 def test_compute_norawalgo_allowed(client):
@@ -30,6 +49,7 @@ def test_compute_norawalgo_allowed(client):
     dataset_ddo_w_compute_service = get_dataset_ddo_with_compute_service_no_rawalgo(client, pub_wallet)
     did = dataset_ddo_w_compute_service.did
     ddo = dataset_ddo_w_compute_service
+
     data_token = dataset_ddo_w_compute_service.data_token_address
     dt_contract = DataToken(data_token)
     mint_tokens_and_wait(dt_contract, cons_wallet, pub_wallet)
@@ -78,7 +98,7 @@ def test_compute_norawalgo_allowed(client):
         data=json.dumps(payload),
         content_type='application/json'
     )
-    assert response.status == '400 BAD REQUEST', f'start compute job failed: {response.status} , { response.data}'
+    assert response.status == '400 BAD REQUEST', f'start compute job failed: {response.status} , {response.data}'
 
 
 def test_compute_specific_algo_dids(client):
@@ -130,11 +150,10 @@ def test_compute_specific_algo_dids(client):
         data=json.dumps(payload),
         content_type='application/json'
     )
-    assert response.status == '400 BAD REQUEST', f'start compute job failed: {response.status} , { response.data}'
+    assert response.status == '400 BAD REQUEST', f'start compute job failed: {response.status} , {response.data}'
 
 
 def test_compute(client):
-
     pub_wallet = get_publisher_wallet()
     cons_wallet = get_consumer_wallet()
 

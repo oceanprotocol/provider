@@ -54,7 +54,9 @@ dev_requirements = [
     'pkginfo',
     'twine',
     'watchdog',
-    'python-dotenv==0.15.0'
+    'python-dotenv==0.15.0',
+    'flake8',
+    'isort'
 ]
 
 setup(
@@ -84,6 +86,6 @@ setup(
     test_suite='tests',
     tests_require=test_requirements,
     url='https://github.com/oceanprotocol/provider-py',
-    version='0.4.1',
+    version='0.4.3',
     zip_safe=False,
 )
