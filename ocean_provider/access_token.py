@@ -1,7 +1,6 @@
 import logging
-
-from uuid import uuid4
 from datetime import datetime, timedelta
+from uuid import uuid4
 
 from ocean_utils.data_store.storage_base import StorageBase
 
@@ -13,17 +12,18 @@ class AccessToken:
         self._storage_path = storage_path
         self.storage = AccessTokenStorage(storage_path)
 
-    def generate_access_token(self, did, consumer_address):
+    def generate_access_token(
+        self, did, consumer_address, tx_id, seconds_to_exp
+    ):
         access_token = uuid4()
         self.storage.write_access_token(
-            did, consumer_address, access_token
+            did, consumer_address, tx_id, seconds_to_exp, access_token
         )
 
         return access_token
 
-    def check_access_token(self, did, consumer_address):
-        # TODO
-        return True
+    def check_access_token(self, did, consumer_address, tx_id):
+        self.storage.check_access_token(did, consumer_address, tx_id)
 
     def use_access_token(self, address):
         # TODO
@@ -38,31 +38,35 @@ class AccessTokenStorage(StorageBase):
         self._run_query(
             f'''CREATE TABLE IF NOT EXISTS {self.TABLE_NAME}
                (access_token VARCHAR PRIMARY KEY, consumer_address VARCHAR,
-                did VARCHAR, expiry_time DATETIME);'''
+                did VARCHAR, tx_id VARCHAR, expiry_time DATETIME);'''
         )
 
-    def write_access_token(self, did, consumer_address, token):
+    def write_access_token(
+        self, did, consumer_address, tx_id, seconds_to_exp, token
+    ):
         """
         Store access_token value for a specific address
 
         :param did: str, the document id for this access_token
         :param consumer_address: str
+        :param tx_id: transfer Id
+        :param seconds_to_exp: int, seconds to expiration, starting now
         :param token: access_token to be written
         """
         logger.debug(
             f'Writing access_token value to {self.TABLE_NAME} storage: '
             f'consumer={consumer_address}, token written={token}'
         )
-        expiry_time = datetime.now() + timedelta(minutes=15)
+        expiry_time = datetime.now() + timedelta(seconds=int(seconds_to_exp))
 
         self._run_query(
             f'''INSERT OR REPLACE
                 INTO {self.TABLE_NAME}
-                VALUES (?,?,?,?)''',
-            [str(token), did, consumer_address, expiry_time],
+                VALUES (?,?,?,?,?)''',
+            [str(token), did, consumer_address, tx_id, expiry_time],
         )
 
-    def check_access_token(self, did, consumer_address):
+    def check_access_token(self, did, consumer_address, tx_id):
         """
         Retrieve stored access_token value
 
@@ -76,14 +80,15 @@ class AccessTokenStorage(StorageBase):
                         FROM {self.TABLE_NAME}
                         WHERE did=?
                         AND consumer_address=?
-                        AND expiry_time < ?;''',
-                    (did, consumer_address, consumer_address, datetime.now())
+                        AND tx_id=?;''',
+                    (did, consumer_address, consumer_address, tx_id)
                 )
             ]
             (access_token, ) = rows[0] if rows else (None,)
             logger.debug(
                 f'Read access_token from `{self.TABLE_NAME}` storage: '
-                f'consumer={consumer_address}, result={access_token}'
+                f'consumer={consumer_address}, txId={tx_id}, '
+                f'result={access_token}'
             )
 
             return access_token

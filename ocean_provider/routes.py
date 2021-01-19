@@ -469,14 +469,14 @@ def access_token():
     try:
         asset, service, did, consumer_address, token_address = process_consume_request(  # noqa
             data,
-            'download',
+            'access_token',
             user_nonce=user_nonce,  # TODO: required or not
-            additional_params=["transferTxId", "fileIndex"]
+            additional_params=["transferTxId", "fileIndex", "secondsToExpiration"]
         )
         service_id = data.get('serviceId')
         service_type = data.get('serviceType')
-        signature = data.get('signature')
         tx_id = data.get("transferTxId")
+        seconds_to_exp = data.get("secondsToExpiration")
 
         if did.startswith('did:'):
             did = add_0x_prefix(did_to_id(did))
@@ -493,24 +493,24 @@ def access_token():
         assert service_type == ServiceTypes.ASSET_ACCESS
 
         access_token = user_access_token.generate_access_token(
-            did, consumer_address  # TODO: maybe serviceType too?
+            did, consumer_address, tx_id, seconds_to_exp
         )
 
         return {'access_token': str(access_token)}, 200
 
-    except InvalidSignatureError as e:  # TODO: maybe not this error
+    except InvalidSignatureError as e:
         msg = f'Consumer signature failed verification: {e}'
         logger.error(msg, exc_info=1)
         return jsonify(error=msg), 401
-
+    except AssertionError as e:
+        return jsonify(error=str(e)), 400
     except Exception as e:
         logger.error(
-            f'Error: {e}. \n'
-            f'Payload was: documentId={did}, '
-            f'consumerAddress={consumer_address},'
-            f'signature={signature}'
-            f'serviceId={service_id}'
-            f'serviceType={service_type}',
+            f"Error: {e}. \n"
+            f"Payload was: documentId={data.get('did')}, "
+            f"consumerAddress={data.get('consumerAddress')},"
+            f"serviceId={data.get('serviceId')}"
+            f"serviceType={data.get('serviceType')}",
             exc_info=1
         )
         return jsonify(error=str(e)), 500

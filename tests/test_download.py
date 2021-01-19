@@ -3,37 +3,30 @@
 
 import mimetypes
 from copy import deepcopy
-from unittest.mock import Mock, MagicMock
+from unittest.mock import MagicMock, Mock
 
 from ocean_lib.models.data_token import DataToken
-from werkzeug.utils import get_content_type
+from ocean_lib.web3_internal.utils import add_ethereum_prefix_and_hash_msg
+from ocean_lib.web3_internal.web3helper import Web3Helper
 from ocean_utils.agreements.service_agreement import ServiceAgreement
 from ocean_utils.agreements.service_types import ServiceTypes
 from ocean_utils.aquarius.aquarius import Aquarius
 from ocean_utils.http_requests.requests_session import get_requests_session
-from ocean_lib.web3_internal.web3helper import Web3Helper
-from ocean_lib.web3_internal.utils import add_ethereum_prefix_and_hash_msg
+from werkzeug.utils import get_content_type
 
 from ocean_provider.constants import BaseURLs
 from ocean_provider.exceptions import InvalidSignatureError
 from ocean_provider.util import build_download_response, get_download_url
-from ocean_provider.utils.accounts import (
-    check_auth_token,
-    generate_auth_token,
-    is_auth_token_valid,
-    verify_signature,
-)
-
-from tests.test_helpers import (
-    get_consumer_wallet,
-    get_dataset_ddo_with_access_service,
-    get_dataset_with_invalid_url_ddo,
-    get_dataset_with_ipfs_url_ddo,
-    get_nonce,
-    get_publisher_wallet,
-    mint_tokens_and_wait,
-    send_order,
-)
+from ocean_provider.utils.accounts import (check_auth_token,
+                                           generate_auth_token,
+                                           is_auth_token_valid,
+                                           verify_signature)
+from tests.test_helpers import (get_consumer_wallet,
+                                get_dataset_ddo_with_access_service,
+                                get_dataset_with_invalid_url_ddo,
+                                get_dataset_with_ipfs_url_ddo, get_nonce,
+                                get_publisher_wallet, mint_tokens_and_wait,
+                                send_order)
 
 
 def dummy_callback(*_):
@@ -124,7 +117,7 @@ def test_access_token(client):
     sa = ServiceAgreement.from_ddo(ServiceTypes.ASSET_ACCESS, ddo)
     tx_id = send_order(client, ddo, dt_token, sa, cons_wallet)
     index = 0
-    download_endpoint = BaseURLs.ASSETS_URL + '/access-token'
+    at_endpoint = BaseURLs.ASSETS_URL + '/access-token'
     # Consume using url index and auth token
     # (let the provider do the decryption)
     payload = dict({
@@ -137,19 +130,24 @@ def test_access_token(client):
     payload['signature'] = generate_auth_token(cons_wallet)
     payload['transferTxId'] = tx_id
     payload['fileIndex'] = index
-    request_url = download_endpoint + '?' + '&'.join(
+    request_url = at_endpoint + '?' + '&'.join(
         [f'{k}={v}' for k, v in payload.items()]
     )
-    response = client.get(
-        request_url
+    response = client.get(request_url)
+    assert response.status_code == 400  # missing secondsToExpiration
+
+    payload['secondsToExpiration'] = 15 * 60
+    request_url = at_endpoint + '?' + '&'.join(
+        [f'{k}={v}' for k, v in payload.items()]
     )
-    assert response.status_code == 200, f'{response.data}'
+    response = client.get(request_url)
+    assert response.status_code == 200
 
     # Try generating access token using url index and
     # signature (withOUT nonce), should fail
     _hash = add_ethereum_prefix_and_hash_msg(ddo.did)
     payload['signature'] = Web3Helper.sign_hash(_hash, cons_wallet)
-    request_url = download_endpoint + '?' + '&'.join(
+    request_url = at_endpoint + '?' + '&'.join(
         [f'{k}={v}' for k, v in payload.items()]
     )
     print('>>>> Expecting InvalidSignatureError from the download endpoint <<<<')  # noqa
@@ -162,7 +160,7 @@ def test_access_token(client):
     nonce = get_nonce(client, cons_wallet.address)
     _hash = add_ethereum_prefix_and_hash_msg(f'{ddo.did}{nonce}')
     payload['signature'] = Web3Helper.sign_hash(_hash, cons_wallet)
-    request_url = download_endpoint + '?' + '&'.join(
+    request_url = at_endpoint + '?' + '&'.join(
         [f'{k}={v}' for k, v in payload.items()]
     )
     response = client.get(
