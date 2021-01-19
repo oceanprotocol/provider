@@ -20,6 +20,11 @@ class CustomJsonRequest(JsonRequest):
             'signature.signature': 'Invalid signature provided.'
         }, request=request)
 
+    def validate(self):
+        if self._validator.fails():
+            return self._validator.messages(), 400
+        return True
+
 
 class CustomValidator(Validator):
     def __init__(
@@ -44,6 +49,8 @@ class CustomRulesProcessor(RulesProcessor):
             return True
         except InvalidSignatureError:
             return False
+
+        return False
 
 
 class NonceRequest(CustomJsonRequest):
@@ -95,5 +102,5 @@ class ComputeStartRequest(CustomJsonRequest):
                 'required_without:algorithmMeta',
                 'required_with_all:algorithmDataToken,algorithmTransferTxId'
             ],
-            'signature': ['required', 'signature:consumerAddress']
+            'signature': ['signature:consumerAddress']
         }
