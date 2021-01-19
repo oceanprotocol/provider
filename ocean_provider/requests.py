@@ -34,9 +34,10 @@ class CustomValidator(Validator):
 
 class CustomRulesProcessor(RulesProcessor):
     def validate_signature(self, value, params, **kwargs):
-        self._assert_params_size(size=1, params=params, rule='signature')
+        self._assert_params_size(size=2, params=params, rule='signature')
         owner = self._attribute_value(params[0])
-        original_msg = f'{owner}'
+        did = self._attribute_value(params[1])
+        original_msg = f'{owner}{did}'
         try:
             verify_signature(
                 owner, value, original_msg, user_nonce.get_nonce(owner)
@@ -85,7 +86,7 @@ class ComputeRequest(CustomJsonRequest):
     def rules(self):
         return {
             'consumerAddress': ['required'],
-            'signature': ['required', 'signature:consumerAddress']
+            'signature': ['required', 'signature:consumerAddress,documentId']
         }
 
 
@@ -104,7 +105,7 @@ class ComputeStartRequest(CustomJsonRequest):
                 'required_without:algorithmMeta',
                 'required_with_all:algorithmDataToken,algorithmTransferTxId'
             ],
-            'signature': ['required', 'signature:consumerAddress'],
+            'signature': ['required', 'signature:consumerAddress,documentId'],
         }
 
 
@@ -119,7 +120,7 @@ class AccessTokenRequest(CustomJsonRequest):
             'secondsToExpiration': ['required', 'integer'],
             'transferTxId': ['required'],
             'fileIndex': ['required'],
-            'signature': ['required', 'signature:consumerAddress'],
+            'signature': ['required', 'signature:consumerAddress,documentId'],
         }
 
 
@@ -133,7 +134,7 @@ class DownloadRequest(CustomJsonRequest):
             'consumerAddress': ['required'],
             'transferTxId': ['required'],
             'fileIndex': ['required'],
-            'signature': ['required', 'signature:consumerAddress'],
+            'signature': ['required', 'signature:consumerAddress,documentId'],
         }
 
 
