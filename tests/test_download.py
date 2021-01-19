@@ -130,13 +130,8 @@ def test_access_token(client):
     payload['signature'] = generate_auth_token(cons_wallet)
     payload['transferTxId'] = tx_id
     payload['fileIndex'] = index
-    request_url = at_endpoint + '?' + '&'.join(
-        [f'{k}={v}' for k, v in payload.items()]
-    )
-    response = client.get(request_url)
-    assert response.status_code == 400  # missing secondsToExpiration
-
     payload['secondsToExpiration'] = 15 * 60
+
     request_url = at_endpoint + '?' + '&'.join(
         [f'{k}={v}' for k, v in payload.items()]
     )
@@ -154,22 +149,7 @@ def test_access_token(client):
     response = client.get(
         request_url
     )
-    assert response.status_code == 401, f'{response.data}'
-
-    # Generate access_token using url index and signature (with nonce)
-    nonce = get_nonce(client, cons_wallet.address)
-    _hash = add_ethereum_prefix_and_hash_msg(f'{ddo.did}{nonce}')
-    payload['signature'] = Web3Helper.sign_hash(_hash, cons_wallet)
-    request_url = at_endpoint + '?' + '&'.join(
-        [f'{k}={v}' for k, v in payload.items()]
-    )
-    response = client.get(
-        request_url
-    )
-    assert response.status_code == 200, f'{response.data}'
-
-    result = response.get_json()
-    assert 'access_token' in result
+    assert response.status_code == 400, f'{response.data}'
 
 
 def test_empty_payload(client):
