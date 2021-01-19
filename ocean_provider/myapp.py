@@ -5,9 +5,11 @@ import os
 
 from flask import Flask
 from flask_cors import CORS
+from flask_sieve import Sieve
 
 app = Flask(__name__)
 CORS(app)
+Sieve(app)
 
 if 'CONFIG_FILE' in os.environ and os.environ['CONFIG_FILE']:
     app.config['CONFIG_FILE'] = os.environ['CONFIG_FILE']

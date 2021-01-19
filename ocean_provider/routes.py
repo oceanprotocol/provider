@@ -18,9 +18,10 @@ from ocean_provider.access_token import AccessToken
 from ocean_provider.exceptions import BadRequestError, InvalidSignatureError
 from ocean_provider.log import setup_logging
 from ocean_provider.myapp import app
-from ocean_provider.requests import (ComputeRequest, ComputeStartRequest,
-                                     EncryptRequest, FileInfoRequest,
-                                     NonceRequest, SimpleFlowConsumeRequest)
+from ocean_provider.requests import (AccessTokenRequest, ComputeRequest,
+                                     ComputeStartRequest, EncryptRequest,
+                                     FileInfoRequest, NonceRequest,
+                                     SimpleFlowConsumeRequest)
 from ocean_provider.user_nonce import UserNonce
 from ocean_provider.util import (build_download_response,
                                  build_stage_algorithm_dict, build_stage_dict,
@@ -422,6 +423,7 @@ def download():
 
 
 @services.route('/access-token', methods=['GET'])
+@validate(AccessTokenRequest)
 def access_token():
     """Generates a one-time access token for file download.
 
@@ -470,8 +472,8 @@ def access_token():
         asset, service, did, consumer_address, token_address = process_consume_request(  # noqa
             data,
             'access_token',
-            user_nonce=user_nonce,  # TODO: required or not
-            additional_params=["transferTxId", "fileIndex", "secondsToExpiration"]
+            user_nonce=user_nonce,
+            with_validation=False
         )
         service_id = data.get('serviceId')
         service_type = data.get('serviceType')
@@ -498,12 +500,6 @@ def access_token():
 
         return {'access_token': str(access_token)}, 200
 
-    except InvalidSignatureError as e:
-        msg = f'Consumer signature failed verification: {e}'
-        logger.error(msg, exc_info=1)
-        return jsonify(error=msg), 401
-    except AssertionError as e:
-        return jsonify(error=str(e)), 400
     except Exception as e:
         logger.error(
             f"Error: {e}. \n"

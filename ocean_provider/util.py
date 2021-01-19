@@ -223,25 +223,27 @@ def record_consume_request(did, service_id, order_tx_id, consumer_address, token
 
 def process_consume_request(
     data: dict, method: str, user_nonce: UserNonce=None,
-    additional_params: list=None, require_signature: bool=True
+    additional_params: list=None, require_signature: bool=True,
+    with_validation=True
 ):
-    required_attributes = [
-        'documentId',
-        'serviceId',
-        'serviceType',
-        'dataToken',
-        'consumerAddress'
-    ]
-    if additional_params:
-        required_attributes += additional_params
+    if with_validation:
+        required_attributes = [
+            'documentId',
+            'serviceId',
+            'serviceType',
+            'dataToken',
+            'consumerAddress'
+        ]
+        if additional_params:
+            required_attributes += additional_params
 
-    if require_signature:
-        required_attributes.append('signature')
+        if require_signature:
+            required_attributes.append('signature')
 
-    msg, status = check_required_attributes(
-        required_attributes, data, method)
-    if msg:
-        raise AssertionError(msg)
+        msg, status = check_required_attributes(
+            required_attributes, data, method)
+        if msg:
+            raise AssertionError(msg)
 
     did = data.get('documentId')
     token_address = data.get('dataToken')
