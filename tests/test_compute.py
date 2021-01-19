@@ -87,7 +87,6 @@ def test_compute_norawalgo_allowed(client):
         'transferTxId': tx_id,
         'dataToken': data_token,
         'output': build_stage_output_dict(dict(), dataset_ddo_w_compute_service, cons_wallet.address, pub_wallet),
-        'algorithmDid': '',
         'algorithmMeta': algorithm_meta,
         'algorithmDataToken': ''
     })
@@ -140,7 +139,6 @@ def test_compute_specific_algo_dids(client):
         'dataToken': data_token,
         'output': build_stage_output_dict(dict(), dataset_ddo_w_compute_service, cons_wallet.address, pub_wallet),
         'algorithmDid': alg_ddo.did,
-        'algorithmMeta': {},
         'algorithmDataToken': alg_data_token
     })
 
@@ -150,6 +148,7 @@ def test_compute_specific_algo_dids(client):
         data=json.dumps(payload),
         content_type='application/json'
     )
+
     assert response.status == '400 BAD REQUEST', f'start compute job failed: {response.status} , {response.data}'
 
 
@@ -194,7 +193,6 @@ def test_compute(client):
         'dataToken': data_token,
         'output': build_stage_output_dict(dict(), dataset_ddo_w_compute_service, cons_wallet.address, pub_wallet),
         'algorithmDid': alg_ddo.did,
-        'algorithmMeta': {},
         'algorithmDataToken': alg_data_token,
         'algorithmTransferTxId': alg_tx_id
     })

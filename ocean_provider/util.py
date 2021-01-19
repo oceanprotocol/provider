@@ -268,14 +268,15 @@ def process_consume_request(
 
 
 def process_compute_request(
-    data, user_nonce: UserNonce, require_signature: bool=True
+    data, user_nonce: UserNonce, require_signature: bool=True, with_validation=False
 ):
-    required_attributes = ['consumerAddress']
-    if require_signature:
-        required_attributes.append('signature')
-    msg, status = check_required_attributes(required_attributes, data, 'compute')
-    if msg:
-        raise BadRequestError(msg)
+    if with_validation:
+        required_attributes = ['consumerAddress']
+        if require_signature:
+            required_attributes.append('signature')
+        msg, status = check_required_attributes(required_attributes, data, 'compute')
+        if msg:
+            raise BadRequestError(msg)
 
     provider_wallet = get_provider_wallet()
     did = data.get('documentId')

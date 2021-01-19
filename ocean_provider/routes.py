@@ -18,7 +18,8 @@ from ocean_provider.access_token import AccessToken
 from ocean_provider.exceptions import BadRequestError, InvalidSignatureError
 from ocean_provider.log import setup_logging
 from ocean_provider.myapp import app
-from ocean_provider.requests import (EncryptRequest, FileInfoRequest,
+from ocean_provider.requests import (ComputeRequest, ComputeStartRequest,
+                                     EncryptRequest, FileInfoRequest,
                                      NonceRequest, SimpleFlowConsumeRequest)
 from ocean_provider.user_nonce import UserNonce
 from ocean_provider.util import (build_download_response,
@@ -32,7 +33,6 @@ from ocean_provider.util import (build_download_response,
                                  record_consume_request,
                                  validate_algorithm_dict, validate_order,
                                  validate_transfer_not_used_for_other_service)
-from ocean_provider.utils.accounts import verify_signature
 from ocean_provider.utils.basics import (LocalFileAdapter,
                                          get_asset_from_metadatastore,
                                          get_config, get_datatoken_minter,
@@ -516,6 +516,7 @@ def access_token():
 
 
 @services.route('/compute', methods=['DELETE'])
+@validate(ComputeRequest)
 def computeDelete():
     """Deletes a workflow.
 
@@ -566,21 +567,13 @@ def computeDelete():
             response.status_code,
             headers={'content-type': 'application/json'}
         )
-
-    except BadRequestError as e:
-        return jsonify(error=str(e)), 400
-
-    except InvalidSignatureError as e:
-        msg = f'Consumer signature failed verification: {e}'
-        logger.error(msg, exc_info=1)
-        return jsonify(error=msg), 401
-
     except (ValueError, Exception) as e:
         logger.error(f'Error- {str(e)}', exc_info=1)
         return jsonify(error=f'Error : {str(e)}'), 500
 
 
 @services.route('/compute', methods=['PUT'])
+@validate(ComputeRequest)
 def computeStop():
     """Stop the execution of a workflow.
 
@@ -635,15 +628,6 @@ def computeStop():
             response.status_code,
             headers={'content-type': 'application/json'}
         )
-
-    except BadRequestError as e:
-        return jsonify(error=str(e)), 400
-
-    except InvalidSignatureError as e:
-        msg = f'Consumer signature failed verification: {e}'
-        logger.error(msg, exc_info=1)
-        return jsonify(error=msg), 401
-
     except (ValueError, Exception) as e:
         logger.error(f'Error- {str(e)}', exc_info=1)
         return jsonify(error=f'Error : {str(e)}'), 500
@@ -696,11 +680,13 @@ def computeStatus():
     try:
         signed_request = False
         try:
-            body = process_compute_request(data, user_nonce)
+            body = process_compute_request(
+                data, user_nonce, require_signature=True, with_validation=True
+            )
             signed_request = True
         except Exception:
             body = process_compute_request(
-                data, user_nonce, require_signature=False
+                data, user_nonce, require_signature=False, with_validation=True
             )
 
         response = requests_session.get(
@@ -745,6 +731,7 @@ def computeStatus():
 
 
 @services.route('/compute', methods=['POST'])
+@validate(ComputeStartRequest)
 def computeStart():
     """Call the execution of a workflow.
 
@@ -802,7 +789,6 @@ def computeStart():
         )
         service_id = data.get('serviceId')
         service_type = data.get('serviceType')
-        signature = data.get('signature')
         tx_id = data.get("transferTxId")
 
         # Verify that  the number of required tokens has been
@@ -831,33 +817,6 @@ def computeStart():
         output_def = data.get('output', dict())
 
         assert service_type == ServiceTypes.CLOUD_COMPUTE
-
-        # Validate algorithm choice
-        if not (algorithm_meta or algorithm_did):
-            msg = f'Need an `algorithmMeta` or `algorithmDid` to run, otherwise don\'t bother.'  # noqa
-            logger.error(msg, exc_info=1)
-            return jsonify(error=msg), 400
-
-        # algorithmDid also requires algorithmDataToken
-        # and algorithmTransferTxId
-        if algorithm_did:
-            if not (algorithm_token_address and algorithm_tx_id):
-                msg = (
-                    f'Using `algorithmDid` requires the `algorithmDataToken` and '  # noqa
-                    f'`algorithmTransferTxId` values in the request payload. '
-                    f'algorithmDataToken is the DataToken address for the algorithm asset. '  # noqa
-                    f'algorithmTransferTxId is the transaction id (hash) of transferring '  # noqa
-                    f'data tokens from consumer wallet to this providers wallet.'
-                )
-                logger.error(msg, exc_info=1)
-                return jsonify(error=msg), 400
-
-        # Consumer signature
-        original_msg = f'{consumer_address}{did}'
-        verify_signature(
-            consumer_address, signature, original_msg,
-            user_nonce.get_nonce(consumer_address)
-        )
 
         ########################
         # Valid service?
@@ -957,12 +916,6 @@ def computeStart():
             response.status_code,
             headers={'content-type': 'application/json'}
         )
-
-    except InvalidSignatureError as e:
-        msg = f'Consumer signature failed verification: {e}'
-        logger.error(msg, exc_info=1)
-        return jsonify(error=msg), 401
-
     except (ValueError, KeyError, Exception) as e:
         logger.error(f'Error- {str(e)}', exc_info=1)
         return jsonify(error=f'Error : {str(e)}'), 500
