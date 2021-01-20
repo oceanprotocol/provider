@@ -417,7 +417,7 @@ def download():
 
 @services.route('/accesstoken', methods=['GET'])
 @validate(AccessTokenRequest)
-def access_token():
+def accessToken():
     """Generates a one-time access token for file download.
 
     ---
