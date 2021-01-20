@@ -371,6 +371,15 @@ def download():
         if did.startswith('did:'):
             did = add_0x_prefix(did_to_id(did))
 
+        original_consumer = user_access_token.get_access_token(
+            consumer_address,
+            did,
+            tx_id
+        )
+
+        if original_consumer:
+            consumer_address = original_consumer
+
         _tx, _order_log, _transfer_log = validate_order(
             consumer_address,
             token_address,

@@ -30,9 +30,8 @@ class AccessToken:
             did, consumer_address, tx_id, delegate_address
         )
 
-    def use_access_token(self, address):
-        # TODO
-        pass
+    def get_access_token(self, delegate_address, did, tx_id):
+        return self.storage.get_access_token(delegate_address, did, tx_id)
 
 
 class AccessTokenStorage(StorageBase):
@@ -109,5 +108,28 @@ class AccessTokenStorage(StorageBase):
         except Exception as e:
             logging.error(
                 f'Error reading access token for {consumer_address}: {e}'
+            )
+            return None
+
+    def get_access_token(self, delegate_address, did, tx_id):
+        try:
+            rows = [
+                row for row in self._run_query(
+                    f'''SELECT consumer_address
+                        FROM access_token
+                        WHERE delegate_address=?
+                        AND did=?
+                        AND tx_id=?
+                        AND expiry_time > ?;''',
+                    (delegate_address, did, tx_id, datetime.now())
+                )
+            ]
+
+            (consumer_address, ) = rows[0] if rows else (None, )
+            return consumer_address
+
+        except Exception as e:
+            logging.error(
+                f'Error reading access token for {delegate_address}: {e}'
             )
             return None

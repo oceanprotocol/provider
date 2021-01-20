@@ -104,3 +104,61 @@ def test_access_token(client):
     response = client.get(request_url)
     # second time doesn't work because token already exists
     assert response.status_code == 400, f'{response.data}'
+
+
+def test_access_token_usage(client):
+    aqua = Aquarius('http://localhost:5000')
+    try:
+        for did in aqua.list_assets():
+            aqua.retire_asset_ddo(did)
+    except (ValueError, Exception):
+        pass
+
+    pub_wallet = get_publisher_wallet()
+    cons_wallet = get_consumer_wallet()
+    some_wallet = get_some_wallet()
+
+    ddo = get_dataset_ddo_with_access_service(client, pub_wallet)
+    dt_address = ddo.as_dictionary()['dataToken']
+    dt_token = DataToken(dt_address)
+    mint_tokens_and_wait(dt_token, cons_wallet, pub_wallet)
+
+    sa = ServiceAgreement.from_ddo(ServiceTypes.ASSET_ACCESS, ddo)
+    tx_id = send_order(client, ddo, dt_token, sa, cons_wallet)
+    index = 0
+    at_endpoint = BaseURLs.ASSETS_URL + '/accesstoken'
+    # Consume using url index and auth token
+    # (let the provider do the decryption)
+    payload = dict({
+        'documentId': ddo.did,
+        'serviceId': sa.index,
+        'serviceType': sa.type,
+        'dataToken': dt_address,
+        'consumerAddress': cons_wallet.address
+    })
+    payload['signature'] = generate_auth_token(cons_wallet)
+    payload['transferTxId'] = tx_id
+    payload['fileIndex'] = index
+    payload['secondsToExpiration'] = 15 * 60
+    payload['delegateAddress'] = some_wallet.address
+
+    request_url = at_endpoint + '?' + '&'.join(
+        [f'{k}={v}' for k, v in payload.items()]
+    )
+    response = client.get(request_url)
+    assert response.status_code == 200
+    response_json = response.get_json()
+    assert 'access_token' in response_json
+
+    download_endpoint = BaseURLs.ASSETS_URL + '/download'
+    # Consume using url index and auth token
+    # (let the provider do the decryption)
+    payload['consumerAddress'] = some_wallet.address
+    payload['signature'] = generate_auth_token(some_wallet)
+    payload.pop('secondsToExpiration')
+    payload.pop('delegateAddress')
+    request_url = download_endpoint + '?' + '&'.join(
+        [f'{k}={v}' for k, v in payload.items()]
+    )
+    response = client.get(request_url)
+    assert response.status_code == 200, f'{response.data}'
