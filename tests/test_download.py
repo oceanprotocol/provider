@@ -121,7 +121,7 @@ def test_access_token(client):
     sa = ServiceAgreement.from_ddo(ServiceTypes.ASSET_ACCESS, ddo)
     tx_id = send_order(client, ddo, dt_token, sa, cons_wallet)
     index = 0
-    at_endpoint = BaseURLs.ASSETS_URL + '/access-token'
+    at_endpoint = BaseURLs.ASSETS_URL + '/accesstoken'
     # Consume using url index and auth token
     # (let the provider do the decryption)
     payload = dict({

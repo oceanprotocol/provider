@@ -415,7 +415,7 @@ def download():
         return jsonify(error=str(e)), 500
 
 
-@services.route('/access-token', methods=['GET'])
+@services.route('/accesstoken', methods=['GET'])
 @validate(AccessTokenRequest)
 def access_token():
     """Generates a one-time access token for file download.
