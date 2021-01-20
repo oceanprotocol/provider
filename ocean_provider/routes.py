@@ -470,6 +470,7 @@ def accessToken():
         service_type = data.get('serviceType')
         tx_id = data.get("transferTxId")
         seconds_to_exp = data.get("secondsToExpiration")
+        delegate_address = data.get("delegateAddress", consumer_address)
 
         if did.startswith('did:'):
             did = add_0x_prefix(did_to_id(did))
@@ -486,7 +487,7 @@ def accessToken():
         assert service_type == ServiceTypes.ASSET_ACCESS
 
         access_token = user_access_token.generate_access_token(
-            did, consumer_address, tx_id, seconds_to_exp
+            did, consumer_address, tx_id, seconds_to_exp, delegate_address
         )
 
         return {'access_token': str(access_token)}, 200

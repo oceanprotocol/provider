@@ -4,6 +4,7 @@ from flask_sieve import JsonRequest
 from flask_sieve.rules_processor import RulesProcessor
 from flask_sieve.validator import Validator
 from ocean_utils.did import did_to_id
+from web3 import Web3
 
 from ocean_provider.access_token import AccessToken
 from ocean_provider.exceptions import InvalidSignatureError
@@ -22,7 +23,8 @@ class CustomJsonRequest(JsonRequest):
         request = get_request_data(request)
         self._validator = CustomValidator(rules=self.rules(), messages={
             'signature.signature': 'Invalid signature provided.',
-            'transferTxId.access_token': 'There is already a token with these parameters'  # noqa
+            'transferTxId.access_token': 'There is already a token with these parameters',  # noqa
+            'delegateAddress.web3_address_or_empty': 'Invalid web3 address provided.'  # noqa
         }, request=request)
 
 
@@ -55,15 +57,26 @@ class CustomRulesProcessor(RulesProcessor):
         return False
 
     def validate_access_token(self, value, params, **kwargs):
-        self._assert_params_size(size=2, params=params, rule='access_token')
+        self._assert_params_size(size=3, params=params, rule='access_token')
         did = self._attribute_value(params[0])
         if did.startswith('did:'):
             did = add_0x_prefix(did_to_id(did))
 
         consumer_address = self._attribute_value(params[1])
+        delegate_address = self._attribute_value(params[2])
         tx_id = value
 
-        return user_access_token.check_unique(did, consumer_address, tx_id)
+        return user_access_token.check_unique(
+            did, consumer_address, tx_id, delegate_address
+        )
+
+    def validate_web3_address_or_empty(self, value, params, **kwargs):
+        self._assert_params_size(size=0, params=params, rule='access_token')
+
+        if not value:
+            return True
+
+        return Web3.isAddress(value)
 
 
 class NonceRequest(CustomJsonRequest):
@@ -143,13 +156,14 @@ class AccessTokenRequest(CustomJsonRequest):
             'secondsToExpiration': ['required', 'integer'],
             'transferTxId': [
                 'required',
-                'access_token:documentId,consumerAddress'
+                'access_token:documentId,consumerAddress,delegateAddress'
             ],
             'fileIndex': ['required'],
             'signature': [
                 'required',
                 'signature:consumerAddress,documentId,only_did'
             ],
+            'delegateAddress': ['web3_address_or_empty'],
         }
 
 

@@ -14,18 +14,21 @@ class AccessToken:
         self.storage = AccessTokenStorage(storage_path)
 
     def generate_access_token(
-        self, did, consumer_address, tx_id, seconds_to_exp
+        self, did, consumer_address, tx_id, seconds_to_exp, delegate_address
     ):
         access_token = str(uuid4())
         access_token = sha256(access_token.encode('utf-8')).hexdigest()
         self.storage.write_access_token(
-            did, consumer_address, tx_id, seconds_to_exp, access_token
+            did, consumer_address, tx_id, seconds_to_exp,
+            delegate_address, access_token
         )
 
         return access_token
 
-    def check_unique(self, did, consumer_address, tx_id):
-        return self.storage.check_unique(did, consumer_address, tx_id)
+    def check_unique(self, did, consumer_address, tx_id, delegate_address):
+        return self.storage.check_unique(
+            did, consumer_address, tx_id, delegate_address
+        )
 
     def use_access_token(self, address):
         # TODO
@@ -40,11 +43,13 @@ class AccessTokenStorage(StorageBase):
         self._run_query(
             f'''CREATE TABLE IF NOT EXISTS {self.TABLE_NAME}
                (access_token VARCHAR PRIMARY KEY, consumer_address VARCHAR,
-                did VARCHAR, tx_id VARCHAR, expiry_time DATETIME);'''
+                did VARCHAR, tx_id VARCHAR, delegate_address,
+                expiry_time DATETIME);'''
         )
 
     def write_access_token(
-        self, did, consumer_address, tx_id, seconds_to_exp, token
+        self, did, consumer_address, tx_id, seconds_to_exp,
+        delegate_address, token
     ):
         """
         Store access_token value for a specific address
@@ -53,6 +58,7 @@ class AccessTokenStorage(StorageBase):
         :param consumer_address: str
         :param tx_id: transfer Id
         :param seconds_to_exp: int, seconds to expiration, starting now
+        :param delegate_address: string, address for access_token delegation
         :param token: access_token to be written
         """
         logger.debug(
@@ -64,12 +70,18 @@ class AccessTokenStorage(StorageBase):
         self._run_query(
             f'''INSERT OR REPLACE
                 INTO {self.TABLE_NAME}
-                (access_token, did, consumer_address, tx_id, expiry_time)
-                VALUES (?,?,?,?,?)''',
-            [str(token), did, consumer_address, tx_id, expiry_time],
+                (
+                    access_token, did, consumer_address,
+                    tx_id, delegate_address, expiry_time
+                )
+                VALUES (?,?,?,?,?,?)''',
+            [
+                str(token), did, consumer_address, tx_id,
+                delegate_address, expiry_time
+            ],
         )
 
-    def check_unique(self, did, consumer_address, tx_id):
+    def check_unique(self, did, consumer_address, tx_id, delegate_address):
         """
         Retrieve stored access_token value
 
@@ -83,8 +95,9 @@ class AccessTokenStorage(StorageBase):
                         FROM {self.TABLE_NAME}
                         WHERE did=?
                         AND consumer_address=?
+                        AND delegate_address=?
                         AND tx_id=?;''',
-                    (did, consumer_address, tx_id)
+                    (did, consumer_address, delegate_address, tx_id)
                 )
             ]
 
