@@ -43,7 +43,7 @@ class CustomRulesProcessor(RulesProcessor):
         owner = self._attribute_value(params[0])
         did = self._attribute_value(params[1])
         rule = params[2]
-        original_msg = f'{owner}{did}' if rule == 'customer_did' else f'{did}'
+        original_msg = f'{owner}{did}' if rule == 'consumer_did' else f'{did}'
         try:
             verify_signature(
                 owner, value, original_msg, user_nonce.get_nonce(owner)
@@ -127,7 +127,7 @@ class ComputeStartRequest(CustomJsonRequest):
             ],
             'signature': [
                 'required',
-                'signature:consumerAddress,documentId,customer_did'
+                'signature:consumerAddress,documentId,consumer_did'
             ],
         }
 
