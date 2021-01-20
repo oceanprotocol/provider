@@ -35,7 +35,6 @@ from ocean_provider.util import (build_download_response,
                                  record_consume_request,
                                  validate_algorithm_dict, validate_order,
                                  validate_transfer_not_used_for_other_service)
-from ocean_provider.utils.accounts import verify_signature
 from ocean_provider.utils.basics import (LocalFileAdapter,
                                          get_asset_from_metadatastore,
                                          get_config, get_datatoken_minter,
@@ -776,7 +775,6 @@ def computeStart():
         )
         service_id = data.get('serviceId')
         service_type = data.get('serviceType')
-        signature = data.get('signature')
         tx_id = data.get("transferTxId")
 
         # Verify that  the number of required tokens has been
@@ -805,13 +803,6 @@ def computeStart():
         output_def = data.get('output', dict())
 
         assert service_type == ServiceTypes.CLOUD_COMPUTE
-
-        # Consumer signature
-        original_msg = f'{consumer_address}{did}'
-        verify_signature(
-            consumer_address, signature, original_msg,
-            user_nonce.get_nonce(consumer_address)
-        )
 
         ########################
         # Valid service?
