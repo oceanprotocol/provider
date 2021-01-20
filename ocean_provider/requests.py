@@ -1,8 +1,11 @@
+from eth_utils import add_0x_prefix
 from flask import request as flask_request
 from flask_sieve import JsonRequest
 from flask_sieve.rules_processor import RulesProcessor
 from flask_sieve.validator import Validator
+from ocean_utils.did import did_to_id
 
+from ocean_provider.access_token import AccessToken
 from ocean_provider.exceptions import InvalidSignatureError
 from ocean_provider.user_nonce import UserNonce
 from ocean_provider.util import get_request_data
@@ -10,6 +13,7 @@ from ocean_provider.utils.accounts import verify_signature
 from ocean_provider.utils.basics import get_config
 
 user_nonce = UserNonce(get_config().storage_path)
+user_access_token = AccessToken(get_config().storage_path)
 
 
 class CustomJsonRequest(JsonRequest):
@@ -17,7 +21,8 @@ class CustomJsonRequest(JsonRequest):
         request = request or flask_request
         request = get_request_data(request)
         self._validator = CustomValidator(rules=self.rules(), messages={
-            'signature.signature': 'Invalid signature provided.'
+            'signature.signature': 'Invalid signature provided.',
+            'transferTxId.access_token': 'There is already a token with these parameters'  # noqa
         }, request=request)
 
 
@@ -48,6 +53,17 @@ class CustomRulesProcessor(RulesProcessor):
             return False
 
         return False
+
+    def validate_access_token(self, value, params, **kwargs):
+        self._assert_params_size(size=2, params=params, rule='access_token')
+        did = self._attribute_value(params[0])
+        if did.startswith('did:'):
+            did = add_0x_prefix(did_to_id(did))
+
+        consumer_address = self._attribute_value(params[1])
+        tx_id = value
+
+        return user_access_token.check_unique(did, consumer_address, tx_id)
 
 
 class NonceRequest(CustomJsonRequest):
@@ -125,7 +141,10 @@ class AccessTokenRequest(CustomJsonRequest):
             'dataToken': ['required'],
             'consumerAddress': ['required'],
             'secondsToExpiration': ['required', 'integer'],
-            'transferTxId': ['required'],
+            'transferTxId': [
+                'required',
+                'access_token:documentId,consumerAddress'
+            ],
             'fileIndex': ['required'],
             'signature': [
                 'required',

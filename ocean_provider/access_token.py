@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime, timedelta
+from hashlib import sha256
 from uuid import uuid4
 
 from ocean_utils.data_store.storage_base import StorageBase
@@ -15,15 +16,16 @@ class AccessToken:
     def generate_access_token(
         self, did, consumer_address, tx_id, seconds_to_exp
     ):
-        access_token = uuid4()
+        access_token = str(uuid4())
+        access_token = sha256(access_token.encode('utf-8')).hexdigest()
         self.storage.write_access_token(
             did, consumer_address, tx_id, seconds_to_exp, access_token
         )
 
         return access_token
 
-    def check_access_token(self, did, consumer_address, tx_id):
-        self.storage.check_access_token(did, consumer_address, tx_id)
+    def check_unique(self, did, consumer_address, tx_id):
+        return self.storage.check_unique(did, consumer_address, tx_id)
 
     def use_access_token(self, address):
         # TODO
@@ -62,11 +64,12 @@ class AccessTokenStorage(StorageBase):
         self._run_query(
             f'''INSERT OR REPLACE
                 INTO {self.TABLE_NAME}
+                (access_token, did, consumer_address, tx_id, expiry_time)
                 VALUES (?,?,?,?,?)''',
             [str(token), did, consumer_address, tx_id, expiry_time],
         )
 
-    def check_access_token(self, did, consumer_address, tx_id):
+    def check_unique(self, did, consumer_address, tx_id):
         """
         Retrieve stored access_token value
 
@@ -81,17 +84,14 @@ class AccessTokenStorage(StorageBase):
                         WHERE did=?
                         AND consumer_address=?
                         AND tx_id=?;''',
-                    (did, consumer_address, consumer_address, tx_id)
+                    (did, consumer_address, tx_id)
                 )
             ]
-            (access_token, ) = rows[0] if rows else (None,)
-            logger.debug(
-                f'Read access_token from `{self.TABLE_NAME}` storage: '
-                f'consumer={consumer_address}, txId={tx_id}, '
-                f'result={access_token}'
-            )
 
-            return access_token
+            if rows:
+                return False
+
+            return True
 
         except Exception as e:
             logging.error(

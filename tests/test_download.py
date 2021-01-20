@@ -14,6 +14,7 @@ from ocean_utils.aquarius.aquarius import Aquarius
 from ocean_utils.http_requests.requests_session import get_requests_session
 from werkzeug.utils import get_content_type
 
+from ocean_provider.access_token import AccessToken
 from ocean_provider.constants import BaseURLs
 from ocean_provider.exceptions import InvalidSignatureError
 from ocean_provider.util import build_download_response, get_download_url
@@ -21,12 +22,15 @@ from ocean_provider.utils.accounts import (check_auth_token,
                                            generate_auth_token,
                                            is_auth_token_valid,
                                            verify_signature)
+from ocean_provider.utils.basics import get_config
 from tests.test_helpers import (get_consumer_wallet,
                                 get_dataset_ddo_with_access_service,
                                 get_dataset_with_invalid_url_ddo,
                                 get_dataset_with_ipfs_url_ddo, get_nonce,
                                 get_publisher_wallet, mint_tokens_and_wait,
                                 send_order)
+
+user_access_token = AccessToken(get_config().storage_path)
 
 
 def dummy_callback(*_):
@@ -138,6 +142,14 @@ def test_access_token(client):
     response = client.get(request_url)
     assert response.status_code == 200
 
+    response_json = response.get_json()
+    assert 'access_token' in response_json
+    # start from scratch, preventing 400 from duplicate failures
+    user_access_token.storage._run_query(
+        "DELETE from access_token where access_token=?;",
+        (response_json['access_token'],)
+    )
+
     # Try generating access token using url index and
     # signature (withOUT nonce), should fail
     _hash = add_ethereum_prefix_and_hash_msg(ddo.did)
@@ -158,10 +170,12 @@ def test_access_token(client):
     request_url = at_endpoint + '?' + '&'.join(
         [f'{k}={v}' for k, v in payload.items()]
     )
-    response = client.get(
-        request_url
-    )
+    response = client.get(request_url)
     assert response.status_code == 200, f'{response.data}'
+
+    response = client.get(request_url)
+    # second time doesn't work because token already exists
+    assert response.status_code == 400, f'{response.data}'
 
 
 def test_empty_payload(client):
