@@ -439,22 +439,29 @@ def accessToken():
         description: The consumer address.
         required: true
         type: string
+      - name: delegateAddress
+        in: query
+        description: The address to recieve access rights.
+        required: true
+        type: string
+      - name: secondsToExpiration
+        in: query
+        description: Number of seconds to access token expiration.
+        required: true
+        type: int
+      - name: delegatePublicKey
+        in: query
+        description: Public key of the delegate
+        required: true
+        type: string
       - name: documentId
         in: query
         description: The ID of the asset/document (the DID).
         required: true
         type: string
-      - name: url
-        in: query
-        description: This URL is only valid if Provider acts as a proxy.
-                     Consumer can't download using the URL if it's not
-                     through the Provider.
-        required: true
-        type: string
       - name: signature
         in: query
-        description: Signature of the documentId to verify that the consumer
-                     has rights to download the asset.
+        description: Signature of the documentId to verify that the consumer has rights to download the asset.
       - name: index
         in: query
         description: Index of the file in the array of files.
@@ -478,7 +485,8 @@ def accessToken():
         service_type = data.get('serviceType')
         tx_id = data.get("transferTxId")
         seconds_to_exp = data.get("secondsToExpiration")
-        delegate_address = data.get("delegateAddress", consumer_address)
+        delegate_address = data.get("delegateAddress")
+        delegate_public_key = data.get("delegatePublicKey")
 
         if did.startswith('did:'):
             did = add_0x_prefix(did_to_id(did))
@@ -498,7 +506,9 @@ def accessToken():
             did, consumer_address, tx_id, seconds_to_exp, delegate_address
         )
 
-        return {'access_token': str(access_token)}, 200
+        encrypted_token = do_encrypt(access_token, delegate_public_key)
+
+        return {'access_token': encrypted_token}, 200
 
     except Exception as e:
         logger.error(

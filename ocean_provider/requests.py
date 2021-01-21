@@ -25,7 +25,7 @@ class CustomJsonRequest(JsonRequest):
             'signature.signature': 'Invalid signature provided.',
             'signature.download_signature': 'Invalid signature provided.',
             'transferTxId.access_token': 'There is already a token with these parameters',  # noqa
-            'delegateAddress.web3_address_or_empty': 'Invalid web3 address provided.'  # noqa
+            'delegateAddress.web3_address': 'Invalid web3 address provided.'  # noqa
         }, request=request)
 
 
@@ -92,7 +92,7 @@ class CustomRulesProcessor(RulesProcessor):
             did, consumer_address, tx_id, delegate_address
         )
 
-    def validate_web3_address_or_empty(self, value, params, **kwargs):
+    def validate_web3_address(self, value, params, **kwargs):
         self._assert_params_size(size=0, params=params, rule='access_token')
 
         if not value:
@@ -185,7 +185,8 @@ class AccessTokenRequest(CustomJsonRequest):
                 'required',
                 'signature:consumerAddress,documentId,only_did'
             ],
-            'delegateAddress': ['web3_address_or_empty'],
+            'delegateAddress': ['web3_address'],
+            'delegatePublicKey': ['required'],
         }
 
 

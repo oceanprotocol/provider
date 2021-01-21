@@ -10,8 +10,9 @@ from ocean_utils.aquarius.aquarius import Aquarius
 
 from ocean_provider.access_token import AccessToken
 from ocean_provider.constants import BaseURLs
-from ocean_provider.utils.accounts import generate_auth_token
+from ocean_provider.utils.accounts import generate_auth_token, get_private_key
 from ocean_provider.utils.basics import get_config
+from ocean_provider.utils.encryption import do_decrypt
 from tests.test_helpers import (get_consumer_wallet,
                                 get_dataset_ddo_with_access_service, get_nonce,
                                 get_publisher_wallet, get_some_wallet,
@@ -54,6 +55,8 @@ def test_access_token(client):
     payload['transferTxId'] = tx_id
     payload['fileIndex'] = index
     payload['secondsToExpiration'] = 15 * 60
+    payload['delegateAddress'] = cons_wallet.address
+    payload['delegatePublicKey'] = get_private_key(cons_wallet).public_key
 
     request_url = at_endpoint + '?' + '&'.join(
         [f'{k}={v}' for k, v in payload.items()]
@@ -64,9 +67,10 @@ def test_access_token(client):
     response_json = response.get_json()
     assert 'access_token' in response_json
     # start from scratch, preventing 400 from duplicate failures
+    decrypted_at = do_decrypt(response_json['access_token'], cons_wallet)
     user_access_token.storage._run_query(
         "DELETE from access_token where access_token=?;",
-        (response_json['access_token'],)
+        (decrypted_at,)
     )
 
     # Try generating access token using url index and
@@ -87,6 +91,7 @@ def test_access_token(client):
     _hash = add_ethereum_prefix_and_hash_msg(f'{ddo.did}{nonce}')
     payload['signature'] = Web3Helper.sign_hash(_hash, cons_wallet)
     payload['delegateAddress'] = 'thisIsNotAValidAddress'  # noqa
+    payload['delegatePublicKey'] = get_private_key(some_wallet).public_key
     request_url = at_endpoint + '?' + '&'.join(
         [f'{k}={v}' for k, v in payload.items()]
     )
@@ -141,6 +146,7 @@ def test_access_token_usage(client):
     payload['fileIndex'] = index
     payload['secondsToExpiration'] = 15 * 60
     payload['delegateAddress'] = some_wallet.address
+    payload['delegatePublicKey'] = get_private_key(some_wallet).public_key
 
     request_url = at_endpoint + '?' + '&'.join(
         [f'{k}={v}' for k, v in payload.items()]
@@ -149,11 +155,12 @@ def test_access_token_usage(client):
     assert response.status_code == 200
     response_json = response.get_json()
     assert 'access_token' in response_json
-    access_token = response_json['access_token']
+
+    decrypted_at = do_decrypt(response_json['access_token'], some_wallet)
 
     download_endpoint = BaseURLs.ASSETS_URL + '/download'
     # Consume using url index and signature (with nonce)
-    nonce = access_token
+    nonce = decrypted_at
     _hash = add_ethereum_prefix_and_hash_msg(f'{ddo.did}{nonce}')
     payload.pop('secondsToExpiration')
     payload.pop('delegateAddress')
