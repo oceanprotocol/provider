@@ -55,7 +55,6 @@ def test_access_token(client):
     payload['transferTxId'] = tx_id
     payload['fileIndex'] = index
     payload['secondsToExpiration'] = 15 * 60
-    payload['delegateAddress'] = cons_wallet.address
     payload['delegatePublicKey'] = get_private_key(cons_wallet).public_key
 
     request_url = at_endpoint + '?' + '&'.join(
@@ -90,15 +89,15 @@ def test_access_token(client):
     nonce = get_nonce(client, cons_wallet.address)
     _hash = add_ethereum_prefix_and_hash_msg(f'{ddo.did}{nonce}')
     payload['signature'] = Web3Helper.sign_hash(_hash, cons_wallet)
-    payload['delegateAddress'] = 'thisIsNotAValidAddress'  # noqa
-    payload['delegatePublicKey'] = get_private_key(some_wallet).public_key
+    payload.pop('delegatePublicKey')
     request_url = at_endpoint + '?' + '&'.join(
         [f'{k}={v}' for k, v in payload.items()]
     )
     response = client.get(request_url)
+    # missing delegatePublicKey
     assert response.status_code == 400, f'{response.data}'
 
-    payload['delegateAddress'] = some_wallet.address
+    payload['delegatePublicKey'] = get_private_key(some_wallet).public_key
     response = client.get(request_url)
     request_url = at_endpoint + '?' + '&'.join(
         [f'{k}={v}' for k, v in payload.items()]
@@ -145,7 +144,6 @@ def test_access_token_usage(client):
     payload['transferTxId'] = tx_id
     payload['fileIndex'] = index
     payload['secondsToExpiration'] = 15 * 60
-    payload['delegateAddress'] = some_wallet.address
     payload['delegatePublicKey'] = get_private_key(some_wallet).public_key
 
     request_url = at_endpoint + '?' + '&'.join(
@@ -163,7 +161,6 @@ def test_access_token_usage(client):
     nonce = decrypted_at
     _hash = add_ethereum_prefix_and_hash_msg(f'{ddo.did}{nonce}')
     payload.pop('secondsToExpiration')
-    payload.pop('delegateAddress')
     payload['consumerAddress'] = some_wallet.address
     payload['signature'] = Web3Helper.sign_hash(_hash, some_wallet)
     request_url = download_endpoint + '?' + '&'.join(

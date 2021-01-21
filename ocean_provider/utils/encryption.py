@@ -21,3 +21,9 @@ def do_decrypt(encrypted_document, provider_wallet):
         key.to_hex(),
         Web3.toBytes(hexstr=encrypted_document)
     ).decode(encoding='utf-8')
+
+
+def get_address_from_public_key(public_key):
+    hash = Web3.sha3(hexstr=public_key)
+
+    return Web3.toHex(hash[-20:])
