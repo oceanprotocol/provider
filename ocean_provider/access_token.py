@@ -125,11 +125,9 @@ class AccessTokenStorage(StorageBase):
                 )
             ]
 
-            (
-                consumer_address, access_token
-            ) = rows[0] if rows else (None, None)
+            consumer_address, access_token = rows[0] if rows else (None, None)
 
-            return (consumer_address, access_token)
+            return consumer_address, access_token
 
         except Exception as e:
             logging.error(

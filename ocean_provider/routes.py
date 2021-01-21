@@ -502,7 +502,7 @@ def accessToken():
             did, consumer_address, tx_id, seconds_to_exp, delegate_address
         )
 
-        encrypted_token = do_encrypt(access_token, delegate_public_key)
+        encrypted_token = do_encrypt(access_token, public_key=delegate_public_key)
 
         return {'access_token': encrypted_token}, 200
 
