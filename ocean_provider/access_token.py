@@ -115,18 +115,21 @@ class AccessTokenStorage(StorageBase):
         try:
             rows = [
                 row for row in self._run_query(
-                    f'''SELECT consumer_address
-                        FROM access_token
-                        WHERE delegate_address=?
-                        AND did=?
-                        AND tx_id=?
-                        AND expiry_time > ?;''',
+                    '''SELECT consumer_address, access_token
+                       FROM access_token
+                       WHERE delegate_address=?
+                       AND did=?
+                       AND tx_id=?
+                       AND expiry_time > ?;''',
                     (delegate_address, did, tx_id, datetime.now())
                 )
             ]
 
-            (consumer_address, ) = rows[0] if rows else (None, )
-            return consumer_address
+            (
+                consumer_address, access_token
+            ) = rows[0] if rows else (None, None)
+
+            return (consumer_address, access_token)
 
         except Exception as e:
             logging.error(

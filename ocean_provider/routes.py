@@ -371,7 +371,7 @@ def download():
         if did.startswith('did:'):
             did = add_0x_prefix(did_to_id(did))
 
-        original_consumer = user_access_token.get_access_token(
+        original_consumer, _ = user_access_token.get_access_token(
             consumer_address,
             did,
             tx_id

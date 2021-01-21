@@ -149,10 +149,11 @@ def test_access_token_usage(client):
     assert response.status_code == 200
     response_json = response.get_json()
     assert 'access_token' in response_json
+    access_token = response_json['access_token']
 
     download_endpoint = BaseURLs.ASSETS_URL + '/download'
     # Consume using url index and signature (with nonce)
-    nonce = get_nonce(client, some_wallet.address)
+    nonce = access_token
     _hash = add_ethereum_prefix_and_hash_msg(f'{ddo.did}{nonce}')
     payload.pop('secondsToExpiration')
     payload.pop('delegateAddress')

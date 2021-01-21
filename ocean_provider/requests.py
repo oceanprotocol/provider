@@ -23,6 +23,7 @@ class CustomJsonRequest(JsonRequest):
         request = get_request_data(request)
         self._validator = CustomValidator(rules=self.rules(), messages={
             'signature.signature': 'Invalid signature provided.',
+            'signature.download_signature': 'Invalid signature provided.',
             'transferTxId.access_token': 'There is already a token with these parameters',  # noqa
             'delegateAddress.web3_address_or_empty': 'Invalid web3 address provided.'  # noqa
         }, request=request)
@@ -50,6 +51,27 @@ class CustomRulesProcessor(RulesProcessor):
             verify_signature(
                 owner, value, original_msg, user_nonce.get_nonce(owner)
             )
+            return True
+        except InvalidSignatureError:
+            return False
+
+        return False
+
+    def validate_download_signature(self, value, params, **kwargs):
+        self._assert_params_size(size=3, params=params, rule='signature')
+        owner = self._attribute_value(params[0])
+        did = self._attribute_value(params[1])
+        tx_id = self._attribute_value(params[2])
+        original_msg = f'{did}'
+
+        if did.startswith('did:'):
+            did = add_0x_prefix(did_to_id(did))
+
+        _, access_token = user_access_token.get_access_token(owner, did, tx_id)
+        nonce = access_token if access_token else user_nonce.get_nonce(owner)
+
+        try:
+            verify_signature(owner, value, original_msg, nonce)
             return True
         except InvalidSignatureError:
             return False
@@ -179,7 +201,7 @@ class DownloadRequest(CustomJsonRequest):
             'fileIndex': ['required'],
             'signature': [
                 'required',
-                'signature:consumerAddress,documentId,only_did'
+                'download_signature:consumerAddress,documentId,transferTxId'
             ],
         }
 
