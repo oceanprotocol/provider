@@ -1,5 +1,6 @@
 #  Copyright 2018 Ocean Protocol Foundation
 #  SPDX-License-Identifier: Apache-2.0
+import time
 
 from ocean_lib.models.data_token import DataToken
 from ocean_lib.web3_internal.utils import add_ethereum_prefix_and_hash_msg
@@ -166,7 +167,72 @@ def test_access_token_usage(client):
     request_url = download_endpoint + '?' + '&'.join(
         [f'{k}={v}' for k, v in payload.items()]
     )
-    response = client.get(
-        request_url
-    )
+    response = client.get(request_url)
     assert response.status_code == 200, f'{response.data}'
+
+    # intentional duplication, it works for multiple access
+    response = client.get(request_url)
+    assert response.status_code == 200, f'{response.data}'
+
+
+def test_access_token_expired(client):
+    aqua = Aquarius('http://localhost:5000')
+    try:
+        for did in aqua.list_assets():
+            aqua.retire_asset_ddo(did)
+    except (ValueError, Exception):
+        pass
+
+    pub_wallet = get_publisher_wallet()
+    cons_wallet = get_consumer_wallet()
+    some_wallet = get_some_wallet()
+
+    ddo = get_dataset_ddo_with_access_service(client, pub_wallet)
+    dt_address = ddo.as_dictionary()['dataToken']
+    dt_token = DataToken(dt_address)
+    mint_tokens_and_wait(dt_token, cons_wallet, pub_wallet)
+
+    sa = ServiceAgreement.from_ddo(ServiceTypes.ASSET_ACCESS, ddo)
+    tx_id = send_order(client, ddo, dt_token, sa, cons_wallet)
+    index = 0
+    at_endpoint = BaseURLs.ASSETS_URL + '/accesstoken'
+    # Consume using url index and auth token
+    # (let the provider do the decryption)
+    payload = dict({
+        'documentId': ddo.did,
+        'serviceId': sa.index,
+        'serviceType': sa.type,
+        'dataToken': dt_address,
+        'consumerAddress': cons_wallet.address
+    })
+    payload['signature'] = generate_auth_token(cons_wallet)
+    payload['transferTxId'] = tx_id
+    payload['fileIndex'] = index
+    payload['secondsToExpiration'] = 1
+    payload['delegatePublicKey'] = get_private_key(some_wallet).public_key
+
+    request_url = at_endpoint + '?' + '&'.join(
+        [f'{k}={v}' for k, v in payload.items()]
+    )
+    response = client.get(request_url)
+    assert response.status_code == 200
+    response_json = response.get_json()
+    assert 'access_token' in response_json
+
+    decrypted_at = do_decrypt(response_json['access_token'], some_wallet)
+
+    download_endpoint = BaseURLs.ASSETS_URL + '/download'
+    # Consume using url index and signature (with nonce)
+    nonce = decrypted_at
+    _hash = add_ethereum_prefix_and_hash_msg(f'{ddo.did}{nonce}')
+    payload.pop('secondsToExpiration')
+    payload['consumerAddress'] = some_wallet.address
+    payload['signature'] = Web3Helper.sign_hash(_hash, some_wallet)
+    request_url = download_endpoint + '?' + '&'.join(
+        [f'{k}={v}' for k, v in payload.items()]
+    )
+
+    # let's give our token some time to expire... then it should fail
+    time.sleep(5)
+    response = client.get(request_url)
+    assert response.status_code == 400, f'{response.data}'
