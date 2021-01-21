@@ -151,14 +151,17 @@ def test_access_token_usage(client):
     assert 'access_token' in response_json
 
     download_endpoint = BaseURLs.ASSETS_URL + '/download'
-    # Consume using url index and auth token
-    # (let the provider do the decryption)
-    payload['consumerAddress'] = some_wallet.address
-    payload['signature'] = generate_auth_token(some_wallet)
+    # Consume using url index and signature (with nonce)
+    nonce = get_nonce(client, some_wallet.address)
+    _hash = add_ethereum_prefix_and_hash_msg(f'{ddo.did}{nonce}')
     payload.pop('secondsToExpiration')
     payload.pop('delegateAddress')
+    payload['consumerAddress'] = some_wallet.address
+    payload['signature'] = Web3Helper.sign_hash(_hash, some_wallet)
     request_url = download_endpoint + '?' + '&'.join(
         [f'{k}={v}' for k, v in payload.items()]
     )
-    response = client.get(request_url)
+    response = client.get(
+        request_url
+    )
     assert response.status_code == 200, f'{response.data}'
