@@ -3,7 +3,7 @@ language: python
 python:
   - "3.8.6"
 
-dist: xenial
+dist: focal
 
 sudo: false
 
