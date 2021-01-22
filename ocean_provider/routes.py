@@ -39,7 +39,8 @@ from ocean_provider.utils.basics import (LocalFileAdapter,
                                          get_asset_from_metadatastore,
                                          get_config, get_datatoken_minter,
                                          get_provider_wallet, setup_network)
-from ocean_provider.utils.encryption import do_encrypt
+from ocean_provider.utils.encryption import (do_encrypt,
+                                             get_address_from_public_key)
 
 setup_logging()
 services = Blueprint('services', __name__)
@@ -371,6 +372,15 @@ def download():
         if did.startswith('did:'):
             did = add_0x_prefix(did_to_id(did))
 
+        original_consumer, _ = user_access_token.get_access_token(
+            consumer_address.lower(),
+            did,
+            tx_id
+        )
+
+        if original_consumer:
+            consumer_address = original_consumer
+
         _tx, _order_log, _transfer_log = validate_order(
             consumer_address,
             token_address,
@@ -430,22 +440,24 @@ def accessToken():
         description: The consumer address.
         required: true
         type: string
+      - name: secondsToExpiration
+        in: query
+        description: Number of seconds to access token expiration.
+        required: true
+        type: int
+      - name: delegatePublicKey
+        in: query
+        description: Public key of the delegate
+        required: true
+        type: string
       - name: documentId
         in: query
         description: The ID of the asset/document (the DID).
         required: true
         type: string
-      - name: url
-        in: query
-        description: This URL is only valid if Provider acts as a proxy.
-                     Consumer can't download using the URL if it's not
-                     through the Provider.
-        required: true
-        type: string
       - name: signature
         in: query
-        description: Signature of the documentId to verify that the consumer
-                     has rights to download the asset.
+        description: Signature of the documentId to verify that the consumer has rights to download the asset.
       - name: index
         in: query
         description: Index of the file in the array of files.
@@ -469,7 +481,7 @@ def accessToken():
         service_type = data.get('serviceType')
         tx_id = data.get("transferTxId")
         seconds_to_exp = data.get("secondsToExpiration")
-        delegate_address = data.get("delegateAddress", consumer_address)
+        delegate_public_key = data.get("delegatePublicKey")
 
         if did.startswith('did:'):
             did = add_0x_prefix(did_to_id(did))
@@ -485,11 +497,14 @@ def accessToken():
 
         assert service_type == ServiceTypes.ASSET_ACCESS
 
+        delegate_address = get_address_from_public_key(delegate_public_key)
         access_token = user_access_token.generate_access_token(
             did, consumer_address, tx_id, seconds_to_exp, delegate_address
         )
 
-        return {'access_token': str(access_token)}, 200
+        encrypted_token = do_encrypt(access_token, public_key=delegate_public_key)
+
+        return {'access_token': encrypted_token}, 200
 
     except Exception as e:
         logger.error(
