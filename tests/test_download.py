@@ -14,7 +14,6 @@ from ocean_utils.aquarius.aquarius import Aquarius
 from ocean_utils.http_requests.requests_session import get_requests_session
 from werkzeug.utils import get_content_type
 
-from ocean_provider.access_token import AccessToken
 from ocean_provider.constants import BaseURLs
 from ocean_provider.exceptions import InvalidSignatureError
 from ocean_provider.util import build_download_response, get_download_url
@@ -22,15 +21,12 @@ from ocean_provider.utils.accounts import (check_auth_token,
                                            generate_auth_token,
                                            is_auth_token_valid,
                                            verify_signature)
-from ocean_provider.utils.basics import get_config
 from tests.test_helpers import (get_consumer_wallet,
                                 get_dataset_ddo_with_access_service,
                                 get_dataset_with_invalid_url_ddo,
                                 get_dataset_with_ipfs_url_ddo, get_nonce,
                                 get_publisher_wallet, mint_tokens_and_wait,
                                 send_order)
-
-user_access_token = AccessToken(get_config().storage_path)
 
 
 def dummy_callback(*_):
@@ -255,7 +251,7 @@ def test_build_download_response():
 def test_asset_info(client):
     pub_wallet = get_publisher_wallet()
     asset = get_dataset_ddo_with_access_service(client, pub_wallet)
-    request_url = BaseURLs.ASSETS_URL + f'/fileinfo'
+    request_url = BaseURLs.ASSETS_URL + '/fileinfo'
     data = {'did': asset.did}
     response = client.post(request_url, json=data)
     result = response.get_json()
@@ -268,7 +264,7 @@ def test_asset_info(client):
         assert file_info['valid'] is True
 
     asset = get_dataset_with_invalid_url_ddo(client, pub_wallet)
-    request_url = BaseURLs.ASSETS_URL + f'/fileinfo'
+    request_url = BaseURLs.ASSETS_URL + '/fileinfo'
     data = {'did': asset.did}
     response = client.post(request_url, json=data)
     result = response.get_json()

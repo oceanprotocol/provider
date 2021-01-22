@@ -14,7 +14,7 @@ from ocean_utils.agreements.service_types import ServiceTypes
 from ocean_utils.did import did_to_id
 from ocean_utils.http_requests.requests_session import get_requests_session
 
-from ocean_provider.access_token import AccessToken
+from ocean_provider.access_token import generate_access_token, get_access_token
 from ocean_provider.exceptions import BadRequestError, InvalidSignatureError
 from ocean_provider.log import setup_logging
 from ocean_provider.myapp import app
@@ -49,7 +49,6 @@ provider_wallet = get_provider_wallet()
 requests_session = get_requests_session()
 requests_session.mount('file://', LocalFileAdapter())
 user_nonce = UserNonce(get_config().storage_path)
-user_access_token = AccessToken(get_config().storage_path)
 
 logger = logging.getLogger(__name__)
 
@@ -372,7 +371,7 @@ def download():
         if did.startswith('did:'):
             did = add_0x_prefix(did_to_id(did))
 
-        original_consumer, _ = user_access_token.get_access_token(
+        original_consumer, _ = get_access_token(
             consumer_address.lower(),
             did,
             tx_id
@@ -500,7 +499,7 @@ def accessToken():
         assert service_type == ServiceTypes.ASSET_ACCESS
 
         delegate_address = get_address_from_public_key(delegate_public_key)
-        access_token = user_access_token.generate_access_token(
+        access_token = generate_access_token(
             did, consumer_address, tx_id, seconds_to_exp, delegate_address
         )
 

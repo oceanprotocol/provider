@@ -9,17 +9,14 @@ from ocean_utils.agreements.service_agreement import ServiceAgreement
 from ocean_utils.agreements.service_types import ServiceTypes
 from ocean_utils.aquarius.aquarius import Aquarius
 
-from ocean_provider.access_token import AccessToken
+from ocean_provider.myapp import AccessToken, db
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import generate_auth_token, get_private_key
-from ocean_provider.utils.basics import get_config
 from ocean_provider.utils.encryption import do_decrypt
 from tests.test_helpers import (get_consumer_wallet,
                                 get_dataset_ddo_with_access_service, get_nonce,
                                 get_publisher_wallet, get_some_wallet,
                                 mint_tokens_and_wait, send_order)
-
-user_access_token = AccessToken(get_config().storage_path)
 
 
 def test_access_token(client):
@@ -68,10 +65,9 @@ def test_access_token(client):
     assert 'access_token' in response_json
     # start from scratch, preventing 400 from duplicate failures
     decrypted_at = do_decrypt(response_json['access_token'], cons_wallet)
-    user_access_token.storage._run_query(
-        "DELETE from access_token where access_token=?;",
-        (decrypted_at,)
-    )
+    at_object = AccessToken.query.get(decrypted_at)
+    db.session.delete(at_object)
+    db.session.commit()
 
     # Try generating access token using url index and
     # signature (withOUT nonce), should fail

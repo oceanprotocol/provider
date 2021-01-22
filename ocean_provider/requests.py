@@ -5,7 +5,8 @@ from flask_sieve.rules_processor import RulesProcessor
 from flask_sieve.validator import Validator
 from ocean_utils.did import did_to_id
 
-from ocean_provider.access_token import AccessToken
+from ocean_provider.access_token import (check_unique_access_token,
+                                         get_access_token)
 from ocean_provider.exceptions import InvalidSignatureError
 from ocean_provider.user_nonce import UserNonce
 from ocean_provider.util import get_request_data
@@ -14,7 +15,6 @@ from ocean_provider.utils.basics import get_config
 from ocean_provider.utils.encryption import get_address_from_public_key
 
 user_nonce = UserNonce(get_config().storage_path)
-user_access_token = AccessToken(get_config().storage_path)
 
 
 class CustomJsonRequest(JsonRequest):
@@ -111,7 +111,7 @@ class CustomRulesProcessor(RulesProcessor):
         if did.startswith('did:'):
             did = add_0x_prefix(did_to_id(did))
 
-        _, access_token = user_access_token.get_access_token(
+        _, access_token = get_access_token(
             owner.lower(), did, tx_id
         )
         nonce = access_token if access_token else user_nonce.get_nonce(owner)
@@ -148,7 +148,7 @@ class CustomRulesProcessor(RulesProcessor):
         delegate_address = get_address_from_public_key(delegate_public_key)
         tx_id = value
 
-        return user_access_token.check_unique(
+        return check_unique_access_token(
             did, consumer_address, tx_id, delegate_address
         )
 
