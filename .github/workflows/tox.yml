@@ -13,8 +13,6 @@ jobs:
     steps:
       - name: Setup Provider
         uses: actions/checkout@v2
-        with:
-          path: 'provider'
       - name: Set up Python ${{ matrix.python_version }}
         uses: actions/setup-python@v2
         with:
@@ -28,9 +26,9 @@ jobs:
         env:
           AQUARIUS_VERSION: 'v3'
           CONTRACTS_VERSION: latest
-      - name: Run barge
+      - name: Run Barge
+        working-directory: ${{ github.workspace }}/barge
         run: |
-          cd $GITHUB_WORKSPACE/barge
           bash -x start_ocean.sh --no-dashboard --no-provider 2>&1 > start_ocean.log &
           for i in $(seq 1 50); do
             sleep 5
@@ -38,11 +36,10 @@ jobs:
             done
           ls -la "$HOME/.ocean/ocean-contracts/artifacts/"
       - name: Install dependencies
+        working-directory: ${{ github.workspace }}
         run: |
-          cd $GITHUB_WORKSPACE/provider
           python -m pip install --upgrade pip
           pip install tox tox-gh-actions
       - name: Test with tox
-        run: |
-            cd $GITHUB_WORKSPACE/provider
-            tox
+        working-directory: ${{ github.workspace }}
+        run: tox
