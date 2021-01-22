@@ -11,26 +11,38 @@ jobs:
       matrix:
         python_version: ['3.6', '3.7', '3.8']
     steps:
-      - uses: actions/checkout@v1
+      - name: Setup Provider
+        uses: actions/checkout@v2
+        with:
+          path: 'provider'
       - name: Set up Python ${{ matrix.python_version }}
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python_version }}
-      - name: Install dependencies
+      - uses: actions/checkout@v2
+        name: Checkout Barge
+        with:
+          repository: "oceanprotocol/barge"
+          ref: 'v3'
+          path: 'barge'
+        env:
+          AQUARIUS_VERSION: 'v3'
+          CONTRACTS_VERSION: latest
+      - name: Run barge
         run: |
-          git clone https://github.com/oceanprotocol/barge
-          cd barge
-          git checkout v3
-          export AQUARIUS_VERSION=v3
-          export CONTRACTS_VERSION=latest
+          cd $GITHUB_WORKSPACE/barge
           bash -x start_ocean.sh --no-dashboard --no-provider 2>&1 > start_ocean.log &
-          cd ..
           for i in $(seq 1 50); do
             sleep 5
             [ -f "$HOME/.ocean/ocean-contracts/artifacts/ready" ] && break
             done
           ls -la "$HOME/.ocean/ocean-contracts/artifacts/"
+      - name: Install dependencies
+        run: |
+          cd $GITHUB_WORKSPACE/provider
           python -m pip install --upgrade pip
           pip install tox tox-gh-actions
       - name: Test with tox
-        run: tox
+        run: |
+            cd $GITHUB_WORKSPACE/provider
+            tox
