@@ -27,7 +27,9 @@ before_install:
       ls -la "${HOME}/.ocean/ocean-contracts/artifacts/"
 
 
-install: pip install -U tox-travis
+install:
+    - pip install --user -r requirements_dev.txt --use-feature=2020-resolver
+    - pip install -U tox-travis
 script: tox
 deploy:
   provider: pypi
