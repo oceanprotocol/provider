@@ -18,6 +18,10 @@ user_access_token = AccessToken(get_config().storage_path)
 
 
 class CustomJsonRequest(JsonRequest):
+    """
+    Extension of JsonRequest from Flask Sieve, allows us to set
+    a custom Validator with specific rules
+    """
     def __init__(self, request=None):
         request = request or flask_request
         request = get_request_data(request)
@@ -29,6 +33,12 @@ class CustomJsonRequest(JsonRequest):
 
 
 class CustomValidator(Validator):
+    """
+    Extension of Validator from Flask Sieve, allows us to set
+    custom validation rules. Implemented like this because handlers in
+    Flask Sieve do not allow access to other parameters, just the value and
+    attributes
+    """
     def __init__(
         self, rules=None, request=None, custom_handlers=None, messages=None,
         **kwargs
@@ -40,7 +50,29 @@ class CustomValidator(Validator):
 
 
 class CustomRulesProcessor(RulesProcessor):
+    """
+    Extension of RulesProcessor from Flask Sieve, allows us to set
+    custom validation handlers. Implemented like this because handlers in
+    Flask Sieve do not allow access to other parameters, just the value and
+    attributes
+    """
     def validate_signature(self, value, params, **kwargs):
+        """
+        Validates a signature using the documentId and/or the consumerAddress.
+
+        parameters:
+          - name: value
+            type: string
+            description: Value of the field being validated
+          - name: params
+            type: list
+            description: The list of parameters defined for the rule,
+                         i.e. names of other fields inside the request.
+                         The last item in the params list is the rule to be
+                         used for checking. 'consumer_did' concatenates
+                         consumer address and did for the original message,
+                         'did' only adds the did to the original_message
+        """
         self._assert_params_size(size=3, params=params, rule='signature')
         owner = self._attribute_value(params[0])
         did = self._attribute_value(params[1])
@@ -57,6 +89,19 @@ class CustomRulesProcessor(RulesProcessor):
         return False
 
     def validate_download_signature(self, value, params, **kwargs):
+        """
+        Validates a download signature using the documentId.
+
+        parameters:
+          - name: value
+            type: string
+            description: Value of the field being validated
+          - name: params
+            type: list
+            description: The list of parameters defined for the rule,
+                         i.e. names of other fields inside the request.
+                         Should be owner, did and tx_id.
+        """
         self._assert_params_size(size=3, params=params, rule='signature')
         owner = self._attribute_value(params[0])
         did = self._attribute_value(params[1])
@@ -80,6 +125,19 @@ class CustomRulesProcessor(RulesProcessor):
         return False
 
     def validate_access_token(self, value, params, **kwargs):
+        """
+        Validates if an access token can be generated with the params.
+
+        parameters:
+          - name: value
+            type: string
+            description: Value of the field being validated
+          - name: params
+            type: list
+            description: The list of parameters defined for the rule,
+                         i.e. names of other fields inside the request.
+                         Should be documentId, consumerAddress, delegatePublicKey
+        """
         self._assert_params_size(size=3, params=params, rule='access_token')
         did = self._attribute_value(params[0])
         if did.startswith('did:'):
@@ -97,9 +155,7 @@ class CustomRulesProcessor(RulesProcessor):
 
 class NonceRequest(CustomJsonRequest):
     def rules(self):
-        return {
-            'userAddress': ['required'],
-        }
+        return {'userAddress': ['required'], }
 
 
 class SimpleFlowConsumeRequest(CustomJsonRequest):

@@ -457,7 +457,9 @@ def accessToken():
         type: string
       - name: signature
         in: query
-        description: Signature of the documentId to verify that the consumer has rights to download the asset.
+        description: Signature of the documentId to verify that the consumer
+                     has rights to consume the asset and therefore delegate
+                     download of the asset.
       - name: index
         in: query
         description: Index of the file in the array of files.
