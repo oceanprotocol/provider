@@ -16,7 +16,7 @@ from ocean_utils.http_requests.requests_session import get_requests_session
 from ocean_provider.exceptions import BadRequestError, InvalidSignatureError
 from ocean_provider.log import setup_logging
 from ocean_provider.myapp import app
-from ocean_provider.user_nonce import UserNonce
+from ocean_provider.user_nonce import get_nonce, increment_nonce
 from ocean_provider.util import (build_download_response,
                                  build_stage_algorithm_dict, build_stage_dict,
                                  build_stage_output_dict,
@@ -44,7 +44,6 @@ setup_network()
 provider_wallet = get_provider_wallet()
 requests_session = get_requests_session()
 requests_session.mount('file://', LocalFileAdapter())
-user_nonce = UserNonce(get_config().storage_path)
 
 logger = logging.getLogger(__name__)
 
@@ -62,7 +61,7 @@ def nonce():
         return jsonify(error=msg), status
 
     address = data.get('userAddress')
-    nonce = user_nonce.get_nonce(address)
+    nonce = get_nonce(address)
     logger.info(f'nonce for user {address} is {nonce}')
     return Response(
         json.dumps({'nonce': nonce}),
@@ -202,7 +201,7 @@ def encrypt():
         logger.info(f'encrypted urls {encrypted_document}, '
                     f'publisher {publisher_address}, '
                     f'documentId {did}')
-        user_nonce.increment_nonce(publisher_address)
+        increment_nonce(publisher_address)
         return Response(
             json.dumps({'encryptedDocument': encrypted_document}),
             201,
@@ -334,7 +333,7 @@ def initialize():
             "to": minter,
             "numTokens": float(service.get_cost()),
             "dataToken": token_address,
-            "nonce": user_nonce.get_nonce(consumer_address)
+            "nonce": get_nonce(consumer_address)
         }
         return Response(
             json.dumps(approve_params),
@@ -398,7 +397,6 @@ def download():
         asset, service, did, consumer_address, token_address = process_consume_request(  # noqa
             data,
             'download',
-            user_nonce=user_nonce,
             additional_params=["transferTxId", "fileIndex"]
         )
         service_id = data.get('serviceId')
@@ -434,7 +432,7 @@ def download():
         download_url = get_download_url(url, app.config['CONFIG_FILE'])
         logger.info(f'Done processing consume request for asset {did}, '
                     f' url {download_url}')
-        user_nonce.increment_nonce(consumer_address)
+        increment_nonce(consumer_address)
         return build_download_response(
             request, requests_session, url, download_url, content_type
         )
@@ -497,12 +495,12 @@ def computeDelete():
     """
     data = get_request_data(request)
     try:
-        body = process_compute_request(data, user_nonce)
+        body = process_compute_request(data)
         response = requests_session.delete(
             get_compute_endpoint(),
             params=body,
             headers={'content-type': 'application/json'})
-        user_nonce.increment_nonce(body['owner'])
+        increment_nonce(body['owner'])
         return Response(
             response.content,
             response.status_code,
@@ -566,12 +564,12 @@ def computeStop():
     """
     data = get_request_data(request)
     try:
-        body = process_compute_request(data, user_nonce)
+        body = process_compute_request(data)
         response = requests_session.put(
             get_compute_endpoint(),
             params=body,
             headers={'content-type': 'application/json'})
-        user_nonce.increment_nonce(body['owner'])
+        increment_nonce(body['owner'])
         return Response(
             response.content,
             response.status_code,
@@ -638,18 +636,18 @@ def computeStatus():
     try:
         signed_request = False
         try:
-            body = process_compute_request(data, user_nonce)
+            body = process_compute_request(data)
             signed_request = True
         except Exception:
             body = process_compute_request(
-                data, user_nonce, require_signature=False
+                data, require_signature=False
             )
 
         response = requests_session.get(
             get_compute_endpoint(),
             params=body,
             headers={'content-type': 'application/json'})
-        user_nonce.increment_nonce(body['owner'])
+        increment_nonce(body['owner'])
         _response = response.content
         # Filter status info if signature is not given or failed validation
         if not signed_request:
@@ -798,7 +796,7 @@ def computeStart():
         original_msg = f'{consumer_address}{did}'
         verify_signature(
             consumer_address, signature, original_msg,
-            user_nonce.get_nonce(consumer_address)
+            get_nonce(consumer_address)
         )
 
         ########################
@@ -893,7 +891,7 @@ def computeStart():
             get_compute_endpoint(),
             data=json.dumps(payload),
             headers={'content-type': 'application/json'})
-        user_nonce.increment_nonce(consumer_address)
+        increment_nonce(consumer_address)
         return Response(
             response.content,
             response.status_code,

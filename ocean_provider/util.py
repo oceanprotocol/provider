@@ -19,7 +19,7 @@ from ocean_utils.agreements.service_agreement import ServiceAgreement
 from ocean_utils.agreements.service_types import ServiceTypes
 from websockets import ConnectionClosed
 
-from ocean_provider.user_nonce import UserNonce
+from ocean_provider.user_nonce import get_nonce
 from ocean_provider.constants import BaseURLs
 from ocean_provider.exceptions import BadRequestError
 from ocean_provider.utils.accounts import verify_signature
@@ -242,8 +242,9 @@ def record_consume_request(did, service_id, order_tx_id, consumer_address, token
 
 
 def process_consume_request(
-        data: dict, method: str, user_nonce: UserNonce=None,
-        additional_params: list=None, require_signature: bool=True):
+    data: dict, method: str, additional_params: list=None,
+    require_signature: bool=True
+):
 
     required_attributes = [
         'documentId',
@@ -279,15 +280,14 @@ def process_consume_request(
         )
 
     if require_signature:
-        assert user_nonce, '`user_nonce` is required when signature is required.'
         # Raises ValueError when signature is invalid
         signature = data.get('signature')
-        verify_signature(consumer_address, signature, did, user_nonce.get_nonce(consumer_address))
+        verify_signature(consumer_address, signature, did, get_nonce(consumer_address))
 
     return asset, service, did, consumer_address, token_address
 
 
-def process_compute_request(data, user_nonce: UserNonce, require_signature: bool=True):
+def process_compute_request(data, require_signature: bool=True):
     required_attributes = ['consumerAddress']
     if require_signature:
         required_attributes.append('signature')
@@ -315,7 +315,7 @@ def process_compute_request(data, user_nonce: UserNonce, require_signature: bool
     if require_signature:
         signature = data.get('signature')
         original_msg = f'{body.get("owner", "")}{body.get("jobId", "")}{body.get("documentId", "")}'
-        verify_signature(owner, signature, original_msg, user_nonce.get_nonce(owner))
+        verify_signature(owner, signature, original_msg, get_nonce(owner))
 
     msg_to_sign = f'{provider_wallet.address}{body.get("jobId", "")}{body.get("documentId", "")}'
     msg_hash = add_ethereum_prefix_and_hash_msg(msg_to_sign)
