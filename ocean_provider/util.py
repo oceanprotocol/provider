@@ -435,7 +435,7 @@ def check_url_details(url):
             content_type = result.headers.get('Content-Type')
             content_length = result.headers.get('Content-Length')
 
-            if content_type and content_length:
+            if content_type or content_length:
                 return True, {"contentLength": content_length, "contentType": content_type}
 
     except requests.exceptions.InvalidSchema:
