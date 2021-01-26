@@ -54,6 +54,7 @@ dev_requirements = [
     'pkginfo',
     'twine',
     'watchdog',
+    'python-dotenv==0.15.0',
     'flake8',
     'isort'
 ]
