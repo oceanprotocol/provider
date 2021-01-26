@@ -14,7 +14,7 @@ class UserNonce:
 
     @property
     def storage(self):
-        return NonceStorage(self._storage_path, create_table=False)
+        return NonceStorage(self._storage_path, create_table=True)
 
     def get_nonce(self, address):
         nonce = self.storage.read_nonce(address)
