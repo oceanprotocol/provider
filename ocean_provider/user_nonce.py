@@ -10,7 +10,11 @@ class UserNonce:
 
     def __init__(self, storage_path=None):
         self._storage_path = storage_path
-        self.storage = NonceStorage(storage_path)
+        NonceStorage(True, storage_path)
+
+    @property
+    def storage(self):
+        return NonceStorage(False, self._storage_path)
 
     def get_nonce(self, address):
         nonce = self.storage.read_nonce(address)
@@ -27,12 +31,13 @@ class UserNonce:
 class NonceStorage(StorageBase):
     TABLE_NAME = 'user_nonce'
     
-    def __init__(self, *args, **kwargs):
+    def __init__(self, create_table=True, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._run_query(
-            f'''CREATE TABLE IF NOT EXISTS {self.TABLE_NAME}
-               (address VARCHAR PRIMARY KEY , nonce VARCHAR);'''
-        ) 
+        if create_table:
+            self._run_query(
+                f'''CREATE TABLE IF NOT EXISTS {self.TABLE_NAME}
+                   (address VARCHAR PRIMARY KEY , nonce VARCHAR);'''
+            )
 
     def write_nonce(self, address, nonce):
         """
