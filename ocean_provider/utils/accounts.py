@@ -73,7 +73,8 @@ def request_ether(faucet_url, wallet, wait=True):
     response = requests.post(
         f'{faucet_url}/faucet',
         data=json.dumps(payload),
-        headers={'content-type': 'application/json'}
+        headers={'content-type': 'application/json'},
+        timeout=3
     )
     try:
         response_json = json.loads(response.content)
