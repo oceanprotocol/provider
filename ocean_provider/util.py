@@ -49,7 +49,7 @@ def build_download_response(request, requests_session, url, download_url, conten
             download_request_headers = {"Range": request.headers.get('range')}
             download_response_headers = download_request_headers
 
-        response = requests_session.get(download_url, headers=download_request_headers, stream=True)
+        response = requests_session.get(download_url, headers=download_request_headers, stream=True, timeout=3)
         if not is_range_request:
             filename = url.split("/")[-1]
 
@@ -422,14 +422,14 @@ def check_url_details(url):
     Otherwise it returns True and a dictionary containing contentType and contentLength.
     """
     try:
-        result = requests.options(url)
+        result = requests.options(url,timeout=3)
         if (
             result.status_code != 200 or
             not result.headers.get('Content-Type') or
             not result.headers.get('Content-Length')
         ):
             # fallback on GET request
-            result = requests.get(url, stream=True)
+            result = requests.get(url, stream=True, timeout=3)
 
         if result.status_code == 200:
             content_type = result.headers.get('Content-Type')
