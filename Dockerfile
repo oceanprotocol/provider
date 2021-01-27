@@ -46,6 +46,7 @@ ENV OCEAN_PROVIDER_URL='http://0.0.0.0:8030'
 # docker-entrypoint.sh configuration file variables
 ENV OCEAN_PROVIDER_WORKERS='1'
 ENV OCEAN_PROVIDER_TIMEOUT='9000'
+ENV ALLOW_NON_PUBLIC_IP=False
 
 ENTRYPOINT ["/ocean-provider/docker-entrypoint.sh"]
 
