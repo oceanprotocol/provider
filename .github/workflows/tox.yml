@@ -7,16 +7,13 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python_version: ['3.6', '3.7', '3.8']
     steps:
       - name: Setup Provider
         uses: actions/checkout@v2
-      - name: Set up Python ${{ matrix.python_version }}
+      - name: Set up Python 3.8
         uses: actions/setup-python@v2
         with:
-          python-version: ${{ matrix.python_version }}
+          python-version: '3.8'
       - uses: actions/checkout@v2
         name: Checkout Barge
         with:
