@@ -12,23 +12,25 @@ from pathlib import Path
 from eth_utils import remove_0x_prefix
 from ocean_lib.assets.asset import Asset
 from ocean_lib.models.data_token import DataToken
+from ocean_lib.models.dtfactory import DTFactory
 from ocean_lib.models.metadata import MetadataContract
 from ocean_lib.ocean.util import to_base_18
+from ocean_lib.web3_internal.contract_handler import ContractHandler
+from ocean_lib.web3_internal.utils import add_ethereum_prefix_and_hash_msg
 from ocean_lib.web3_internal.wallet import Wallet
 from ocean_lib.web3_internal.web3_provider import Web3Provider
-from ocean_lib.models.dtfactory import DTFactory
-from ocean_lib.web3_internal.contract_handler import ContractHandler
 from ocean_lib.web3_internal.web3helper import Web3Helper
-from ocean_lib.web3_internal.utils import add_ethereum_prefix_and_hash_msg
-from ocean_utils.utils.utilities import checksum
-from ocean_utils.ddo.metadata import MetadataMain
+from ocean_utils.agreements.service_factory import (ServiceDescriptor,
+                                                    ServiceFactory)
 from ocean_utils.aquarius.aquarius import Aquarius
+from ocean_utils.ddo.metadata import MetadataMain
 from ocean_utils.ddo.public_key_rsa import PUBLIC_KEY_TYPE_RSA
-from ocean_utils.agreements.service_factory import ServiceDescriptor, ServiceFactory
+from ocean_utils.utils.utilities import checksum
 
 from ocean_provider.constants import BaseURLs
 from ocean_provider.util import get_metadata_url
-from ocean_provider.utils.basics import get_datatoken_minter, get_asset_from_metadatastore
+from ocean_provider.utils.basics import (get_asset_from_metadatastore,
+                                         get_datatoken_minter)
 
 
 def get_publisher_wallet():
@@ -37,6 +39,10 @@ def get_publisher_wallet():
 
 def get_consumer_wallet():
     return Wallet(Web3Provider.get_web3(), private_key=os.getenv('TEST_PRIVATE_KEY2'))
+
+
+def get_some_wallet():
+    return Wallet(Web3Provider.get_web3(), private_key='0x5d75837394b078ce97bc289fa8d75e21000573520bfa7784a9d28ccaae602bf7')
 
 
 def get_ganache_wallet():
