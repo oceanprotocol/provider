@@ -14,15 +14,13 @@ from ocean_utils.agreements.service_types import ServiceTypes
 from ocean_utils.did import did_to_id
 from ocean_utils.http_requests.requests_session import get_requests_session
 
-from ocean_provider.access_token import generate_access_token, get_access_token
 from ocean_provider.exceptions import BadRequestError, InvalidSignatureError
 from ocean_provider.log import setup_logging
 from ocean_provider.myapp import app
-from ocean_provider.requests import (AccessTokenRequest, ComputeRequest,
-                                     ComputeStartRequest, DownloadRequest,
-                                     EncryptRequest, FileInfoRequest,
-                                     InitializeRequest, NonceRequest,
-                                     SimpleFlowConsumeRequest)
+from ocean_provider.requests import (ComputeRequest, ComputeStartRequest,
+                                     DownloadRequest, EncryptRequest,
+                                     FileInfoRequest, InitializeRequest,
+                                     NonceRequest, SimpleFlowConsumeRequest)
 from ocean_provider.user_nonce import get_nonce, increment_nonce
 from ocean_provider.util import (build_download_response,
                                  build_stage_algorithm_dict, build_stage_dict,
@@ -39,8 +37,7 @@ from ocean_provider.utils.basics import (LocalFileAdapter,
                                          get_asset_from_metadatastore,
                                          get_datatoken_minter,
                                          get_provider_wallet, setup_network)
-from ocean_provider.utils.encryption import (do_encrypt,
-                                             get_address_from_public_key)
+from ocean_provider.utils.encryption import do_encrypt
 
 setup_logging()
 services = Blueprint('services', __name__)
@@ -370,15 +367,6 @@ def download():
         if did.startswith('did:'):
             did = add_0x_prefix(did_to_id(did))
 
-        original_consumer, _ = get_access_token(
-            consumer_address.lower(),
-            did,
-            tx_id
-        )
-
-        if original_consumer:
-            consumer_address = original_consumer
-
         _tx, _order_log, _transfer_log = validate_order(
             consumer_address,
             token_address,
@@ -409,102 +397,6 @@ def download():
         return build_download_response(
             request, requests_session, url, download_url, content_type
         )
-
-    except Exception as e:
-        logger.error(
-            f"Error: {e}. \n"
-            f"Payload was: documentId={data.get('did')}, "
-            f"consumerAddress={data.get('consumerAddress')},"
-            f"serviceId={data.get('serviceId')}"
-            f"serviceType={data.get('serviceType')}",
-            exc_info=1
-        )
-        return jsonify(error=str(e)), 500
-
-
-@services.route('/accesstoken', methods=['GET'])
-@validate(AccessTokenRequest)
-def accessToken():
-    """Generates a one-time access token for file download.
-
-    ---
-    tags:
-      - services
-    consumes:
-      - application/json
-    parameters:
-      - name: consumerAddress
-        in: query
-        description: The consumer address.
-        required: true
-        type: string
-      - name: secondsToExpiration
-        in: query
-        description: Number of seconds to access token expiration.
-        required: true
-        type: int
-      - name: delegatePublicKey
-        in: query
-        description: Public key of the delegate
-        required: true
-        type: string
-      - name: documentId
-        in: query
-        description: The ID of the asset/document (the DID).
-        required: true
-        type: string
-      - name: signature
-        in: query
-        description: Signature of the documentId to verify that the consumer
-                     has rights to consume the asset and therefore delegate
-                     download of the asset.
-      - name: index
-        in: query
-        description: Index of the file in the array of files.
-    responses:
-      200:
-        access_token: Generated access token.
-      400:
-        description: One of the required attributes is missing.
-      401:
-        description: Invalid asset data.
-      500:
-        description: Error
-    """
-    data = get_request_data(request)
-    try:
-        asset, service, did, consumer_address, token_address = process_consume_request(  # noqa
-            data,
-            'access_token'
-        )
-        service_id = data.get('serviceId')
-        service_type = data.get('serviceType')
-        tx_id = data.get("transferTxId")
-        seconds_to_exp = data.get("secondsToExpiration")
-        delegate_public_key = data.get("delegatePublicKey")
-
-        if did.startswith('did:'):
-            did = add_0x_prefix(did_to_id(did))
-
-        _tx, _order_log, _transfer_log = validate_order(
-            consumer_address,
-            token_address,
-            float(service.get_cost()),
-            tx_id,
-            did,
-            service_id
-        )
-
-        assert service_type == ServiceTypes.ASSET_ACCESS
-
-        delegate_address = get_address_from_public_key(delegate_public_key)
-        access_token = generate_access_token(
-            did, consumer_address, tx_id, seconds_to_exp, delegate_address
-        )
-
-        encrypted_token = do_encrypt(access_token, public_key=delegate_public_key)
-
-        return {'access_token': encrypted_token}, 200
 
     except Exception as e:
         logger.error(

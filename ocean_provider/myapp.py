@@ -30,19 +30,6 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////' + os.path.join(
 db = SQLAlchemy(app)
 
 
-class AccessToken(db.Model):
-    __tablename__ = 'access_token'
-
-    access_token = db.Column(
-        db.String(255), nullable=False, primary_key=True, autoincrement=False
-    )
-    consumer_address = db.Column(db.String(255), nullable=False)
-    delegate_address = db.Column(db.String(255), nullable=False)
-    did = db.Column(db.String(255), nullable=False)
-    tx_id = db.Column(db.String(255), nullable=False)
-    expiry_time = db.Column(db.DateTime, nullable=False)
-
-
 class UserNonce(db.Model):
     __tablename__ = 'user_nonce'
     FIRST_NONCE = 0

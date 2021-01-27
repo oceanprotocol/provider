@@ -1,17 +1,12 @@
-from eth_utils import add_0x_prefix
 from flask import request as flask_request
 from flask_sieve import JsonRequest
 from flask_sieve.rules_processor import RulesProcessor
 from flask_sieve.validator import Validator
-from ocean_utils.did import did_to_id
 
-from ocean_provider.access_token import (check_unique_access_token,
-                                         get_access_token)
 from ocean_provider.exceptions import InvalidSignatureError
 from ocean_provider.user_nonce import get_nonce
 from ocean_provider.util import get_request_data
 from ocean_provider.utils.accounts import verify_signature
-from ocean_provider.utils.encryption import get_address_from_public_key
 
 
 class CustomJsonRequest(JsonRequest):
@@ -23,9 +18,7 @@ class CustomJsonRequest(JsonRequest):
         request = request or flask_request
         request = get_request_data(request)
         self._validator = CustomValidator(rules=self.rules(), messages={
-            'signature.signature': 'Invalid signature provided.',
-            'signature.download_signature': 'Invalid signature provided.',
-            'transferTxId.access_token': 'There is already a token with these parameters',  # noqa
+            'signature.signature': 'Invalid signature provided.'
         }, request=request)
 
 
@@ -84,70 +77,6 @@ class CustomRulesProcessor(RulesProcessor):
             return False
 
         return False
-
-    def validate_download_signature(self, value, params, **kwargs):
-        """
-        Validates a download signature using the documentId.
-
-        parameters:
-          - name: value
-            type: string
-            description: Value of the field being validated
-          - name: params
-            type: list
-            description: The list of parameters defined for the rule,
-                         i.e. names of other fields inside the request.
-                         Should be owner, did and tx_id.
-        """
-        self._assert_params_size(size=3, params=params, rule='signature')
-        owner = self._attribute_value(params[0])
-        did = self._attribute_value(params[1])
-        tx_id = self._attribute_value(params[2])
-        original_msg = f'{did}'
-
-        if did.startswith('did:'):
-            did = add_0x_prefix(did_to_id(did))
-
-        _, access_token = get_access_token(
-            owner.lower(), did, tx_id
-        )
-        nonce = access_token if access_token else get_nonce(owner)
-
-        try:
-            verify_signature(owner, value, original_msg, nonce)
-            return True
-        except InvalidSignatureError:
-            return False
-
-        return False
-
-    def validate_access_token(self, value, params, **kwargs):
-        """
-        Validates if an access token can be generated with the params.
-
-        parameters:
-          - name: value
-            type: string
-            description: Value of the field being validated
-          - name: params
-            type: list
-            description: The list of parameters defined for the rule,
-                         i.e. names of other fields inside the request.
-                         Should be documentId, consumerAddress, delegatePublicKey
-        """
-        self._assert_params_size(size=3, params=params, rule='access_token')
-        did = self._attribute_value(params[0])
-        if did.startswith('did:'):
-            did = add_0x_prefix(did_to_id(did))
-
-        consumer_address = self._attribute_value(params[1])
-        delegate_public_key = self._attribute_value(params[2])
-        delegate_address = get_address_from_public_key(delegate_public_key)
-        tx_id = value
-
-        return check_unique_access_token(
-            did, consumer_address, tx_id, delegate_address
-        )
 
 
 class NonceRequest(CustomJsonRequest):
@@ -214,28 +143,6 @@ class ComputeStartRequest(CustomJsonRequest):
         }
 
 
-class AccessTokenRequest(CustomJsonRequest):
-    def rules(self):
-        return {
-            'documentId': ['bail', 'required'],
-            'serviceId': ['required'],
-            'serviceType': ['required'],
-            'dataToken': ['required'],
-            'consumerAddress': ['bail', 'required'],
-            'secondsToExpiration': ['required', 'integer'],
-            'delegatePublicKey': ['bail', 'required'],
-            'transferTxId': [
-                'required',
-                'access_token:documentId,consumerAddress,delegatePublicKey'
-            ],
-            'fileIndex': ['required'],
-            'signature': [
-                'required',
-                'signature:consumerAddress,documentId,only_did'
-            ],
-        }
-
-
 class DownloadRequest(CustomJsonRequest):
     def rules(self):
         return {
@@ -248,7 +155,7 @@ class DownloadRequest(CustomJsonRequest):
             'fileIndex': ['required'],
             'signature': [
                 'required',
-                'download_signature:consumerAddress,documentId,transferTxId'
+                'signature:consumerAddress,documentId,only_did'
             ],
         }
 

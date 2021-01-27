@@ -41,10 +41,6 @@ def get_consumer_wallet():
     return Wallet(Web3Provider.get_web3(), private_key=os.getenv('TEST_PRIVATE_KEY2'))
 
 
-def get_some_wallet():
-    return Wallet(Web3Provider.get_web3(), private_key='0x5d75837394b078ce97bc289fa8d75e21000573520bfa7784a9d28ccaae602bf7')
-
-
 def get_ganache_wallet():
     web3 = Web3Provider.get_web3()
     if web3.eth.accounts and web3.eth.accounts[0].lower() == '0xe2DD09d719Da89e5a3D0F2549c7E24566e947260'.lower():
