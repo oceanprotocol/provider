@@ -25,6 +25,10 @@ def is_safe_schema(url):
         return False
 
 
+def is_ip(address):
+    return address.replace('.', '').isnumeric()
+
+
 def _get_records(domain, record_type):
     DNS_RESOLVER = dns.resolver.Resolver()
     try:
@@ -41,10 +45,15 @@ def is_safe_domain(domain):
     ip_v4_records = _get_records(domain, "A")
     ip_v6_records = _get_records(domain, "AAAA")
 
-    return (
+    result = (
         validate_dns_records(domain, ip_v4_records, "A") and
         validate_dns_records(domain, ip_v6_records, "AAAA")
     )
+
+    if not is_ip(domain):
+        return result
+
+    return result and validate_dns_records(domain, domain, "")
 
 
 def validate_dns_records(domain, records, record_type):
@@ -63,7 +72,7 @@ def validate_dns_records(domain, records, record_type):
 
 
 def validate_dns_record(record, domain, record_type):
-    value = record.to_text().strip()
+    value = record if isinstance(record, str) else record.to_text().strip()
     allow_non_public_ip = get_config().allow_non_public_ip
 
     try:
