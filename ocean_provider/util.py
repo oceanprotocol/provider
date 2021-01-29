@@ -25,6 +25,7 @@ from ocean_provider.exceptions import BadRequestError
 from ocean_provider.utils.accounts import verify_signature
 from ocean_provider.utils.basics import get_config, get_provider_wallet, get_asset_from_metadatastore
 from ocean_provider.utils.encryption import do_decrypt
+from ocean_provider.util_url import is_safe_url
 
 logger = logging.getLogger(__name__)
 
@@ -41,6 +42,8 @@ def get_request_data(request, url_params_only=False):
 
 def build_download_response(request, requests_session, url, download_url, content_type=None):
     try:
+        if not is_safe_url(url):
+            raise ValueError(f'Unsafe url {url}')
         download_request_headers = {}
         download_response_headers = {}
         is_range_request = bool(request.range)
@@ -422,6 +425,8 @@ def check_url_details(url):
     Otherwise it returns True and a dictionary containing contentType and contentLength.
     """
     try:
+        if not is_safe_url(url):
+            False, {}
         result = requests.options(url,timeout=3)
         if (
             result.status_code != 200 or
