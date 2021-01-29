@@ -25,6 +25,7 @@ from ocean_provider.utils.accounts import verify_signature
 from ocean_provider.utils.basics import (get_asset_from_metadatastore,
                                          get_config, get_provider_wallet)
 from ocean_provider.utils.encryption import do_decrypt
+from ocean_provider.util_url import is_safe_url
 
 logger = logging.getLogger(__name__)
 
