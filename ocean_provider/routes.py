@@ -21,16 +21,16 @@ from ocean_provider.util import (build_download_response,
                                  build_stage_algorithm_dict, build_stage_dict,
                                  build_stage_output_dict,
                                  check_at_least_one_attribute,
-                                 check_required_attributes, check_url_details,
+                                 check_required_attributes,
                                  get_asset_download_urls,
-                                 get_asset_url_at_index, get_asset_urls,
-                                 get_compute_endpoint, get_download_url,
-                                 get_metadata_url, get_request_data,
-                                 process_compute_request,
+                                 get_asset_url_at_index, get_compute_endpoint,
+                                 get_download_url, get_metadata_url,
+                                 get_request_data, process_compute_request,
                                  process_consume_request,
                                  record_consume_request,
                                  validate_algorithm_dict, validate_order,
                                  validate_transfer_not_used_for_other_service)
+from ocean_provider.util_url import check_url_details
 from ocean_provider.utils.accounts import verify_signature
 from ocean_provider.utils.basics import (LocalFileAdapter,
                                          get_asset_from_metadatastore,
@@ -266,9 +266,11 @@ def fileinfo():
     else:
         url_list = [get_download_url(url, app.config['CONFIG_FILE']), ]
 
+    with_checksum = data.get('checksum', False)
+
     files_info = []
     for i, url in enumerate(url_list):
-        valid, details = check_url_details(url)
+        valid, details = check_url_details(url, with_checksum=with_checksum)
         info = {'index': i, 'valid': valid}
         info.update(details)
         files_info.append(info)

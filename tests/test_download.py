@@ -216,7 +216,7 @@ def test_asset_info(client):
     pub_wallet = get_publisher_wallet()
     asset = get_dataset_ddo_with_access_service(client, pub_wallet)
     request_url = BaseURLs.ASSETS_URL + f'/fileinfo'
-    data = { 'did': asset.did }
+    data = {'did': asset.did, 'checksum': 'true'}
     response = client.post(request_url, json=data)
     result = response.get_json()
     assert response.status == '200 OK'
@@ -226,6 +226,8 @@ def test_asset_info(client):
         assert file_info['contentLength']
         assert file_info['contentType'] == 'text/plain; charset=utf-8'
         assert file_info['valid'] is True
+        assert file_info['checksum'] == '1f7c17bed455f484f4d5ebc581cde6bc059977ef1e143b52a703f18b89c86a22'  # noqa
+        assert file_info['checksumType'] == 'sha256'
 
     asset = get_dataset_with_invalid_url_ddo(client, pub_wallet)
     request_url = BaseURLs.ASSETS_URL + f'/fileinfo'
