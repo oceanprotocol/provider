@@ -90,6 +90,7 @@ def validate_dns_record(record, domain, record_type):
                     f"{domain} resolves to a non public IP address {value}, "
                     "but allowed by config!"
                 )
+                return True
             else:
                 logger.error(
                     f"[!] DNS record type {record_type} for domain name "
