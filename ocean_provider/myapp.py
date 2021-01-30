@@ -7,7 +7,6 @@ from os.path import abspath, dirname
 from flask import Flask
 from flask_cors import CORS
 from flask_sieve import Sieve
-from flask_sqlalchemy import SQLAlchemy
 
 from ocean_provider.utils.basics import get_config
 
@@ -27,17 +26,6 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////' + os.path.join(
     get_config().storage_path
 )
 
-db = SQLAlchemy(app)
-
-
-class UserNonce(db.Model):
-    __tablename__ = 'user_nonce'
-    FIRST_NONCE = 0
-
-    address = db.Column(
-        db.String(255), nullable=False, primary_key=True, autoincrement=False
-    )
-    nonce = db.Column(db.String(255), nullable=False)
-
-
+from ocean_provider.models import db as db_models  # noqa isort: skip
+db = db_models
 db.create_all()

@@ -1,6 +1,6 @@
 import logging
 
-from ocean_provider.myapp import UserNonce, db
+from ocean_provider.models import UserNonce, db
 
 logger = logging.getLogger(__name__)
 
