@@ -16,6 +16,7 @@ NAME_AUTH_TOKEN_EXPIRATION = 'auth_token_expiration'
 
 NAME_AQUARIUS_URL = 'aquarius.url'
 NAME_OPERATOR_SERVICE_URL = 'operator_service.url'
+NAME_ALLOW_NON_PUBLIC_IP = 'allow_non_public_ip'
 NAME_STORAGE_PATH = 'storage.path'
 
 environ_names = {
@@ -29,6 +30,7 @@ environ_names = {
                                  'Auth token expiration time expressed in seconds', 'resources'],
     NAME_AQUARIUS_URL: ['AQUARIUS_URL', 'Aquarius url (metadata store)', 'resources'],
     NAME_OPERATOR_SERVICE_URL: ['OPERATOR_SERVICE_URL', 'Operator service URL', 'resources'],
+    NAME_ALLOW_NON_PUBLIC_IP: ['ALLOW_NON_PUBLIC_IP', 'Allow non public ip', 'resources'],
     NAME_STORAGE_PATH: ['STORAGE_PATH', 'Path to the local database file'],
 }
 
@@ -111,6 +113,10 @@ class Config(configparser.ConfigParser):
     def operator_service_url(self):
         """URL of the operator service component. (e.g.): http://myoperatorservice:8050."""
         return self.get('resources', NAME_OPERATOR_SERVICE_URL, fallback=None)
+
+    @property
+    def allow_non_public_ip(self):
+        return self.get('resources', NAME_ALLOW_NON_PUBLIC_IP, fallback=None)
 
     @property
     def auth_token_message(self):

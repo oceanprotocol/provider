@@ -25,6 +25,7 @@ from ocean_provider.utils.accounts import verify_signature
 from ocean_provider.utils.basics import (get_asset_from_metadatastore,
                                          get_config, get_provider_wallet)
 from ocean_provider.utils.encryption import do_decrypt
+from ocean_provider.util_url import is_safe_url
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +44,8 @@ def build_download_response(
     request, requests_session, url, download_url, content_type=None
 ):
     try:
+        if not is_safe_url(url):
+            raise ValueError(f'Unsafe url {url}')
         download_request_headers = {}
         download_response_headers = {}
         is_range_request = bool(request.range)
@@ -52,7 +55,7 @@ def build_download_response(
             download_response_headers = download_request_headers
 
         response = requests_session.get(
-            download_url, headers=download_request_headers, stream=True
+            download_url, headers=download_request_headers, stream=True, timeout=3
         )
         if not is_range_request:
             filename = url.split("/")[-1]
@@ -435,14 +438,16 @@ def check_url_details(url):
     contentLength.
     """
     try:
-        result = requests.options(url)
+        if not is_safe_url(url):
+            False, {}
+        result = requests.options(url,timeout=3)
         if (
             result.status_code != 200 or
             not result.headers.get('Content-Type') or
             not result.headers.get('Content-Length')
         ):
             # fallback on GET request
-            result = requests.get(url, stream=True)
+            result = requests.get(url, stream=True, timeout=3)
 
         if result.status_code == 200:
             content_type = result.headers.get('Content-Type')

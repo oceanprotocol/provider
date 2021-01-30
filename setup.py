@@ -31,6 +31,8 @@ install_requirements = [
     'ocean-lib>=0.5.3',
     'requests_testadapter',
     'eciespy',
+    'ipaddress',
+    'dnspython',
     'flask-sieve==1.2.2',
     'Flask-SQLAlchemy==2.1'
 ]
@@ -88,6 +90,6 @@ setup(
     test_suite='tests',
     tests_require=test_requirements,
     url='https://github.com/oceanprotocol/provider-py',
-    version='0.4.5',
+    version='0.4.6',
     zip_safe=False,
 )
