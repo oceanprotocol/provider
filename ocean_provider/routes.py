@@ -6,6 +6,7 @@ import os
 
 from eth_utils import add_0x_prefix
 from flask import Blueprint, Response, jsonify, request
+from flask_sieve import validate
 from ocean_lib.models.data_token import DataToken
 from ocean_lib.web3_internal.utils import add_ethereum_prefix_and_hash_msg
 from ocean_lib.web3_internal.web3helper import Web3Helper
@@ -16,12 +17,14 @@ from ocean_utils.http_requests.requests_session import get_requests_session
 from ocean_provider.exceptions import BadRequestError, InvalidSignatureError
 from ocean_provider.log import setup_logging
 from ocean_provider.myapp import app
-from ocean_provider.user_nonce import UserNonce
+from ocean_provider.requests import (ComputeRequest, ComputeStartRequest,
+                                     DownloadRequest, EncryptRequest,
+                                     FileInfoRequest, InitializeRequest,
+                                     NonceRequest, SimpleFlowConsumeRequest)
+from ocean_provider.user_nonce import get_nonce, increment_nonce
 from ocean_provider.util import (build_download_response,
                                  build_stage_algorithm_dict, build_stage_dict,
                                  build_stage_output_dict,
-                                 check_at_least_one_attribute,
-                                 check_required_attributes,
                                  get_asset_download_urls,
                                  get_asset_url_at_index, get_compute_endpoint,
                                  get_download_url, get_metadata_url,
@@ -34,7 +37,7 @@ from ocean_provider.util_url import check_url_details
 from ocean_provider.utils.accounts import verify_signature
 from ocean_provider.utils.basics import (LocalFileAdapter,
                                          get_asset_from_metadatastore,
-                                         get_config, get_datatoken_minter,
+                                         get_datatoken_minter,
                                          get_provider_wallet, setup_network)
 from ocean_provider.utils.encryption import do_encrypt
 
@@ -44,25 +47,16 @@ setup_network()
 provider_wallet = get_provider_wallet()
 requests_session = get_requests_session()
 requests_session.mount('file://', LocalFileAdapter())
-user_nonce = UserNonce(get_config().storage_path)
 
 logger = logging.getLogger(__name__)
 
 
 @services.route('/nonce', methods=['GET'])
+@validate(NonceRequest)
 def nonce():
-    required_attributes = [
-        'userAddress',
-    ]
     data = get_request_data(request)
-
-    msg, status = check_required_attributes(
-        required_attributes, data, 'nonce')
-    if msg:
-        return jsonify(error=msg), status
-
     address = data.get('userAddress')
-    nonce = user_nonce.get_nonce(address)
+    nonce = get_nonce(address)
     logger.info(f'nonce for user {address} is {nonce}')
     return Response(
         json.dumps({'nonce': nonce}),
@@ -72,19 +66,9 @@ def nonce():
 
 
 @services.route('/', methods=['GET'])
+@validate(SimpleFlowConsumeRequest)
 def simple_flow_consume():
-    required_attributes = [
-        'consumerAddress',
-        'dataToken',
-        'transferTxId'
-    ]
     data = get_request_data(request)
-
-    msg, status = check_required_attributes(
-        required_attributes, data, 'simple_flow_consume')
-    if msg:
-        return jsonify(error=msg), status
-
     consumer = data.get('consumerAddress')
     dt_address = data.get('dataToken')
     tx_id = data.get('transferTxId')
@@ -130,6 +114,7 @@ def simple_flow_consume():
 
 
 @services.route('/encrypt', methods=['POST'])
+@validate(EncryptRequest)
 def encrypt():
     """Encrypt document using the Provider's own symmetric key (symmetric encryption).
     This can be used by the publisher of an asset to encrypt the urls of the
@@ -175,18 +160,7 @@ def encrypt():
 
     return: the encrypted document (hex str)
     """
-    required_attributes = [
-        'documentId',
-        'document',
-        'publisherAddress'
-    ]
     data = get_request_data(request)
-
-    msg, status = check_required_attributes(
-        required_attributes, data, 'encrypt')
-    if msg:
-        return jsonify(error=msg), status
-
     did = data.get('documentId')
     document = json.dumps(json.loads(
         data.get('document')), separators=(',', ':'))
@@ -200,7 +174,7 @@ def encrypt():
         logger.info(f'encrypted urls {encrypted_document}, '
                     f'publisher {publisher_address}, '
                     f'documentId {did}')
-        user_nonce.increment_nonce(publisher_address)
+        increment_nonce(publisher_address)
         return Response(
             json.dumps({'encryptedDocument': encrypted_document}),
             201,
@@ -219,6 +193,7 @@ def encrypt():
 
 
 @services.route('/fileinfo', methods=['POST'])
+@validate(FileInfoRequest)
 def fileinfo():
     """Retrieves Content-Type and Content-Length from the given URL or asset. Supports a payload of either url or did.
     This can be used by the publisher of an asset to check basic information
@@ -239,20 +214,8 @@ def fileinfo():
 
     return: list of file info (index, valid, contentLength, contentType)
     """
-    required_attributes = ['url', 'did']
     data = get_request_data(request)
-
-    msg, status = check_at_least_one_attribute(
-        required_attributes, data, 'checkURL'
-    )
-    if msg:
-        return jsonify(error=msg), status
-
     did = data.get('did')
-
-    if did and not did.startswith('did:op:'):
-        return jsonify(error=f'Invalid `did` {did}.'), 400
-
     url = data.get('url')
 
     if did:
@@ -280,6 +243,7 @@ def fileinfo():
 
 
 @services.route('/initialize', methods=['GET'])
+@validate(InitializeRequest)
 def initialize():
     """Initialize a service request.
     In order to consume a data service the user is required to send
@@ -306,8 +270,7 @@ def initialize():
     try:
         asset, service, did, consumer_address, token_address = process_consume_request(  # noqa
             data,
-            'initialize',
-            require_signature=False
+            'initialize'
         )
 
         url = get_asset_url_at_index(0, asset, provider_wallet)
@@ -333,7 +296,7 @@ def initialize():
             "to": minter,
             "numTokens": float(service.get_cost()),
             "dataToken": token_address,
-            "nonce": user_nonce.get_nonce(consumer_address)
+            "nonce": get_nonce(consumer_address)
         }
         return Response(
             json.dumps(approve_params),
@@ -351,6 +314,7 @@ def initialize():
 
 
 @services.route('/download', methods=['GET'])
+@validate(DownloadRequest)
 def download():
     """Allows download of asset data file.
 
@@ -396,13 +360,10 @@ def download():
     try:
         asset, service, did, consumer_address, token_address = process_consume_request(  # noqa
             data,
-            'download',
-            user_nonce=user_nonce,
-            additional_params=["transferTxId", "fileIndex"]
+            'download'
         )
         service_id = data.get('serviceId')
         service_type = data.get('serviceType')
-        signature = data.get('signature')
         tx_id = data.get("transferTxId")
         if did.startswith('did:'):
             did = add_0x_prefix(did_to_id(did))
@@ -433,30 +394,25 @@ def download():
         download_url = get_download_url(url, app.config['CONFIG_FILE'])
         logger.info(f'Done processing consume request for asset {did}, '
                     f' url {download_url}')
-        user_nonce.increment_nonce(consumer_address)
+        increment_nonce(consumer_address)
         return build_download_response(
             request, requests_session, url, download_url, content_type
         )
 
-    except InvalidSignatureError as e:
-        msg = f'Consumer signature failed verification: {e}'
-        logger.error(msg, exc_info=1)
-        return jsonify(error=msg), 401
-
     except Exception as e:
         logger.error(
-            f'Error: {e}. \n'
-            f'Payload was: documentId={did}, '
-            f'consumerAddress={consumer_address},'
-            f'signature={signature}'
-            f'serviceId={service_id}'
-            f'serviceType={service_type}',
+            f"Error: {e}. \n"
+            f"Payload was: documentId={data.get('did')}, "
+            f"consumerAddress={data.get('consumerAddress')},"
+            f"serviceId={data.get('serviceId')}"
+            f"serviceType={data.get('serviceType')}",
             exc_info=1
         )
         return jsonify(error=str(e)), 500
 
 
 @services.route('/compute', methods=['DELETE'])
+@validate(ComputeRequest)
 def computeDelete():
     """Deletes a workflow.
 
@@ -496,32 +452,24 @@ def computeDelete():
     """
     data = get_request_data(request)
     try:
-        body = process_compute_request(data, user_nonce)
+        body = process_compute_request(data)
         response = requests_session.delete(
             get_compute_endpoint(),
             params=body,
             headers={'content-type': 'application/json'})
-        user_nonce.increment_nonce(body['owner'])
+        increment_nonce(body['owner'])
         return Response(
             response.content,
             response.status_code,
             headers={'content-type': 'application/json'}
         )
-
-    except BadRequestError as e:
-        return jsonify(error=str(e)), 400
-
-    except InvalidSignatureError as e:
-        msg = f'Consumer signature failed verification: {e}'
-        logger.error(msg, exc_info=1)
-        return jsonify(error=msg), 401
-
     except (ValueError, Exception) as e:
         logger.error(f'Error- {str(e)}', exc_info=1)
         return jsonify(error=f'Error : {str(e)}'), 500
 
 
 @services.route('/compute', methods=['PUT'])
+@validate(ComputeRequest)
 def computeStop():
     """Stop the execution of a workflow.
 
@@ -565,26 +513,17 @@ def computeStop():
     """
     data = get_request_data(request)
     try:
-        body = process_compute_request(data, user_nonce)
+        body = process_compute_request(data)
         response = requests_session.put(
             get_compute_endpoint(),
             params=body,
             headers={'content-type': 'application/json'})
-        user_nonce.increment_nonce(body['owner'])
+        increment_nonce(body['owner'])
         return Response(
             response.content,
             response.status_code,
             headers={'content-type': 'application/json'}
         )
-
-    except BadRequestError as e:
-        return jsonify(error=str(e)), 400
-
-    except InvalidSignatureError as e:
-        msg = f'Consumer signature failed verification: {e}'
-        logger.error(msg, exc_info=1)
-        return jsonify(error=msg), 401
-
     except (ValueError, Exception) as e:
         logger.error(f'Error- {str(e)}', exc_info=1)
         return jsonify(error=f'Error : {str(e)}'), 500
@@ -637,18 +576,20 @@ def computeStatus():
     try:
         signed_request = False
         try:
-            body = process_compute_request(data, user_nonce)
+            body = process_compute_request(
+                data, require_signature=True, with_validation=True
+            )
             signed_request = True
         except Exception:
             body = process_compute_request(
-                data, user_nonce, require_signature=False
+                data, require_signature=False, with_validation=True
             )
 
         response = requests_session.get(
             get_compute_endpoint(),
             params=body,
             headers={'content-type': 'application/json'})
-        user_nonce.increment_nonce(body['owner'])
+        increment_nonce(body['owner'])
         _response = response.content
         # Filter status info if signature is not given or failed validation
         if not signed_request:
@@ -686,6 +627,7 @@ def computeStatus():
 
 
 @services.route('/compute', methods=['POST'])
+@validate(ComputeStartRequest)
 def computeStart():
     """Call the execution of a workflow.
 
@@ -737,13 +679,10 @@ def computeStart():
     try:
         asset, service, did, consumer_address, token_address = process_consume_request(  # noqa
             data,
-            'compute_start_job',
-            additional_params=["transferTxId", "output"],
-            require_signature=False
+            'compute_start_job'
         )
         service_id = data.get('serviceId')
         service_type = data.get('serviceType')
-        signature = data.get('signature')
         tx_id = data.get("transferTxId")
 
         # Verify that  the number of required tokens has been
@@ -772,33 +711,6 @@ def computeStart():
         output_def = data.get('output', dict())
 
         assert service_type == ServiceTypes.CLOUD_COMPUTE
-
-        # Validate algorithm choice
-        if not (algorithm_meta or algorithm_did):
-            msg = f'Need an `algorithmMeta` or `algorithmDid` to run, otherwise don\'t bother.'  # noqa
-            logger.error(msg, exc_info=1)
-            return jsonify(error=msg), 400
-
-        # algorithmDid also requires algorithmDataToken
-        # and algorithmTransferTxId
-        if algorithm_did:
-            if not (algorithm_token_address and algorithm_tx_id):
-                msg = (
-                    f'Using `algorithmDid` requires the `algorithmDataToken` and '  # noqa
-                    f'`algorithmTransferTxId` values in the request payload. '
-                    f'algorithmDataToken is the DataToken address for the algorithm asset. '  # noqa
-                    f'algorithmTransferTxId is the transaction id (hash) of transferring '  # noqa
-                    f'data tokens from consumer wallet to this providers wallet.'
-                )
-                logger.error(msg, exc_info=1)
-                return jsonify(error=msg), 400
-
-        # Consumer signature
-        original_msg = f'{consumer_address}{did}'
-        verify_signature(
-            consumer_address, signature, original_msg,
-            user_nonce.get_nonce(consumer_address)
-        )
 
         ########################
         # Valid service?
@@ -892,18 +804,12 @@ def computeStart():
             get_compute_endpoint(),
             data=json.dumps(payload),
             headers={'content-type': 'application/json'})
-        user_nonce.increment_nonce(consumer_address)
+        increment_nonce(consumer_address)
         return Response(
             response.content,
             response.status_code,
             headers={'content-type': 'application/json'}
         )
-
-    except InvalidSignatureError as e:
-        msg = f'Consumer signature failed verification: {e}'
-        logger.error(msg, exc_info=1)
-        return jsonify(error=msg), 401
-
     except (ValueError, KeyError, Exception) as e:
         logger.error(f'Error- {str(e)}', exc_info=1)
         return jsonify(error=f'Error : {str(e)}'), 500

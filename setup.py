@@ -6,7 +6,7 @@
 #  Copyright 2018 Ocean Protocol Foundation
 #  SPDX-License-Identifier: Apache-2.0
 
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
 with open('README.md') as readme_file:
     readme = readme_file.read()
@@ -32,7 +32,9 @@ install_requirements = [
     'requests_testadapter',
     'eciespy',
     'ipaddress',
-    'dnspython'
+    'dnspython',
+    'flask-sieve==1.2.2',
+    'Flask-SQLAlchemy==2.1'
 ]
 
 # Required to run setup.py:

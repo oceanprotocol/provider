@@ -1,79 +1,29 @@
 import logging
 
-from ocean_utils.data_store.storage_base import StorageBase
+from ocean_provider.models import UserNonce, db
 
 logger = logging.getLogger(__name__)
 
 
-class UserNonce:
-    FIRST_NONCE = 0
+def get_nonce(address):
+    result = UserNonce.query.filter_by(address=address).first()
 
-    def __init__(self, storage_path=None):
-        self._storage_path = storage_path
-        NonceStorage(storage_path, create_table=True)
-
-    @property
-    def storage(self):
-        return NonceStorage(self._storage_path, create_table=True)
-
-    def get_nonce(self, address):
-        nonce = self.storage.read_nonce(address)
-        if nonce is not None:
-            return int(nonce)
-        return UserNonce.FIRST_NONCE
-
-    def increment_nonce(self, address):
-        nonce = self.get_nonce(address)
-        logger.debug(f'increment_nonce: {address}, {nonce}, new nonce {nonce+1}')
-        self.storage.write_nonce(address, nonce + 1)
+    return result.nonce if result else UserNonce.FIRST_NONCE
 
 
-class NonceStorage(StorageBase):
-    TABLE_NAME = 'user_nonce'
-    
-    def __init__(self, storage_path, create_table=True, *args, **kwargs):
-        super().__init__(storage_path, *args, **kwargs)
-        if create_table:
-            self._run_query(
-                f'''CREATE TABLE IF NOT EXISTS {self.TABLE_NAME}
-                   (address VARCHAR PRIMARY KEY , nonce VARCHAR);'''
-            )
+def increment_nonce(address):
+    nonce_object = UserNonce.query.filter_by(address=address).first()
+    if nonce_object:
+        nonce_value = nonce_object.nonce
+    else:
+        nonce_object = UserNonce(address=address)
+        nonce_value = UserNonce.FIRST_NONCE
 
-    def write_nonce(self, address, nonce):
-        """
-        Store nonce value for a specific address
+    logger.debug(
+        f'increment_nonce: {address}, {nonce_value}, '
+        'new nonce {int(nonce_value) + 1}'
+    )
 
-        :param address: hex str the ethereum address that signed the token
-        :param nonce: str
-        """
-        logger.debug(f'Writing nonce value to {self.TABLE_NAME} storage: '
-                     f'account={address}, nonce={nonce}')
-        self._run_query(
-            f'''INSERT OR REPLACE
-                INTO {self.TABLE_NAME}
-                VALUES (?,?)''',
-            [address, str(nonce)],
-        )
-
-    def read_nonce(self, address):
-        """
-        Retrieve stored nonce value
-
-        :param address: hex str the ethereum address
-        :return: str nonce value
-        """
-        try:
-            rows = [row for row in self._run_query(
-                f'''SELECT nonce
-                    FROM {self.TABLE_NAME}
-                    WHERE address=?;''',
-                (address,))
-                    ]
-            (nonce, ) = rows[0] if rows else (None,)
-            logger.debug(f'Read nonce from `{self.TABLE_NAME}` storage: '
-                         f'account={address}, nonce={nonce}')
-            return nonce
-
-        except Exception as e:
-            logging.error(f'Error reading nonce value for account {address}: {e}')
-            return None
+    nonce_object.nonce = int(nonce_value) + 1
+    db.session.add(nonce_object)
+    db.session.commit()

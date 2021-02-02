@@ -12,20 +12,13 @@ from ocean_utils.agreements.service_types import ServiceTypes
 from ocean_provider.constants import BaseURLs
 from ocean_provider.run import get_services_endpoints
 from ocean_provider.util import build_stage_output_dict
-
 from tests.test_helpers import (
-    get_algorithm_ddo,
-    get_consumer_wallet,
-    get_compute_job_info,
-    get_dataset_ddo_with_compute_service_no_rawalgo,
-    get_dataset_ddo_with_compute_service_specific_algo_dids,
+    get_algorithm_ddo, get_compute_job_info, get_consumer_wallet,
     get_dataset_ddo_with_compute_service,
-    get_possible_compute_job_status_text,
-    get_publisher_wallet,
-    get_nonce,
-    mint_tokens_and_wait,
-    send_order,
-)
+    get_dataset_ddo_with_compute_service_no_rawalgo,
+    get_dataset_ddo_with_compute_service_specific_algo_dids, get_nonce,
+    get_possible_compute_job_status_text, get_publisher_wallet,
+    mint_tokens_and_wait, send_order)
 
 
 def test_compute_expose_endpoints(client):
@@ -87,7 +80,6 @@ def test_compute_norawalgo_allowed(client):
         'transferTxId': tx_id,
         'dataToken': data_token,
         'output': build_stage_output_dict(dict(), dataset_ddo_w_compute_service, cons_wallet.address, pub_wallet),
-        'algorithmDid': '',
         'algorithmMeta': algorithm_meta,
         'algorithmDataToken': ''
     })
@@ -140,7 +132,6 @@ def test_compute_specific_algo_dids(client):
         'dataToken': data_token,
         'output': build_stage_output_dict(dict(), dataset_ddo_w_compute_service, cons_wallet.address, pub_wallet),
         'algorithmDid': alg_ddo.did,
-        'algorithmMeta': {},
         'algorithmDataToken': alg_data_token
     })
 
@@ -150,6 +141,7 @@ def test_compute_specific_algo_dids(client):
         data=json.dumps(payload),
         content_type='application/json'
     )
+
     assert response.status == '400 BAD REQUEST', f'start compute job failed: {response.status} , {response.data}'
 
 
@@ -194,7 +186,6 @@ def test_compute(client):
         'dataToken': data_token,
         'output': build_stage_output_dict(dict(), dataset_ddo_w_compute_service, cons_wallet.address, pub_wallet),
         'algorithmDid': alg_ddo.did,
-        'algorithmMeta': {},
         'algorithmDataToken': alg_data_token,
         'algorithmTransferTxId': alg_tx_id
     })
@@ -210,7 +201,7 @@ def test_compute(client):
         content_type='application/json'
     )
 
-    assert response.status_code == 401, f'{response.data}'
+    assert response.status_code == 400, f'{response.data}'
 
     # Start compute with valid signature
     payload['signature'] = signature
