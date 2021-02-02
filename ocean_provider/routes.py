@@ -25,8 +25,6 @@ from ocean_provider.user_nonce import get_nonce, increment_nonce
 from ocean_provider.util import (build_download_response,
                                  build_stage_algorithm_dict, build_stage_dict,
                                  build_stage_output_dict,
-                                 check_at_least_one_attribute,
-                                 check_required_attributes,
                                  get_asset_download_urls,
                                  get_asset_url_at_index, get_compute_endpoint,
                                  get_download_url, get_metadata_url,
