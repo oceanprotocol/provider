@@ -1,29 +1,29 @@
-import io
 import json
 import logging
 import mimetypes
 import os
-import requests
 from cgi import parse_header
 
 from eth_utils import add_0x_prefix
 from flask import Response
 from ocean_lib.models.data_token import DataToken
 from ocean_lib.ocean.util import to_base_18
-from ocean_lib.web3_internal.web3_provider import Web3Provider
-from ocean_utils.did import did_to_id
-from osmosis_driver_interface.osmosis import Osmosis
 from ocean_lib.web3_internal.utils import add_ethereum_prefix_and_hash_msg
+from ocean_lib.web3_internal.web3_provider import Web3Provider
 from ocean_lib.web3_internal.web3helper import Web3Helper
 from ocean_utils.agreements.service_agreement import ServiceAgreement
 from ocean_utils.agreements.service_types import ServiceTypes
+from ocean_utils.did import did_to_id
+from osmosis_driver_interface.osmosis import Osmosis
 from websockets import ConnectionClosed
 
-from ocean_provider.user_nonce import UserNonce
 from ocean_provider.constants import BaseURLs
 from ocean_provider.exceptions import BadRequestError
+from ocean_provider.user_nonce import UserNonce
+from ocean_provider.util_url import is_safe_url
 from ocean_provider.utils.accounts import verify_signature
-from ocean_provider.utils.basics import get_config, get_provider_wallet, get_asset_from_metadatastore
+from ocean_provider.utils.basics import (get_asset_from_metadatastore,
+                                         get_config, get_provider_wallet)
 from ocean_provider.utils.encryption import do_decrypt
 from ocean_provider.util_url import is_safe_url
 
@@ -78,7 +78,7 @@ def build_download_response(request, requests_session, url, download_url, conten
 
             download_response_headers = {
                 "Content-Disposition": f'attachment;filename={filename}',
-                "Access-Control-Expose-Headers": f'Content-Disposition'
+                "Access-Control-Expose-Headers": 'Content-Disposition'
             }
 
         def _generate(_response):
@@ -417,37 +417,3 @@ def validate_algorithm_dict(algorithm_dict, algorithm_did):
         return f'algorithm `container` must specify values for all of entrypoint, image and tag.', 400
 
     return None, None
-
-
-def check_url_details(url):
-    """
-    If the url argument is invalid, returns False and empty dictionary.
-    Otherwise it returns True and a dictionary containing contentType and contentLength.
-    """
-    try:
-        if not is_safe_url(url):
-            False, {}
-        result = requests.options(url,timeout=3)
-        if (
-            result.status_code != 200 or
-            not result.headers.get('Content-Type') or
-            not result.headers.get('Content-Length')
-        ):
-            # fallback on GET request
-            result = requests.get(url, stream=True, timeout=3)
-
-        if result.status_code == 200:
-            content_type = result.headers.get('Content-Type')
-            content_length = result.headers.get('Content-Length')
-
-            if content_type or content_length:
-                return True, {"contentLength": content_length, "contentType": content_type}
-
-    except requests.exceptions.InvalidSchema:
-        pass
-    except requests.exceptions.MissingSchema:
-        pass
-    except requests.exceptions.ConnectionError:
-        pass
-
-    return False, {}

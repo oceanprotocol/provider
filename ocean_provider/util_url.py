@@ -1,11 +1,16 @@
 import logging
+import requests
 import ipaddress
 import dns.resolver
 from ocean_provider.utils.basics import get_config
+import hashlib as hash
 
 from urllib.parse import urlparse
 
 logger = logging.getLogger(__name__)
+
+REQUEST_TIMEOUT = 3
+CHUNK_SIZE = 8192
 
 
 def is_safe_url(url):
@@ -83,13 +88,13 @@ def validate_dns_record(record, domain, record_type):
                 logger.warning(
                     f"[!] DNS record type {record_type} for domain name "
                     f"{domain} resolves to a non public IP address {value}, "
-                    "but allowed by config!")
+                    "but allowed by config!"
+                )
                 return True
             else:
                 logger.error(
                     f"[!] DNS record type {record_type} for domain name "
-                    f"{domain} resolves to a non public IP address {value}, "
-                    "but allowed by config!"
+                    f"{domain} resolves to a non public IP address {value}. "
                 )
 
                 return False
@@ -98,3 +103,68 @@ def validate_dns_record(record, domain, record_type):
         return False
 
     return True
+
+
+def check_url_details(url, with_checksum=False):
+    """
+    If the url argument is invalid, returns False and empty dictionary.
+    Otherwise it returns True and a dictionary containing contentType and
+    contentLength. If the with_checksum flag is set to True, it also returns
+    the file checksum and the checksumType (currently hardcoded to sha256)
+    """
+    try:
+        if not is_safe_url(url):
+            False, {}
+
+        result, extra_data = _get_result_from_url(
+            url, with_checksum=with_checksum
+        )
+
+        if result.status_code == 200:
+            content_type = result.headers.get('Content-Type')
+            content_length = result.headers.get('Content-Length')
+
+            if content_type or content_length:
+                details = {
+                    "contentLength": content_length,
+                    "contentType": content_type
+                }
+
+                if extra_data:
+                    details.update(extra_data)
+
+                return True, details
+
+    except requests.exceptions.InvalidSchema:
+        pass
+    except requests.exceptions.MissingSchema:
+        pass
+    except requests.exceptions.ConnectionError:
+        pass
+
+    return False, {}
+
+
+def _get_result_from_url(url, with_checksum=False):
+    result = requests.options(url, timeout=REQUEST_TIMEOUT)
+
+    if (
+        not with_checksum and
+        result.status_code == 200 and
+        result.headers.get('Content-Type') and
+        result.headers.get('Content-Length')
+    ):
+        return result, {}
+
+    if not with_checksum:
+        # fallback on GET request
+        return requests.get(url, stream=True, timeout=REQUEST_TIMEOUT), {}
+
+    sha = hash.sha256()
+
+    with requests.get(url, stream=True) as r:
+        r.raise_for_status()
+        for chunk in r.iter_content(chunk_size=CHUNK_SIZE):
+            sha.update(chunk)
+
+    return r, {'checksum': sha.hexdigest(), 'checksumType': 'sha256'}
