@@ -24,7 +24,9 @@ from ocean_provider.requests import (ComputeRequest, ComputeStartRequest,
 from ocean_provider.user_nonce import get_nonce, increment_nonce
 from ocean_provider.util import (build_download_response,
                                  build_stage_algorithm_dict, build_stage_dict,
-                                 build_stage_output_dict, check_url_details,
+                                 build_stage_output_dict,
+                                 check_at_least_one_attribute,
+                                 check_required_attributes,
                                  get_asset_download_urls,
                                  get_asset_url_at_index, get_compute_endpoint,
                                  get_download_url, get_metadata_url,
@@ -33,6 +35,8 @@ from ocean_provider.util import (build_download_response,
                                  record_consume_request,
                                  validate_algorithm_dict, validate_order,
                                  validate_transfer_not_used_for_other_service)
+from ocean_provider.util_url import check_url_details
+from ocean_provider.utils.accounts import verify_signature
 from ocean_provider.utils.basics import (LocalFileAdapter,
                                          get_asset_from_metadatastore,
                                          get_datatoken_minter,
@@ -114,16 +118,14 @@ def simple_flow_consume():
 @services.route('/encrypt', methods=['POST'])
 @validate(EncryptRequest)
 def encrypt():
-    """
-    Encrypt document using the Provider's own symmetric key
-    (symmetric encryption).
-
+    """Encrypt document using the Provider's own symmetric key (symmetric encryption).
     This can be used by the publisher of an asset to encrypt the urls of the
     asset data files before publishing the asset ddo. The publisher to use this
     service is one that is using a front-end with a wallet app such as MetaMask.
     The `urls` are encrypted by the provider so that the provider will be able
     to decrypt at time of providing the service later on.
 
+    ---
     tags:
       - services
     consumes:
@@ -195,15 +197,14 @@ def encrypt():
 @services.route('/fileinfo', methods=['POST'])
 @validate(FileInfoRequest)
 def fileinfo():
-    """Retrieves Content-Type and Content-Length from the given URL or
-    asset. Supports a payload of either url or did.
-
+    """Retrieves Content-Type and Content-Length from the given URL or asset. Supports a payload of either url or did.
     This can be used by the publisher of an asset to check basic information
     about the URL(s). For now, this information consists of the Content-Type
     and Content-Length of the request, using primarily OPTIONS, with fallback
     to GET. In the future, we will add a hash to make sure that the file was
     not tampered with at consumption time.
 
+    ---
     tags:
       - services
 
@@ -227,9 +228,11 @@ def fileinfo():
     else:
         url_list = [get_download_url(url, app.config['CONFIG_FILE']), ]
 
+    with_checksum = data.get('checksum', False)
+
     files_info = []
     for i, url in enumerate(url_list):
-        valid, details = check_url_details(url)
+        valid, details = check_url_details(url, with_checksum=with_checksum)
         info = {'index': i, 'valid': valid}
         info.update(details)
         files_info.append(info)

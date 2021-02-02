@@ -21,11 +21,11 @@ from websockets import ConnectionClosed
 from ocean_provider.constants import BaseURLs
 from ocean_provider.exceptions import BadRequestError
 from ocean_provider.user_nonce import get_nonce
+from ocean_provider.util_url import is_safe_url
 from ocean_provider.utils.accounts import verify_signature
 from ocean_provider.utils.basics import (get_asset_from_metadatastore,
                                          get_config, get_provider_wallet)
 from ocean_provider.utils.encryption import do_decrypt
-from ocean_provider.util_url import is_safe_url
 
 logger = logging.getLogger(__name__)
 
@@ -429,41 +429,3 @@ def validate_algorithm_dict(algorithm_dict, algorithm_did):
         return f'algorithm `container` must specify values for all of entrypoint, image and tag.', 400  # noqa
 
     return None, None
-
-
-def check_url_details(url):
-    """
-    If the url argument is invalid, returns False and empty dictionary.
-    Otherwise it returns True and a dictionary containing contentType and
-    contentLength.
-    """
-    try:
-        if not is_safe_url(url):
-            False, {}
-        result = requests.options(url,timeout=3)
-        if (
-            result.status_code != 200 or
-            not result.headers.get('Content-Type') or
-            not result.headers.get('Content-Length')
-        ):
-            # fallback on GET request
-            result = requests.get(url, stream=True, timeout=3)
-
-        if result.status_code == 200:
-            content_type = result.headers.get('Content-Type')
-            content_length = result.headers.get('Content-Length')
-
-            if content_type or content_length:
-                return True, {
-                    "contentLength": content_length,
-                    "contentType": content_type
-                }
-
-    except requests.exceptions.InvalidSchema:
-        pass
-    except requests.exceptions.MissingSchema:
-        pass
-    except requests.exceptions.ConnectionError:
-        pass
-
-    return False, {}
