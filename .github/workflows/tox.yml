@@ -18,11 +18,7 @@ jobs:
         name: Checkout Barge
         with:
           repository: "oceanprotocol/barge"
-          ref: 'v3'
           path: 'barge'
-        env:
-          AQUARIUS_VERSION: 'v3'
-          CONTRACTS_VERSION: latest
       - name: Run Barge
         working-directory: ${{ github.workspace }}/barge
         run: |
