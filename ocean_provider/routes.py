@@ -17,29 +17,30 @@ from ocean_utils.http_requests.requests_session import get_requests_session
 from ocean_provider.exceptions import BadRequestError, InvalidSignatureError
 from ocean_provider.log import setup_logging
 from ocean_provider.myapp import app
-from ocean_provider.requests import (ComputeRequest, ComputeStartRequest,
-                                     DownloadRequest, EncryptRequest,
-                                     FileInfoRequest, InitializeRequest,
-                                     NonceRequest, SimpleFlowConsumeRequest)
 from ocean_provider.user_nonce import get_nonce, increment_nonce
 from ocean_provider.util import (build_download_response,
-                                 build_stage_algorithm_dict, build_stage_dict,
-                                 build_stage_output_dict,
                                  get_asset_download_urls,
                                  get_asset_url_at_index, get_compute_endpoint,
                                  get_download_url, get_metadata_url,
                                  get_request_data, process_compute_request,
                                  process_consume_request,
-                                 record_consume_request,
-                                 validate_algorithm_dict, validate_order,
+                                 record_consume_request, validate_order,
                                  validate_transfer_not_used_for_other_service)
 from ocean_provider.util_url import check_url_details
-from ocean_provider.utils.accounts import verify_signature
 from ocean_provider.utils.basics import (LocalFileAdapter,
                                          get_asset_from_metadatastore,
                                          get_datatoken_minter,
                                          get_provider_wallet, setup_network)
 from ocean_provider.utils.encryption import do_encrypt
+from ocean_provider.validation.algo import AlgoValidator
+from ocean_provider.validation.requests import (ComputeRequest,
+                                                ComputeStartRequest,
+                                                DownloadRequest,
+                                                EncryptRequest,
+                                                FileInfoRequest,
+                                                InitializeRequest,
+                                                NonceRequest,
+                                                SimpleFlowConsumeRequest)
 
 setup_logging()
 services = Blueprint('services', __name__)
@@ -704,82 +705,17 @@ def computeStart():
             service.get_cost()
         )
 
-        algorithm_did = data.get('algorithmDid')
-        algorithm_token_address = data.get('algorithmDataToken')
-        algorithm_meta = data.get('algorithmMeta')
-        algorithm_tx_id = data.get('algorithmTransferTxId')
-        output_def = data.get('output', dict())
-
         assert service_type == ServiceTypes.CLOUD_COMPUTE
 
-        ########################
-        # Valid service?
-        if service is None:
-            return jsonify(
-                error=f'This DID has no compute service {did}.'
-            ), 400
-
-        #########################
-        # Check privacy
-        privacy_options = service.main.get('privacy', {})
-        if (
-            algorithm_meta and
-            privacy_options.get('allowRawAlgorithm', True) is False
-        ):
-            return jsonify(
-                error=f'cannot run raw algorithm on this did {did}.'
-            ), 400
-
-        trusted_algorithms = privacy_options.get('trustedAlgorithms', [])
-        if (
-            algorithm_did and
-            trusted_algorithms and
-            algorithm_did not in trusted_algorithms
-        ):
-            return jsonify(
-                error=f'cannot run raw algorithm on this did {did}.'
-            ), 400
-
-        #########################
-        # Validate ALGORITHM meta
-        if algorithm_meta:
-            algorithm_meta = json.loads(algorithm_meta) if isinstance(
-                algorithm_meta, str) else algorithm_meta
-
-        algorithm_dict = build_stage_algorithm_dict(
-            consumer_address, algorithm_did, algorithm_token_address,
-            algorithm_tx_id, algorithm_meta, provider_wallet
+        validator = AlgoValidator(
+            consumer_address, provider_wallet, data, service, asset
         )
-        error_msg, status_code = validate_algorithm_dict(
-            algorithm_dict, algorithm_did)
-        if error_msg:
-            return jsonify(error=error_msg), status_code
 
-        #########################
-        # INPUT
-        asset_urls = get_asset_download_urls(
-            asset, provider_wallet, config_file=app.config['CONFIG_FILE']
-        )
-        if not asset_urls:
-            return jsonify(error=f'cannot get url(s) in input did {did}.'), 400
+        status = validator.validate()
+        if not status:
+            return jsonify(error=validator.error), 400
 
-        input_dict = dict({
-            'index': 0,
-            'id': did,
-            'url': asset_urls
-        })
-
-        #########################
-        # OUTPUT
-        if output_def:
-            output_def = json.loads(output_def) if isinstance(
-                output_def, str) else output_def
-        output_dict = build_stage_output_dict(
-            output_def, asset, consumer_address, provider_wallet)
-
-        #########################
-        # STAGE
-        stage = build_stage_dict(input_dict, algorithm_dict, output_dict)
+        stage = validator.stage
 
         #########################
         # WORKFLOW
@@ -803,7 +739,8 @@ def computeStart():
         response = requests_session.post(
             get_compute_endpoint(),
             data=json.dumps(payload),
-            headers={'content-type': 'application/json'})
+            headers={'content-type': 'application/json'}
+        )
         increment_nonce(consumer_address)
         return Response(
             response.content,

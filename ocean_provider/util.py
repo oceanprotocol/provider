@@ -4,7 +4,6 @@ import mimetypes
 import os
 from cgi import parse_header
 
-import requests
 from eth_utils import add_0x_prefix
 from flask import Response
 from ocean_lib.models.data_token import DataToken
@@ -55,8 +54,12 @@ def build_download_response(
             download_response_headers = download_request_headers
 
         response = requests_session.get(
-            download_url, headers=download_request_headers, stream=True, timeout=3
+            download_url,
+            headers=download_request_headers,
+            stream=True,
+            timeout=3
         )
+
         if not is_range_request:
             filename = url.split("/")[-1]
 
@@ -410,22 +413,3 @@ def build_stage_dict(input_dict, algorithm_dict, output_dict):
         'algorithm': algorithm_dict,
         'output': output_dict
     })
-
-
-def validate_algorithm_dict(algorithm_dict, algorithm_did):
-    if algorithm_did and not algorithm_dict['url']:
-        return f'cannot get url for the algorithmDid {algorithm_did}', 400
-
-    if not algorithm_dict['url'] and not algorithm_dict['rawcode']:
-        return f'`algorithmMeta` must define one of `url` or `rawcode`, but both seem missing.', 400  # noqa
-
-    container = algorithm_dict['container']
-    # Validate `container` data
-    if not (
-        container.get('entrypoint') and
-        container.get('image') and
-        container.get('tag')
-    ):
-        return f'algorithm `container` must specify values for all of entrypoint, image and tag.', 400  # noqa
-
-    return None, None
