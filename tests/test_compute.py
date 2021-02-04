@@ -28,6 +28,7 @@ def test_get_provider_address(client):
     provider_address = get_provider_address()
     assert 'provider-address' in result
     assert provider_address == get_provider_wallet().address
+    assert result['provider-address'] == get_provider_wallet().address
     assert get_response.status == '200 OK'
 
 
