@@ -3,7 +3,8 @@ import json
 from ocean_provider.myapp import app
 from ocean_provider.util import (build_stage_algorithm_dict, build_stage_dict,
                                  build_stage_output_dict,
-                                 get_asset_download_urls)
+                                 get_asset_download_urls, get_metadata_url)
+from ocean_provider.utils.basics import get_asset_from_metadatastore
 
 
 class AlgoValidator:
@@ -66,6 +67,34 @@ class AlgoValidator:
 
         return True
 
+    def _build_and_validate_algo(
+        self,
+        algorithm_did,
+        algorithm_token_address,
+        algorithm_tx_id,
+        algorithm_meta
+    ):
+        algorithm_dict = build_stage_algorithm_dict(
+            self.consumer_address,
+            algorithm_did,
+            algorithm_token_address,
+            algorithm_tx_id,
+            algorithm_meta,
+            self.provider_wallet
+        )
+
+        valid, error_msg = self.validate_formatted_algorithm_dict(
+            algorithm_dict, algorithm_did
+        )
+
+        if not valid:
+            self.error = error_msg
+            return False
+
+        self.validated_algo_dict = algorithm_dict
+
+        return True
+
     def validate_algo(self):
         algorithm_meta = self.data.get('algorithmMeta')
         algorithm_did = self.data.get('algorithmDid')
@@ -79,9 +108,13 @@ class AlgoValidator:
             self.error = f'This DID has no compute service {self.did}.'
             return False
 
-        # TODO
-        # if privacy_options.get('allowAnyPublishedAlgorithm'):
-        #     return True
+        if privacy_options.get('allowAnyPublishedAlgorithm'):
+            return self._build_and_validate_algo(
+                algorithm_did,
+                algorithm_token_address,
+                algorithm_tx_id,
+                algorithm_meta
+            )
 
         if (
             algorithm_meta and
@@ -100,47 +133,39 @@ class AlgoValidator:
             self.error = f'cannot run raw algorithm on this did {self.did}.'
             return False
 
-        if algorithm_meta:
-            algorithm_meta = json.loads(algorithm_meta) if isinstance(
-                algorithm_meta, str
-            ) else algorithm_meta
+        if algorithm_meta and isinstance(algorithm_meta, str):
+            algorithm_meta = json.loads(algorithm_meta)
 
-        algorithm_dict = build_stage_algorithm_dict(
-            self.consumer_address,
+        return self._build_and_validate_algo(
             algorithm_did,
             algorithm_token_address,
             algorithm_tx_id,
-            algorithm_meta,
-            self.provider_wallet
+            algorithm_meta
         )
 
-        valid, error_msg = validate_algorithm_dict(
-            algorithm_dict, algorithm_did
-        )
+    def validate_formatted_algorithm_dict(self, algorithm_dict, algorithm_did):
+        algo = get_asset_from_metadatastore(get_metadata_url(), algorithm_did)
+        try:
+            asset_type = algo.metadata['main']['type']
+        except ValueError:
+            asset_type = None
 
-        if not valid:
-            self.error = error_msg
-            return False
+        if asset_type != 'algorithm':
+            return False, f'DID {algorithm_did} is not a valid algorithm'
 
-        self.validated_algo_dict = algorithm_dict
+        if algorithm_did and not algorithm_dict['url']:
+            return False, f'cannot get url for the algorithmDid {algorithm_did}'  # noqa
 
-        return True
+        if not algorithm_dict['url'] and not algorithm_dict['rawcode']:
+            return False, 'algorithmMeta must define one of `url` or `rawcode`, but both seem missing.'  # noqa
 
+        container = algorithm_dict['container']
+        # Validate `container` data
+        if not (
+            container.get('entrypoint') and
+            container.get('image') and
+            container.get('tag')
+        ):
+            return False, 'algorithm `container` must specify values for all of entrypoint, image and tag.',  # noqa
 
-def validate_algorithm_dict(algorithm_dict, algorithm_did):
-    if algorithm_did and not algorithm_dict['url']:
-        return False, f'cannot get url for the algorithmDid {algorithm_did}'
-
-    if not algorithm_dict['url'] and not algorithm_dict['rawcode']:
-        return False, 'algorithmMeta must define one of `url` or `rawcode`, but both seem missing.'  # noqa
-
-    container = algorithm_dict['container']
-    # Validate `container` data
-    if not (
-        container.get('entrypoint') and
-        container.get('image') and
-        container.get('tag')
-    ):
-        return False, 'algorithm `container` must specify values for all of entrypoint, image and tag.',  # noqa
-
-    return True, ''
+        return True, ''
