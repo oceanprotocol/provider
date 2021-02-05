@@ -11,6 +11,7 @@ class AlgoValidator:
     def __init__(
         self, consumer_address, provider_wallet, data, service, asset
     ):
+        """Initializes the validator."""
         self.consumer_address = consumer_address
         self.provider_wallet = provider_wallet
         self.data = data
@@ -19,6 +20,7 @@ class AlgoValidator:
         self.asset = asset
 
     def validate(self):
+        """Validates for algo, input and output contents."""
         if not self.validate_algo():
             return False
 
@@ -37,6 +39,7 @@ class AlgoValidator:
         return True
 
     def validate_input(self):
+        """Validates input dictionary."""
         asset_urls = get_asset_download_urls(
             self.asset,
             self.provider_wallet,
@@ -56,6 +59,7 @@ class AlgoValidator:
         return True
 
     def validate_output(self):
+        """Validates output dictionary after stage build."""
         output_def = self.data.get('output', dict())
 
         if output_def and isinstance(output_def, str):
@@ -74,6 +78,7 @@ class AlgoValidator:
         algorithm_tx_id,
         algorithm_meta
     ):
+        """Returns False if invalid, otherwise sets the validated_algo_dict attribute."""
         algo = get_asset_from_metadatastore(get_metadata_url(), algorithm_did)
         try:
             asset_type = algo.metadata['main']['type']
@@ -93,7 +98,7 @@ class AlgoValidator:
             self.provider_wallet
         )
 
-        valid, error_msg = self.validate_formatted_algorithm_dict(
+        valid, error_msg = validate_formatted_algorithm_dict(
             algorithm_dict, algorithm_did
         )
 
@@ -106,6 +111,7 @@ class AlgoValidator:
         return True
 
     def validate_algo(self):
+        """Validates algorithm details that allow the algo dict to be built."""
         algorithm_meta = self.data.get('algorithmMeta')
         algorithm_did = self.data.get('algorithmDid')
         algorithm_token_address = self.data.get('algorithmDataToken')
@@ -153,20 +159,21 @@ class AlgoValidator:
             algorithm_meta
         )
 
-    def validate_formatted_algorithm_dict(self, algorithm_dict, algorithm_did):
-        if algorithm_did and not algorithm_dict['url']:
-            return False, f'cannot get url for the algorithmDid {algorithm_did}'  # noqa
 
-        if not algorithm_dict['url'] and not algorithm_dict['rawcode']:
-            return False, 'algorithmMeta must define one of `url` or `rawcode`, but both seem missing.'  # noqa
+def validate_formatted_algorithm_dict(algorithm_dict, algorithm_did):
+    if algorithm_did and not algorithm_dict['url']:
+        return False, f'cannot get url for the algorithmDid {algorithm_did}'
 
-        container = algorithm_dict['container']
-        # Validate `container` data
-        if not (
-            container.get('entrypoint') and
-            container.get('image') and
-            container.get('tag')
-        ):
-            return False, 'algorithm `container` must specify values for all of entrypoint, image and tag.',  # noqa
+    if not algorithm_dict['url'] and not algorithm_dict['rawcode']:
+        return False, 'algorithmMeta must define one of `url` or `rawcode`, but both seem missing.'  # noqa
 
-        return True, ''
+    container = algorithm_dict['container']
+    # Validate `container` data
+    if not (
+        container.get('entrypoint') and
+        container.get('image') and
+        container.get('tag')
+    ):
+        return False, 'algorithm `container` must specify values for all of entrypoint, image and tag.',  # noqa
+
+    return True, ''
