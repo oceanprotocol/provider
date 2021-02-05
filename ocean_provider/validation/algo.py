@@ -74,6 +74,16 @@ class AlgoValidator:
         algorithm_tx_id,
         algorithm_meta
     ):
+        algo = get_asset_from_metadatastore(get_metadata_url(), algorithm_did)
+        try:
+            asset_type = algo.metadata['main']['type']
+        except ValueError:
+            asset_type = None
+
+        if asset_type != 'algorithm':
+            self.error = f'DID {algorithm_did} is not a valid algorithm'
+            return False
+
         algorithm_dict = build_stage_algorithm_dict(
             self.consumer_address,
             algorithm_did,
@@ -144,15 +154,6 @@ class AlgoValidator:
         )
 
     def validate_formatted_algorithm_dict(self, algorithm_dict, algorithm_did):
-        algo = get_asset_from_metadatastore(get_metadata_url(), algorithm_did)
-        try:
-            asset_type = algo.metadata['main']['type']
-        except ValueError:
-            asset_type = None
-
-        if asset_type != 'algorithm':
-            return False, f'DID {algorithm_did} is not a valid algorithm'
-
         if algorithm_did and not algorithm_dict['url']:
             return False, f'cannot get url for the algorithmDid {algorithm_did}'  # noqa
 
