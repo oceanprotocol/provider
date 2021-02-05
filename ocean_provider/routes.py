@@ -14,7 +14,6 @@ from ocean_utils.agreements.service_types import ServiceTypes
 from ocean_utils.did import did_to_id
 from ocean_utils.http_requests.requests_session import get_requests_session
 
-from ocean_provider.exceptions import BadRequestError, InvalidSignatureError
 from ocean_provider.log import setup_logging
 from ocean_provider.myapp import app
 from ocean_provider.user_nonce import get_nonce, increment_nonce
@@ -40,7 +39,8 @@ from ocean_provider.validation.requests import (ComputeRequest,
                                                 FileInfoRequest,
                                                 InitializeRequest,
                                                 NonceRequest,
-                                                SimpleFlowConsumeRequest)
+                                                SimpleFlowConsumeRequest,
+                                                UnsignedComputeRequest)
 
 setup_logging()
 services = Blueprint('services', __name__)
@@ -531,6 +531,7 @@ def computeStop():
 
 
 @services.route('/compute', methods=['GET'])
+@validate(UnsignedComputeRequest)
 def computeStatus():
     """Get status for a specific jobId/documentId/owner
 
@@ -575,21 +576,15 @@ def computeStatus():
     """
     data = get_request_data(request)
     try:
-        signed_request = False
-        try:
-            body = process_compute_request(
-                data, require_signature=True, with_validation=True
-            )
-            signed_request = True
-        except Exception:
-            body = process_compute_request(
-                data, require_signature=False, with_validation=True
-            )
+        body = process_compute_request(data)
+        signed_request = bool(data.get('signature'))
 
         response = requests_session.get(
             get_compute_endpoint(),
             params=body,
-            headers={'content-type': 'application/json'})
+            headers={'content-type': 'application/json'}
+        )
+
         increment_nonce(body['owner'])
         _response = response.content
         # Filter status info if signature is not given or failed validation
@@ -613,14 +608,6 @@ def computeStatus():
             response.status_code,
             headers={'content-type': 'application/json'}
         )
-
-    except BadRequestError as e:
-        return jsonify(error=str(e)), 400
-
-    except InvalidSignatureError as e:
-        msg = f'Consumer signature failed verification: {e}'
-        logger.error(msg, exc_info=1)
-        return jsonify(error=msg), 401
 
     except (ValueError, Exception) as e:
         logger.error(f'Error- {str(e)}', exc_info=1)

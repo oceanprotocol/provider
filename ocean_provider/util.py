@@ -18,10 +18,7 @@ from osmosis_driver_interface.osmosis import Osmosis
 from websockets import ConnectionClosed
 
 from ocean_provider.constants import BaseURLs
-from ocean_provider.exceptions import BadRequestError
-from ocean_provider.user_nonce import get_nonce
 from ocean_provider.util_url import is_safe_url
-from ocean_provider.utils.accounts import verify_signature
 from ocean_provider.utils.basics import (get_asset_from_metadatastore,
                                          get_config, get_provider_wallet)
 from ocean_provider.utils.encryption import do_decrypt
@@ -237,8 +234,8 @@ def validate_transfer_not_used_for_other_service(
 ):
     logger.debug(
         f'validate_transfer_not_used_for_other_service: '
-        f'did={did}, service_id={service_id}, transfer_tx_id={transfer_tx_id}, '
-        f'consumer_address={consumer_address}, token_address={token_address}'
+        f'did={did}, service_id={service_id}, transfer_tx_id={transfer_tx_id},'
+        f' consumer_address={consumer_address}, token_address={token_address}'
     )
     return
 
@@ -275,20 +272,7 @@ def process_consume_request(data: dict, method: str):
     return asset, service, did, consumer_address, token_address
 
 
-def process_compute_request(
-    data, require_signature: bool=True,
-    with_validation=False
-):
-    if with_validation:
-        required_attributes = ['consumerAddress']
-        if require_signature:
-            required_attributes.append('signature')
-        msg, status = check_required_attributes(
-            required_attributes, data, 'compute'
-        )
-        if msg:
-            raise BadRequestError(msg)
-
+def process_compute_request(data):
     provider_wallet = get_provider_wallet()
     did = data.get('documentId')
     owner = data.get('consumerAddress')
@@ -305,17 +289,10 @@ def process_compute_request(
     if did is not None:
         body['documentId'] = did
 
-    # Consumer signature
-    if require_signature:
-        signature = data.get('signature')
-        original_msg = f'{body.get("owner", "")}{body.get("jobId", "")}{body.get("documentId", "")}'  # noqa
-        verify_signature(
-            owner, signature, original_msg, get_nonce(owner)
-        )
-
     msg_to_sign = f'{provider_wallet.address}{body.get("jobId", "")}{body.get("documentId", "")}'  # noqa
     msg_hash = add_ethereum_prefix_and_hash_msg(msg_to_sign)
     body['providerSignature'] = Web3Helper.sign_hash(msg_hash, provider_wallet)
+
     return body
 
 
