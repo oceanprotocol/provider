@@ -18,7 +18,8 @@ class CustomJsonRequest(JsonRequest):
         request = request or flask_request
         request = get_request_data(request)
         self._validator = CustomValidator(rules=self.rules(), messages={
-            'signature.signature': 'Invalid signature provided.'
+            'signature.signature': 'Invalid signature provided.',
+            'signature.compute_signature': 'Invalid signature provided.'
         }, request=request)
 
 
@@ -78,6 +79,38 @@ class CustomRulesProcessor(RulesProcessor):
 
         return False
 
+    def validate_compute_signature(self, value, params, **kwargs):
+        """
+        Validates a signature using the owner, jobId, and documentId.
+
+        parameters:
+          - name: value
+            type: string
+            description: Value of the field being validated
+          - name: params
+            type: list
+            description: The list of parameters defined for the rule,
+                         i.e. names of other fields inside the request.
+        """
+        self._assert_params_size(
+            size=3, params=params, rule='compute_signature'
+        )
+
+        if not value:
+            return True
+
+        owner = self._attribute_value(params[0])
+        did = self._attribute_value(params[1])
+        jobId = self._attribute_value(params[2])
+        original_msg = f'{owner}{jobId}{did}'
+        try:
+            verify_signature(owner, value, original_msg, get_nonce(owner))
+            return True
+        except InvalidSignatureError:
+            return False
+
+        return False
+
 
 class NonceRequest(CustomJsonRequest):
     def rules(self):
@@ -117,6 +150,18 @@ class ComputeRequest(CustomJsonRequest):
             'signature': [
                 'required',
                 'signature:consumerAddress,documentId,only_did'
+            ]
+        }
+
+
+class UnsignedComputeRequest(CustomJsonRequest):
+    def rules(self):
+        return {
+            'consumerAddress': ['bail', 'required'],
+            'jobId': ['required'],
+            'signature': [
+                'nullable',
+                'compute_signature:consumerAddress,documentId,jobId'
             ]
         }
 
