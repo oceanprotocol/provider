@@ -124,14 +124,6 @@ class AlgoValidator:
             self.error = f'This DID has no compute service {self.did}.'
             return False
 
-        if privacy_options.get('allowAnyPublishedAlgorithm'):
-            return self._build_and_validate_algo(
-                algorithm_did,
-                algorithm_token_address,
-                algorithm_tx_id,
-                algorithm_meta
-            )
-
         if (
             algorithm_meta and
             privacy_options.get('allowRawAlgorithm', True) is False

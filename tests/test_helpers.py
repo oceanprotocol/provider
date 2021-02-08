@@ -310,8 +310,8 @@ def get_compute_service_descriptor_allow_all_published(
             "creator": address,
             "cost": price,
             "privacy": {
-                "allowAnyPublishedAlgorithm": True,
-                "allowNetworkAccess": True
+                "allowNetworkAccess": True,
+                # intentionally no trustedAlgorithms, all algos are fair game
             },
             "timeout": 3600,
             "datePublished": metadata[MetadataMain.KEY]['dateCreated']
