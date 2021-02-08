@@ -30,6 +30,12 @@ def get_services_endpoints():
     return services_endpoints
 
 
+def get_provider_address():
+    """Gets the provider wallet address."""
+    provider_address = get_provider_wallet().address
+    return provider_address
+
+
 def get_version():
     conf = configparser.ConfigParser()
     conf.read('.bumpversion.cfg')
@@ -53,7 +59,7 @@ def version():
     info['software'] = Metadata.TITLE
     info['version'] = get_version()
     info['network-url'] = config.network_url
-    info['provider-address'] = get_provider_wallet().address
+    info['provider-address'] = get_provider_address()
     info['serviceEndpoints'] = get_services_endpoints()
     return jsonify(info)
 

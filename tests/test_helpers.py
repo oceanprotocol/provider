@@ -301,6 +301,29 @@ def get_compute_service_descriptor_specific_algo_dids(address, price, metadata):
     )
 
 
+def get_compute_service_descriptor_allow_all_published(
+    address, price, metadata
+):
+    compute_service_attributes = {
+        "main": {
+            "name": "dataAssetComputeServiceAgreement",
+            "creator": address,
+            "cost": price,
+            "privacy": {
+                "allowNetworkAccess": True,
+                # intentionally no trustedAlgorithms, all algos are fair game
+            },
+            "timeout": 3600,
+            "datePublished": metadata[MetadataMain.KEY]['dateCreated']
+        }
+    }
+
+    return ServiceDescriptor.compute_service_descriptor(
+        compute_service_attributes,
+        f'http://localhost:8030{BaseURLs.ASSETS_URL}/compute'
+    )
+
+
 def get_algorithm_ddo(client, wallet):
     metadata = get_sample_algorithm_ddo()['service'][0]['attributes']
     metadata['main']['files'][0]['checksum'] = str(uuid.uuid4())
@@ -332,6 +355,16 @@ def get_dataset_ddo_with_compute_service_specific_algo_dids(client, wallet):
     metadata['main']['files'][0]['checksum'] = str(uuid.uuid4())
     service_descriptor = get_compute_service_descriptor_specific_algo_dids(
         wallet.address, metadata[MetadataMain.KEY]['cost'], metadata)
+    metadata[MetadataMain.KEY].pop('cost')
+    return get_registered_ddo(client, wallet, metadata, service_descriptor)
+
+
+def get_dataset_ddo_with_compute_service_allow_all_published(client, wallet):
+    metadata = get_sample_ddo_with_compute_service()['service'][0]['attributes']
+    metadata['main']['files'][0]['checksum'] = str(uuid.uuid4())
+    service_descriptor = get_compute_service_descriptor_allow_all_published(
+        wallet.address, metadata[MetadataMain.KEY]['cost'], metadata
+    )
     metadata[MetadataMain.KEY].pop('cost')
     return get_registered_ddo(client, wallet, metadata, service_descriptor)
 
