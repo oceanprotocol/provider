@@ -10,8 +10,9 @@ from ocean_utils.agreements.service_agreement import ServiceAgreement
 from ocean_utils.agreements.service_types import ServiceTypes
 
 from ocean_provider.constants import BaseURLs
-from ocean_provider.run import get_services_endpoints
+from ocean_provider.run import get_services_endpoints, get_provider_address
 from ocean_provider.util import build_stage_output_dict
+from ocean_provider.utils.basics import get_provider_wallet
 from tests.test_helpers import (
     get_algorithm_ddo, get_compute_job_info, get_consumer_wallet,
     get_dataset_ddo_with_compute_service,
@@ -19,6 +20,16 @@ from tests.test_helpers import (
     get_dataset_ddo_with_compute_service_specific_algo_dids, get_nonce,
     get_possible_compute_job_status_text, get_publisher_wallet,
     mint_tokens_and_wait, send_order)
+
+
+def test_get_provider_address(client):
+    get_response = client.get('/')
+    result = get_response.get_json()
+    provider_address = get_provider_address()
+    assert 'provider-address' in result
+    assert provider_address == get_provider_wallet().address
+    assert result['provider-address'] == get_provider_wallet().address
+    assert get_response.status == '200 OK'
 
 
 def test_compute_expose_endpoints(client):
