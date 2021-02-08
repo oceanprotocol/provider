@@ -196,6 +196,11 @@ def get_compute_endpoint():
     return get_config().operator_service_url + '/api/v1/operator/compute'
 
 
+def get_compute_address():
+    compute_info = requests.get(get_config().operator_service_url).json()
+    return compute_info['address']
+    
+
 def check_required_attributes(required_attributes, data, method):
     assert isinstance(data, dict), 'invalid payload format.'
     logger.info('got %s request: %s' % (method, data))
