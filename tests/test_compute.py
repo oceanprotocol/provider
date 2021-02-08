@@ -30,6 +30,7 @@ def test_compute_expose_endpoints(client):
     assert 'version' in result
     assert 'network-url' in result
     assert 'provider-address' in result
+    assert 'compute-address' in result
     assert get_response.status == '200 OK'
     assert len(result['serviceEndpoints']) == len(services_endpoints)
 
