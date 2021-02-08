@@ -1,3 +1,4 @@
+"""Unites routes from compute and consume files."""
 # flake8: noqa
 from flask import Blueprint
 
