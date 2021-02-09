@@ -1,3 +1,4 @@
+import requests
 from eth_utils import add_0x_prefix
 from ocean_provider.util import (
     get_asset_url_at_index,
@@ -5,6 +6,7 @@ from ocean_provider.util import (
     validate_order,
     validate_transfer_not_used_for_other_service,
 )
+from ocean_provider.util_url import is_this_same_provider
 from ocean_provider.utils.basics import get_asset_from_metadatastore, get_config
 from ocean_utils.agreements.service_agreement import ServiceAgreement
 from ocean_utils.agreements.service_types import ServiceTypes
@@ -74,11 +76,19 @@ class StageAlgoSerializer:
         dict_template["id"] = algorithm_did
         dict_template["rawcode"] = ""
 
-        if get_config().provider_address == self.provider_wallet.address:
-            dict_template["url"] = get_asset_url_at_index(
-                0, algo_asset, self.provider_wallet
-            )
-        else:
+        try:
+            if is_this_same_provider(service.service_endpoint):
+                dict_template["url"] = get_asset_url_at_index(
+                    0, algo_asset, self.provider_wallet
+                )
+            else:
+                dict_template["remote"] = {
+                    "serviceEndpoint": service.service_endpoint,
+                    "txId": algorithm_tx_id,
+                    "serviceIndex": service.index,
+                }
+        # the try/except can be removed after changes in ocean.py
+        except requests.exceptions.ConnectionError:
             dict_template["remote"] = {
                 "serviceEndpoint": service.service_endpoint,
                 "txId": algorithm_tx_id,

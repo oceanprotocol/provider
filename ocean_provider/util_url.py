@@ -5,7 +5,8 @@ from urllib.parse import urlparse
 
 import dns.resolver
 import requests
-from ocean_provider.utils.basics import get_config
+from ocean_lib.data_provider.data_service_provider import DataServiceProvider
+from ocean_provider.utils.basics import get_config, get_provider_wallet
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +33,17 @@ def is_safe_schema(url):
 
 def is_ip(address):
     return address.replace(".", "").isnumeric()
+
+
+def is_this_same_provider(url):
+    result = urlparse(url)
+
+    return (
+        DataServiceProvider().get_provider_address(
+            f"{result.scheme}://{result.netloc}/"
+        )
+        == get_provider_wallet().address
+    )
 
 
 def _get_records(domain, record_type):
