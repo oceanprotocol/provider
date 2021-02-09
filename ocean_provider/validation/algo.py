@@ -1,8 +1,8 @@
 import json
 
 from ocean_provider.myapp import app
+from ocean_provider.serializers import StageAlgoSerializer
 from ocean_provider.util import (
-    build_stage_algorithm_dict,
     build_stage_dict,
     build_stage_output_dict,
     get_asset_download_urls,
@@ -69,10 +69,9 @@ class AlgoValidator:
 
         return True
 
-    def _build_and_validate_algo(
-        self, algorithm_did, algorithm_token_address, algorithm_tx_id, algorithm_meta
-    ):
+    def _build_and_validate_algo(self, algo_data):
         """Returns False if invalid, otherwise sets the validated_algo_dict attribute."""
+        algorithm_did = algo_data.get("algorithmDid")
         algo = get_asset_from_metadatastore(get_metadata_url(), algorithm_did)
         try:
             asset_type = algo.metadata["main"]["type"]
@@ -83,14 +82,9 @@ class AlgoValidator:
             self.error = f"DID {algorithm_did} is not a valid algorithm"
             return False
 
-        algorithm_dict = build_stage_algorithm_dict(
-            self.consumer_address,
-            algorithm_did,
-            algorithm_token_address,
-            algorithm_tx_id,
-            algorithm_meta,
-            self.provider_wallet,
-        )
+        algorithm_dict = StageAlgoSerializer(
+            self.consumer_address, self.provider_wallet, algo_data
+        ).serialize()
 
         valid, error_msg = validate_formatted_algorithm_dict(
             algorithm_dict, algorithm_did
@@ -108,9 +102,7 @@ class AlgoValidator:
         """Validates algorithm details that allow the algo dict to be built."""
         algorithm_meta = self.data.get("algorithmMeta")
         algorithm_did = self.data.get("algorithmDid")
-        algorithm_token_address = self.data.get("algorithmDataToken")
         algorithm_meta = self.data.get("algorithmMeta")
-        algorithm_tx_id = self.data.get("algorithmTransferTxId")
 
         privacy_options = self.service.main.get("privacy", {})
 
@@ -135,9 +127,7 @@ class AlgoValidator:
         if algorithm_meta and isinstance(algorithm_meta, str):
             algorithm_meta = json.loads(algorithm_meta)
 
-        return self._build_and_validate_algo(
-            algorithm_did, algorithm_token_address, algorithm_tx_id, algorithm_meta
-        )
+        return self._build_and_validate_algo(self.data)
 
 
 def validate_formatted_algorithm_dict(algorithm_dict, algorithm_did):
