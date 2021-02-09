@@ -9,6 +9,7 @@ from ocean_provider.util import (
     get_asset_download_urls,
     get_metadata_url,
 )
+from ocean_provider.util_url import is_this_same_provider
 from ocean_provider.utils.basics import get_asset_from_metadatastore
 from ocean_utils.agreements.service_types import ServiceTypes
 from ocean_utils.did import did_to_id
@@ -247,6 +248,13 @@ class InputItemValidator(AlgoValidator):
             ServiceTypes.CLOUD_COMPUTE,
         ]:
             self.error = "Services in additionalInput can only be access or compute."
+            return False
+
+        if (
+            self.service.type == ServiceTypes.CLOUD_COMPUTE
+            and not is_this_same_provider(self.service.endpoint)
+        ):
+            self.error = "Services in additionalInput with compute type must be in the same provider you are calling."
             return False
 
         return super().validate_input()
