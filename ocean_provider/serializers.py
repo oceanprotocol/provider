@@ -5,6 +5,7 @@ from ocean_provider.util import (
     validate_order,
     validate_transfer_not_used_for_other_service,
 )
+from ocean_provider.util_url import get_base_url
 from ocean_provider.utils.basics import get_asset_from_metadatastore, get_config
 from ocean_utils.agreements.service_agreement import ServiceAgreement
 from ocean_utils.agreements.service_types import ServiceTypes
@@ -27,54 +28,68 @@ class StageAlgoSerializer:
         algorithm_token_address = self.algo_data.get("algorithmDataToken")
         algorithm_tx_id = self.algo_data.get("algorithmTransferTxId")
 
-        if algorithm_did is not None:
-            msg = "algorithm_did requires both algorithm_token_address and algorithm_tx_id."
-            assert algorithm_token_address and algorithm_tx_id, msg
+        dict_template = {"id": None, "rawcode": None, "container": None}
 
-            algo_asset = get_asset_from_metadatastore(get_metadata_url(), algorithm_did)
-
-            service = ServiceAgreement.from_ddo(ServiceTypes.ASSET_ACCESS, algo_asset)
-            _tx, _order_log, _transfer_log = validate_order(
-                self.consumer_address,
-                algorithm_token_address,
-                float(service.get_cost()),
-                algorithm_tx_id,
-                add_0x_prefix(did_to_id(algorithm_did))
-                if algorithm_did.startswith("did:")
-                else algorithm_did,
-                service.index,
-            )
-            validate_transfer_not_used_for_other_service(
-                algorithm_did,
-                service.index,
-                algorithm_tx_id,
-                self.consumer_address,
-                algorithm_token_address,
-            )
-            record_consume_request(
-                algorithm_did,
-                service.index,
-                algorithm_tx_id,
-                self.consumer_address,
-                algorithm_token_address,
-                service.get_cost(),
+        if algorithm_did is None:
+            return dict(
+                {
+                    "id": "",
+                    "url": algorithm_meta.get("url"),
+                    "rawcode": algorithm_meta.get("rawcode"),
+                    "container": algorithm_meta.get("container"),
+                }
             )
 
-            algo_id = algorithm_did
-            raw_code = ""
-            algo_url = get_asset_url_at_index(0, algo_asset, self.provider_wallet)
-            container = algo_asset.metadata["main"]["algorithm"]["container"]
-        else:
-            algo_id = ""
-            algo_url = algorithm_meta.get("url")
-            raw_code = algorithm_meta.get("rawcode")
-            container = algorithm_meta.get("container")
+        msg = "algorithm_did requires both algorithm_token_address and algorithm_tx_id."
+        assert algorithm_token_address and algorithm_tx_id, msg
 
-        return dict(
-            {
-                "id": algo_id,
-                "url": algo_url,
-                "rawcode": raw_code,
-                "container": container,
-            }
+        algo_asset = get_asset_from_metadatastore(get_metadata_url(), algorithm_did)
+
+        service = ServiceAgreement.from_ddo(ServiceTypes.ASSET_ACCESS, algo_asset)
+        _tx, _order_log, _transfer_log = validate_order(
+            self.consumer_address,
+            algorithm_token_address,
+            float(service.get_cost()),
+            algorithm_tx_id,
+            add_0x_prefix(did_to_id(algorithm_did))
+            if algorithm_did.startswith("did:")
+            else algorithm_did,
+            service.index,
         )
+        validate_transfer_not_used_for_other_service(
+            algorithm_did,
+            service.index,
+            algorithm_tx_id,
+            self.consumer_address,
+            algorithm_token_address,
+        )
+        record_consume_request(
+            algorithm_did,
+            service.index,
+            algorithm_tx_id,
+            self.consumer_address,
+            algorithm_token_address,
+            service.get_cost(),
+        )
+
+        dict_template["id"] = algorithm_did
+        dict_template["rawcode"] = ""
+
+        if get_base_url(service.service_endpoint) == get_base_url(
+            get_config().provider_url
+        ):
+            dict_template["url"] = get_asset_url_at_index(
+                0, algo_asset, self.provider_wallet
+            )
+        else:
+            dict_template["remote"] = {
+                "serviceEndpoint": service.service_endpoint,
+                "txId": algorithm_tx_id,
+                "serviceIndex": service.index,
+            }
+
+        dict_template["container"] = algo_asset.metadata["main"]["algorithm"][
+            "container"
+        ]
+
+        return dict(dict_template)

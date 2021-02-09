@@ -58,6 +58,10 @@ def is_safe_domain(domain):
     return result and validate_dns_records(domain, domain, "")
 
 
+def get_base_url(url):
+    return urlparse(url).netloc
+
+
 def validate_dns_records(domain, records, record_type):
     """
     Verify if all DNS records resolve to public IP addresses.
