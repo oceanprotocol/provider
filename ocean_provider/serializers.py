@@ -1,4 +1,3 @@
-import requests
 from eth_utils import add_0x_prefix
 from ocean_provider.util import (
     get_asset_url_at_index,
@@ -76,19 +75,11 @@ class StageAlgoSerializer:
         dict_template["id"] = algorithm_did
         dict_template["rawcode"] = ""
 
-        try:
-            if is_this_same_provider(service.service_endpoint):
-                dict_template["url"] = get_asset_url_at_index(
-                    0, algo_asset, self.provider_wallet
-                )
-            else:
-                dict_template["remote"] = {
-                    "serviceEndpoint": service.service_endpoint,
-                    "txId": algorithm_tx_id,
-                    "serviceIndex": service.index,
-                }
-        # the try/except can be removed after changes in ocean.py
-        except requests.exceptions.ConnectionError:
+        if is_this_same_provider(service.service_endpoint):
+            dict_template["url"] = get_asset_url_at_index(
+                0, algo_asset, self.provider_wallet
+            )
+        else:
             dict_template["remote"] = {
                 "serviceEndpoint": service.service_endpoint,
                 "txId": algorithm_tx_id,
