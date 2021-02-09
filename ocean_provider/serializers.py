@@ -1,4 +1,3 @@
-import requests
 from eth_utils import add_0x_prefix
 from ocean_provider.util import (
     get_asset_url_at_index,
