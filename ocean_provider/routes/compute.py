@@ -304,9 +304,8 @@ def computeStart():
             did,
             consumer_address,
             token_address,
-        ) = process_consume_request(  # noqa
-            data, "compute_start_job"
-        )
+        ) = process_consume_request(data)
+
         service_id = data.get("serviceId")
         service_type = data.get("serviceType")
         tx_id = data.get("transferTxId")
@@ -339,11 +338,11 @@ def computeStart():
         if not status:
             return jsonify(error=validator.error), 400
 
-        stage = validator.stage
+        stages = list([validator.stage] + validator.additional_stages)
 
         #########################
         # WORKFLOW
-        workflow = dict({"stages": list([stage])})
+        workflow = dict({"stages": stages})
 
         # workflow is ready, push it to operator
         logger.info("Sending: %s", workflow)

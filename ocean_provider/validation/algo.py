@@ -1,5 +1,6 @@
 import json
 
+from eth_utils import add_0x_prefix
 from ocean_provider.myapp import app
 from ocean_provider.serializers import StageAlgoSerializer
 from ocean_provider.util import (
@@ -9,6 +10,8 @@ from ocean_provider.util import (
     get_metadata_url,
 )
 from ocean_provider.utils.basics import get_asset_from_metadatastore
+from ocean_utils.agreements.service_types import ServiceTypes
+from ocean_utils.did import did_to_id
 
 
 class AlgoValidator:
@@ -27,6 +30,9 @@ class AlgoValidator:
             return False
 
         if not self.validate_input():
+            return False
+
+        if not self.validate_additional_input():
             return False
 
         if not self.validate_output():
@@ -53,6 +59,34 @@ class AlgoValidator:
         self.validated_input_dict = dict(
             {"index": 0, "id": self.did, "url": asset_urls}
         )
+
+        return True
+
+    def validate_additional_input(self):
+        """Validates additional input dictionary."""
+        if not self.data.get("additionalInput"):
+            return True
+
+        self.additional_stages = []
+
+        for index, input_item in enumerate(self.data["additionalInput"]):
+            input_item_validator = InputItemValidator(
+                self.consumer_address,
+                self.provider_wallet,
+                input_item,
+                self.validated_algo_dict,
+                self.validated_output_dict,
+                index + 1,
+            )
+            status = input_item_validator.validate()
+            if not status:
+                self.error = (
+                    f"Error in additionalInput at index {index}: "
+                    + input_item_validator.error
+                )
+                return False
+
+            self.additional_stages.append(status)
 
         return True
 
@@ -157,3 +191,62 @@ def validate_formatted_algorithm_dict(algorithm_dict, algorithm_did):
         )  # noqa
 
     return True, ""
+
+
+class InputItemValidator(AlgoValidator):
+    def __init__(
+        self,
+        consumer_address,
+        provider_wallet,
+        data,
+        parent_validated_algo_dict,
+        parent_validated_output_dict,
+        index,
+    ):
+        self.consumer_address = consumer_address
+        self.provider_wallet = provider_wallet
+        self.data = data
+        self.parent_validated_algo_dict = parent_validated_algo_dict
+        self.parent_validated_output_dict = parent_validated_output_dict
+        self.index = index
+
+    def validate(self):
+        """Validates for input and output contents and inherits the rest."""
+        if not self.validate_input():
+            return False
+
+        self.stage = build_stage_dict(
+            self.validated_input_dict,
+            self.parent_validated_algo_dict,
+            self.parent_validated_output_dict,
+            index=self.index,
+        )
+
+        return True
+
+    def validate_input(self):
+        required_keys = ["did", "transferTxId", "serviceId"]
+
+        for req_item in required_keys:
+            if not self.data.get("key"):
+                self.error = f"No {req_item} in additionalInput."
+                return False
+
+        did = self.data.get("did")
+        did = add_0x_prefix(did_to_id(did)) if did.startswith("did:") else did
+        self.asset = get_asset_from_metadatastore(get_metadata_url(), did)
+
+        if not self.asset:
+            self.error = f"Asset for did {did} not found."
+            return False
+
+        self.service = self.asset.services[self.data["serviceId"]]
+
+        if self.service.type not in [
+            ServiceTypes.ASSET_ACCESS,
+            ServiceTypes.CLOUD_COMPUTE,
+        ]:
+            self.error = "Services in additionalInput can only be access or compute."
+            return False
+
+        return super().validate_input()

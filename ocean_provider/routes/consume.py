@@ -263,14 +263,8 @@ def initialize():
     data = get_request_data(request)
 
     try:
-        (
-            asset,
-            service,
-            _,
-            consumer_address,
-            token_address,
-        ) = process_consume_request(  # noqa
-            data, "initialize"
+        (asset, service, _, consumer_address, token_address) = process_consume_request(
+            data
         )
 
         url = get_asset_url_at_index(0, asset, provider_wallet)
@@ -360,9 +354,7 @@ def download():
             did,
             consumer_address,
             token_address,
-        ) = process_consume_request(  # noqa
-            data, "download"
-        )
+        ) = process_consume_request(data)
         service_id = data.get("serviceId")
         service_type = data.get("serviceType")
         tx_id = data.get("transferTxId")

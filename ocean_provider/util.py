@@ -236,7 +236,7 @@ def record_consume_request(
     return
 
 
-def process_consume_request(data: dict, method: str):
+def process_consume_request(data: dict):
     did = data.get("documentId")
     token_address = data.get("dataToken")
     consumer_address = data.get("consumerAddress")
@@ -315,10 +315,10 @@ def build_stage_output_dict(output_def, asset, owner, provider_wallet):
     )
 
 
-def build_stage_dict(input_dict, algorithm_dict, output_dict):
+def build_stage_dict(input_dict, algorithm_dict, output_dict, index=0):
     return dict(
         {
-            "index": 0,
+            "index": index,
             "input": [input_dict],
             "compute": {"Instances": 1, "namespace": "ocean-compute", "maxtime": 3600},
             "algorithm": algorithm_dict,
