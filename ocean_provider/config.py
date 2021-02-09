@@ -15,7 +15,7 @@ NAME_AUTH_TOKEN_MESSAGE = "auth_token_message"
 NAME_AUTH_TOKEN_EXPIRATION = "auth_token_expiration"
 
 NAME_AQUARIUS_URL = "aquarius.url"
-NAME_PROVIDER_URL = "provider.url"
+NAME_PROVIDER_ADDRESS = "provider.address"
 NAME_OPERATOR_SERVICE_URL = "operator_service.url"
 NAME_ALLOW_NON_PUBLIC_IP = "allow_non_public_ip"
 NAME_STORAGE_PATH = "storage.path"
@@ -136,8 +136,8 @@ class Config(configparser.ConfigParser):
         return self.get("resources", NAME_AQUARIUS_URL, fallback=None)
 
     @property
-    def provider_url(self):
-        return self.get("resources", NAME_PROVIDER_URL, fallback=None)
+    def provider_address(self):
+        return self.get("resources", NAME_PROVIDER_ADDRESS, fallback=None)
 
     @property
     def operator_service_url(self):

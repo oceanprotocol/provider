@@ -5,7 +5,6 @@ from ocean_provider.util import (
     validate_order,
     validate_transfer_not_used_for_other_service,
 )
-from ocean_provider.util_url import get_base_url
 from ocean_provider.utils.basics import get_asset_from_metadatastore, get_config
 from ocean_utils.agreements.service_agreement import ServiceAgreement
 from ocean_utils.agreements.service_types import ServiceTypes
@@ -75,9 +74,7 @@ class StageAlgoSerializer:
         dict_template["id"] = algorithm_did
         dict_template["rawcode"] = ""
 
-        if get_base_url(service.service_endpoint) == get_base_url(
-            get_config().provider_url
-        ):
+        if get_config().provider_address == self.provider_wallet.address:
             dict_template["url"] = get_asset_url_at_index(
                 0, algo_asset, self.provider_wallet
             )
