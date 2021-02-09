@@ -131,13 +131,19 @@ class AlgoValidator:
 
 
 def validate_formatted_algorithm_dict(algorithm_dict, algorithm_did):
-    if algorithm_did and not algorithm_dict["url"]:
+    if algorithm_did and not (
+        algorithm_dict.get("url") or algorithm_dict.get("remote")
+    ):
         return False, f"cannot get url for the algorithmDid {algorithm_did}"
 
-    if not algorithm_dict["url"] and not algorithm_dict["rawcode"]:
+    if (
+        not algorithm_dict.get("url")
+        and not algorithm_dict.get("rawcode")
+        and not algorithm_dict.get("remote")
+    ):
         return (
             False,
-            "algorithmMeta must define one of `url` or `rawcode`, but both seem missing.",
+            "algorithmMeta must define one of `url` or `rawcode` or `remote`, but all seem missing.",
         )  # noqa
 
     container = algorithm_dict["container"]
