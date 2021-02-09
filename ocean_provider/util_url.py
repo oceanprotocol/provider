@@ -114,7 +114,7 @@ def check_url_details(url, with_checksum=False):
     """
     try:
         if not is_safe_url(url):
-            False, {}
+            return False, {}
 
         result, extra_data = _get_result_from_url(
             url, with_checksum=with_checksum
@@ -126,8 +126,8 @@ def check_url_details(url, with_checksum=False):
 
             if content_type or content_length:
                 details = {
-                    "contentLength": content_length,
-                    "contentType": content_type
+                    "contentLength": content_length or "",
+                    "contentType": content_type or ""
                 }
 
                 if extra_data:
