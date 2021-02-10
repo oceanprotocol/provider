@@ -452,16 +452,16 @@ def encrypt_document(client, did, document, wallet):
 
 def get_possible_compute_job_status_text():
     return {
-        1: 'Warming up',
-        10: 'Job started',
-        20: 'Configuring volumes',
-        30: 'Provisioning success',
-        31: 'Data provisioning failed',
-        32: 'Algorithm provisioning failed',
-        40: 'Running algorithm',
-        50: 'Filtering results',
-        60: 'Publishing results',
-        70: 'Job completed',
+        1: "Warming up",
+        10: "Job started",
+        20: "Configuring volumes",
+        30: "Provisioning success",
+        31: "Data provisioning failed",
+        32: "Algorithm provisioning failed",
+        40: "Running algorithm",
+        50: "Filtering results",
+        60: "Publishing results",
+        70: "Job completed",
     }.values()
 
 

@@ -3,6 +3,7 @@ import logging
 import mimetypes
 import os
 from cgi import parse_header
+
 import requests
 from flask import Response
 from ocean_lib.models.data_token import DataToken
@@ -183,7 +184,7 @@ def get_compute_endpoint():
 def get_compute_address():
     try:
         compute_info = requests.get(get_config().operator_service_url).json()
-        return compute_info['address']
+        return compute_info["address"]
     except Exception as e:
         logger.error(f"Error getting CtD address: {str(e)}")
         return None
