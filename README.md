@@ -83,8 +83,5 @@ You might also want to set `FLASK_ENV=development`. Then run ```flask run --port
 
 Refer to the [API.md](API.md) file for endpoints and payloads.
 
-#### Installing the git pre-commit hook (recommended)
-`flake8 --install-hook git`
-`git config --bool flake8.strict true`
-
-You can also run isort to order imports `isort {file_path}`
+#### Before you commit
+If you are a contributor, make sure you install the pre-commit hooks using the command `pre-commit install`. This will make sure your imports are sorted and your code is properly formatted before committing. We use `black`, `isort` and `flake8` to keep code clean.

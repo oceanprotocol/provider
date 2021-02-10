@@ -1,11 +1,12 @@
-import logging
-import requests
-import ipaddress
-import dns.resolver
-from ocean_provider.utils.basics import get_config
 import hashlib as hash
-
+import ipaddress
+import logging
 from urllib.parse import urlparse
+
+import dns.resolver
+import requests
+from ocean_lib.data_provider.data_service_provider import DataServiceProvider
+from ocean_provider.utils.basics import get_config, get_provider_wallet
 
 logger = logging.getLogger(__name__)
 
@@ -26,12 +27,27 @@ def is_safe_schema(url):
     try:
         result = urlparse(url)
         return all([result.scheme, result.netloc, result.path])
-    except:
+    except:  # noqa
         return False
 
 
 def is_ip(address):
-    return address.replace('.', '').isnumeric()
+    return address.replace(".", "").isnumeric()
+
+
+def is_this_same_provider(url):
+    result = urlparse(url)
+
+    try:
+        return (
+            DataServiceProvider()
+            .get_provider_address(f"{result.scheme}://{result.netloc}/")
+            .lower()
+            == get_provider_wallet().address.lower()
+        )
+    # the try/except can be removed after changes in ocean.py
+    except requests.exceptions.ConnectionError:
+        return False
 
 
 def _get_records(domain, record_type):
@@ -39,9 +55,7 @@ def _get_records(domain, record_type):
     try:
         return DNS_RESOLVER.resolve(domain, record_type, search=True)
     except Exception as e:
-        logger.info(
-            f"[i] Cannot get {record_type} record for domain {domain}: {e}\n"
-        )
+        logger.info(f"[i] Cannot get {record_type} record for domain {domain}: {e}\n")
 
         return None
 
@@ -50,9 +64,8 @@ def is_safe_domain(domain):
     ip_v4_records = _get_records(domain, "A")
     ip_v6_records = _get_records(domain, "AAAA")
 
-    result = (
-        validate_dns_records(domain, ip_v4_records, "A") and
-        validate_dns_records(domain, ip_v6_records, "AAAA")
+    result = validate_dns_records(domain, ip_v4_records, "A") and validate_dns_records(
+        domain, ip_v6_records, "AAAA"
     )
 
     if not is_ip(domain):
@@ -114,20 +127,18 @@ def check_url_details(url, with_checksum=False):
     """
     try:
         if not is_safe_url(url):
-            False, {}
+            return False, {}
 
-        result, extra_data = _get_result_from_url(
-            url, with_checksum=with_checksum
-        )
+        result, extra_data = _get_result_from_url(url, with_checksum=with_checksum)
 
         if result.status_code == 200:
-            content_type = result.headers.get('Content-Type')
-            content_length = result.headers.get('Content-Length')
+            content_type = result.headers.get("Content-Type")
+            content_length = result.headers.get("Content-Length")
 
             if content_type or content_length:
                 details = {
-                    "contentLength": content_length,
-                    "contentType": content_type
+                    "contentLength": content_length or "",
+                    "contentType": content_type or "",
                 }
 
                 if extra_data:
@@ -149,10 +160,10 @@ def _get_result_from_url(url, with_checksum=False):
     result = requests.options(url, timeout=REQUEST_TIMEOUT)
 
     if (
-        not with_checksum and
-        result.status_code == 200 and
-        result.headers.get('Content-Type') and
-        result.headers.get('Content-Length')
+        not with_checksum
+        and result.status_code == 200
+        and result.headers.get("Content-Type")
+        and result.headers.get("Content-Length")
     ):
         return result, {}
 
@@ -167,4 +178,4 @@ def _get_result_from_url(url, with_checksum=False):
         for chunk in r.iter_content(chunk_size=CHUNK_SIZE):
             sha.update(chunk)
 
-    return r, {'checksum': sha.hexdigest(), 'checksumType': 'sha256'}
+    return r, {"checksum": sha.hexdigest(), "checksumType": "sha256"}

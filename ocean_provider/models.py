@@ -1,12 +1,11 @@
 from flask_sqlalchemy import SQLAlchemy
-
 from ocean_provider.myapp import app
 
 db = SQLAlchemy(app)
 
 
 class UserNonce(db.Model):
-    __tablename__ = 'user_nonce'
+    __tablename__ = "user_nonce"
     FIRST_NONCE = 0
 
     address = db.Column(
