@@ -120,8 +120,8 @@ def test_compute_specific_algo_dids(client):
     cons_wallet = get_consumer_wallet()
 
     # publish a dataset asset
-    dataset_ddo_w_compute_service = (
-        get_dataset_ddo_with_compute_service_specific_algo_dids(client, pub_wallet)
+    dataset_ddo_w_compute_service = get_dataset_ddo_with_compute_service_specific_algo_dids(
+        client, pub_wallet
     )
     did = dataset_ddo_w_compute_service.did
     ddo = dataset_ddo_w_compute_service
@@ -175,7 +175,7 @@ def test_compute_specific_algo_dids(client):
     ), f"start compute job failed: {response.status} , {response.data}"
 
 
-def test_compute(client):
+def build_and_send_ddo_with_compute_service(client, alg_diff=False):
     pub_wallet = get_publisher_wallet()
     cons_wallet = get_consumer_wallet()
 
@@ -190,7 +190,11 @@ def test_compute(client):
     mint_tokens_and_wait(dt_contract, cons_wallet, pub_wallet)
 
     # publish an algorithm asset (asset with metadata of type `algorithm`)
-    alg_ddo = get_algorithm_ddo(client, cons_wallet)
+    alg_ddo = (
+        get_algorithm_ddo_different_provider(client, cons_wallet)
+        if alg_diff
+        else get_algorithm_ddo(client, cons_wallet)
+    )
     alg_data_token = alg_ddo.as_dictionary()["dataToken"]
     alg_dt_contract = DataToken(alg_data_token)
     mint_tokens_and_wait(alg_dt_contract, cons_wallet, cons_wallet)
@@ -199,9 +203,29 @@ def test_compute(client):
         ServiceTypes.CLOUD_COMPUTE, dataset_ddo_w_compute_service
     )
     tx_id = send_order(client, ddo, dt_contract, sa, cons_wallet)
-
     alg_service = ServiceAgreement.from_ddo(ServiceTypes.ASSET_ACCESS, alg_ddo)
     alg_tx_id = send_order(client, alg_ddo, alg_dt_contract, alg_service, cons_wallet)
+
+    return (
+        dataset_ddo_w_compute_service,
+        did,
+        tx_id,
+        sa,
+        data_token,
+        alg_ddo,
+        alg_data_token,
+        alg_dt_contract,
+        alg_tx_id,
+    )
+
+
+def test_compute(client):
+    pub_wallet = get_publisher_wallet()
+    cons_wallet = get_consumer_wallet()
+
+    dataset, did, tx_id, sa, data_token, alg_ddo, alg_data_token, alg_dt_contract, alg_tx_id = build_and_send_ddo_with_compute_service(
+        client
+    )
 
     nonce = get_nonce(client, cons_wallet.address)
     # prepare consumer signature on did
@@ -220,7 +244,7 @@ def test_compute(client):
             "transferTxId": tx_id,
             "dataToken": data_token,
             "output": build_stage_output_dict(
-                dict(), dataset_ddo_w_compute_service, cons_wallet.address, pub_wallet
+                dict(), dataset, cons_wallet.address, pub_wallet
             ),
             "algorithmDid": alg_ddo.did,
             "algorithmDataToken": alg_data_token,
@@ -302,29 +326,9 @@ def test_compute_diff_provider(client):
     pub_wallet = get_publisher_wallet()
     cons_wallet = get_consumer_wallet()
 
-    # publish a dataset asset
-    dataset_ddo_w_compute_service = get_dataset_ddo_with_compute_service(
-        client, pub_wallet
+    dataset, did, tx_id, sa, data_token, alg_ddo, alg_data_token, alg_dt_contract, alg_tx_id = build_and_send_ddo_with_compute_service(
+        client, alg_diff=True
     )
-    did = dataset_ddo_w_compute_service.did
-    ddo = dataset_ddo_w_compute_service
-    data_token = dataset_ddo_w_compute_service.data_token_address
-    dt_contract = DataToken(data_token)
-    mint_tokens_and_wait(dt_contract, cons_wallet, pub_wallet)
-
-    # publish an algorithm asset (asset with metadata of type `algorithm`)
-    alg_ddo = get_algorithm_ddo_different_provider(client, cons_wallet)
-    alg_data_token = alg_ddo.as_dictionary()["dataToken"]
-    alg_dt_contract = DataToken(alg_data_token)
-    mint_tokens_and_wait(alg_dt_contract, cons_wallet, cons_wallet)
-
-    sa = ServiceAgreement.from_ddo(
-        ServiceTypes.CLOUD_COMPUTE, dataset_ddo_w_compute_service
-    )
-    tx_id = send_order(client, ddo, dt_contract, sa, cons_wallet)
-
-    alg_service = ServiceAgreement.from_ddo(ServiceTypes.ASSET_ACCESS, alg_ddo)
-    alg_tx_id = send_order(client, alg_ddo, alg_dt_contract, alg_service, cons_wallet)
 
     nonce = get_nonce(client, cons_wallet.address)
     # prepare consumer signature on did
@@ -343,7 +347,7 @@ def test_compute_diff_provider(client):
             "transferTxId": tx_id,
             "dataToken": data_token,
             "output": build_stage_output_dict(
-                dict(), dataset_ddo_w_compute_service, cons_wallet.address, pub_wallet
+                dict(), dataset, cons_wallet.address, pub_wallet
             ),
             "algorithmDid": alg_ddo.did,
             "algorithmDataToken": alg_data_token,
@@ -364,8 +368,8 @@ def test_compute_allow_all_published(client):
     cons_wallet = get_consumer_wallet()
 
     # publish a dataset asset
-    dataset_ddo_w_compute_service = (
-        get_dataset_ddo_with_compute_service_allow_all_published(client, pub_wallet)
+    dataset_ddo_w_compute_service = get_dataset_ddo_with_compute_service_allow_all_published(
+        client, pub_wallet
     )
     did = dataset_ddo_w_compute_service.did
     ddo = dataset_ddo_w_compute_service
@@ -426,8 +430,8 @@ def test_compute_not_an_algo(client):
     cons_wallet = get_consumer_wallet()
 
     # publish a dataset asset
-    dataset_ddo_w_compute_service = (
-        get_dataset_ddo_with_compute_service_allow_all_published(client, pub_wallet)
+    dataset_ddo_w_compute_service = get_dataset_ddo_with_compute_service_allow_all_published(
+        client, pub_wallet
     )
     did = dataset_ddo_w_compute_service.did
     ddo = dataset_ddo_w_compute_service
