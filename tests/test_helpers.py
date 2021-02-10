@@ -452,6 +452,7 @@ def encrypt_document(client, did, document, wallet):
 
 def get_possible_compute_job_status_text():
     return {
+        1: "Warming up",
         10: "Job started",
         20: "Configuring volumes",
         30: "Provisioning success",

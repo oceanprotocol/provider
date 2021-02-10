@@ -10,6 +10,7 @@ from ocean_provider.config import Config
 from ocean_provider.constants import BaseURLs, ConfigSections, Metadata
 from ocean_provider.myapp import app
 from ocean_provider.routes import services
+from ocean_provider.util import get_compute_address
 from ocean_provider.utils.basics import get_provider_wallet
 
 config = Config(filename=app.config["CONFIG_FILE"])
@@ -75,6 +76,7 @@ def version():
     info["version"] = get_version()
     info["network-url"] = config.network_url
     info["provider-address"] = get_provider_address()
+    info["compute-address"] = get_compute_address()
     info["serviceEndpoints"] = get_services_endpoints()
     return jsonify(info)
 
