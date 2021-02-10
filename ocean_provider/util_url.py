@@ -122,7 +122,7 @@ def check_url_details(url, with_checksum=False):
             if content_type or content_length:
                 details = {
                     "contentLength": content_length or "",
-                    "contentType": content_type or ""
+                    "contentType": content_type or "",
                 }
 
                 if extra_data:
