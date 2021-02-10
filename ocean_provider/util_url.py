@@ -42,8 +42,8 @@ def is_this_same_provider(url):
         return (
             DataServiceProvider().get_provider_address(
                 f"{result.scheme}://{result.netloc}/"
-            )
-            == get_provider_wallet().address
+            ).lower()
+            == get_provider_wallet().address.lower()
         )
     # the try/except can be removed after changes in ocean.py
     except requests.exceptions.ConnectionError:
