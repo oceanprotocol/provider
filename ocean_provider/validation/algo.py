@@ -1,6 +1,5 @@
 import json
 
-from eth_utils import add_0x_prefix
 from ocean_provider.myapp import app
 from ocean_provider.serializers import StageAlgoSerializer
 from ocean_provider.util import (
@@ -12,7 +11,6 @@ from ocean_provider.util import (
 from ocean_provider.util_url import is_this_same_provider
 from ocean_provider.utils.basics import get_asset_from_metadatastore
 from ocean_utils.agreements.service_types import ServiceTypes
-from ocean_utils.did import did_to_id
 
 
 class AlgoValidator:
@@ -200,19 +198,23 @@ class InputItemValidator(AlgoValidator):
         required_keys = ["did", "transferTxId", "serviceId"]
 
         for req_item in required_keys:
-            if not self.data.get("key"):
+            if not self.data.get(req_item):
                 self.error = f"No {req_item} in additionalInput."
                 return False
 
         did = self.data.get("did")
-        did = add_0x_prefix(did_to_id(did)) if did.startswith("did:") else did
         self.asset = get_asset_from_metadatastore(get_metadata_url(), did)
 
         if not self.asset:
             self.error = f"Asset for did {did} not found."
             return False
 
-        self.service = self.asset.services[self.data["serviceId"]]
+        matching_services = [s for s in self.asset.services if s.index == self.data["serviceId"]]
+        if matching_services:
+            self.service = matching_services[0]
+        else:
+            self.error = f"Service index {self.data['serviceId']} not found."
+            return False
 
         if self.service.type not in [
             ServiceTypes.ASSET_ACCESS,
@@ -223,7 +225,7 @@ class InputItemValidator(AlgoValidator):
 
         if (
             self.service.type == ServiceTypes.CLOUD_COMPUTE
-            and not is_this_same_provider(self.service.endpoint)
+            and not is_this_same_provider(self.service.service_endpoint)
         ):
             self.error = "Services in additionalInput with compute type must be in the same provider you are calling."
             return False
