@@ -20,8 +20,8 @@ def increment_nonce(address):
         nonce_value = UserNonce.FIRST_NONCE
 
     logger.debug(
-        f'increment_nonce: {address}, {nonce_value}, '
-        'new nonce {int(nonce_value) + 1}'
+        f"increment_nonce: {address}, {nonce_value}, "
+        "new nonce {int(nonce_value) + 1}"
     )
 
     nonce_object.nonce = int(nonce_value) + 1
