@@ -40,7 +40,7 @@ class StageAlgoSerializer:
                 }
             )
 
-        msg = "algorithm_did requires both algorithm_token_address and algorithm_tx_id."
+        msg = "algorithmDid requires both algorithmDataToken and algorithmTransferTxId."
         assert algorithm_token_address and algorithm_tx_id, msg
 
         algo_asset = get_asset_from_metadatastore(get_metadata_url(), algorithm_did)
