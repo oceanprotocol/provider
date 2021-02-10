@@ -40,14 +40,14 @@ class AlgoValidator:
             return False
 
         self.stage = build_stage_dict(
-            self.validated_input_dict,
+            [self.validated_input_dict] + self.validated_additional_input,
             self.validated_algo_dict,
             self.validated_output_dict,
         )
 
         return True
 
-    def validate_input(self):
+    def validate_input(self, index=0):
         """Validates input dictionary."""
         asset_urls = get_asset_download_urls(
             self.asset, self.provider_wallet, config_file=app.config["CONFIG_FILE"]
@@ -58,26 +58,21 @@ class AlgoValidator:
             return False
 
         self.validated_input_dict = dict(
-            {"index": 0, "id": self.did, "url": asset_urls}
+            {"index": index, "id": self.did, "url": asset_urls}
         )
 
         return True
 
     def validate_additional_input(self):
         """Validates additional input dictionary."""
+        self.validated_additional_input = []
+
         if not self.data.get("additionalInput"):
             return True
 
-        self.additional_stages = []
-
         for index, input_item in enumerate(self.data["additionalInput"]):
             input_item_validator = InputItemValidator(
-                self.consumer_address,
-                self.provider_wallet,
-                input_item,
-                self.validated_algo_dict,
-                self.validated_output_dict,
-                index + 1,
+                self.consumer_address, self.provider_wallet, input_item, index + 1
             )
             status = input_item_validator.validate()
             if not status:
@@ -87,7 +82,7 @@ class AlgoValidator:
                 )
                 return False
 
-            self.additional_stages.append(status)
+            self.validated_additional_input.append(status)
 
         return True
 
@@ -195,37 +190,13 @@ def validate_formatted_algorithm_dict(algorithm_dict, algorithm_did):
 
 
 class InputItemValidator(AlgoValidator):
-    def __init__(
-        self,
-        consumer_address,
-        provider_wallet,
-        data,
-        parent_validated_algo_dict,
-        parent_validated_output_dict,
-        index,
-    ):
+    def __init__(self, consumer_address, provider_wallet, data, index):
         self.consumer_address = consumer_address
         self.provider_wallet = provider_wallet
         self.data = data
-        self.parent_validated_algo_dict = parent_validated_algo_dict
-        self.parent_validated_output_dict = parent_validated_output_dict
         self.index = index
 
     def validate(self):
-        """Validates for input and output contents and inherits the rest."""
-        if not self.validate_input():
-            return False
-
-        self.stage = build_stage_dict(
-            self.validated_input_dict,
-            self.parent_validated_algo_dict,
-            self.parent_validated_output_dict,
-            index=self.index,
-        )
-
-        return True
-
-    def validate_input(self):
         required_keys = ["did", "transferTxId", "serviceId"]
 
         for req_item in required_keys:
@@ -257,4 +228,4 @@ class InputItemValidator(AlgoValidator):
             self.error = "Services in additionalInput with compute type must be in the same provider you are calling."
             return False
 
-        return super().validate_input()
+        return super().validate_input(self.index)

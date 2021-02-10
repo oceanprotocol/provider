@@ -338,7 +338,7 @@ def computeStart():
         if not status:
             return jsonify(error=validator.error), 400
 
-        stages = list([validator.stage] + validator.additional_stages)
+        stages = list([validator.stage])
 
         #########################
         # WORKFLOW
