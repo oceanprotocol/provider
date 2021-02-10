@@ -3,7 +3,7 @@ import logging
 import mimetypes
 import os
 from cgi import parse_header
-
+import requests
 from flask import Response
 from ocean_lib.models.data_token import DataToken
 from ocean_lib.ocean.util import to_base_18
@@ -183,7 +183,7 @@ def get_compute_endpoint():
 def get_compute_address():
     compute_info = requests.get(get_config().operator_service_url).json()
     return compute_info['address']
-    
+
 
 def check_required_attributes(required_attributes, data, method):
     assert isinstance(data, dict), "invalid payload format."
