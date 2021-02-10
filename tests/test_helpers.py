@@ -113,6 +113,23 @@ def get_access_service_descriptor(address, metadata):
     )
 
 
+def get_access_service_descriptor_different_provider(address, metadata):
+    access_service_attributes = {
+        "main": {
+            "name": "dataAssetAccessServiceAgreement",
+            "creator": address,
+            "cost": metadata[MetadataMain.KEY]["cost"],
+            "timeout": 3600,
+            "datePublished": metadata[MetadataMain.KEY]["dateCreated"],
+        }
+    }
+
+    return ServiceDescriptor.access_service_descriptor(
+        access_service_attributes,
+        f"http://some_different_provider{BaseURLs.ASSETS_URL}/download",
+    )
+
+
 def get_registered_ddo(client, wallet, metadata, service_descriptor):
     aqua = Aquarius("http://localhost:5000")
     ddo_service_endpoint = aqua.get_service_endpoint()
@@ -343,6 +360,16 @@ def get_algorithm_ddo(client, wallet):
     metadata = get_sample_algorithm_ddo()["service"][0]["attributes"]
     metadata["main"]["files"][0]["checksum"] = str(uuid.uuid4())
     service_descriptor = get_access_service_descriptor(wallet.address, metadata)
+    metadata[MetadataMain.KEY].pop("cost")
+    return get_registered_ddo(client, wallet, metadata, service_descriptor)
+
+
+def get_algorithm_ddo_different_provider(client, wallet):
+    metadata = get_sample_algorithm_ddo()["service"][0]["attributes"]
+    metadata["main"]["files"][0]["checksum"] = str(uuid.uuid4())
+    service_descriptor = get_access_service_descriptor_different_provider(
+        wallet.address, metadata
+    )
     metadata[MetadataMain.KEY].pop("cost")
     return get_registered_ddo(client, wallet, metadata, service_descriptor)
 

@@ -4,7 +4,6 @@ import mimetypes
 import os
 from cgi import parse_header
 
-from eth_utils import add_0x_prefix
 from flask import Response
 from ocean_lib.models.data_token import DataToken
 from ocean_lib.ocean.util import to_base_18
@@ -21,7 +20,6 @@ from ocean_provider.utils.basics import (
 from ocean_provider.utils.encryption import do_decrypt
 from ocean_utils.agreements.service_agreement import ServiceAgreement
 from ocean_utils.agreements.service_types import ServiceTypes
-from ocean_utils.did import did_to_id
 from osmosis_driver_interface.osmosis import Osmosis
 from websockets import ConnectionClosed
 
@@ -284,63 +282,6 @@ def process_compute_request(data):
     body["providerSignature"] = Web3Helper.sign_hash(msg_hash, provider_wallet)
 
     return body
-
-
-def build_stage_algorithm_dict(
-    consumer_address,
-    algorithm_did,
-    algorithm_token_address,
-    algorithm_tx_id,
-    algorithm_meta,
-    provider_wallet,
-    receiver_address=None,
-):
-    if algorithm_did is not None:
-        msg = "algorithm_did requires both algorithm_token_address and algorithm_tx_id."
-        assert algorithm_token_address and algorithm_tx_id, msg
-
-        algo_asset = get_asset_from_metadatastore(get_metadata_url(), algorithm_did)
-
-        service = ServiceAgreement.from_ddo(ServiceTypes.ASSET_ACCESS, algo_asset)
-        _tx, _order_log, _transfer_log = validate_order(
-            consumer_address,
-            algorithm_token_address,
-            float(service.get_cost()),
-            algorithm_tx_id,
-            add_0x_prefix(did_to_id(algorithm_did))
-            if algorithm_did.startswith("did:")
-            else algorithm_did,
-            service.index,
-        )
-        validate_transfer_not_used_for_other_service(
-            algorithm_did,
-            service.index,
-            algorithm_tx_id,
-            consumer_address,
-            algorithm_token_address,
-        )
-        record_consume_request(
-            algorithm_did,
-            service.index,
-            algorithm_tx_id,
-            consumer_address,
-            algorithm_token_address,
-            service.get_cost(),
-        )
-
-        algo_id = algorithm_did
-        raw_code = ""
-        algo_url = get_asset_url_at_index(0, algo_asset, provider_wallet)
-        container = algo_asset.metadata["main"]["algorithm"]["container"]
-    else:
-        algo_id = ""
-        algo_url = algorithm_meta.get("url")
-        raw_code = algorithm_meta.get("rawcode")
-        container = algorithm_meta.get("container")
-
-    return dict(
-        {"id": algo_id, "url": algo_url, "rawcode": raw_code, "container": container}
-    )
 
 
 def build_stage_output_dict(output_def, asset, owner, provider_wallet):
