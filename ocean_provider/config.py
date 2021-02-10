@@ -154,4 +154,7 @@ class Config(configparser.ConfigParser):
     @property
     def storage_path(self):
         """Path to local storage (database file)."""
-        return self.get("resources", NAME_STORAGE_PATH)
+        fallback = "ocean-provider.db"
+        result = self.get("resources", NAME_STORAGE_PATH, fallback=fallback)
+
+        return result if result else fallback

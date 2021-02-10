@@ -22,7 +22,7 @@ else:
 
 PROJECT_ROOT = dirname(dirname(abspath(__file__)))
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:////" + os.path.join(
-    PROJECT_ROOT, get_config().storage_path
+    PROJECT_ROOT, "db", get_config().storage_path
 )
 
 from ocean_provider.models import db as db_models  # noqa isort: skip
