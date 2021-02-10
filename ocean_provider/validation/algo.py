@@ -1,6 +1,5 @@
 import json
 
-from eth_utils import add_0x_prefix
 from ocean_provider.myapp import app
 from ocean_provider.serializers import StageAlgoSerializer
 from ocean_provider.util import (
@@ -210,7 +209,9 @@ class InputItemValidator(AlgoValidator):
             self.error = f"Asset for did {did} not found."
             return False
 
-        matching_services = [s for s in self.asset.services if s.index == self.data["serviceId"]]
+        matching_services = [
+            s for s in self.asset.services if s.index == self.data["serviceId"]
+        ]
         if matching_services:
             self.service = matching_services[0]
         else:

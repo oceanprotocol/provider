@@ -218,7 +218,6 @@ def build_and_send_ddo_with_compute_service(client, alg_diff=False, asset_type=N
     )
 
 
-
 def test_compute(client):
     pub_wallet = get_publisher_wallet()
     cons_wallet = get_consumer_wallet()
