@@ -1,11 +1,11 @@
-import logging
-import requests
-import ipaddress
-import dns.resolver
-from ocean_provider.utils.basics import get_config
 import hashlib as hash
-
+import ipaddress
+import logging
 from urllib.parse import urlparse
+
+import dns.resolver
+import requests
+from ocean_provider.utils.basics import get_config
 
 logger = logging.getLogger(__name__)
 
@@ -26,12 +26,12 @@ def is_safe_schema(url):
     try:
         result = urlparse(url)
         return all([result.scheme, result.netloc, result.path])
-    except:
+    except:  # noqa
         return False
 
 
 def is_ip(address):
-    return address.replace('.', '').isnumeric()
+    return address.replace(".", "").isnumeric()
 
 
 def _get_records(domain, record_type):
@@ -39,9 +39,7 @@ def _get_records(domain, record_type):
     try:
         return DNS_RESOLVER.resolve(domain, record_type, search=True)
     except Exception as e:
-        logger.info(
-            f"[i] Cannot get {record_type} record for domain {domain}: {e}\n"
-        )
+        logger.info(f"[i] Cannot get {record_type} record for domain {domain}: {e}\n")
 
         return None
 
@@ -50,9 +48,8 @@ def is_safe_domain(domain):
     ip_v4_records = _get_records(domain, "A")
     ip_v6_records = _get_records(domain, "AAAA")
 
-    result = (
-        validate_dns_records(domain, ip_v4_records, "A") and
-        validate_dns_records(domain, ip_v6_records, "AAAA")
+    result = validate_dns_records(domain, ip_v4_records, "A") and validate_dns_records(
+        domain, ip_v6_records, "AAAA"
     )
 
     if not is_ip(domain):
@@ -116,13 +113,11 @@ def check_url_details(url, with_checksum=False):
         if not is_safe_url(url):
             return False, {}
 
-        result, extra_data = _get_result_from_url(
-            url, with_checksum=with_checksum
-        )
+        result, extra_data = _get_result_from_url(url, with_checksum=with_checksum)
 
         if result.status_code == 200:
-            content_type = result.headers.get('Content-Type')
-            content_length = result.headers.get('Content-Length')
+            content_type = result.headers.get("Content-Type")
+            content_length = result.headers.get("Content-Length")
 
             if content_type or content_length:
                 details = {
@@ -149,10 +144,10 @@ def _get_result_from_url(url, with_checksum=False):
     result = requests.options(url, timeout=REQUEST_TIMEOUT)
 
     if (
-        not with_checksum and
-        result.status_code == 200 and
-        result.headers.get('Content-Type') and
-        result.headers.get('Content-Length')
+        not with_checksum
+        and result.status_code == 200
+        and result.headers.get("Content-Type")
+        and result.headers.get("Content-Length")
     ):
         return result, {}
 
@@ -167,4 +162,4 @@ def _get_result_from_url(url, with_checksum=False):
         for chunk in r.iter_content(chunk_size=CHUNK_SIZE):
             sha.update(chunk)
 
-    return r, {'checksum': sha.hexdigest(), 'checksumType': 'sha256'}
+    return r, {"checksum": sha.hexdigest(), "checksumType": "sha256"}
