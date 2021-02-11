@@ -4,6 +4,7 @@ import mimetypes
 import os
 from cgi import parse_header
 
+import requests
 from flask import Response
 from ocean_lib.models.data_token import DataToken
 from ocean_lib.ocean.util import to_base_18
@@ -178,6 +179,15 @@ def get_download_url(url, config_file):
 
 def get_compute_endpoint():
     return get_config().operator_service_url + "/api/v1/operator/compute"
+
+
+def get_compute_address():
+    try:
+        compute_info = requests.get(get_config().operator_service_url).json()
+        return compute_info["address"]
+    except Exception as e:
+        logger.error(f"Error getting CtD address: {str(e)}")
+        return None
 
 
 def check_required_attributes(required_attributes, data, method):

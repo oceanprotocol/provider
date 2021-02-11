@@ -138,7 +138,6 @@ class AlgoValidator:
         """Validates algorithm details that allow the algo dict to be built."""
         algorithm_meta = self.data.get("algorithmMeta")
         algorithm_did = self.data.get("algorithmDid")
-        algorithm_meta = self.data.get("algorithmMeta")
 
         privacy_options = self.service.main.get("privacy", {})
 
@@ -159,9 +158,6 @@ class AlgoValidator:
         ):
             self.error = f"cannot run raw algorithm on this did {self.did}."
             return False
-
-        if algorithm_meta and isinstance(algorithm_meta, str):
-            algorithm_meta = json.loads(algorithm_meta)
 
         return self._build_and_validate_algo(self.data)
 
