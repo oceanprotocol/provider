@@ -29,7 +29,7 @@ def setup_all():
     ):
         wallet = Wallet(
             web3,
-            private_key="0xc594c6e5def4bab63ac29eed19a134c130388f74f019bc74b8f4389df2837a58",
+            private_key="0xfd5c1ccea015b6d663618850824154a3b3fb2882c46cefb05b9a93fea8c3d215",
         )
 
         provider = get_provider_wallet()

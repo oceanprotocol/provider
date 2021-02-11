@@ -13,22 +13,10 @@ from ocean_provider.utils.basics import get_provider_wallet
 from ocean_utils.agreements.service_agreement import ServiceAgreement
 from ocean_utils.agreements.service_types import ServiceTypes
 from tests.test_helpers import (
-    get_algorithm_ddo,
-    get_algorithm_ddo_different_provider,
+    build_and_send_ddo_with_compute_service,
+    comp_ds_no_rawalgo,
     get_compute_job_info,
     get_consumer_wallet,
-)
-from tests.test_helpers import get_dataset_ddo_with_compute_service as comp_ds
-from tests.test_helpers import (
-    get_dataset_ddo_with_compute_service_allow_all_published as comp_ds_allow_all_published,
-)
-from tests.test_helpers import (
-    get_dataset_ddo_with_compute_service_no_rawalgo as comp_ds_no_rawalgo,
-)
-from tests.test_helpers import (
-    get_dataset_ddo_with_compute_service_specific_algo_dids as comp_ds_specific_algo_dids,
-)
-from tests.test_helpers import (
     get_nonce,
     get_possible_compute_job_status_text,
     get_publisher_wallet,
@@ -169,53 +157,6 @@ def test_compute_specific_algo_dids(client):
     assert (
         response.status == "400 BAD REQUEST"
     ), f"start compute job failed: {response.status} , {response.data}"
-
-
-def build_and_send_ddo_with_compute_service(client, alg_diff=False, asset_type=None):
-    pub_wallet = get_publisher_wallet()
-    cons_wallet = get_consumer_wallet()
-
-    # publish a dataset asset
-    if asset_type == "allow_all_published":
-        dataset_ddo_w_compute_service = comp_ds_allow_all_published(client, pub_wallet)
-    elif asset_type == "specific_algo_dids":
-        dataset_ddo_w_compute_service = comp_ds_specific_algo_dids(client, pub_wallet)
-    else:
-        dataset_ddo_w_compute_service = comp_ds(client, pub_wallet)
-    did = dataset_ddo_w_compute_service.did
-    ddo = dataset_ddo_w_compute_service
-    data_token = dataset_ddo_w_compute_service.data_token_address
-    dt_contract = DataToken(data_token)
-    mint_tokens_and_wait(dt_contract, cons_wallet, pub_wallet)
-
-    # publish an algorithm asset (asset with metadata of type `algorithm`)
-    alg_ddo = (
-        get_algorithm_ddo_different_provider(client, cons_wallet)
-        if alg_diff
-        else get_algorithm_ddo(client, cons_wallet)
-    )
-    alg_data_token = alg_ddo.as_dictionary()["dataToken"]
-    alg_dt_contract = DataToken(alg_data_token)
-    mint_tokens_and_wait(alg_dt_contract, cons_wallet, cons_wallet)
-
-    sa = ServiceAgreement.from_ddo(
-        ServiceTypes.CLOUD_COMPUTE, dataset_ddo_w_compute_service
-    )
-    tx_id = send_order(client, ddo, dt_contract, sa, cons_wallet)
-    alg_service = ServiceAgreement.from_ddo(ServiceTypes.ASSET_ACCESS, alg_ddo)
-    alg_tx_id = send_order(client, alg_ddo, alg_dt_contract, alg_service, cons_wallet)
-
-    return (
-        dataset_ddo_w_compute_service,
-        did,
-        tx_id,
-        sa,
-        data_token,
-        alg_ddo,
-        alg_data_token,
-        alg_dt_contract,
-        alg_tx_id,
-    )
 
 
 def test_compute(client):

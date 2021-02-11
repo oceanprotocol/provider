@@ -315,11 +315,11 @@ def build_stage_output_dict(output_def, asset, owner, provider_wallet):
     )
 
 
-def build_stage_dict(input_dict, algorithm_dict, output_dict, index=0):
+def build_stage_dict(input_list, algorithm_dict, output_dict, index=0):
     return dict(
         {
             "index": index,
-            "input": [input_dict],
+            "input": input_list,
             "compute": {"Instances": 1, "namespace": "ocean-compute", "maxtime": 3600},
             "algorithm": algorithm_dict,
             "output": output_dict,

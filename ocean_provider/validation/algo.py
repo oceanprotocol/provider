@@ -80,7 +80,9 @@ class AlgoValidator:
                 )
                 return False
 
-            self.validated_additional_input.append(status)
+            self.validated_additional_input.append(
+                input_item_validator.validated_input_dict
+            )
 
         return True
 
@@ -202,11 +204,11 @@ class InputItemValidator(AlgoValidator):
                 self.error = f"No {req_item} in additionalInput."
                 return False
 
-        did = self.data.get("did")
-        self.asset = get_asset_from_metadatastore(get_metadata_url(), did)
+        self.did = self.data.get("did")
+        self.asset = get_asset_from_metadatastore(get_metadata_url(), self.did)
 
         if not self.asset:
-            self.error = f"Asset for did {did} not found."
+            self.error = f"Asset for did {self.did} not found."
             return False
 
         matching_services = [
