@@ -1,3 +1,5 @@
+import json
+
 from eth_utils import add_0x_prefix
 from ocean_provider.util import (
     get_asset_url_at_index,
@@ -30,6 +32,9 @@ class StageAlgoSerializer:
         algorithm_tx_id = self.algo_data.get("algorithmTransferTxId")
 
         dict_template = {"id": None, "rawcode": None, "container": None}
+
+        if algorithm_meta and isinstance(algorithm_meta, str):
+            algorithm_meta = json.loads(algorithm_meta)
 
         if algorithm_did is None:
             return dict(
