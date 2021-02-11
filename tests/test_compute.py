@@ -171,7 +171,7 @@ def test_compute(client):
         data_token,
         alg_ddo,
         alg_data_token,
-        alg_dt_contract,
+        _,
         alg_tx_id,
     ) = build_and_send_ddo_with_compute_service(client)
 
@@ -282,7 +282,7 @@ def test_compute_diff_provider(client):
         data_token,
         alg_ddo,
         alg_data_token,
-        alg_dt_contract,
+        _,
         alg_tx_id,
     ) = build_and_send_ddo_with_compute_service(client, alg_diff=True)
 
@@ -331,7 +331,7 @@ def test_compute_allow_all_published(client):
         data_token,
         alg_ddo,
         alg_data_token,
-        alg_dt_contract,
+        _,
         alg_tx_id,
     ) = build_and_send_ddo_with_compute_service(
         client, asset_type="allow_all_published"
@@ -383,7 +383,7 @@ def test_compute_not_an_algo(client):
         data_token,
         _,
         alg_data_token,
-        alg_dt_contract,
+        _,
         alg_tx_id,
     ) = build_and_send_ddo_with_compute_service(
         client, asset_type="allow_all_published"
@@ -437,7 +437,7 @@ def test_compute_additional_input(client):
         data_token,
         alg_ddo,
         alg_data_token,
-        alg_dt_contract,
+        _,
         alg_tx_id,
     ) = build_and_send_ddo_with_compute_service(client)
 
