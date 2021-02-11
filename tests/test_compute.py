@@ -121,8 +121,8 @@ def test_compute_specific_algo_dids(client):
         data_token,
         alg_ddo,
         alg_data_token,
-        alg_dt_contract,
-        alg_tx_id,
+        _,
+        _,
     ) = build_and_send_ddo_with_compute_service(client, asset_type="specific_algo_dids")
     nonce = get_nonce(client, cons_wallet.address)
 
@@ -381,7 +381,7 @@ def test_compute_not_an_algo(client):
         tx_id,
         sa,
         data_token,
-        alg_ddo,
+        _,
         alg_data_token,
         alg_dt_contract,
         alg_tx_id,
@@ -441,17 +441,9 @@ def test_compute_additional_input(client):
         alg_tx_id,
     ) = build_and_send_ddo_with_compute_service(client)
 
-    (
-        dataset2,
-        did2,
-        tx_id2,
-        sa2,
-        data_token2,
-        alg_ddo2,
-        alg_data_token2,
-        alg_dt_contract2,
-        alg_tx_id2,
-    ) = build_and_send_ddo_with_compute_service(client, asset_type="specific_algo_dids")
+    _, did2, tx_id2, sa2, _, _, _, _, _ = build_and_send_ddo_with_compute_service(
+        client, asset_type="specific_algo_dids"
+    )
 
     nonce = get_nonce(client, cons_wallet.address)
     # prepare consumer signature on did
