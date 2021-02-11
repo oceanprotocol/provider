@@ -468,7 +468,6 @@ def test_compute_additional_input(client):
             "algorithmDataToken": alg_data_token,
             "algorithmTransferTxId": alg_tx_id,
             "additionalInput": [
-                # {"did": did2, "transferTxId": tx_id2, "serviceIndex": sa2.index}
                 {"did": did2, "transferTxId": tx_id2, "serviceId": sa2.index}
             ],
         }

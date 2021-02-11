@@ -20,8 +20,8 @@ class AlgoValidator:
         self.provider_wallet = provider_wallet
         self.data = data
         self.service = service
-        self.did = data.get("documentId")
         self.asset = asset
+        self.did = asset.did
 
     def validate(self):
         """Validates for algo, input and output contents."""
@@ -90,8 +90,12 @@ class AlgoValidator:
         """Validates output dictionary after stage build."""
         output_def = self.data.get("output", dict())
 
-        if output_def and isinstance(output_def, str):
-            output_def = json.loads(output_def)
+        try:
+            if output_def and isinstance(output_def, str):
+                output_def = json.loads(output_def)
+        except json.decoder.JSONDecodeError:
+            self.error = "Output is invalid or can not be decoded."
+            return False
 
         self.validated_output_dict = build_stage_output_dict(
             output_def, self.asset, self.consumer_address, self.provider_wallet
@@ -102,15 +106,17 @@ class AlgoValidator:
     def _build_and_validate_algo(self, algo_data):
         """Returns False if invalid, otherwise sets the validated_algo_dict attribute."""
         algorithm_did = algo_data.get("algorithmDid")
-        algo = get_asset_from_metadatastore(get_metadata_url(), algorithm_did)
-        try:
-            asset_type = algo.metadata["main"]["type"]
-        except ValueError:
-            asset_type = None
 
-        if asset_type != "algorithm":
-            self.error = f"DID {algorithm_did} is not a valid algorithm"
-            return False
+        if algorithm_did and not algo_data.get("algorithmMeta"):
+            algo = get_asset_from_metadatastore(get_metadata_url(), algorithm_did)
+            try:
+                asset_type = algo.metadata["main"]["type"]
+            except ValueError:
+                asset_type = None
+
+            if asset_type != "algorithm":
+                self.error = f"DID {algorithm_did} is not a valid algorithm"
+                return False
 
         algorithm_dict = StageAlgoSerializer(
             self.consumer_address, self.provider_wallet, algo_data
@@ -176,7 +182,7 @@ def validate_formatted_algorithm_dict(algorithm_dict, algorithm_did):
             "algorithmMeta must define one of `url` or `rawcode` or `remote`, but all seem missing.",
         )  # noqa
 
-    container = algorithm_dict["container"]
+    container = algorithm_dict.get("container", {})
     # Validate `container` data
     if not (
         container.get("entrypoint") and container.get("image") and container.get("tag")
@@ -206,9 +212,9 @@ class InputItemValidator(AlgoValidator):
                 return False
 
         self.did = self.data.get("did")
-        self.asset = get_asset_from_metadatastore(get_metadata_url(), self.did)
-
-        if not self.asset:
+        try:
+            self.asset = get_asset_from_metadatastore(get_metadata_url(), self.did)
+        except ValueError:
             self.error = f"Asset for did {self.did} not found."
             return False
 
