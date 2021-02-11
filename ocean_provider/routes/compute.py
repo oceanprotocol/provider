@@ -8,8 +8,9 @@ from flask import Response, jsonify, request
 from flask_sieve import validate
 from ocean_lib.web3_internal.utils import add_ethereum_prefix_and_hash_msg
 from ocean_lib.web3_internal.web3helper import Web3Helper
+from ocean_provider.exceptions import InvalidSignatureError
 from ocean_provider.log import setup_logging
-from ocean_provider.user_nonce import increment_nonce
+from ocean_provider.user_nonce import get_nonce, increment_nonce
 from ocean_provider.util import (
     get_compute_endpoint,
     get_request_data,
@@ -19,6 +20,7 @@ from ocean_provider.util import (
     validate_order,
     validate_transfer_not_used_for_other_service,
 )
+from ocean_provider.utils.accounts import verify_signature
 from ocean_provider.utils.basics import (
     LocalFileAdapter,
     get_provider_wallet,
@@ -212,7 +214,6 @@ def computeStatus():
     data = get_request_data(request)
     try:
         body = process_compute_request(data)
-        signed_request = bool(data.get("signature"))
 
         response = requests_session.get(
             get_compute_endpoint(),
@@ -222,6 +223,20 @@ def computeStatus():
 
         increment_nonce(body["owner"])
         _response = response.content
+
+        signed_request = bool(data.get("signature"))
+        if signed_request:
+            owner = data.get("consumerAddress")
+            did = data.get("documentId")
+            jobId = data.get("jobId")
+            original_msg = f"{owner}{jobId}{did}"
+            try:
+                verify_signature(
+                    owner, data.get("signature"), original_msg, get_nonce(owner)
+                )
+            except InvalidSignatureError:
+                signed_request = False
+
         # Filter status info if signature is not given or failed validation
         if not signed_request:
             resp_content = json.loads(response.content.decode("utf-8"))
