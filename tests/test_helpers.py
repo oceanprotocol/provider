@@ -673,6 +673,7 @@ def build_and_send_ddo_with_compute_service(client, alg_diff=False, asset_type=N
     sa = ServiceAgreement.from_ddo(
         ServiceTypes.CLOUD_COMPUTE, dataset_ddo_w_compute_service
     )
+
     tx_id = send_order(client, ddo, dt_contract, sa, cons_wallet)
     alg_service = ServiceAgreement.from_ddo(ServiceTypes.ASSET_ACCESS, alg_ddo)
     alg_tx_id = send_order(client, alg_ddo, alg_dt_contract, alg_service, cons_wallet)

@@ -203,7 +203,9 @@ class InputItemValidator(AlgoValidator):
         required_keys = ["did", "transferTxId", "serviceId"]
 
         for req_item in required_keys:
-            if not self.data.get(req_item):
+            if not self.data.get(req_item) and not (
+                req_item == "serviceId" and self.data.get(req_item) == 0
+            ):
                 self.error = f"No {req_item} in additionalInput."
                 return False
 

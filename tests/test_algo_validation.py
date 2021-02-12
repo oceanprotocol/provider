@@ -4,6 +4,7 @@
 from ocean_provider.util import build_stage_output_dict
 from ocean_provider.utils.basics import get_provider_wallet
 from ocean_provider.validation.algo import AlgoValidator
+from ocean_utils.agreements.service_types import ServiceTypes
 from tests.test_helpers import (
     build_and_send_ddo_with_compute_service,
     get_consumer_wallet,
@@ -198,6 +199,26 @@ def test_fails(client):
         == "Error in additionalInput at index 0: Asset for did i am not a did not found."
     )
 
-    # TODO
-    # additionalInput: service type is not access and not compute
-    # compute service is served by diff provider
+    # Service is not compute, nor access
+    other_service = [
+        s
+        for s in dataset.services
+        if s.type not in [ServiceTypes.CLOUD_COMPUTE, ServiceTypes.ASSET_ACCESS]
+    ][0]
+    data = {
+        "documentId": did,
+        "output": valid_output,
+        "algorithmDid": alg_ddo.did,
+        "algorithmDataToken": alg_data_token,
+        "algorithmTransferTxId": alg_tx_id,
+        "additionalInput": [
+            {"did": did, "transferTxId": tx_id, "serviceId": other_service.index}
+        ],
+    }
+
+    validator = AlgoValidator(consumer_address, provider_wallet, data, sa, dataset)
+    assert validator.validate() is False
+    assert (
+        validator.error
+        == "Error in additionalInput at index 0: Services in additionalInput can only be access or compute."
+    )
