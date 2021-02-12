@@ -443,7 +443,7 @@ def test_compute_additional_input(client):
     ) = build_and_send_ddo_with_compute_service(client)
 
     _, did2, tx_id2, sa2, _, _, _, _, _ = build_and_send_ddo_with_compute_service(
-        client, asset_type="specific_algo_dids"
+        client
     )
 
     nonce = get_nonce(client, cons_wallet.address)

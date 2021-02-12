@@ -78,6 +78,13 @@ class AlgoValidator:
             return False
 
         for index, input_item in enumerate(additional_input):
+            input_item.update(
+                {
+                    key: self.data[key]
+                    for key in self.data
+                    if key.startswith("algorithm")
+                }
+            )
             input_item_validator = InputItemValidator(
                 self.consumer_address, self.provider_wallet, input_item, index + 1
             )
@@ -248,4 +255,6 @@ class InputItemValidator(AlgoValidator):
             self.error = "Services in additionalInput with compute type must be in the same provider you are calling."
             return False
 
-        return super().validate_input(self.index)
+        return super().validate_input(self.index) and (
+            self.service.type != ServiceTypes.CLOUD_COMPUTE or super().validate_algo()
+        )

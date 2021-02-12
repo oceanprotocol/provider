@@ -236,3 +236,34 @@ def test_fails(client):
         validator.error
         == "Error in additionalInput at index 0: Services in additionalInput can only be access or compute."
     )
+
+    # Additional input has other trusted algs
+    (
+        _,
+        trust_did,
+        trust_tx_id,
+        trust_sa,
+        _,
+        _,
+        _,
+        _,
+        _,
+    ) = build_and_send_ddo_with_compute_service(client, asset_type="specific_algo_dids")
+
+    data = {
+        "documentId": did,
+        "output": valid_output,
+        "algorithmDid": alg_ddo.did,
+        "algorithmDataToken": alg_data_token,
+        "algorithmTransferTxId": alg_tx_id,
+        "additionalInput": [
+            {"did": trust_did, "transferTxId": trust_tx_id, "serviceId": trust_sa.index}
+        ],
+    }
+
+    validator = AlgoValidator(consumer_address, provider_wallet, data, sa, dataset)
+    assert validator.validate() is False
+    assert (
+        validator.error
+        == f"Error in additionalInput at index 0: cannot run raw algorithm on this did {trust_did}."
+    )
