@@ -19,7 +19,10 @@ class CustomJsonRequest(JsonRequest):
         request = get_request_data(request)
         self._validator = CustomValidator(
             rules=self.rules(),
-            messages={"signature.signature": "Invalid signature provided."},
+            messages={
+                "signature.signature": "Invalid signature provided.",
+                "signature.download_signature": "Invalid signature provided.",
+            },
             request=request,
         )
 
@@ -67,10 +70,40 @@ class CustomRulesProcessor(RulesProcessor):
                          'did' only adds the did to the original_message
         """
         self._assert_params_size(size=3, params=params, rule="signature")
+        owner = self._attribute_value(params[0]) or ""
+        did = self._attribute_value(params[1]) or ""
+        job_id = self._attribute_value(params[2]) or ""
+
+        original_msg = f"{owner}{job_id}{did}"
+        try:
+            verify_signature(owner, value, original_msg, get_nonce(owner))
+            return True
+        except InvalidSignatureError:
+            return False
+
+        return False
+
+    def validate_download_signature(self, value, params, **kwargs):
+        """
+        Validates a signature using the documentId.
+
+        parameters:
+          - name: value
+            type: string
+            description: Value of the field being validated
+          - name: params
+            type: list
+            description: The list of parameters defined for the rule,
+                         i.e. names of other fields inside the request.
+                         The last item in the params list is the rule to be
+                         used for checking. 'consumer_did' concatenates
+                         consumer address and did for the original message,
+                         'did' only adds the did to the original_message
+        """
+        self._assert_params_size(size=2, params=params, rule="signature")
         owner = self._attribute_value(params[0])
         did = self._attribute_value(params[1])
-        rule = params[2]
-        original_msg = f"{owner}{did}" if rule == "consumer_did" else f"{did}"
+        original_msg = f"{did}"
         try:
             verify_signature(owner, value, original_msg, get_nonce(owner))
             return True
@@ -115,7 +148,7 @@ class ComputeRequest(CustomJsonRequest):
     def rules(self):
         return {
             "consumerAddress": ["bail", "required"],
-            "signature": ["required", "signature:consumerAddress,documentId,only_did"],
+            "signature": ["required", "signature:consumerAddress,documentId,jobId"],
         }
 
 
@@ -139,10 +172,7 @@ class ComputeStartRequest(CustomJsonRequest):
                 "required_without:algorithmMeta",
                 "required_with_all:algorithmDataToken,algorithmTransferTxId",
             ],
-            "signature": [
-                "required",
-                "signature:consumerAddress,documentId,consumer_did",
-            ],
+            "signature": ["required", "signature:consumerAddress,documentId,jobId"],
         }
 
 
@@ -156,7 +186,7 @@ class DownloadRequest(CustomJsonRequest):
             "consumerAddress": ["bail", "required"],
             "transferTxId": ["bail", "required"],
             "fileIndex": ["required"],
-            "signature": ["required", "signature:consumerAddress,documentId,only_did"],
+            "signature": ["required", "download_signature:consumerAddress,documentId"],
         }
 
 
