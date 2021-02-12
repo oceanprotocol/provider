@@ -20,12 +20,12 @@ def test_passes(client):
     (
         dataset,
         did,
-        tx_id,
+        _,
         sa,
-        data_token,
+        _,
         alg_ddo,
         alg_data_token,
-        alg_dt_contract,
+        _,
         alg_tx_id,
     ) = build_and_send_ddo_with_compute_service(client)
 
