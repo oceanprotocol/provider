@@ -54,7 +54,7 @@ class CustomRulesProcessor(RulesProcessor):
 
     def validate_signature(self, value, params, **kwargs):
         """
-        Validates a signature using the documentId and/or the consumerAddress.
+        Validates a signature using the documentId, jobId and consumerAddress.
 
         parameters:
           - name: value
@@ -64,10 +64,6 @@ class CustomRulesProcessor(RulesProcessor):
             type: list
             description: The list of parameters defined for the rule,
                          i.e. names of other fields inside the request.
-                         The last item in the params list is the rule to be
-                         used for checking. 'consumer_did' concatenates
-                         consumer address and did for the original message,
-                         'did' only adds the did to the original_message
         """
         self._assert_params_size(size=3, params=params, rule="signature")
         owner = self._attribute_value(params[0]) or ""
@@ -95,10 +91,6 @@ class CustomRulesProcessor(RulesProcessor):
             type: list
             description: The list of parameters defined for the rule,
                          i.e. names of other fields inside the request.
-                         The last item in the params list is the rule to be
-                         used for checking. 'consumer_did' concatenates
-                         consumer address and did for the original message,
-                         'did' only adds the did to the original_message
         """
         self._assert_params_size(size=2, params=params, rule="signature")
         owner = self._attribute_value(params[0])

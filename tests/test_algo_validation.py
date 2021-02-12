@@ -67,10 +67,10 @@ def test_fails(client):
         did,
         tx_id,
         sa,
-        data_token,
+        _,
         alg_ddo,
         alg_data_token,
-        alg_dt_contract,
+        _,
         alg_tx_id,
     ) = build_and_send_ddo_with_compute_service(client)
 
@@ -162,6 +162,20 @@ def test_fails(client):
 
     validator = AlgoValidator(consumer_address, provider_wallet, data, sa, dataset)
     assert validator.validate() is True
+
+    # additional input is invalid
+    data = {
+        "documentId": did,
+        "output": valid_output,
+        "algorithmDid": alg_ddo.did,
+        "algorithmDataToken": alg_data_token,
+        "algorithmTransferTxId": alg_tx_id,
+        "additionalInput": "i can not be decoded in json!",
+    }
+
+    validator = AlgoValidator(consumer_address, provider_wallet, data, sa, dataset)
+    assert validator.validate() is False
+    assert validator.error == "Additional input is invalid or can not be decoded."
 
     # Missing did in additional input
     data = {

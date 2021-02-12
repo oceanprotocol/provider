@@ -68,7 +68,16 @@ class AlgoValidator:
         if not self.data.get("additionalInput"):
             return True
 
-        for index, input_item in enumerate(self.data["additionalInput"]):
+        additional_input = self.data["additionalInput"]
+
+        try:
+            if isinstance(additional_input, str):
+                additional_input = json.loads(additional_input)
+        except json.decoder.JSONDecodeError:
+            self.error = "Additional input is invalid or can not be decoded."
+            return False
+
+        for index, input_item in enumerate(additional_input):
             input_item_validator = InputItemValidator(
                 self.consumer_address, self.provider_wallet, input_item, index + 1
             )
