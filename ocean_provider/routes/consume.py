@@ -22,6 +22,7 @@ from ocean_provider.util import (
     record_consume_request,
     validate_order,
     validate_transfer_not_used_for_other_service,
+    get_compute_address
 )
 from ocean_provider.util_url import check_url_details
 from ocean_provider.utils.basics import (
@@ -291,6 +292,7 @@ def initialize():
             "numTokens": float(service.get_cost()),
             "dataToken": token_address,
             "nonce": get_nonce(consumer_address),
+            "computeAddress": get_compute_address()
         }
         return Response(
             json.dumps(approve_params),
