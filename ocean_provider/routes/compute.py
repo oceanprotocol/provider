@@ -32,7 +32,6 @@ from ocean_provider.validation.requests import (
     ComputeStartRequest,
     UnsignedComputeRequest,
 )
-from ocean_utils.agreements.service_types import ServiceTypes
 from ocean_utils.did import did_to_id
 from ocean_utils.http_requests.requests_session import get_requests_session
 
@@ -322,7 +321,6 @@ def computeStart():
         ) = process_consume_request(data)
 
         service_id = data.get("serviceId")
-        service_type = data.get("serviceType")
         tx_id = data.get("transferTxId")
 
         # Verify that  the number of required tokens has been
@@ -343,17 +341,13 @@ def computeStart():
             did, service_id, tx_id, consumer_address, token_address, service.get_cost()
         )
 
-        assert service_type == ServiceTypes.CLOUD_COMPUTE
-
-        validator = AlgoValidator(
-            consumer_address, provider_wallet, data, service, asset
-        )
+        validator = AlgoValidator(consumer_address, provider_wallet, data)
 
         status = validator.validate()
         if not status:
             return jsonify(error=validator.error), 400
 
-        stages = list([validator.stage])
+        stages = validator.stages
 
         #########################
         # WORKFLOW

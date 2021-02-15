@@ -14,91 +14,79 @@ from ocean_utils.agreements.service_types import ServiceTypes
 
 
 class AlgoValidator:
-    def __init__(self, consumer_address, provider_wallet, data, service, asset):
+    def __init__(self, consumer_address, provider_wallet, data):
         """Initializes the validator."""
         self.consumer_address = consumer_address
         self.provider_wallet = provider_wallet
         self.data = data
-        self.service = service
-        self.asset = asset
-        self.did = asset.did
+        self.stages = []
 
     def validate(self):
-        """Validates for algo, input and output contents."""
-        if not self.validate_algo():
-            return False
-
+        """Validates for input and output contents."""
         if not self.validate_input():
-            return False
-
-        if not self.validate_additional_input():
             return False
 
         if not self.validate_output():
             return False
 
-        self.stage = build_stage_dict(
-            [self.validated_input_dict] + self.validated_additional_input,
-            self.validated_algo_dict,
-            self.validated_output_dict,
+        self.stages.append(
+            build_stage_dict(
+                self.validated_input_dict,
+                self.validated_algo_dict,
+                self.validated_output_dict,
+            )
         )
 
         return True
 
     def validate_input(self, index=0):
         """Validates input dictionary."""
-        asset_urls = get_asset_download_urls(
-            self.asset, self.provider_wallet, config_file=app.config["CONFIG_FILE"]
-        )
 
-        if not asset_urls:
-            self.error = f"cannot get url(s) in input did {self.did}."
-            return False
+        main_input = [
+            {
+                key: self.data[key]
+                for key in self.data
+                if key in ["documentId", "transferTxId", "serviceId"]
+            }
+        ]
 
-        self.validated_input_dict = dict(
-            {"index": index, "id": self.did, "url": asset_urls}
-        )
-
-        return True
-
-    def validate_additional_input(self):
-        """Validates additional input dictionary."""
-        self.validated_additional_input = []
-
-        if not self.data.get("additionalInputs"):
-            return True
-
-        additional_input = self.data["additionalInputs"]
+        additional_inputs = self.data.get("additionalInputs")
 
         try:
-            if isinstance(additional_input, str):
-                additional_input = json.loads(additional_input)
+            if additional_inputs and isinstance(additional_inputs, str):
+                additional_inputs = json.loads(additional_inputs)
         except json.decoder.JSONDecodeError:
             self.error = "Additional input is invalid or can not be decoded."
             return False
 
-        for index, input_item in enumerate(additional_input):
-            input_item.update(
-                {
-                    key: self.data[key]
-                    for key in self.data
-                    if key.startswith("algorithm")
-                }
-            )
+        if not additional_inputs:
+            additional_inputs = []
+
+        all_data = main_input + additional_inputs
+        algo_data_per_item = {
+            key: self.data[key] for key in self.data if key.startswith("algorithm")
+        }
+
+        self.validated_input_dict = []
+
+        for index, input_item in enumerate(all_data):
+            input_item.update(algo_data_per_item)
             input_item_validator = InputItemValidator(
                 self.consumer_address, self.provider_wallet, input_item, index + 1
             )
             status = input_item_validator.validate()
             if not status:
                 self.error = (
-                    f"Error in additionalInputs at index {index}: "
-                    + input_item_validator.error
-                )
+                    f"Error in input at index {index}: " if index else ""
+                ) + input_item_validator.error
                 return False
 
-            self.validated_additional_input.append(
-                input_item_validator.validated_input_dict
-            )
+            self.validated_input_dict.append(input_item_validator.validated_input_dict)
+
+            if index == 0:
+                self.asset = input_item_validator.asset
+
+        self.validated_algo_dict = input_item_validator.validated_algo_dict
 
         return True
 
@@ -118,64 +106,6 @@ class AlgoValidator:
         )
 
         return True
-
-    def _build_and_validate_algo(self, algo_data):
-        """Returns False if invalid, otherwise sets the validated_algo_dict attribute."""
-        algorithm_did = algo_data.get("algorithmDid")
-
-        if algorithm_did and not algo_data.get("algorithmMeta"):
-            algo = get_asset_from_metadatastore(get_metadata_url(), algorithm_did)
-            try:
-                asset_type = algo.metadata["main"]["type"]
-            except ValueError:
-                asset_type = None
-
-            if asset_type != "algorithm":
-                self.error = f"DID {algorithm_did} is not a valid algorithm"
-                return False
-
-        algorithm_dict = StageAlgoSerializer(
-            self.consumer_address, self.provider_wallet, algo_data
-        ).serialize()
-
-        valid, error_msg = validate_formatted_algorithm_dict(
-            algorithm_dict, algorithm_did
-        )
-
-        if not valid:
-            self.error = error_msg
-            return False
-
-        self.validated_algo_dict = algorithm_dict
-
-        return True
-
-    def validate_algo(self):
-        """Validates algorithm details that allow the algo dict to be built."""
-        algorithm_meta = self.data.get("algorithmMeta")
-        algorithm_did = self.data.get("algorithmDid")
-
-        privacy_options = self.service.main.get("privacy", {})
-
-        if self.service is None:
-            self.error = f"This DID has no compute service {self.did}."
-            return False
-
-        if algorithm_meta and privacy_options.get("allowRawAlgorithm", True) is False:
-            self.error = f"cannot run raw algorithm on this did {self.did}."
-            return False
-
-        trusted_algorithms = privacy_options.get("trustedAlgorithms", [])
-
-        if (
-            algorithm_did
-            and trusted_algorithms
-            and algorithm_did not in trusted_algorithms
-        ):
-            self.error = f"cannot run raw algorithm on this did {self.did}."
-            return False
-
-        return self._build_and_validate_algo(self.data)
 
 
 def validate_formatted_algorithm_dict(algorithm_dict, algorithm_did):
@@ -216,16 +146,16 @@ class InputItemValidator(AlgoValidator):
         self.index = index
 
     def validate(self):
-        required_keys = ["did", "transferTxId", "serviceId"]
+        required_keys = ["documentId", "transferTxId", "serviceId"]
 
         for req_item in required_keys:
             if not self.data.get(req_item) and not (
                 req_item == "serviceId" and self.data.get(req_item) == 0
             ):
-                self.error = f"No {req_item} in additionalInputs."
+                self.error = f"No {req_item} in input item."
                 return False
 
-        self.did = self.data.get("did")
+        self.did = self.data.get("documentId")
         try:
             self.asset = get_asset_from_metadatastore(get_metadata_url(), self.did)
         except ValueError:
@@ -245,16 +175,91 @@ class InputItemValidator(AlgoValidator):
             ServiceTypes.ASSET_ACCESS,
             ServiceTypes.CLOUD_COMPUTE,
         ]:
-            self.error = "Services in additionalInputs can only be access or compute."
+            self.error = "Services in input can only be access or compute."
             return False
 
         if (
             self.service.type == ServiceTypes.CLOUD_COMPUTE
             and not is_this_same_provider(self.service.service_endpoint)
         ):
-            self.error = "Services in additionalInputs with compute type must be in the same provider you are calling."
+            self.error = "Services in input with compute type must be in the same provider you are calling."
             return False
 
-        return super().validate_input(self.index) and (
-            self.service.type != ServiceTypes.CLOUD_COMPUTE or super().validate_algo()
+        if self.service.type != ServiceTypes.CLOUD_COMPUTE and self.index == 0:
+            self.error = "Service for main asset must be compute."
+            return False
+
+        asset_urls = get_asset_download_urls(
+            self.asset, self.provider_wallet, config_file=app.config["CONFIG_FILE"]
         )
+
+        if not asset_urls:
+            self.error = f"cannot get url(s) in input did {self.did}."
+            return False
+
+        if not self.validate_algo():
+            return False
+
+        self.validated_input_dict = dict(
+            {"index": self.index, "id": self.did, "url": asset_urls}
+        )
+
+        return True
+
+    def validate_algo(self):
+        """Validates algorithm details that allow the algo dict to be built."""
+        algorithm_meta = self.data.get("algorithmMeta")
+        algorithm_did = self.data.get("algorithmDid")
+
+        privacy_options = self.service.main.get("privacy", {})
+
+        if self.service is None:
+            self.error = f"This DID has no compute service {self.did}."
+            return False
+
+        if algorithm_meta and privacy_options.get("allowRawAlgorithm", True) is False:
+            self.error = f"cannot run raw algorithm on this did {self.did}."
+            return False
+
+        trusted_algorithms = privacy_options.get("trustedAlgorithms", [])
+
+        if (
+            algorithm_did
+            and trusted_algorithms
+            and algorithm_did not in trusted_algorithms
+        ):
+            self.error = f"cannot run raw algorithm on this did {self.did}."
+            return False
+
+        return self._build_and_validate_algo(self.data)
+
+    def _build_and_validate_algo(self, algo_data):
+        """Returns False if invalid, otherwise sets the validated_algo_dict attribute."""
+        algorithm_did = algo_data.get("algorithmDid")
+
+        if algorithm_did and not algo_data.get("algorithmMeta"):
+            algo = get_asset_from_metadatastore(get_metadata_url(), algorithm_did)
+            try:
+                asset_type = algo.metadata["main"]["type"]
+            except ValueError:
+                asset_type = None
+
+            if asset_type != "algorithm":
+                self.error = f"DID {algorithm_did} is not a valid algorithm"
+                return False
+
+        algorithm_dict = StageAlgoSerializer(
+            self.consumer_address, self.provider_wallet, algo_data
+        ).serialize()
+
+        valid, error_msg = validate_formatted_algorithm_dict(
+            algorithm_dict, algorithm_did
+        )
+
+        if not valid:
+            self.error = error_msg
+            return False
+
+        self.validated_algo_dict = algorithm_dict
+
+        return True
