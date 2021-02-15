@@ -84,7 +84,7 @@ def simple_flow_consume():
 
     try:
         _ = DataToken(dt_address)
-        # TODO: Verify that the datatoken is owned by this provider's account
+        # TODO: verify that the datatoken is owned by this provider's account
 
         # TODO: Enable this check for the token transfer.
         # validate_order(
