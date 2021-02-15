@@ -157,7 +157,7 @@ def test_fails(client):
         "algorithmDid": alg_ddo.did,
         "algorithmDataToken": alg_data_token,
         "algorithmTransferTxId": alg_tx_id,
-        "additionalInput": "",
+        "additionalInputs": "",
     }
 
     validator = AlgoValidator(consumer_address, provider_wallet, data, sa, dataset)
@@ -170,7 +170,7 @@ def test_fails(client):
         "algorithmDid": alg_ddo.did,
         "algorithmDataToken": alg_data_token,
         "algorithmTransferTxId": alg_tx_id,
-        "additionalInput": "i can not be decoded in json!",
+        "additionalInputs": "i can not be decoded in json!",
     }
 
     validator = AlgoValidator(consumer_address, provider_wallet, data, sa, dataset)
@@ -184,14 +184,14 @@ def test_fails(client):
         "algorithmDid": alg_ddo.did,
         "algorithmDataToken": alg_data_token,
         "algorithmTransferTxId": alg_tx_id,
-        "additionalInput": [{"transferTxId": tx_id, "serviceId": sa.index}],
+        "additionalInputs": [{"transferTxId": tx_id, "serviceId": sa.index}],
     }
 
     validator = AlgoValidator(consumer_address, provider_wallet, data, sa, dataset)
     assert validator.validate() is False
     assert (
         validator.error
-        == "Error in additionalInput at index 0: No did in additionalInput."
+        == "Error in additionalInputs at index 0: No did in additionalInputs."
     )
 
     # Did is not valid
@@ -201,7 +201,7 @@ def test_fails(client):
         "algorithmDid": alg_ddo.did,
         "algorithmDataToken": alg_data_token,
         "algorithmTransferTxId": alg_tx_id,
-        "additionalInput": [
+        "additionalInputs": [
             {"did": "i am not a did", "transferTxId": tx_id, "serviceId": sa.index}
         ],
     }
@@ -210,7 +210,7 @@ def test_fails(client):
     assert validator.validate() is False
     assert (
         validator.error
-        == "Error in additionalInput at index 0: Asset for did i am not a did not found."
+        == "Error in additionalInputs at index 0: Asset for did i am not a did not found."
     )
 
     # Service is not compute, nor access
@@ -225,7 +225,7 @@ def test_fails(client):
         "algorithmDid": alg_ddo.did,
         "algorithmDataToken": alg_data_token,
         "algorithmTransferTxId": alg_tx_id,
-        "additionalInput": [
+        "additionalInputs": [
             {"did": did, "transferTxId": tx_id, "serviceId": other_service.index}
         ],
     }
@@ -234,7 +234,7 @@ def test_fails(client):
     assert validator.validate() is False
     assert (
         validator.error
-        == "Error in additionalInput at index 0: Services in additionalInput can only be access or compute."
+        == "Error in additionalInputs at index 0: Services in additionalInputs can only be access or compute."
     )
 
     # Additional input has other trusted algs
@@ -256,7 +256,7 @@ def test_fails(client):
         "algorithmDid": alg_ddo.did,
         "algorithmDataToken": alg_data_token,
         "algorithmTransferTxId": alg_tx_id,
-        "additionalInput": [
+        "additionalInputs": [
             {"did": trust_did, "transferTxId": trust_tx_id, "serviceId": trust_sa.index}
         ],
     }
@@ -265,5 +265,5 @@ def test_fails(client):
     assert validator.validate() is False
     assert (
         validator.error
-        == f"Error in additionalInput at index 0: cannot run raw algorithm on this did {trust_did}."
+        == f"Error in additionalInputs at index 0: cannot run raw algorithm on this did {trust_did}."
     )

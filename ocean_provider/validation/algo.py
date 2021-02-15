@@ -65,10 +65,10 @@ class AlgoValidator:
         """Validates additional input dictionary."""
         self.validated_additional_input = []
 
-        if not self.data.get("additionalInput"):
+        if not self.data.get("additionalInputs"):
             return True
 
-        additional_input = self.data["additionalInput"]
+        additional_input = self.data["additionalInputs"]
 
         try:
             if isinstance(additional_input, str):
@@ -91,7 +91,7 @@ class AlgoValidator:
             status = input_item_validator.validate()
             if not status:
                 self.error = (
-                    f"Error in additionalInput at index {index}: "
+                    f"Error in additionalInputs at index {index}: "
                     + input_item_validator.error
                 )
                 return False
@@ -222,7 +222,7 @@ class InputItemValidator(AlgoValidator):
             if not self.data.get(req_item) and not (
                 req_item == "serviceId" and self.data.get(req_item) == 0
             ):
-                self.error = f"No {req_item} in additionalInput."
+                self.error = f"No {req_item} in additionalInputs."
                 return False
 
         self.did = self.data.get("did")
@@ -245,14 +245,14 @@ class InputItemValidator(AlgoValidator):
             ServiceTypes.ASSET_ACCESS,
             ServiceTypes.CLOUD_COMPUTE,
         ]:
-            self.error = "Services in additionalInput can only be access or compute."
+            self.error = "Services in additionalInputs can only be access or compute."
             return False
 
         if (
             self.service.type == ServiceTypes.CLOUD_COMPUTE
             and not is_this_same_provider(self.service.service_endpoint)
         ):
-            self.error = "Services in additionalInput with compute type must be in the same provider you are calling."
+            self.error = "Services in additionalInputs with compute type must be in the same provider you are calling."
             return False
 
         return super().validate_input(self.index) and (
