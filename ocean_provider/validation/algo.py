@@ -222,20 +222,32 @@ class InputItemValidator(AlgoValidator):
             self.error = "Service for main asset must be compute."
             return False
 
-        asset_urls = get_asset_download_urls(
-            self.asset, self.provider_wallet, config_file=app.config["CONFIG_FILE"]
-        )
+        if is_this_same_provider(self.service.service_endpoint):
+            asset_urls = get_asset_download_urls(
+                self.asset, self.provider_wallet, config_file=app.config["CONFIG_FILE"]
+            )
 
-        if not asset_urls:
-            self.error = f"cannot get url(s) in input did {self.did}."
-            return False
+            if not asset_urls:
+                self.error = f"cannot get url(s) in input did {self.did}."
+                return False
 
-        if not self.validate_algo():
-            return False
+            if not self.validate_algo():
+                return False
 
-        self.validated_input_dict = dict(
-            {"index": self.index, "id": self.did, "url": asset_urls}
-        )
+            self.validated_input_dict = dict(
+                {"index": self.index, "id": self.did, "url": asset_urls}
+            )
+        else:
+            self.validated_input_dict = dict(
+                {
+                    "index": self.index,
+                    "id": self.did,
+                    "remote": {
+                        "txid": self.data.get("transferTxId"),
+                        "serviceIndex": self.service.index,
+                    },
+                }
+            )
 
         return True
 
