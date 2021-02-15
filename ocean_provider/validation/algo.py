@@ -210,10 +210,13 @@ class InputItemValidator(AlgoValidator):
         ]:
             self.error = "Services in input can only be access or compute."
             return False
-
+        
+        asset_urls = get_asset_download_urls(
+                self.asset, self.provider_wallet, config_file=app.config["CONFIG_FILE"]
+            )
         if (
             self.service.type == ServiceTypes.CLOUD_COMPUTE
-            and not is_this_same_provider(self.service.service_endpoint)
+            and not asset_urls
         ):
             self.error = "Services in input with compute type must be in the same provider you are calling."
             return False
@@ -222,15 +225,7 @@ class InputItemValidator(AlgoValidator):
             self.error = "Service for main asset must be compute."
             return False
 
-        if is_this_same_provider(self.service.service_endpoint):
-            asset_urls = get_asset_download_urls(
-                self.asset, self.provider_wallet, config_file=app.config["CONFIG_FILE"]
-            )
-
-            if not asset_urls:
-                self.error = f"cannot get url(s) in input did {self.did}."
-                return False
-
+        if asset_urls:
             if not self.validate_algo():
                 return False
 
