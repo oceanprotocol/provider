@@ -384,7 +384,8 @@ def download():
         file_attributes = asset.metadata["main"]["files"][file_index]
         content_type = file_attributes.get("contentType", None)
         url = get_asset_url_at_index(file_index, asset, provider_wallet)
-
+        if not url:
+          return jsonify(error='Cannot decrypt files for this asset'), 500  
         download_url = get_download_url(url, app.config["CONFIG_FILE"])
         logger.info(
             f"Done processing consume request for asset {did}, " f" url {download_url}"

@@ -123,6 +123,8 @@ def get_asset_url_at_index(url_index, asset, wallet):
     )
     try:
         files_list = get_asset_urls(asset, wallet)
+        if not files_list:
+            return None
         if url_index >= len(files_list):
             raise ValueError(f'url index "{url_index}"" is invalid.')
         return files_list[url_index]
@@ -140,6 +142,8 @@ def get_asset_urls(asset, wallet):
     logger.debug(f"get_asset_urls(): did={asset.did}, provider={wallet.address}")
     try:
         files_list = get_asset_files_list(asset, wallet)
+        if not files_list:
+            return None
         input_urls = []
         for i, file_meta_dict in enumerate(files_list):
             if not file_meta_dict or not isinstance(file_meta_dict, dict):
