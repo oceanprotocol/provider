@@ -80,9 +80,7 @@ class StageAlgoSerializer:
         dict_template["id"] = algorithm_did
         dict_template["rawcode"] = ""
 
-        asset_urls = get_asset_url_at_index(
-                0, algo_asset, self.provider_wallet
-            )
+        asset_urls = get_asset_url_at_index(0, algo_asset, self.provider_wallet)
         if asset_urls:
             dict_template["url"] = asset_urls
         else:

@@ -8,7 +8,6 @@ from ocean_provider.util import (
     get_asset_download_urls,
     get_metadata_url,
 )
-
 from ocean_provider.utils.basics import get_asset_from_metadatastore
 from ocean_utils.agreements.service_types import ServiceTypes
 
@@ -210,14 +209,12 @@ class InputItemValidator(AlgoValidator):
         ]:
             self.error = "Services in input can only be access or compute."
             return False
-        
+
         asset_urls = get_asset_download_urls(
-                self.asset, self.provider_wallet, config_file=app.config["CONFIG_FILE"]
-            )
-        if (
-            self.service.type == ServiceTypes.CLOUD_COMPUTE
-            and not asset_urls
-        ):
+            self.asset, self.provider_wallet, config_file=app.config["CONFIG_FILE"]
+        )
+
+        if self.service.type == ServiceTypes.CLOUD_COMPUTE and not asset_urls:
             self.error = "Services in input with compute type must be in the same provider you are calling."
             return False
 

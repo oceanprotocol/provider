@@ -14,10 +14,10 @@ def do_encrypt(document, wallet: Wallet = None, public_key=None):
 def do_decrypt(encrypted_document, provider_wallet):
     key = get_private_key(provider_wallet)
     try:
-        return ecies.decrypt(key.to_hex(), Web3.toBytes(hexstr=encrypted_document)).decode(
-            encoding="utf-8"
-        )
-    except:
+        return ecies.decrypt(
+            key.to_hex(), Web3.toBytes(hexstr=encrypted_document)
+        ).decode(encoding="utf-8")
+    except:  # noqa
         return None
 
 

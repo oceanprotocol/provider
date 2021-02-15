@@ -15,6 +15,7 @@ from ocean_provider.util import (
     build_download_response,
     get_asset_download_urls,
     get_asset_url_at_index,
+    get_compute_address,
     get_download_url,
     get_metadata_url,
     get_request_data,
@@ -22,7 +23,6 @@ from ocean_provider.util import (
     record_consume_request,
     validate_order,
     validate_transfer_not_used_for_other_service,
-    get_compute_address
 )
 from ocean_provider.util_url import check_url_details
 from ocean_provider.utils.basics import (
@@ -292,7 +292,7 @@ def initialize():
             "numTokens": float(service.get_cost()),
             "dataToken": token_address,
             "nonce": get_nonce(consumer_address),
-            "computeAddress": get_compute_address()
+            "computeAddress": get_compute_address(),
         }
         return Response(
             json.dumps(approve_params),
@@ -385,7 +385,8 @@ def download():
         content_type = file_attributes.get("contentType", None)
         url = get_asset_url_at_index(file_index, asset, provider_wallet)
         if not url:
-          return jsonify(error='Cannot decrypt files for this asset'), 500  
+            return jsonify(error="Cannot decrypt files for this asset."), 400
+
         download_url = get_download_url(url, app.config["CONFIG_FILE"])
         logger.info(
             f"Done processing consume request for asset {did}, " f" url {download_url}"
