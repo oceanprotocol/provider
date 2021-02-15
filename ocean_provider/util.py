@@ -105,6 +105,8 @@ def get_asset_files_list(asset, wallet):
         if encrypted_files.startswith("{"):
             encrypted_files = json.loads(encrypted_files)["encryptedDocument"]
         files_str = do_decrypt(encrypted_files, wallet)
+        if not files_str:
+            return None
         logger.debug(f"Got decrypted files str {files_str}")
         files_list = json.loads(files_str)
         if not isinstance(files_list, list):
