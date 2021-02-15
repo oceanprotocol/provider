@@ -196,7 +196,7 @@ class InputItemValidator(AlgoValidator):
             return False
 
         matching_services = [
-            s for s in self.asset.services if s.index == self.data["serviceId"]
+            s for s in self.asset.services if s.index == int(self.data["serviceId"])
         ]
         if matching_services:
             self.service = matching_services[0]
