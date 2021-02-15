@@ -1,12 +1,13 @@
-import json
-
 from ocean_provider.myapp import app
 from ocean_provider.serializers import StageAlgoSerializer
 from ocean_provider.util import (
-    build_stage_dict,
     build_stage_output_dict,
+    decode_from_data,
+    filter_dictionary,
+    filter_dictionary_starts_with,
     get_asset_download_urls,
     get_metadata_url,
+    get_service_at_index,
 )
 from ocean_provider.utils.basics import get_asset_from_metadatastore
 from ocean_utils.agreements.service_types import ServiceTypes
@@ -29,11 +30,17 @@ class AlgoValidator:
             return False
 
         self.stages.append(
-            build_stage_dict(
-                self.validated_input_dict,
-                self.validated_algo_dict,
-                self.validated_output_dict,
-            )
+            {
+                "index": 0,
+                "input": self.validated_input_dict,
+                "compute": {
+                    "Instances": 1,
+                    "namespace": "ocean-compute",
+                    "maxtime": 3600,
+                },
+                "algorithm": self.validated_algo_dict,
+                "output": self.validated_output_dict,
+            }
         )
 
         return True
@@ -42,42 +49,29 @@ class AlgoValidator:
         """Validates input dictionary."""
 
         main_input = [
-            {
-                key: self.data[key]
-                for key in self.data
-                if key in ["documentId", "transferTxId", "serviceId"]
-            }
+            filter_dictionary(self.data, ["documentId", "transferTxId", "serviceId"])
         ]
+        additional_inputs = decode_from_data(self.data, "additionalInputs")
 
-        additional_inputs = self.data.get("additionalInputs")
-
-        try:
-            if additional_inputs and isinstance(additional_inputs, str):
-                additional_inputs = json.loads(additional_inputs)
-        except json.decoder.JSONDecodeError:
+        if additional_inputs == -1:
             self.error = "Additional input is invalid or can not be decoded."
             return False
 
-        if not additional_inputs:
-            additional_inputs = []
-
         all_data = main_input + additional_inputs
-        algo_data = {
-            key: self.data[key] for key in self.data if key.startswith("algorithm")
-        }
+        algo_data = filter_dictionary_starts_with(self.data, "algorithm")
 
         self.validated_input_dict = []
 
         for index, input_item in enumerate(all_data):
             input_item.update(algo_data)
             input_item_validator = InputItemValidator(
-                self.consumer_address, self.provider_wallet, input_item, index + 1
+                self.consumer_address, self.provider_wallet, input_item, index
             )
+
             status = input_item_validator.validate()
             if not status:
-                self.error = (
-                    f"Error in input at index {index}: " if index else ""
-                ) + input_item_validator.error
+                prefix = f"Error in input at index {index}: " if index else ""
+                self.error = prefix + input_item_validator.error
                 return False
 
             self.validated_input_dict.append(input_item_validator.validated_input_dict)
@@ -93,12 +87,9 @@ class AlgoValidator:
 
     def validate_output(self):
         """Validates output dictionary after stage build."""
-        output_def = self.data.get("output", dict())
+        output_def = decode_from_data(self.data, "output", dec_type="dict")
 
-        try:
-            if output_def and isinstance(output_def, str):
-                output_def = json.loads(output_def)
-        except json.decoder.JSONDecodeError:
+        if output_def == -1:
             self.error = "Output is invalid or can not be decoded."
             return False
 
@@ -194,12 +185,9 @@ class InputItemValidator(AlgoValidator):
             self.error = f"Asset for did {self.did} not found."
             return False
 
-        matching_services = [
-            s for s in self.asset.services if s.index == int(self.data["serviceId"])
-        ]
-        if matching_services:
-            self.service = matching_services[0]
-        else:
+        self.service = get_service_at_index(self.asset, self.data["serviceId"])
+
+        if not self.service:
             self.error = f"Service index {self.data['serviceId']} not found."
             return False
 
@@ -249,10 +237,6 @@ class InputItemValidator(AlgoValidator):
         algorithm_did = self.data.get("algorithmDid")
 
         privacy_options = self.service.main.get("privacy", {})
-
-        if self.service is None:
-            self.error = f"This DID has no compute service {self.did}."
-            return False
 
         if algorithm_meta and privacy_options.get("allowRawAlgorithm", True) is False:
             self.error = f"cannot run raw algorithm on this did {self.did}."

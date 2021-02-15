@@ -331,13 +331,38 @@ def build_stage_output_dict(output_def, asset, owner, provider_wallet):
     )
 
 
-def build_stage_dict(input_list, algorithm_dict, output_dict, index=0):
-    return dict(
-        {
-            "index": index,
-            "input": input_list,
-            "compute": {"Instances": 1, "namespace": "ocean-compute", "maxtime": 3600},
-            "algorithm": algorithm_dict,
-            "output": output_dict,
-        }
-    )
+def filter_dictionary(dictionary, keys):
+    """Filters a dictionary from a list of keys."""
+    return {key: dictionary[key] for key in dictionary if key in keys}
+
+
+def filter_dictionary_starts_with(dictionary, prefix):
+    """Filters a dictionary from a key prefix."""
+    return {key: dictionary[key] for key in dictionary if key.startswith(prefix)}
+
+
+def decode_from_data(data, key, dec_type="list"):
+    """Retrieves a dictionary key as a decoded dictionary or list."""
+    default_value = list() if dec_type == "list" else dict()
+    data = data.get(key, default_value)
+
+    if data == "":
+        return default_value
+
+    if data and isinstance(data, str):
+        try:
+            data = json.loads(data)
+        except json.decoder.JSONDecodeError:
+            return -1
+
+    return data
+
+
+def get_service_at_index(asset, index):
+    """Gets asset's service at index."""
+    matching_services = [s for s in asset.services if s.index == int(index)]
+
+    if not matching_services:
+        return None
+
+    return matching_services[0]
