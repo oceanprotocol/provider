@@ -8,7 +8,7 @@ from ocean_provider.util import (
     get_asset_download_urls,
     get_metadata_url,
 )
-from ocean_provider.util_url import is_this_same_provider
+
 from ocean_provider.utils.basics import get_asset_from_metadatastore
 from ocean_utils.agreements.service_types import ServiceTypes
 
