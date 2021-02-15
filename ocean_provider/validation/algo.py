@@ -63,14 +63,14 @@ class AlgoValidator:
             additional_inputs = []
 
         all_data = main_input + additional_inputs
-        algo_data_per_item = {
+        algo_data = {
             key: self.data[key] for key in self.data if key.startswith("algorithm")
         }
 
         self.validated_input_dict = []
 
         for index, input_item in enumerate(all_data):
-            input_item.update(algo_data_per_item)
+            input_item.update(algo_data)
             input_item_validator = InputItemValidator(
                 self.consumer_address, self.provider_wallet, input_item, index + 1
             )
@@ -86,7 +86,9 @@ class AlgoValidator:
             if index == 0:
                 self.asset = input_item_validator.asset
 
-        self.validated_algo_dict = input_item_validator.validated_algo_dict
+        status = self._build_and_validate_algo(algo_data)
+        if not status:
+            return False
 
         return True
 
@@ -104,6 +106,37 @@ class AlgoValidator:
         self.validated_output_dict = build_stage_output_dict(
             output_def, self.asset, self.consumer_address, self.provider_wallet
         )
+
+        return True
+
+    def _build_and_validate_algo(self, algo_data):
+        """Returns False if invalid, otherwise sets the validated_algo_dict attribute."""
+        algorithm_did = algo_data.get("algorithmDid")
+
+        if algorithm_did and not algo_data.get("algorithmMeta"):
+            algo = get_asset_from_metadatastore(get_metadata_url(), algorithm_did)
+            try:
+                asset_type = algo.metadata["main"]["type"]
+            except ValueError:
+                asset_type = None
+
+            if asset_type != "algorithm":
+                self.error = f"DID {algorithm_did} is not a valid algorithm"
+                return False
+
+        algorithm_dict = StageAlgoSerializer(
+            self.consumer_address, self.provider_wallet, algo_data
+        ).serialize()
+
+        valid, error_msg = validate_formatted_algorithm_dict(
+            algorithm_dict, algorithm_did
+        )
+
+        if not valid:
+            self.error = error_msg
+            return False
+
+        self.validated_algo_dict = algorithm_dict
 
         return True
 
@@ -230,36 +263,5 @@ class InputItemValidator(AlgoValidator):
         ):
             self.error = f"cannot run raw algorithm on this did {self.did}."
             return False
-
-        return self._build_and_validate_algo(self.data)
-
-    def _build_and_validate_algo(self, algo_data):
-        """Returns False if invalid, otherwise sets the validated_algo_dict attribute."""
-        algorithm_did = algo_data.get("algorithmDid")
-
-        if algorithm_did and not algo_data.get("algorithmMeta"):
-            algo = get_asset_from_metadatastore(get_metadata_url(), algorithm_did)
-            try:
-                asset_type = algo.metadata["main"]["type"]
-            except ValueError:
-                asset_type = None
-
-            if asset_type != "algorithm":
-                self.error = f"DID {algorithm_did} is not a valid algorithm"
-                return False
-
-        algorithm_dict = StageAlgoSerializer(
-            self.consumer_address, self.provider_wallet, algo_data
-        ).serialize()
-
-        valid, error_msg = validate_formatted_algorithm_dict(
-            algorithm_dict, algorithm_did
-        )
-
-        if not valid:
-            self.error = error_msg
-            return False
-
-        self.validated_algo_dict = algorithm_dict
 
         return True
