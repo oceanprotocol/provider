@@ -312,13 +312,9 @@ def computeStart():
     data = get_request_data(request)
 
     try:
-        (
-            asset,
-            service,
-            did,
-            consumer_address,
-            token_address,
-        ) = process_consume_request(data)
+        (_, service, did, consumer_address, token_address) = process_consume_request(
+            data
+        )
 
         service_id = data.get("serviceId")
         tx_id = data.get("transferTxId")
