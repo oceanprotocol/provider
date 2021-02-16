@@ -1,3 +1,4 @@
+from eth_utils import add_0x_prefix
 from ocean_provider.myapp import app
 from ocean_provider.serializers import StageAlgoSerializer
 from ocean_provider.util import (
@@ -8,9 +9,13 @@ from ocean_provider.util import (
     get_asset_download_urls,
     get_metadata_url,
     get_service_at_index,
+    record_consume_request,
+    validate_order,
+    validate_transfer_not_used_for_other_service,
 )
 from ocean_provider.utils.basics import get_asset_from_metadatastore
 from ocean_utils.agreements.service_types import ServiceTypes
+from ocean_utils.did import did_to_id
 
 
 class AlgoValidator:
@@ -19,7 +24,7 @@ class AlgoValidator:
         self.consumer_address = consumer_address
         self.provider_wallet = provider_wallet
         self.data = data
-        self.stages = []
+        self.workflow = dict({"stages": []})
 
     def validate(self):
         """Validates for input and output contents."""
@@ -29,7 +34,7 @@ class AlgoValidator:
         if not self.validate_output():
             return False
 
-        self.stages.append(
+        self.workflow["stages"].append(
             {
                 "index": 0,
                 "input": self.validated_input_dict,
@@ -229,7 +234,7 @@ class InputItemValidator(AlgoValidator):
                 }
             )
 
-        return True
+        return self.validate_usage()
 
     def validate_algo(self):
         """Validates algorithm details that allow the algo dict to be built."""
@@ -250,6 +255,42 @@ class InputItemValidator(AlgoValidator):
             and algorithm_did not in trusted_algorithms
         ):
             self.error = f"cannot run raw algorithm on this did {self.did}."
+            return False
+
+        return True
+
+    def validate_usage(self):
+        """Verify that the tokens have been transferred to the provider's wallet."""
+        tx_id = self.data.get("transferTxId")
+        token_address = self.asset._other_values["dataToken"]
+        try:
+            _tx, _order_log, _transfer_log = validate_order(
+                self.consumer_address,
+                token_address,
+                float(self.service.get_cost()),
+                tx_id,
+                add_0x_prefix(did_to_id(self.did))
+                if self.did.startswith("did:")
+                else self.did,
+                self.service.index,
+            )
+            validate_transfer_not_used_for_other_service(
+                self.did,
+                self.service.index,
+                tx_id,
+                self.consumer_address,
+                token_address,
+            )
+            record_consume_request(
+                self.did,
+                self.service.index,
+                tx_id,
+                self.consumer_address,
+                token_address,
+                self.service.get_cost(),
+            )
+        except Exception:
+            self.error = f"Order for serviceId {self.service.index} is not valid."
             return False
 
         return True

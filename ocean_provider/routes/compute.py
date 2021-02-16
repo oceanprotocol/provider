@@ -3,7 +3,6 @@
 import json
 import logging
 
-from eth_utils import add_0x_prefix
 from flask import Response, jsonify, request
 from flask_sieve import validate
 from ocean_lib.web3_internal.utils import add_ethereum_prefix_and_hash_msg
@@ -15,10 +14,6 @@ from ocean_provider.util import (
     get_compute_endpoint,
     get_request_data,
     process_compute_request,
-    process_consume_request,
-    record_consume_request,
-    validate_order,
-    validate_transfer_not_used_for_other_service,
 )
 from ocean_provider.utils.accounts import verify_signature
 from ocean_provider.utils.basics import (
@@ -32,7 +27,6 @@ from ocean_provider.validation.requests import (
     ComputeStartRequest,
     UnsignedComputeRequest,
 )
-from ocean_utils.did import did_to_id
 from ocean_utils.http_requests.requests_session import get_requests_session
 
 from . import services
@@ -312,48 +306,23 @@ def computeStart():
     data = get_request_data(request)
 
     try:
-        (_, service, did, consumer_address, token_address) = process_consume_request(
-            data
-        )
-
-        service_id = data.get("serviceId")
-        tx_id = data.get("transferTxId")
-
-        # Verify that  the number of required tokens has been
-        # transferred to the provider's wallet.
-
-        _tx, _order_log, _transfer_log = validate_order(
-            consumer_address,
-            token_address,
-            float(service.get_cost()),
-            tx_id,
-            add_0x_prefix(did_to_id(did)) if did.startswith("did:") else did,
-            service_id,
-        )
-        validate_transfer_not_used_for_other_service(
-            did, service_id, tx_id, consumer_address, token_address
-        )
-        record_consume_request(
-            did, service_id, tx_id, consumer_address, token_address, service.get_cost()
-        )
-
+        consumer_address = data.get("consumerAddress")
         validator = AlgoValidator(consumer_address, provider_wallet, data)
 
         status = validator.validate()
         if not status:
             return jsonify(error=validator.error), 400
 
-        stages = validator.stages
-
-        #########################
-        # WORKFLOW
-        workflow = dict({"stages": stages})
-
+        workflow = validator.workflow
         # workflow is ready, push it to operator
         logger.info("Sending: %s", workflow)
 
+        tx_id = data.get("transferTxId")
+        did = data.get("documentId")
+
         msg_to_sign = f"{provider_wallet.address}{did}"
         msg_hash = add_ethereum_prefix_and_hash_msg(msg_to_sign)
+
         payload = {
             "workflow": workflow,
             "providerSignature": Web3Helper.sign_hash(msg_hash, provider_wallet),
