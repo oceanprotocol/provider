@@ -14,11 +14,12 @@ from ocean_provider.util import (
     validate_transfer_not_used_for_other_service,
 )
 from ocean_provider.utils.basics import get_asset_from_metadatastore
+from ocean_utils.agreements.service_agreement import ServiceAgreement
 from ocean_utils.agreements.service_types import ServiceTypes
 from ocean_utils.did import did_to_id
 
 
-class AlgoValidator:
+class WorkflowValidator:
     def __init__(self, consumer_address, provider_wallet, data):
         """Initializes the validator."""
         self.consumer_address = consumer_address
@@ -52,7 +53,6 @@ class AlgoValidator:
 
     def validate_input(self, index=0):
         """Validates input dictionary."""
-
         main_input = [
             filter_dictionary(self.data, ["documentId", "transferTxId", "serviceId"])
         ]
@@ -109,6 +109,9 @@ class AlgoValidator:
         algorithm_did = algo_data.get("algorithmDid")
 
         if algorithm_did and not algo_data.get("algorithmMeta"):
+            algorithm_token_address = algo_data.get("algorithmDataToken")
+            algorithm_tx_id = algo_data.get("algorithmTransferTxId")
+
             algo = get_asset_from_metadatastore(get_metadata_url(), algorithm_did)
             try:
                 asset_type = algo.metadata["main"]["type"]
@@ -117,6 +120,37 @@ class AlgoValidator:
 
             if asset_type != "algorithm":
                 self.error = f"DID {algorithm_did} is not a valid algorithm"
+                return False
+
+            try:
+                service = ServiceAgreement.from_ddo(ServiceTypes.ASSET_ACCESS, algo)
+                _tx, _order_log, _transfer_log = validate_order(
+                    self.consumer_address,
+                    algorithm_token_address,
+                    float(service.get_cost()),
+                    algorithm_tx_id,
+                    add_0x_prefix(did_to_id(algorithm_did))
+                    if algorithm_did.startswith("did:")
+                    else algorithm_did,
+                    service.index,
+                )
+                validate_transfer_not_used_for_other_service(
+                    algorithm_did,
+                    service.index,
+                    algorithm_tx_id,
+                    self.consumer_address,
+                    algorithm_token_address,
+                )
+                record_consume_request(
+                    algorithm_did,
+                    service.index,
+                    algorithm_tx_id,
+                    self.consumer_address,
+                    algorithm_token_address,
+                    service.get_cost(),
+                )
+            except Exception:
+                self.error = "Algorithm is already in use."
                 return False
 
         algorithm_dict = StageAlgoSerializer(
@@ -165,7 +199,7 @@ def validate_formatted_algorithm_dict(algorithm_dict, algorithm_did):
     return True, ""
 
 
-class InputItemValidator(AlgoValidator):
+class InputItemValidator(WorkflowValidator):
     def __init__(self, consumer_address, provider_wallet, data, index):
         """Initializes the input item validator."""
         self.consumer_address = consumer_address

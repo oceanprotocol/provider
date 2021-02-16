@@ -1,16 +1,9 @@
 import json
 
-from eth_utils import add_0x_prefix
-from ocean_provider.util import (
-    get_asset_url_at_index,
-    record_consume_request,
-    validate_order,
-    validate_transfer_not_used_for_other_service,
-)
+from ocean_provider.util import get_asset_url_at_index
 from ocean_provider.utils.basics import get_asset_from_metadatastore, get_config
 from ocean_utils.agreements.service_agreement import ServiceAgreement
 from ocean_utils.agreements.service_types import ServiceTypes
-from ocean_utils.did import did_to_id
 
 
 def get_metadata_url():
@@ -27,7 +20,6 @@ class StageAlgoSerializer:
     def serialize(self):
         algorithm_meta = self.algo_data.get("algorithmMeta")
         algorithm_did = self.algo_data.get("algorithmDid")
-        algorithm_token_address = self.algo_data.get("algorithmDataToken")
         algorithm_tx_id = self.algo_data.get("algorithmTransferTxId")
 
         dict_template = {"id": None, "rawcode": None, "container": None}
@@ -45,37 +37,8 @@ class StageAlgoSerializer:
                 }
             )
 
-        msg = "algorithmDid requires both algorithmDataToken and algorithmTransferTxId."
-        assert algorithm_token_address and algorithm_tx_id, msg
-
         algo_asset = get_asset_from_metadatastore(get_metadata_url(), algorithm_did)
-
         service = ServiceAgreement.from_ddo(ServiceTypes.ASSET_ACCESS, algo_asset)
-        _tx, _order_log, _transfer_log = validate_order(
-            self.consumer_address,
-            algorithm_token_address,
-            float(service.get_cost()),
-            algorithm_tx_id,
-            add_0x_prefix(did_to_id(algorithm_did))
-            if algorithm_did.startswith("did:")
-            else algorithm_did,
-            service.index,
-        )
-        validate_transfer_not_used_for_other_service(
-            algorithm_did,
-            service.index,
-            algorithm_tx_id,
-            self.consumer_address,
-            algorithm_token_address,
-        )
-        record_consume_request(
-            algorithm_did,
-            service.index,
-            algorithm_tx_id,
-            self.consumer_address,
-            algorithm_token_address,
-            service.get_cost(),
-        )
 
         dict_template["id"] = algorithm_did
         dict_template["rawcode"] = ""

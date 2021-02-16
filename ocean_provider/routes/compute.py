@@ -21,7 +21,7 @@ from ocean_provider.utils.basics import (
     get_provider_wallet,
     setup_network,
 )
-from ocean_provider.validation.algo import AlgoValidator
+from ocean_provider.validation.algo import WorkflowValidator
 from ocean_provider.validation.requests import (
     ComputeRequest,
     ComputeStartRequest,
@@ -307,7 +307,7 @@ def computeStart():
 
     try:
         consumer_address = data.get("consumerAddress")
-        validator = AlgoValidator(consumer_address, provider_wallet, data)
+        validator = WorkflowValidator(consumer_address, provider_wallet, data)
 
         status = validator.validate()
         if not status:
