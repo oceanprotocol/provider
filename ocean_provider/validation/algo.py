@@ -1,4 +1,4 @@
-import hashlib as hash
+import hashlib
 import json
 
 from eth_utils import add_0x_prefix
@@ -312,7 +312,7 @@ class InputItemValidator(WorkflowValidator):
             )
             service = algo.get_service(ServiceTypes.METADATA)
 
-            filesChecksum = hash.sha256(
+            filesChecksum = hashlib.sha256(
                 (
                     service.attributes["encryptedFiles"]
                     + json.dumps(service.main["files"])
@@ -328,7 +328,7 @@ class InputItemValidator(WorkflowValidator):
                 )
                 return False
 
-            containerSectionChecksum = hash.sha256(
+            containerSectionChecksum = hashlib.sha256(
                 (json.dumps(service.main["algorithm"]["container"])).encode("utf-8")
             ).hexdigest()
 

@@ -1,4 +1,4 @@
-import hashlib as hash
+import hashlib
 import ipaddress
 import logging
 from urllib.parse import urlparse
@@ -171,7 +171,7 @@ def _get_result_from_url(url, with_checksum=False):
         # fallback on GET request
         return requests.get(url, stream=True, timeout=REQUEST_TIMEOUT), {}
 
-    sha = hash.sha256()
+    sha = hashlib.sha256()
 
     with requests.get(url, stream=True) as r:
         r.raise_for_status()

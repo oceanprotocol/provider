@@ -1,7 +1,7 @@
 #  Copyright 2018 Ocean Protocol Foundation
 #  SPDX-License-Identifier: Apache-2.0
 
-import hashlib as hash
+import hashlib
 import itertools
 import json
 import lzma
@@ -340,13 +340,13 @@ def get_compute_service_descriptor_specific_algo_dids(address, price, metadata, 
         ].append(
             {
                 "did": algo.did,
-                "filesChecksum": hash.sha256(
+                "filesChecksum": hashlib.sha256(
                     (
                         service.attributes["encryptedFiles"]
                         + json.dumps(service.main["files"])
                     ).encode("utf-8")
                 ).hexdigest(),
-                "containerSectionChecksum": hash.sha256(
+                "containerSectionChecksum": hashlib.sha256(
                     (json.dumps(service.main["algorithm"]["container"])).encode("utf-8")
                 ).hexdigest(),
             }
