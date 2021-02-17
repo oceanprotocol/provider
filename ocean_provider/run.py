@@ -75,8 +75,8 @@ def version():
     info["software"] = Metadata.TITLE
     info["version"] = get_version()
     info["network-url"] = config.network_url
-    info["provider-address"] = get_provider_address()
-    info["compute-address"] = get_compute_address()
+    info["providerAddress"] = get_provider_address()
+    info["computeAddress"] = get_compute_address()
     info["serviceEndpoints"] = get_services_endpoints()
     return jsonify(info)
 

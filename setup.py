@@ -31,6 +31,7 @@ install_requirements = [
     "ocean-lib>=0.5.6",
     "requests_testadapter",
     "eciespy",
+    "coincurve>=13,<15",
     "ipaddress",
     "dnspython",
     "flask-sieve==1.2.2",

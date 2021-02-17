@@ -15,6 +15,7 @@ from ocean_provider.util import (
     build_download_response,
     get_asset_download_urls,
     get_asset_url_at_index,
+    get_compute_address,
     get_download_url,
     get_metadata_url,
     get_request_data,
@@ -84,7 +85,7 @@ def simple_flow_consume():
 
     try:
         _ = DataToken(dt_address)
-        # TODO: Verify that the datatoken is owned by this provider's account
+        # TODO: verify that the datatoken is owned by this provider's account
 
         # TODO: Enable this check for the token transfer.
         # validate_order(
@@ -263,14 +264,8 @@ def initialize():
     data = get_request_data(request)
 
     try:
-        (
-            asset,
-            service,
-            _,
-            consumer_address,
-            token_address,
-        ) = process_consume_request(  # noqa
-            data, "initialize"
+        (asset, service, _, consumer_address, token_address) = process_consume_request(
+            data
         )
 
         url = get_asset_url_at_index(0, asset, provider_wallet)
@@ -297,6 +292,7 @@ def initialize():
             "numTokens": float(service.get_cost()),
             "dataToken": token_address,
             "nonce": get_nonce(consumer_address),
+            "computeAddress": get_compute_address(),
         }
         return Response(
             json.dumps(approve_params),
@@ -360,9 +356,7 @@ def download():
             did,
             consumer_address,
             token_address,
-        ) = process_consume_request(  # noqa
-            data, "download"
-        )
+        ) = process_consume_request(data)
         service_id = data.get("serviceId")
         service_type = data.get("serviceType")
         tx_id = data.get("transferTxId")
@@ -390,6 +384,8 @@ def download():
         file_attributes = asset.metadata["main"]["files"][file_index]
         content_type = file_attributes.get("contentType", None)
         url = get_asset_url_at_index(file_index, asset, provider_wallet)
+        if not url:
+            return jsonify(error="Cannot decrypt files for this asset."), 400
 
         download_url = get_download_url(url, app.config["CONFIG_FILE"])
         logger.info(

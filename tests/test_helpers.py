@@ -26,7 +26,9 @@ from ocean_provider.utils.basics import (
     get_asset_from_metadatastore,
     get_datatoken_minter,
 )
+from ocean_utils.agreements.service_agreement import ServiceAgreement
 from ocean_utils.agreements.service_factory import ServiceDescriptor, ServiceFactory
+from ocean_utils.agreements.service_types import ServiceTypes
 from ocean_utils.aquarius.aquarius import Aquarius
 from ocean_utils.ddo.metadata import MetadataMain
 from ocean_utils.ddo.public_key_rsa import PUBLIC_KEY_TYPE_RSA
@@ -50,7 +52,7 @@ def get_ganache_wallet():
     ):
         return Wallet(
             web3,
-            private_key="0xc594c6e5def4bab63ac29eed19a134c130388f74f019bc74b8f4389df2837a58",
+            private_key="0xfd5c1ccea015b6d663618850824154a3b3fb2882c46cefb05b9a93fea8c3d215",
         )
 
     return None
@@ -374,7 +376,7 @@ def get_algorithm_ddo_different_provider(client, wallet):
     return get_registered_ddo(client, wallet, metadata, service_descriptor)
 
 
-def get_dataset_ddo_with_compute_service(client, wallet):
+def comp_ds(client, wallet):
     metadata = get_sample_ddo_with_compute_service()["service"][0]["attributes"]
     metadata["main"]["files"][0]["checksum"] = str(uuid.uuid4())
     service_descriptor = get_compute_service_descriptor(
@@ -384,7 +386,7 @@ def get_dataset_ddo_with_compute_service(client, wallet):
     return get_registered_ddo(client, wallet, metadata, service_descriptor)
 
 
-def get_dataset_ddo_with_compute_service_no_rawalgo(client, wallet):
+def comp_ds_no_rawalgo(client, wallet):
     metadata = get_sample_ddo_with_compute_service()["service"][0]["attributes"]
     metadata["main"]["files"][0]["checksum"] = str(uuid.uuid4())
     service_descriptor = get_compute_service_descriptor_no_rawalgo(
@@ -394,7 +396,7 @@ def get_dataset_ddo_with_compute_service_no_rawalgo(client, wallet):
     return get_registered_ddo(client, wallet, metadata, service_descriptor)
 
 
-def get_dataset_ddo_with_compute_service_specific_algo_dids(client, wallet):
+def comp_ds_specific_algo_dids(client, wallet):
     metadata = get_sample_ddo_with_compute_service()["service"][0]["attributes"]
     metadata["main"]["files"][0]["checksum"] = str(uuid.uuid4())
     service_descriptor = get_compute_service_descriptor_specific_algo_dids(
@@ -404,7 +406,7 @@ def get_dataset_ddo_with_compute_service_specific_algo_dids(client, wallet):
     return get_registered_ddo(client, wallet, metadata, service_descriptor)
 
 
-def get_dataset_ddo_with_compute_service_allow_all_published(client, wallet):
+def comp_ds_allow_all_published(client, wallet):
     metadata = get_sample_ddo_with_compute_service()["service"][0]["attributes"]
     metadata["main"]["files"][0]["checksum"] = str(uuid.uuid4())
     service_descriptor = get_compute_service_descriptor_allow_all_published(
@@ -639,3 +641,51 @@ def send_order(client, ddo, datatoken, service, cons_wallet, expect_failure=Fals
         web3, tx_id, ddo.asset_id, service.index, amount, cons_wallet.address
     )
     return tx_id
+
+
+def build_and_send_ddo_with_compute_service(client, alg_diff=False, asset_type=None):
+    pub_wallet = get_publisher_wallet()
+    cons_wallet = get_consumer_wallet()
+
+    # publish a dataset asset
+    if asset_type == "allow_all_published":
+        dataset_ddo_w_compute_service = comp_ds_allow_all_published(client, pub_wallet)
+    elif asset_type == "specific_algo_dids":
+        dataset_ddo_w_compute_service = comp_ds_specific_algo_dids(client, pub_wallet)
+    else:
+        dataset_ddo_w_compute_service = comp_ds(client, pub_wallet)
+    did = dataset_ddo_w_compute_service.did
+    ddo = dataset_ddo_w_compute_service
+    data_token = dataset_ddo_w_compute_service.data_token_address
+    dt_contract = DataToken(data_token)
+    mint_tokens_and_wait(dt_contract, cons_wallet, pub_wallet)
+
+    # publish an algorithm asset (asset with metadata of type `algorithm`)
+    alg_ddo = (
+        get_algorithm_ddo_different_provider(client, cons_wallet)
+        if alg_diff
+        else get_algorithm_ddo(client, cons_wallet)
+    )
+    alg_data_token = alg_ddo.as_dictionary()["dataToken"]
+    alg_dt_contract = DataToken(alg_data_token)
+    mint_tokens_and_wait(alg_dt_contract, cons_wallet, cons_wallet)
+
+    sa = ServiceAgreement.from_ddo(
+        ServiceTypes.CLOUD_COMPUTE, dataset_ddo_w_compute_service
+    )
+
+    tx_id = send_order(client, ddo, dt_contract, sa, cons_wallet)
+    alg_service = ServiceAgreement.from_ddo(ServiceTypes.ASSET_ACCESS, alg_ddo)
+    alg_tx_id = send_order(client, alg_ddo, alg_dt_contract, alg_service, cons_wallet)
+
+    return (
+        dataset_ddo_w_compute_service,
+        did,
+        tx_id,
+        sa,
+        data_token,
+        alg_ddo,
+        alg_data_token,
+        alg_dt_contract,
+        alg_tx_id,
+    )

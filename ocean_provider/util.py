@@ -20,7 +20,6 @@ from ocean_provider.utils.basics import (
 )
 from ocean_provider.utils.encryption import do_decrypt
 from ocean_utils.agreements.service_agreement import ServiceAgreement
-from ocean_utils.agreements.service_types import ServiceTypes
 from osmosis_driver_interface.osmosis import Osmosis
 from websockets import ConnectionClosed
 
@@ -105,6 +104,8 @@ def get_asset_files_list(asset, wallet):
         if encrypted_files.startswith("{"):
             encrypted_files = json.loads(encrypted_files)["encryptedDocument"]
         files_str = do_decrypt(encrypted_files, wallet)
+        if not files_str:
+            return None
         logger.debug(f"Got decrypted files str {files_str}")
         files_list = json.loads(files_str)
         if not isinstance(files_list, list):
@@ -123,6 +124,8 @@ def get_asset_url_at_index(url_index, asset, wallet):
     )
     try:
         files_list = get_asset_urls(asset, wallet)
+        if not files_list:
+            return None
         if url_index >= len(files_list):
             raise ValueError(f'url index "{url_index}"" is invalid.')
         return files_list[url_index]
@@ -140,6 +143,8 @@ def get_asset_urls(asset, wallet):
     logger.debug(f"get_asset_urls(): did={asset.did}, provider={wallet.address}")
     try:
         files_list = get_asset_files_list(asset, wallet)
+        if not files_list:
+            return None
         input_urls = []
         for i, file_meta_dict in enumerate(files_list):
             if not file_meta_dict or not isinstance(file_meta_dict, dict):
@@ -246,7 +251,7 @@ def record_consume_request(
     return
 
 
-def process_consume_request(data: dict, method: str):
+def process_consume_request(data: dict):
     did = data.get("documentId")
     token_address = data.get("dataToken")
     consumer_address = data.get("consumerAddress")
@@ -294,9 +299,8 @@ def process_compute_request(data):
     return body
 
 
-def build_stage_output_dict(output_def, asset, owner, provider_wallet):
+def build_stage_output_dict(output_def, service_endpoint, owner, provider_wallet):
     config = get_config()
-    service_endpoint = asset.get_service(ServiceTypes.CLOUD_COMPUTE).service_endpoint
     if BaseURLs.ASSETS_URL in service_endpoint:
         service_endpoint = service_endpoint.split(BaseURLs.ASSETS_URL)[0]
 
@@ -316,7 +320,7 @@ def build_stage_output_dict(output_def, asset, owner, provider_wallet):
                     }
                 ),
             ),
-            "metadataUri": output_def.get("metadataUri", config.aquarius_url),
+            "metadataUri": config.aquarius_url,
             "owner": output_def.get("owner", owner),
             "publishOutput": output_def.get("publishOutput", 1),
             "publishAlgorithmLog": output_def.get("publishAlgorithmLog", 1),
@@ -325,13 +329,38 @@ def build_stage_output_dict(output_def, asset, owner, provider_wallet):
     )
 
 
-def build_stage_dict(input_dict, algorithm_dict, output_dict):
-    return dict(
-        {
-            "index": 0,
-            "input": [input_dict],
-            "compute": {"Instances": 1, "namespace": "ocean-compute", "maxtime": 3600},
-            "algorithm": algorithm_dict,
-            "output": output_dict,
-        }
-    )
+def filter_dictionary(dictionary, keys):
+    """Filters a dictionary from a list of keys."""
+    return {key: dictionary[key] for key in dictionary if key in keys}
+
+
+def filter_dictionary_starts_with(dictionary, prefix):
+    """Filters a dictionary from a key prefix."""
+    return {key: dictionary[key] for key in dictionary if key.startswith(prefix)}
+
+
+def decode_from_data(data, key, dec_type="list"):
+    """Retrieves a dictionary key as a decoded dictionary or list."""
+    default_value = list() if dec_type == "list" else dict()
+    data = data.get(key, default_value)
+
+    if data == "":
+        return default_value
+
+    if data and isinstance(data, str):
+        try:
+            data = json.loads(data)
+        except json.decoder.JSONDecodeError:
+            return -1
+
+    return data
+
+
+def get_service_at_index(asset, index):
+    """Gets asset's service at index."""
+    matching_services = [s for s in asset.services if s.index == int(index)]
+
+    if not matching_services:
+        return None
+
+    return matching_services[0]

@@ -3,35 +3,30 @@
 import json
 import logging
 
-from eth_utils import add_0x_prefix
 from flask import Response, jsonify, request
 from flask_sieve import validate
 from ocean_lib.web3_internal.utils import add_ethereum_prefix_and_hash_msg
 from ocean_lib.web3_internal.web3helper import Web3Helper
+from ocean_provider.exceptions import InvalidSignatureError
 from ocean_provider.log import setup_logging
-from ocean_provider.user_nonce import increment_nonce
+from ocean_provider.user_nonce import get_nonce, increment_nonce
 from ocean_provider.util import (
     get_compute_endpoint,
     get_request_data,
     process_compute_request,
-    process_consume_request,
-    record_consume_request,
-    validate_order,
-    validate_transfer_not_used_for_other_service,
 )
+from ocean_provider.utils.accounts import verify_signature
 from ocean_provider.utils.basics import (
     LocalFileAdapter,
     get_provider_wallet,
     setup_network,
 )
-from ocean_provider.validation.algo import AlgoValidator
+from ocean_provider.validation.algo import WorkflowValidator
 from ocean_provider.validation.requests import (
     ComputeRequest,
     ComputeStartRequest,
     UnsignedComputeRequest,
 )
-from ocean_utils.agreements.service_types import ServiceTypes
-from ocean_utils.did import did_to_id
 from ocean_utils.http_requests.requests_session import get_requests_session
 
 from . import services
@@ -212,7 +207,6 @@ def computeStatus():
     data = get_request_data(request)
     try:
         body = process_compute_request(data)
-        signed_request = bool(data.get("signature"))
 
         response = requests_session.get(
             get_compute_endpoint(),
@@ -222,6 +216,20 @@ def computeStatus():
 
         increment_nonce(body["owner"])
         _response = response.content
+
+        signed_request = bool(data.get("signature"))
+        if signed_request:
+            owner = data.get("consumerAddress")
+            did = data.get("documentId")
+            jobId = data.get("jobId")
+            original_msg = f"{owner}{jobId}{did}"
+            try:
+                verify_signature(
+                    owner, data.get("signature"), original_msg, get_nonce(owner)
+                )
+            except InvalidSignatureError:
+                signed_request = False
+
         # Filter status info if signature is not given or failed validation
         if not signed_request:
             resp_content = json.loads(response.content.decode("utf-8"))
@@ -298,58 +306,23 @@ def computeStart():
     data = get_request_data(request)
 
     try:
-        (
-            asset,
-            service,
-            did,
-            consumer_address,
-            token_address,
-        ) = process_consume_request(  # noqa
-            data, "compute_start_job"
-        )
-        service_id = data.get("serviceId")
-        service_type = data.get("serviceType")
-        tx_id = data.get("transferTxId")
-
-        # Verify that  the number of required tokens has been
-        # transferred to the provider's wallet.
-
-        _tx, _order_log, _transfer_log = validate_order(
-            consumer_address,
-            token_address,
-            float(service.get_cost()),
-            tx_id,
-            add_0x_prefix(did_to_id(did)) if did.startswith("did:") else did,
-            service_id,
-        )
-        validate_transfer_not_used_for_other_service(
-            did, service_id, tx_id, consumer_address, token_address
-        )
-        record_consume_request(
-            did, service_id, tx_id, consumer_address, token_address, service.get_cost()
-        )
-
-        assert service_type == ServiceTypes.CLOUD_COMPUTE
-
-        validator = AlgoValidator(
-            consumer_address, provider_wallet, data, service, asset
-        )
+        consumer_address = data.get("consumerAddress")
+        validator = WorkflowValidator(consumer_address, provider_wallet, data)
 
         status = validator.validate()
         if not status:
             return jsonify(error=validator.error), 400
 
-        stage = validator.stage
-
-        #########################
-        # WORKFLOW
-        workflow = dict({"stages": list([stage])})
-
+        workflow = validator.workflow
         # workflow is ready, push it to operator
         logger.info("Sending: %s", workflow)
 
+        tx_id = data.get("transferTxId")
+        did = data.get("documentId")
+
         msg_to_sign = f"{provider_wallet.address}{did}"
         msg_hash = add_ethereum_prefix_and_hash_msg(msg_to_sign)
+
         payload = {
             "workflow": workflow,
             "providerSignature": Web3Helper.sign_hash(msg_hash, provider_wallet),

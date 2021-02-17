@@ -13,10 +13,12 @@ def do_encrypt(document, wallet: Wallet = None, public_key=None):
 
 def do_decrypt(encrypted_document, provider_wallet):
     key = get_private_key(provider_wallet)
-
-    return ecies.decrypt(key.to_hex(), Web3.toBytes(hexstr=encrypted_document)).decode(
-        encoding="utf-8"
-    )
+    try:
+        return ecies.decrypt(
+            key.to_hex(), Web3.toBytes(hexstr=encrypted_document)
+        ).decode(encoding="utf-8")
+    except Exception:
+        return None
 
 
 def get_address_from_public_key(public_key):
