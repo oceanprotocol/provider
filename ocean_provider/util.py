@@ -20,7 +20,6 @@ from ocean_provider.utils.basics import (
 )
 from ocean_provider.utils.encryption import do_decrypt
 from ocean_utils.agreements.service_agreement import ServiceAgreement
-from ocean_utils.agreements.service_types import ServiceTypes
 from osmosis_driver_interface.osmosis import Osmosis
 from websockets import ConnectionClosed
 
@@ -300,9 +299,8 @@ def process_compute_request(data):
     return body
 
 
-def build_stage_output_dict(output_def, asset, owner, provider_wallet):
+def build_stage_output_dict(output_def, service_endpoint, owner, provider_wallet):
     config = get_config()
-    service_endpoint = asset.get_service(ServiceTypes.CLOUD_COMPUTE).service_endpoint
     if BaseURLs.ASSETS_URL in service_endpoint:
         service_endpoint = service_endpoint.split(BaseURLs.ASSETS_URL)[0]
 
