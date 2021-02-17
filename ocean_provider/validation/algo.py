@@ -208,14 +208,16 @@ class InputItemValidator(WorkflowValidator):
         self.index = index
 
     def validate(self):
-        required_keys = ["documentId", "transferTxId", "serviceId"]
+        required_keys = ["documentId", "transferTxId"]
 
         for req_item in required_keys:
-            if not self.data.get(req_item) and not (
-                req_item == "serviceId" and self.data.get(req_item) == 0
-            ):
+            if not self.data.get(req_item):
                 self.error = f"No {req_item} in input item."
                 return False
+
+        if not self.data.get("serviceId") and self.data.get("serviceId") != 0:
+            self.error = "No serviceId in input item."
+            return False
 
         self.did = self.data.get("documentId")
         try:
@@ -237,16 +239,16 @@ class InputItemValidator(WorkflowValidator):
             self.error = "Services in input can only be access or compute."
             return False
 
+        if self.service.type != ServiceTypes.CLOUD_COMPUTE and self.index == 0:
+            self.error = "Service for main asset must be compute."
+            return False
+
         asset_urls = get_asset_download_urls(
             self.asset, self.provider_wallet, config_file=app.config["CONFIG_FILE"]
         )
 
         if self.service.type == ServiceTypes.CLOUD_COMPUTE and not asset_urls:
             self.error = "Services in input with compute type must be in the same provider you are calling."
-            return False
-
-        if self.service.type != ServiceTypes.CLOUD_COMPUTE and self.index == 0:
-            self.error = "Service for main asset must be compute."
             return False
 
         if asset_urls:
