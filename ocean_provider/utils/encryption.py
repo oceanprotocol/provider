@@ -17,7 +17,7 @@ def do_decrypt(encrypted_document, provider_wallet):
         return ecies.decrypt(
             key.to_hex(), Web3.toBytes(hexstr=encrypted_document)
         ).decode(encoding="utf-8")
-    except:  # noqa
+    except Exception:
         return None
 
 
