@@ -301,7 +301,7 @@ def get_compute_service_descriptor_no_rawalgo(address, price, metadata):
             "cost": price,
             "privacy": {
                 "allowRawAlgorithm": False,
-                "trustedAlgorithms": [],
+                "publisherTrustedAlgorithms": [],
                 "allowNetworkAccess": True,
             },
             "timeout": 3600,
@@ -323,7 +323,10 @@ def get_compute_service_descriptor_specific_algo_dids(address, price, metadata):
             "cost": price,
             "privacy": {
                 "allowRawAlgorithm": True,
-                "trustedAlgorithms": ["did:op:123", "did:op:1234"],
+                "publisherTrustedAlgorithms": [
+                    {"did": "did:op:123"},
+                    {"did": "did:op:1234"},
+                ],
                 "allowNetworkAccess": True,
             },
             "timeout": 3600,

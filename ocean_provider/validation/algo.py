@@ -281,14 +281,20 @@ class InputItemValidator(WorkflowValidator):
             self.error = f"cannot run raw algorithm on this did {self.did}."
             return False
 
-        trusted_algorithms = privacy_options.get("trustedAlgorithms", [])
+        trusted_algorithms = privacy_options.get("publisherTrustedAlgorithms", [])
 
-        if (
-            algorithm_did
-            and trusted_algorithms
-            and algorithm_did not in trusted_algorithms
-        ):
-            self.error = f"cannot run raw algorithm on this did {self.did}."
+        if not (algorithm_did and trusted_algorithms):
+            return True
+
+        try:
+            trusted_dids = [algo["did"] for algo in trusted_algorithms]
+            if algorithm_did not in trusted_dids:
+                self.error = f"cannot run raw algorithm on this did {self.did}."
+                return False
+        except ValueError:
+            self.error = (
+                "Some algos in the publisherTrustedAlgorithms don't have a did."
+            )
             return False
 
         return True
