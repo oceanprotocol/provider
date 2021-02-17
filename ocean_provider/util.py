@@ -189,7 +189,7 @@ def get_compute_endpoint():
 def get_compute_address():
     try:
         compute_info = requests.get(get_config().operator_service_url).json()
-        return compute_info["address"]
+        return compute_info.get("address", None)
     except Exception as e:
         logger.error(f"Error getting CtD address: {str(e)}")
         return None
