@@ -38,7 +38,7 @@ class WorkflowValidator:
         self.workflow["stages"].append(
             {
                 "index": 0,
-                "input": self.validated_input_dict,
+                "input": self.validated_inputs,
                 "compute": {
                     "Instances": 1,
                     "namespace": "ocean-compute",
@@ -65,7 +65,7 @@ class WorkflowValidator:
         all_data = main_input + additional_inputs
         algo_data = filter_dictionary_starts_with(self.data, "algorithm")
 
-        self.validated_input_dict = []
+        self.validated_inputs = []
 
         for index, input_item in enumerate(all_data):
             input_item.update(algo_data)
@@ -79,10 +79,10 @@ class WorkflowValidator:
                 self.error = prefix + input_item_validator.error
                 return False
 
-            self.validated_input_dict.append(input_item_validator.validated_input_dict)
+            self.validated_inputs.append(input_item_validator.validated_inputs)
 
             if index == 0:
-                self.asset = input_item_validator.asset
+                self.service_endpoint = input_item_validator.service.service_endpoint
 
         status = self._build_and_validate_algo(algo_data)
         if not status:
@@ -99,7 +99,10 @@ class WorkflowValidator:
             return False
 
         self.validated_output_dict = build_stage_output_dict(
-            output_def, self.asset, self.consumer_address, self.provider_wallet
+            output_def,
+            self.service_endpoint,
+            self.consumer_address,
+            self.provider_wallet,
         )
 
         return True
@@ -208,14 +211,16 @@ class InputItemValidator(WorkflowValidator):
         self.index = index
 
     def validate(self):
-        required_keys = ["documentId", "transferTxId", "serviceId"]
+        required_keys = ["documentId", "transferTxId"]
 
         for req_item in required_keys:
-            if not self.data.get(req_item) and not (
-                req_item == "serviceId" and self.data.get(req_item) == 0
-            ):
+            if not self.data.get(req_item):
                 self.error = f"No {req_item} in input item."
                 return False
+
+        if not self.data.get("serviceId") and self.data.get("serviceId") != 0:
+            self.error = "No serviceId in input item."
+            return False
 
         self.did = self.data.get("documentId")
         try:
@@ -237,6 +242,10 @@ class InputItemValidator(WorkflowValidator):
             self.error = "Services in input can only be access or compute."
             return False
 
+        if self.service.type != ServiceTypes.CLOUD_COMPUTE and self.index == 0:
+            self.error = "Service for main asset must be compute."
+            return False
+
         asset_urls = get_asset_download_urls(
             self.asset, self.provider_wallet, config_file=app.config["CONFIG_FILE"]
         )
@@ -245,19 +254,16 @@ class InputItemValidator(WorkflowValidator):
             self.error = "Services in input with compute type must be in the same provider you are calling."
             return False
 
-        if self.service.type != ServiceTypes.CLOUD_COMPUTE and self.index == 0:
-            self.error = "Service for main asset must be compute."
-            return False
-
-        if asset_urls:
+        if self.service.type == ServiceTypes.CLOUD_COMPUTE:
             if not self.validate_algo():
                 return False
 
-            self.validated_input_dict = dict(
+        if asset_urls:
+            self.validated_inputs = dict(
                 {"index": self.index, "id": self.did, "url": asset_urls}
             )
         else:
-            self.validated_input_dict = dict(
+            self.validated_inputs = dict(
                 {
                     "index": self.index,
                     "id": self.did,

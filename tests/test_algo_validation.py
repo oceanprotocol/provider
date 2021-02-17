@@ -18,7 +18,7 @@ def test_passes(client):
     pub_wallet = get_publisher_wallet()
 
     (
-        dataset,
+        _,
         did,
         tx_id,
         sa,
@@ -34,7 +34,7 @@ def test_passes(client):
         "serviceId": sa.index,
         "transferTxId": tx_id,
         "output": build_stage_output_dict(
-            dict(), dataset, consumer_address, pub_wallet
+            dict(), sa.service_endpoint, consumer_address, pub_wallet
         ),
         "algorithmDid": alg_ddo.did,
         "algorithmDataToken": alg_data_token,
@@ -49,7 +49,7 @@ def test_passes(client):
         "serviceId": sa.index,
         "transferTxId": tx_id,
         "output": build_stage_output_dict(
-            dict(), dataset, consumer_address, pub_wallet
+            dict(), sa.service_endpoint, consumer_address, pub_wallet
         ),
         "algorithmMeta": {
             "rawcode": "console.log('Hello world'!)",
@@ -100,7 +100,7 @@ def test_fails(client):
         "transferTxId": tx_id,
         "serviceId": sa.index,
         "output": build_stage_output_dict(
-            dict(), dataset, consumer_address, pub_wallet
+            dict(), sa.service_endpoint, consumer_address, pub_wallet
         ),
         "algorithmDid": did,
         "algorithmDataToken": alg_data_token,
@@ -112,7 +112,7 @@ def test_fails(client):
     assert validator.error == f"DID {did} is not a valid algorithm"
 
     valid_output = build_stage_output_dict(
-        dict(), dataset, consumer_address, pub_wallet
+        dict(), sa.service_endpoint, consumer_address, pub_wallet
     )
 
     # algorithmMeta doesn't contain 'url' or 'rawcode'

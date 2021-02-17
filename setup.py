@@ -30,7 +30,7 @@ install_requirements = [
     "Werkzeug>=0.15.3",
     "ocean-lib>=0.5.6",
     "requests_testadapter",
-    "eciespy",
+    "eciespy==0.3.9",
     "ipaddress",
     "dnspython",
     "flask-sieve==1.2.2",

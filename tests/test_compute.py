@@ -94,7 +94,7 @@ def test_compute_norawalgo_allowed(client):
             "transferTxId": tx_id,
             "dataToken": data_token,
             "output": build_stage_output_dict(
-                dict(), dataset_ddo_w_compute_service, cons_wallet.address, pub_wallet
+                dict(), sa.service_endpoint, cons_wallet.address, pub_wallet
             ),
             "algorithmMeta": algorithm_meta,
             "algorithmDataToken": "",
@@ -115,7 +115,7 @@ def test_compute_specific_algo_dids(client):
     cons_wallet = get_consumer_wallet()
 
     (
-        dataset,
+        _,
         did,
         tx_id,
         sa,
@@ -143,7 +143,7 @@ def test_compute_specific_algo_dids(client):
             "transferTxId": tx_id,
             "dataToken": data_token,
             "output": build_stage_output_dict(
-                dict(), dataset, cons_wallet.address, pub_wallet
+                dict(), sa.service_endpoint, cons_wallet.address, pub_wallet
             ),
             "algorithmDid": alg_ddo.did,
             "algorithmDataToken": alg_data_token,
@@ -165,7 +165,7 @@ def test_compute(client):
     cons_wallet = get_consumer_wallet()
 
     (
-        dataset,
+        _,
         did,
         tx_id,
         sa,
@@ -193,7 +193,7 @@ def test_compute(client):
             "transferTxId": tx_id,
             "dataToken": data_token,
             "output": build_stage_output_dict(
-                dict(), dataset, cons_wallet.address, pub_wallet
+                dict(), sa.service_endpoint, cons_wallet.address, pub_wallet
             ),
             "algorithmDid": alg_ddo.did,
             "algorithmDataToken": alg_data_token,
@@ -276,7 +276,7 @@ def test_compute_diff_provider(client):
     cons_wallet = get_consumer_wallet()
 
     (
-        dataset,
+        _,
         did,
         tx_id,
         sa,
@@ -304,7 +304,7 @@ def test_compute_diff_provider(client):
             "transferTxId": tx_id,
             "dataToken": data_token,
             "output": build_stage_output_dict(
-                dict(), dataset, cons_wallet.address, pub_wallet
+                dict(), sa.service_endpoint, cons_wallet.address, pub_wallet
             ),
             "algorithmDid": alg_ddo.did,
             "algorithmDataToken": alg_data_token,
@@ -325,7 +325,7 @@ def test_compute_allow_all_published(client):
     cons_wallet = get_consumer_wallet()
 
     (
-        dataset,
+        _,
         did,
         tx_id,
         sa,
@@ -355,7 +355,7 @@ def test_compute_allow_all_published(client):
             "transferTxId": tx_id,
             "dataToken": data_token,
             "output": build_stage_output_dict(
-                dict(), dataset, cons_wallet.address, pub_wallet
+                dict(), sa.service_endpoint, cons_wallet.address, pub_wallet
             ),
             "algorithmDid": alg_ddo.did,
             "algorithmDataToken": alg_data_token,
@@ -377,7 +377,7 @@ def test_compute_not_an_algo(client):
     cons_wallet = get_consumer_wallet()
 
     (
-        dataset,
+        _,
         did,
         tx_id,
         sa,
@@ -407,7 +407,7 @@ def test_compute_not_an_algo(client):
             "transferTxId": tx_id,
             "dataToken": data_token,
             "output": build_stage_output_dict(
-                dict(), dataset, cons_wallet.address, pub_wallet
+                dict(), sa.service_endpoint, cons_wallet.address, pub_wallet
             ),
             "algorithmDid": did,  # intentionally, should not be an algo did
             "algorithmDataToken": alg_data_token,
@@ -431,7 +431,7 @@ def test_compute_additional_input(client):
     cons_wallet = get_consumer_wallet()
 
     (
-        dataset,
+        _,
         did,
         tx_id,
         sa,
@@ -463,7 +463,7 @@ def test_compute_additional_input(client):
             "transferTxId": tx_id,
             "dataToken": data_token,
             "output": build_stage_output_dict(
-                dict(), dataset, cons_wallet.address, pub_wallet
+                dict(), sa.service_endpoint, cons_wallet.address, pub_wallet
             ),
             "algorithmDid": alg_ddo.did,
             "algorithmDataToken": alg_data_token,
