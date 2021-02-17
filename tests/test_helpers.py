@@ -1,6 +1,8 @@
 #  Copyright 2018 Ocean Protocol Foundation
 #  SPDX-License-Identifier: Apache-2.0
 
+import hashlib as hash
+import itertools
 import json
 import lzma
 import os
@@ -315,7 +317,7 @@ def get_compute_service_descriptor_no_rawalgo(address, price, metadata):
     )
 
 
-def get_compute_service_descriptor_specific_algo_dids(address, price, metadata):
+def get_compute_service_descriptor_specific_algo_dids(address, price, metadata, algos):
     compute_service_attributes = {
         "main": {
             "name": "dataAssetComputeServiceAgreement",
@@ -323,16 +325,32 @@ def get_compute_service_descriptor_specific_algo_dids(address, price, metadata):
             "cost": price,
             "privacy": {
                 "allowRawAlgorithm": True,
-                "publisherTrustedAlgorithms": [
-                    {"did": "did:op:123"},
-                    {"did": "did:op:1234"},
-                ],
+                "publisherTrustedAlgorithms": [],
                 "allowNetworkAccess": True,
             },
             "timeout": 3600,
             "datePublished": metadata[MetadataMain.KEY]["dateCreated"],
         }
     }
+
+    for algo in algos:
+        service = algo.get_service(ServiceTypes.METADATA)
+        compute_service_attributes["main"]["privacy"][
+            "publisherTrustedAlgorithms"
+        ].append(
+            {
+                "did": algo.did,
+                "filesChecksum": hash.sha256(
+                    (
+                        service.attributes["encryptedFiles"]
+                        + json.dumps(service.main["files"])
+                    ).encode("utf-8")
+                ).hexdigest(),
+                "containerSectionChecksum": hash.sha256(
+                    (json.dumps(service.main["algorithm"]["container"])).encode("utf-8")
+                ).hexdigest(),
+            }
+        )
 
     return ServiceDescriptor.compute_service_descriptor(
         compute_service_attributes,
@@ -399,11 +417,11 @@ def comp_ds_no_rawalgo(client, wallet):
     return get_registered_ddo(client, wallet, metadata, service_descriptor)
 
 
-def comp_ds_specific_algo_dids(client, wallet):
+def comp_ds_specific_algo_dids(client, wallet, algos):
     metadata = get_sample_ddo_with_compute_service()["service"][0]["attributes"]
     metadata["main"]["files"][0]["checksum"] = str(uuid.uuid4())
     service_descriptor = get_compute_service_descriptor_specific_algo_dids(
-        wallet.address, metadata[MetadataMain.KEY]["cost"], metadata
+        wallet.address, metadata[MetadataMain.KEY]["cost"], metadata, algos
     )
     metadata[MetadataMain.KEY].pop("cost")
     return get_registered_ddo(client, wallet, metadata, service_descriptor)
@@ -650,19 +668,6 @@ def build_and_send_ddo_with_compute_service(client, alg_diff=False, asset_type=N
     pub_wallet = get_publisher_wallet()
     cons_wallet = get_consumer_wallet()
 
-    # publish a dataset asset
-    if asset_type == "allow_all_published":
-        dataset_ddo_w_compute_service = comp_ds_allow_all_published(client, pub_wallet)
-    elif asset_type == "specific_algo_dids":
-        dataset_ddo_w_compute_service = comp_ds_specific_algo_dids(client, pub_wallet)
-    else:
-        dataset_ddo_w_compute_service = comp_ds(client, pub_wallet)
-    did = dataset_ddo_w_compute_service.did
-    ddo = dataset_ddo_w_compute_service
-    data_token = dataset_ddo_w_compute_service.data_token_address
-    dt_contract = DataToken(data_token)
-    mint_tokens_and_wait(dt_contract, cons_wallet, pub_wallet)
-
     # publish an algorithm asset (asset with metadata of type `algorithm`)
     alg_ddo = (
         get_algorithm_ddo_different_provider(client, cons_wallet)
@@ -671,7 +676,32 @@ def build_and_send_ddo_with_compute_service(client, alg_diff=False, asset_type=N
     )
     alg_data_token = alg_ddo.as_dictionary()["dataToken"]
     alg_dt_contract = DataToken(alg_data_token)
+
     mint_tokens_and_wait(alg_dt_contract, cons_wallet, cons_wallet)
+
+    # publish a dataset asset
+    if asset_type == "allow_all_published":
+        dataset_ddo_w_compute_service = comp_ds_allow_all_published(client, pub_wallet)
+    elif asset_type == "specific_algo_dids":
+        algos = []
+
+        for _ in itertools.repeat(None, 2):
+            alg_ddo = get_algorithm_ddo(client, cons_wallet)
+            alg_data_token = alg_ddo.as_dictionary()["dataToken"]
+            alg_dt_contract = DataToken(alg_data_token)
+            mint_tokens_and_wait(alg_dt_contract, cons_wallet, cons_wallet)
+            algos.append(alg_ddo)
+
+        dataset_ddo_w_compute_service = comp_ds_specific_algo_dids(
+            client, pub_wallet, algos
+        )
+    else:
+        dataset_ddo_w_compute_service = comp_ds(client, pub_wallet)
+    did = dataset_ddo_w_compute_service.did
+    ddo = dataset_ddo_w_compute_service
+    data_token = dataset_ddo_w_compute_service.data_token_address
+    dt_contract = DataToken(data_token)
+    mint_tokens_and_wait(dt_contract, cons_wallet, pub_wallet)
 
     sa = ServiceAgreement.from_ddo(
         ServiceTypes.CLOUD_COMPUTE, dataset_ddo_w_compute_service

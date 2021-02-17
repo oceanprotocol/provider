@@ -1,3 +1,6 @@
+import hashlib as hash
+import json
+
 from eth_utils import add_0x_prefix
 from ocean_provider.myapp import app
 from ocean_provider.serializers import StageAlgoSerializer
@@ -297,11 +300,45 @@ class InputItemValidator(WorkflowValidator):
             if algorithm_did not in trusted_dids:
                 self.error = f"cannot run raw algorithm on this did {self.did}."
                 return False
-        except ValueError:
+        except KeyError:
             self.error = (
                 "Some algos in the publisherTrustedAlgorithms don't have a did."
             )
             return False
+
+        for trusted_algorithm in trusted_algorithms:
+            algo = get_asset_from_metadatastore(
+                get_metadata_url(), trusted_algorithm["did"]
+            )
+            service = algo.get_service(ServiceTypes.METADATA)
+
+            filesChecksum = hash.sha256(
+                (
+                    service.attributes["encryptedFiles"]
+                    + json.dumps(service.main["files"])
+                ).encode("utf-8")
+            ).hexdigest()
+
+            if (
+                trusted_algorithm.get("filesChecksum")
+                and filesChecksum != trusted_algorithm["filesChecksum"]
+            ):
+                self.error = (
+                    f"filesChecksum for algo with did {algo.did} does not match"
+                )
+                return False
+
+            containerSectionChecksum = hash.sha256(
+                (json.dumps(service.main["algorithm"]["container"])).encode("utf-8")
+            ).hexdigest()
+
+            if (
+                trusted_algorithm.get("containerSectionChecksum")
+                and containerSectionChecksum
+                != trusted_algorithm["containerSectionChecksum"]
+            ):
+                self.error = f"containerSectionChecksum for algo with did {algo.did} does not match"
+                return False
 
         return True
 
