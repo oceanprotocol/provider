@@ -202,7 +202,7 @@ def validate_formatted_algorithm_dict(algorithm_dict, algorithm_did):
     return True, ""
 
 
-class InputItemValidator(WorkflowValidator):
+class InputItemValidator:
     def __init__(self, consumer_address, provider_wallet, data, index):
         """Initializes the input item validator."""
         self.consumer_address = consumer_address
