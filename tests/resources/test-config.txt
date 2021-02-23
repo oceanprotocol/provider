@@ -1,0 +1,33 @@
+[eth-network]
+network = http://127.0.0.1:8545
+dtfactory.address = 0xB9d406D24B310A7D821D0b782a36909e8c925471
+
+artifacts.path =
+
+[resources]
+aquarius.url = http://127.0.0.1:5000
+auth_token_expiration = 331536000
+ocean_provider.url = http://localhost:8030
+
+provider.url = http://localhost:8030
+provider.address = 0x00bd138abd70e2f00903268f3db08f2d25677c9e
+
+operator_service.url = https://operator-api.operator.dev-ocean.com/
+storage.path = ocean-provider.db
+downloads.path = consume-downloads
+
+[osmosis]
+azure.account.name =
+azure.account.key =
+azure.resource_group =
+azure.location =
+azure.client.id =
+azure.client.secret =
+azure.tenant.id =
+azure.subscription.id =
+; azure.share.input and azure.share.output are only used
+; for Azure Compute data assets (not for Azure Storage data assets).
+; If you're not supporting Azure Compute, just leave their values
+; as compute and output, respectively.
+azure.share.input = compute
+azure.share.output = output
