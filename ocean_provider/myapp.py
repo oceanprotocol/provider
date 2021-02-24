@@ -4,7 +4,6 @@
 import os
 import sqlite3
 from os.path import abspath, dirname
-
 from flask import Flask
 from flask_cors import CORS
 from flask_sieve import Sieve
