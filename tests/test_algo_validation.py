@@ -305,5 +305,5 @@ def test_fails(client):
     assert validator.validate() is False
     assert (
         validator.error
-        == f"Error in input at index 1: cannot run raw algorithm on this did {trust_did}."
+        == f"Error in input at index 1: this algorithm did {alg_ddo.did} is not trusted."
     )
