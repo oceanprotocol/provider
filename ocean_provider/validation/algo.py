@@ -298,7 +298,7 @@ class InputItemValidator:
         try:
             trusted_dids = [algo["did"] for algo in trusted_algorithms]
             if algorithm_did not in trusted_dids:
-                self.error = f"cannot run raw algorithm on this did {self.did}."
+                self.error = f"this algorithm did {algorithm_did} is not trusted."
                 return False
         except KeyError:
             self.error = (

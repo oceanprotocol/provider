@@ -57,7 +57,7 @@ environ_names = {
         "Allow non public ip",
         "resources",
     ],
-    NAME_STORAGE_PATH: ["STORAGE_PATH", "Path to the local database file"],
+    NAME_STORAGE_PATH: ["STORAGE_PATH", "Path to the local database file", "resources"],
 }
 
 
