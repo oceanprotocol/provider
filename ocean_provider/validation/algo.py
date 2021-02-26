@@ -294,7 +294,7 @@ class InputItemValidator:
             and trusted_algorithms
             and algorithm_did not in trusted_algorithms
         ):
-            self.error = f"cannot run raw algorithm on this did {self.did}."
+            self.error = f"this algorithm did {algorithm_did} is not trusted."
             return False
 
         return True
