@@ -1,6 +1,6 @@
 #  Copyright 2018 Ocean Protocol Foundation
 #  SPDX-License-Identifier: Apache-2.0
-
+# fmt: off
 import os
 import sqlite3
 from os.path import abspath, dirname
@@ -32,3 +32,4 @@ try:
     db.create_all()
 except sqlite3.OperationalError:
     pass
+# fmt: on
