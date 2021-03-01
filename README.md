@@ -1,3 +1,6 @@
+[![banner](https://raw.githubusercontent.com/oceanprotocol/art/master/github/repo-banner%402x.png)](https://oceanprotocol.com)
+
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/286c8284fd0140d294d0933f6578b3ad)](https://www.codacy.com/gh/oceanprotocol/provider/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=oceanprotocol/provider&amp;utm_campaign=Badge_Grade)
 # provider
 REST API for provider of data services
 
