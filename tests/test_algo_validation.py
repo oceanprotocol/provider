@@ -1,5 +1,7 @@
-#  Copyright 2018 Ocean Protocol Foundation
-#  SPDX-License-Identifier: Apache-2.0
+#
+# Copyright 2021 Ocean Protocol Foundation
+# SPDX-License-Identifier: Apache-2.0
+#
 
 from ocean_provider.util import build_stage_output_dict
 from ocean_provider.utils.basics import get_provider_wallet

@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+#
+# Copyright 2021 Ocean Protocol Foundation
+# SPDX-License-Identifier: Apache-2.0
+#
 
 """The setup script."""
 
@@ -64,6 +68,7 @@ dev_requirements = [
     "isort",
     "black",
     "pre-commit",
+    "licenseheaders",
 ]
 
 setup(
