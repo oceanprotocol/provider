@@ -40,7 +40,7 @@ jobs:
       - name: Test with tox
         working-directory: ${{ github.workspace }}
         run: tox
-      - name: codacy-coverage-reporter
+      - name: Run codacy-coverage-reporter
         uses: codacy/codacy-coverage-reporter-action@master
         with:
             project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
