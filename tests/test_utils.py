@@ -1,3 +1,7 @@
+#
+# Copyright 2021 Ocean Protocol Foundation
+# SPDX-License-Identifier: Apache-2.0
+#
 from ocean_provider.util_url import is_safe_schema, is_safe_url
 
 
