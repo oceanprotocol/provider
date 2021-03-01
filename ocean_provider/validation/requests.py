@@ -1,3 +1,7 @@
+#
+# Copyright 2021 Ocean Protocol Foundation
+# SPDX-License-Identifier: Apache-2.0
+#
 from flask import request as flask_request
 from flask_sieve import JsonRequest
 from flask_sieve.rules_processor import RulesProcessor
