@@ -9,10 +9,18 @@ from flask_cors import CORS
 from flask_sieve import Sieve
 from sqlalchemy.orm import scoped_session
 
-from . import models
 from .database import Base, SessionLocal, engine
 
-models.Base.metadata.create_all(bind=engine)
+with engine.connect() as con:
+    rs = con.execute(
+        """
+        CREATE TABLE IF NOT EXISTS user_nonce (
+          address VARCHAR(255) NOT NULL,
+          nonce VARCHAR(255) NOT NULL,
+          PRIMARY KEY (address)
+        )
+        """
+    )
 
 app = Flask(__name__)
 CORS(app)
