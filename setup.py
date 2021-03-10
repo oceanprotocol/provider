@@ -39,7 +39,7 @@ install_requirements = [
     "ipaddress",
     "dnspython",
     "flask-sieve==1.2.2",
-    "Flask-SQLAlchemy==2.1",
+    "SQLAlchemy",
 ]
 
 # Required to run setup.py:
