@@ -6,7 +6,6 @@ which means these components must be available before the deployment.
 
 The following template could be customized based on environment's specifics:
 [provider-standard-networks-deployment-example.yaml](https://github.com/oceanprotocol/provider/blob/deployment_files/deployment/provider-standard-networks-deployment-example.yaml)
-(rename .txt to .yaml before deployment)
 
 Tip: before deployment you can [validate](https://github.com/instrumenta/kubeval) the yaml file.
 
