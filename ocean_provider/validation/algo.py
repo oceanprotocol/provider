@@ -362,10 +362,10 @@ class InputItemValidator:
 
             else:
                 allow_raw_algo = privacy_options.get("allowRawAlgorithm", False)
-                if algorithm_meta and allow_raw_algo is False:
+                if allow_raw_algo is False:
                     self.error = f"cannot run raw algorithm on this did {self.did}."
 
-        return bool(self.error)
+        return not bool(self.error)
 
     def validate_usage(self):
         """Verify that the tokens have been transferred to the provider's wallet."""
