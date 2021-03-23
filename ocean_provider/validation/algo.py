@@ -2,6 +2,8 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
+import json
+
 from eth_utils import add_0x_prefix
 from ocean_provider.myapp import app
 from ocean_provider.serializers import StageAlgoSerializer
@@ -17,7 +19,7 @@ from ocean_provider.util import (
     validate_order,
     validate_transfer_not_used_for_other_service,
 )
-from ocean_provider.utils.basics import get_asset_from_metadatastore
+from ocean_provider.utils.basics import get_asset_from_metadatastore, create_checksum
 from ocean_utils.agreements.service_agreement import ServiceAgreement
 from ocean_utils.agreements.service_types import ServiceTypes
 from ocean_utils.did import did_to_id
@@ -280,25 +282,77 @@ class InputItemValidator:
 
         return self.validate_usage()
 
+    def _validate_trusted_algos(self, algorithm_did, trusted_algorithms):
+        if not trusted_algorithms:
+            self.error = (
+                "Using algorithmDid but allowAllPublishedAlgorithms is False and no "
+                "trusted algorithms are set in publisherTrustedAlgorithms."
+            )
+            return False
+
+        try:
+            did_to_trusted_algo_dict = {
+                algo["did"]: algo for algo in trusted_algorithms
+            }
+            if algorithm_did not in did_to_trusted_algo_dict:
+                self.error = f"this algorithm did {algorithm_did} is not trusted."
+                return False
+
+        except KeyError:
+            self.error = (
+                "Some algos in the publisherTrustedAlgorithms don't have a did."
+            )
+            return False
+
+        trusted_algo_dict = did_to_trusted_algo_dict[algorithm_did]
+        allowed_files_checksum = trusted_algo_dict.get("filesChecksum")
+        allowed_container_checksum = trusted_algo_dict.get("containerSectionChecksum")
+        algo_ddo = get_asset_from_metadatastore(
+            get_metadata_url(), trusted_algo_dict["did"]
+        )
+        service = algo_ddo.get_service(ServiceTypes.METADATA)
+
+        files_checksum = create_checksum(
+            service.attributes["encryptedFiles"] + json.dumps(service.main["files"])
+        )
+        if allowed_files_checksum and files_checksum != allowed_files_checksum:
+            self.error = (
+                f"filesChecksum for algorithm with did {algo_ddo.did} does not match"
+            )
+            return False
+
+        container_section_checksum = create_checksum(
+            json.dumps(service.main["algorithm"]["container"])
+        )
+        if (
+            allowed_container_checksum
+            and container_section_checksum != allowed_container_checksum
+        ):
+            self.error = f"containerSectionChecksum for algorithm with did {algo_ddo.did} does not match"
+            return False
+
+        return True
+
     def validate_algo(self):
         """Validates algorithm details that allow the algo dict to be built."""
         algorithm_meta = self.data.get("algorithmMeta")
         algorithm_did = self.data.get("algorithmDid")
-
-        privacy_options = self.service.main.get("privacy", {})
-
-        if algorithm_meta and privacy_options.get("allowRawAlgorithm", True) is False:
-            self.error = f"cannot run raw algorithm on this did {self.did}."
+        if algorithm_did is None and algorithm_meta is None:
+            self.error = "both algorithmMeta and algorithmDid are missing, at least one of these is required."
             return False
 
-        trusted_algorithms = privacy_options.get("trustedAlgorithms", [])
+        privacy_options = self.service.main.get("privacy", {})
+        if algorithm_did and privacy_options.get("allowAllPublishedAlgorithms", False):
+            return True
 
-        if (
-            algorithm_did
-            and trusted_algorithms
-            and algorithm_did not in trusted_algorithms
-        ):
-            self.error = f"this algorithm did {algorithm_did} is not trusted."
+        if algorithm_did:
+            return self._validate_trusted_algos(
+                algorithm_did, privacy_options.get("publisherTrustedAlgorithms", [])
+            )
+
+        allow_raw_algo = privacy_options.get("allowRawAlgorithm", False)
+        if allow_raw_algo is False:
+            self.error = f"cannot run raw algorithm on this did {self.did}."
             return False
 
         return True
