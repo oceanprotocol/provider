@@ -283,68 +283,78 @@ class InputItemValidator:
 
         return self.validate_usage()
 
-    def validate_algo(self):
-        """Validates algorithm details that allow the algo dict to be built."""
-        algorithm_meta = self.data.get("algorithmMeta")
-        algorithm_did = self.data.get("algorithmDid")
-
-        privacy_options = self.service.main.get("privacy", {})
-
-        if algorithm_meta and privacy_options.get("allowRawAlgorithm", True) is False:
-            self.error = f"cannot run raw algorithm on this did {self.did}."
-            return False
-
-        trusted_algorithms = privacy_options.get("publisherTrustedAlgorithms", [])
-
-        if not (algorithm_did and trusted_algorithms):
-            return True
-
+    def _validate_trusted_algos(self, algorithm_did, trusted_algorithms):
         try:
-            trusted_dids = [algo["did"] for algo in trusted_algorithms]
-            if algorithm_did not in trusted_dids:
+            did_to_trusted_algo_dict = {algo["did"]: algo for algo in trusted_algorithms}
+            if algorithm_did not in did_to_trusted_algo_dict:
                 self.error = f"this algorithm did {algorithm_did} is not trusted."
-                return False
+
+            elif (
+                    not did_to_trusted_algo_dict[algorithm_did].get("filesChecksum") or
+                    not did_to_trusted_algo_dict[algorithm_did].get("containerSectionChecksum")
+            ):
+                self.error = "The trusted algorithm dict is not valid, missing " \
+                             "filesChecksum and/or containerSectionChecksum."
+
         except KeyError:
+            did_to_trusted_algo_dict = {}
             self.error = (
                 "Some algos in the publisherTrustedAlgorithms don't have a did."
             )
-            return False
 
-        for trusted_algorithm in trusted_algorithms:
-            algo = get_asset_from_metadatastore(
-                get_metadata_url(), trusted_algorithm["did"]
+        if not self.error:
+            trusted_algo_dict = did_to_trusted_algo_dict[algorithm_did]
+            algo_ddo = get_asset_from_metadatastore(
+                get_metadata_url(), trusted_algo_dict["did"]
             )
-            service = algo.get_service(ServiceTypes.METADATA)
-
-            filesChecksum = hashlib.sha256(
+            service = algo_ddo.get_service(ServiceTypes.METADATA)
+            files_checksum = hashlib.sha256(
                 (
                     service.attributes["encryptedFiles"]
                     + json.dumps(service.main["files"])
                 ).encode("utf-8")
             ).hexdigest()
 
-            if (
-                trusted_algorithm.get("filesChecksum")
-                and filesChecksum != trusted_algorithm["filesChecksum"]
-            ):
+            if files_checksum != trusted_algo_dict["filesChecksum"]:
                 self.error = (
-                    f"filesChecksum for algo with did {algo.did} does not match"
+                    f"filesChecksum for algorithm with did {algo_ddo.did} does not match"
                 )
-                return False
 
-            containerSectionChecksum = hashlib.sha256(
+            container_section_checksum = hashlib.sha256(
                 (json.dumps(service.main["algorithm"]["container"])).encode("utf-8")
             ).hexdigest()
 
-            if (
-                trusted_algorithm.get("containerSectionChecksum")
-                and containerSectionChecksum
-                != trusted_algorithm["containerSectionChecksum"]
-            ):
-                self.error = f"containerSectionChecksum for algo with did {algo.did} does not match"
-                return False
+            if container_section_checksum != trusted_algo_dict["containerSectionChecksum"]:
+                self.error = f"containerSectionChecksum for algorithm with did {algo_ddo.did} does not match"
 
-        return True
+        return bool(self.error)
+
+    def validate_algo(self):
+        """Validates algorithm details that allow the algo dict to be built."""
+        algorithm_meta = self.data.get("algorithmMeta")
+        algorithm_did = self.data.get("algorithmDid")
+        if not algorithm_did and not algorithm_meta:
+            self.error = "both algorithmMeta and algorithmDid are missing, at least one of these is required."
+
+        else:
+            privacy_options = self.service.main.get("privacy", {})
+            if algorithm_did:
+                trusted_algorithms = privacy_options.get("publisherTrustedAlgorithms", [])
+                allow_all = privacy_options.get("allowAllPublishedAlgorithms", False)
+
+                if not allow_all:
+                    if not trusted_algorithms:
+                        self.error = "Using algorithmDid but allowAllPublishedAlgorithms is False and no " \
+                                     "trusted algorithms are set in publisherTrustedAlgorithms."
+                    else:
+                        self._validate_trusted_algos(algorithm_did, trusted_algorithms)
+
+            else:
+                allow_raw_algo = privacy_options.get("allowRawAlgorithm", False)
+                if algorithm_meta and allow_raw_algo is False:
+                    self.error = f"cannot run raw algorithm on this did {self.did}."
+
+        return bool(self.error)
 
     def validate_usage(self):
         """Verify that the tokens have been transferred to the provider's wallet."""
