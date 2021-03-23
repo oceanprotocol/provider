@@ -1,3 +1,7 @@
+#
+# Copyright 2021 Ocean Protocol Foundation
+# SPDX-License-Identifier: Apache-2.0
+#
 import ecies
 from ocean_lib.web3_internal.wallet import Wallet
 from ocean_provider.utils.accounts import get_private_key

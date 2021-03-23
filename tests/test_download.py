@@ -1,5 +1,7 @@
-#  Copyright 2018 Ocean Protocol Foundation
-#  SPDX-License-Identifier: Apache-2.0
+#
+# Copyright 2021 Ocean Protocol Foundation
+# SPDX-License-Identifier: Apache-2.0
+#
 
 import mimetypes
 from copy import deepcopy
@@ -201,7 +203,9 @@ def test_build_download_response():
     )
     assert response.headers["content-type"] == content_type
 
-    matched_cd = f"attachment;filename={filename+mimetypes.guess_extension(content_type)}"  # noqa
+    matched_cd = (
+        f"attachment;filename={filename+mimetypes.guess_extension(content_type)}"
+    )
     assert response.headers.get_all("Content-Disposition")[0] == matched_cd
 
     mocked_response_with_attachment = deepcopy(mocked_response)

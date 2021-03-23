@@ -1,4 +1,8 @@
 #!/bin/sh
+##
+## Copyright 2021 Ocean Protocol Foundation
+## SPDX-License-Identifier: Apache-2.0
+##
 
 export CONFIG_FILE=/ocean-provider/config.ini
 envsubst < /ocean-provider/config.ini.template > /ocean-provider/config.ini

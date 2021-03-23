@@ -1,3 +1,7 @@
+<!--
+Copyright 2021 Ocean Protocol Foundation
+SPDX-License-Identifier: Apache-2.0
+-->
 # Ocean Provider Endpoints Specification
 
 This document specifies the endpoints for Ocean Provider to be implemented by the core 

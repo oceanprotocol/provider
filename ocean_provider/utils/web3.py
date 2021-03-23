@@ -1,3 +1,7 @@
+#
+# Copyright 2021 Ocean Protocol Foundation
+# SPDX-License-Identifier: Apache-2.0
+#
 from ocean_lib.web3_internal.web3_provider import Web3Provider
 from ocean_provider.utils.basics import get_config
 

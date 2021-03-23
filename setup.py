@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+#
+# Copyright 2021 Ocean Protocol Foundation
+# SPDX-License-Identifier: Apache-2.0
+#
 
 """The setup script."""
 
@@ -35,7 +39,7 @@ install_requirements = [
     "ipaddress",
     "dnspython",
     "flask-sieve==1.2.2",
-    "Flask-SQLAlchemy==2.1",
+    "SQLAlchemy==1.3.23",
 ]
 
 # Required to run setup.py:
@@ -64,6 +68,7 @@ dev_requirements = [
     "isort",
     "black",
     "pre-commit",
+    "licenseheaders",
 ]
 
 setup(
@@ -95,6 +100,9 @@ setup(
     test_suite="tests",
     tests_require=test_requirements,
     url="https://github.com/oceanprotocol/provider-py",
-    version="0.4.6",
+    # fmt: off
+    # bumpversion needs single quotes
+    version='0.4.6',
+    # fmt: on
     zip_safe=False,
 )

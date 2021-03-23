@@ -1,5 +1,7 @@
-#  Copyright 2018 Ocean Protocol Foundation
-#  SPDX-License-Identifier: Apache-2.0
+#
+# Copyright 2021 Ocean Protocol Foundation
+# SPDX-License-Identifier: Apache-2.0
+#
 import json
 import logging
 
@@ -214,7 +216,6 @@ def computeStatus():
             headers={"content-type": "application/json"},
         )
 
-        increment_nonce(body["owner"])
         _response = response.content
 
         signed_request = bool(data.get("signature"))
@@ -229,6 +230,7 @@ def computeStatus():
                 )
             except InvalidSignatureError:
                 signed_request = False
+            increment_nonce(owner)
 
         # Filter status info if signature is not given or failed validation
         if not signed_request:
