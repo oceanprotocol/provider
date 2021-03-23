@@ -26,6 +26,5 @@ def do_decrypt(encrypted_document, provider_wallet):
 
 
 def get_address_from_public_key(public_key):
-    hash = Web3.sha3(hexstr=public_key)
-
-    return Web3.toHex(hash[-20:])
+    _hash = Web3.sha3(hexstr=public_key)
+    return Web3.toHex(_hash[-20:])
