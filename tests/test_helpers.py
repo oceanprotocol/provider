@@ -289,8 +289,8 @@ def get_compute_service_descriptor(address, price, metadata):
             "timeout": 3600,
             "datePublished": metadata[MetadataMain.KEY]["dateCreated"],
             "privacy": {
-                "allowRawAlgorithm": False,
-                "allowAllPublishedAlgorithms": False,
+                "allowRawAlgorithm": True,
+                "allowAllPublishedAlgorithms": True,
                 "publisherTrustedAlgorithms": [],
                 "allowNetworkAccess": False,
             },

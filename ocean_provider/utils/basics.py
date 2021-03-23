@@ -2,6 +2,7 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
+import hashlib
 import os
 import site
 
@@ -124,3 +125,7 @@ class LocalFileAdapter(requests.adapters.HTTPAdapter):
 def get_asset_from_metadatastore(metadata_url, document_id):
     aqua = Aquarius(metadata_url)
     return aqua.get_asset_ddo(document_id)
+
+
+def create_checksum(text):
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
