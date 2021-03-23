@@ -2,7 +2,6 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
-import hashlib
 import json
 
 from eth_utils import add_0x_prefix
