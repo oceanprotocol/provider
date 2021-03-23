@@ -305,6 +305,7 @@ def get_compute_service_descriptor_no_rawalgo(address, price, metadata):
             "cost": price,
             "privacy": {
                 "allowRawAlgorithm": False,
+                "allowAllPublishedAlgorithms": False,
                 "publisherTrustedAlgorithms": [],
                 "allowNetworkAccess": True,
             },
@@ -326,7 +327,8 @@ def get_compute_service_descriptor_specific_algo_dids(address, price, metadata, 
             "creator": address,
             "cost": price,
             "privacy": {
-                "allowRawAlgorithm": True,
+                "allowRawAlgorithm": False,
+                "allowAllPublishedAlgorithms": False,
                 "publisherTrustedAlgorithms": [],
                 "allowNetworkAccess": True,
             },
@@ -367,8 +369,10 @@ def get_compute_service_descriptor_allow_all_published(address, price, metadata)
             "creator": address,
             "cost": price,
             "privacy": {
+                "allowRawAlgorithm": False,
                 "allowNetworkAccess": True,
-                # intentionally no trustedAlgorithms, all algos are fair game
+                "allowAllPublishedAlgorithms": True,
+                "publisherTrustedAlgorithms": []
             },
             "timeout": 3600,
             "datePublished": metadata[MetadataMain.KEY]["dateCreated"],
@@ -699,6 +703,7 @@ def build_and_send_ddo_with_compute_service(client, alg_diff=False, asset_type=N
         )
     else:
         dataset_ddo_w_compute_service = comp_ds(client, pub_wallet)
+
     did = dataset_ddo_w_compute_service.did
     ddo = dataset_ddo_w_compute_service
     data_token = dataset_ddo_w_compute_service.data_token_address
