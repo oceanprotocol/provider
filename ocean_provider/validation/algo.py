@@ -285,16 +285,21 @@ class InputItemValidator:
 
     def _validate_trusted_algos(self, algorithm_did, trusted_algorithms):
         try:
-            did_to_trusted_algo_dict = {algo["did"]: algo for algo in trusted_algorithms}
+            did_to_trusted_algo_dict = {
+                algo["did"]: algo for algo in trusted_algorithms
+            }
             if algorithm_did not in did_to_trusted_algo_dict:
                 self.error = f"this algorithm did {algorithm_did} is not trusted."
 
-            elif (
-                    not did_to_trusted_algo_dict[algorithm_did].get("filesChecksum") or
-                    not did_to_trusted_algo_dict[algorithm_did].get("containerSectionChecksum")
+            elif not did_to_trusted_algo_dict[algorithm_did].get(
+                "filesChecksum"
+            ) or not did_to_trusted_algo_dict[algorithm_did].get(
+                "containerSectionChecksum"
             ):
-                self.error = "The trusted algorithm dict is not valid, missing " \
-                             "filesChecksum and/or containerSectionChecksum."
+                self.error = (
+                    "The trusted algorithm dict is not valid, missing "
+                    "filesChecksum and/or containerSectionChecksum."
+                )
 
         except KeyError:
             did_to_trusted_algo_dict = {}
@@ -316,21 +321,23 @@ class InputItemValidator:
             ).hexdigest()
 
             if files_checksum != trusted_algo_dict["filesChecksum"]:
-                self.error = (
-                    f"filesChecksum for algorithm with did {algo_ddo.did} does not match"
-                )
+                self.error = f"filesChecksum for algorithm with did {algo_ddo.did} does not match"
 
             container_section_checksum = hashlib.sha256(
                 (json.dumps(service.main["algorithm"]["container"])).encode("utf-8")
             ).hexdigest()
 
-            if container_section_checksum != trusted_algo_dict["containerSectionChecksum"]:
+            if (
+                container_section_checksum
+                != trusted_algo_dict["containerSectionChecksum"]
+            ):
                 self.error = f"containerSectionChecksum for algorithm with did {algo_ddo.did} does not match"
 
         return bool(self.error)
 
     def validate_algo(self):
         """Validates algorithm details that allow the algo dict to be built."""
+        self.error = ""
         algorithm_meta = self.data.get("algorithmMeta")
         algorithm_did = self.data.get("algorithmDid")
         if not algorithm_did and not algorithm_meta:
@@ -339,13 +346,17 @@ class InputItemValidator:
         else:
             privacy_options = self.service.main.get("privacy", {})
             if algorithm_did:
-                trusted_algorithms = privacy_options.get("publisherTrustedAlgorithms", [])
+                trusted_algorithms = privacy_options.get(
+                    "publisherTrustedAlgorithms", []
+                )
                 allow_all = privacy_options.get("allowAllPublishedAlgorithms", False)
 
                 if not allow_all:
                     if not trusted_algorithms:
-                        self.error = "Using algorithmDid but allowAllPublishedAlgorithms is False and no " \
-                                     "trusted algorithms are set in publisherTrustedAlgorithms."
+                        self.error = (
+                            "Using algorithmDid but allowAllPublishedAlgorithms is False and no "
+                            "trusted algorithms are set in publisherTrustedAlgorithms."
+                        )
                     else:
                         self._validate_trusted_algos(algorithm_did, trusted_algorithms)
 

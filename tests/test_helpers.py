@@ -288,6 +288,12 @@ def get_compute_service_descriptor(address, price, metadata):
             "cost": price,
             "timeout": 3600,
             "datePublished": metadata[MetadataMain.KEY]["dateCreated"],
+            "privacy": {
+                "allowRawAlgorithm": False,
+                "allowAllPublishedAlgorithms": False,
+                "publisherTrustedAlgorithms": [],
+                "allowNetworkAccess": False,
+            },
         }
     }
 
@@ -372,7 +378,7 @@ def get_compute_service_descriptor_allow_all_published(address, price, metadata)
                 "allowRawAlgorithm": False,
                 "allowNetworkAccess": True,
                 "allowAllPublishedAlgorithms": True,
-                "publisherTrustedAlgorithms": []
+                "publisherTrustedAlgorithms": [],
             },
             "timeout": 3600,
             "datePublished": metadata[MetadataMain.KEY]["dateCreated"],
