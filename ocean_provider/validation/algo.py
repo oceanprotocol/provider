@@ -19,7 +19,7 @@ from ocean_provider.util import (
     validate_order,
     validate_transfer_not_used_for_other_service,
 )
-from ocean_provider.utils.basics import get_asset_from_metadatastore, create_checksum
+from ocean_provider.utils.basics import create_checksum, get_asset_from_metadatastore
 from ocean_utils.agreements.service_agreement import ServiceAgreement
 from ocean_utils.agreements.service_types import ServiceTypes
 from ocean_utils.did import did_to_id
@@ -313,7 +313,8 @@ class InputItemValidator:
         service = algo_ddo.get_service(ServiceTypes.METADATA)
 
         files_checksum = create_checksum(
-            service.attributes["encryptedFiles"] + json.dumps(service.main["files"])
+            service.attributes["encryptedFiles"]
+            + json.dumps(service.main["files"], separators=(",", ":"))
         )
         if allowed_files_checksum and files_checksum != allowed_files_checksum:
             self.error = (
@@ -322,7 +323,7 @@ class InputItemValidator:
             return False
 
         container_section_checksum = create_checksum(
-            json.dumps(service.main["algorithm"]["container"])
+            json.dumps(service.main["algorithm"]["container"], separators=(",", ":"))
         )
         if (
             allowed_container_checksum

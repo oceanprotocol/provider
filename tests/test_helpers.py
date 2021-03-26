@@ -353,11 +353,16 @@ def get_compute_service_descriptor_specific_algo_dids(address, price, metadata, 
                 "filesChecksum": hashlib.sha256(
                     (
                         service.attributes["encryptedFiles"]
-                        + json.dumps(service.main["files"])
+                        + json.dumps(service.main["files"], separators=(",", ":"))
                     ).encode("utf-8")
                 ).hexdigest(),
                 "containerSectionChecksum": hashlib.sha256(
-                    (json.dumps(service.main["algorithm"]["container"])).encode("utf-8")
+                    (
+                        json.dumps(
+                            service.main["algorithm"]["container"],
+                            separators=(",", ":"),
+                        )
+                    ).encode("utf-8")
                 ).hexdigest(),
             }
         )
