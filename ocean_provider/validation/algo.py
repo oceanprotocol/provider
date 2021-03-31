@@ -139,6 +139,17 @@ class WorkflowValidator:
                 algo_service_id = order_log.args.serviceId
                 self.algo_service = get_service_at_index(algo, algo_service_id)
 
+                if self.algo_service.type == ServiceTypes.CLOUD_COMPUTE:
+                    asset_urls = get_asset_download_urls(
+                        algo,
+                        self.provider_wallet,
+                        config_file=app.config["CONFIG_FILE"],
+                    )
+
+                    if not asset_urls:
+                        self.error = "Services in algorithm with compute type must be in the same provider you are calling."
+                        return False
+
                 if not self.algo_service:
                     self.error = "Failed to retrieve purchased algorithm service id."
                     return False
