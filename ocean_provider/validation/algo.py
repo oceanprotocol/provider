@@ -180,7 +180,7 @@ class WorkflowValidator:
                     self.algo_service.get_cost(),
                 )
             except Exception:
-                self.error = "Algorithm is already in use."
+                self.error = "Algorithm is already in use or can not be found on chain."
                 return False
 
         algorithm_dict = StageAlgoSerializer(
