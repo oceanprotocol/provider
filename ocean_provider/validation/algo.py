@@ -5,6 +5,7 @@
 import json
 
 from eth_utils import add_0x_prefix
+from ocean_lib.models.data_token import DataToken
 from ocean_provider.myapp import app
 from ocean_provider.serializers import StageAlgoSerializer
 from ocean_provider.util import (
@@ -20,7 +21,6 @@ from ocean_provider.util import (
     validate_transfer_not_used_for_other_service,
 )
 from ocean_provider.utils.basics import create_checksum, get_asset_from_metadatastore
-from ocean_utils.agreements.service_agreement import ServiceAgreement
 from ocean_utils.agreements.service_types import ServiceTypes
 from ocean_utils.did import did_to_id
 
@@ -132,34 +132,55 @@ class WorkflowValidator:
                 return False
 
             try:
-                service = ServiceAgreement.from_ddo(ServiceTypes.ASSET_ACCESS, algo)
+                dt = DataToken(self.consumer_address)
+                tx_receipt = dt.get_tx_receipt(algorithm_tx_id)
+                event_logs = dt.events.OrderStarted().processReceipt(tx_receipt)
+                order_log = event_logs[0] if event_logs else None
+                algo_service_id = order_log.args.serviceId
+                self.algo_service = get_service_at_index(algo, algo_service_id)
+
+                if self.algo_service.type == ServiceTypes.CLOUD_COMPUTE:
+                    asset_urls = get_asset_download_urls(
+                        algo,
+                        self.provider_wallet,
+                        config_file=app.config["CONFIG_FILE"],
+                    )
+
+                    if not asset_urls:
+                        self.error = "Services in algorithm with compute type must be in the same provider you are calling."
+                        return False
+
+                if not self.algo_service:
+                    self.error = "Failed to retrieve purchased algorithm service id."
+                    return False
+
                 _tx, _order_log, _transfer_log = validate_order(
                     self.consumer_address,
                     algorithm_token_address,
-                    float(service.get_cost()),
+                    float(self.algo_service.get_cost()),
                     algorithm_tx_id,
                     add_0x_prefix(did_to_id(algorithm_did))
                     if algorithm_did.startswith("did:")
                     else algorithm_did,
-                    service.index,
+                    self.algo_service.index,
                 )
                 validate_transfer_not_used_for_other_service(
                     algorithm_did,
-                    service.index,
+                    self.algo_service.index,
                     algorithm_tx_id,
                     self.consumer_address,
                     algorithm_token_address,
                 )
                 record_consume_request(
                     algorithm_did,
-                    service.index,
+                    self.algo_service.index,
                     algorithm_tx_id,
                     self.consumer_address,
                     algorithm_token_address,
-                    service.get_cost(),
+                    self.algo_service.get_cost(),
                 )
             except Exception:
-                self.error = "Algorithm is already in use."
+                self.error = "Algorithm is already in use or can not be found on chain."
                 return False
 
         algorithm_dict = StageAlgoSerializer(
