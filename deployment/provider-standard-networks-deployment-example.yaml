@@ -41,7 +41,7 @@ spec:
           value: "9000"
         - name: AQUARIUS_URL
           value: < http://aquarius_url >
-        image: oceanprotocol/provider-py:<tag from hub.docker.com - https://hub.docker.com/repository/docker/oceanprotocol/provider-py/tags?page=1&ordering=last_updated >
+        image: oceanprotocol/provider-py:<check tag on hub.docker.com >
         imagePullPolicy: IfNotPresent
         name: provider
         ports:
