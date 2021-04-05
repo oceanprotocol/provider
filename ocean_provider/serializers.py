@@ -6,8 +6,6 @@ import json
 
 from ocean_provider.util import get_asset_url_at_index
 from ocean_provider.utils.basics import get_asset_from_metadatastore, get_config
-from ocean_utils.agreements.service_agreement import ServiceAgreement
-from ocean_utils.agreements.service_types import ServiceTypes
 
 
 def get_metadata_url():
@@ -15,11 +13,12 @@ def get_metadata_url():
 
 
 class StageAlgoSerializer:
-    def __init__(self, consumer_address, provider_wallet, algo_data):
+    def __init__(self, consumer_address, provider_wallet, algo_data, algo_service):
         """Initialize Serializer."""
         self.consumer_address = consumer_address
         self.provider_wallet = provider_wallet
         self.algo_data = algo_data
+        self.algo_service = algo_service
 
     def serialize(self):
         algorithm_meta = self.algo_data.get("algorithmMeta")
@@ -42,7 +41,6 @@ class StageAlgoSerializer:
             )
 
         algo_asset = get_asset_from_metadatastore(get_metadata_url(), algorithm_did)
-        service = ServiceAgreement.from_ddo(ServiceTypes.ASSET_ACCESS, algo_asset)
 
         dict_template["id"] = algorithm_did
         dict_template["rawcode"] = ""
@@ -52,9 +50,9 @@ class StageAlgoSerializer:
             dict_template["url"] = asset_urls
         else:
             dict_template["remote"] = {
-                "serviceEndpoint": service.service_endpoint,
+                "serviceEndpoint": self.algo_service.service_endpoint,
                 "txId": algorithm_tx_id,
-                "serviceIndex": service.index,
+                "serviceIndex": self.algo_service.index,
             }
 
         dict_template["container"] = algo_asset.metadata["main"]["algorithm"][

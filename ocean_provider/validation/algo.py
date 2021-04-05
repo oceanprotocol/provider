@@ -116,12 +116,14 @@ class WorkflowValidator:
     def _build_and_validate_algo(self, algo_data):
         """Returns False if invalid, otherwise sets the validated_algo_dict attribute."""
         algorithm_did = algo_data.get("algorithmDid")
+        self.algo_service = None
 
         if algorithm_did and not algo_data.get("algorithmMeta"):
             algorithm_token_address = algo_data.get("algorithmDataToken")
             algorithm_tx_id = algo_data.get("algorithmTransferTxId")
 
             algo = get_asset_from_metadatastore(get_metadata_url(), algorithm_did)
+
             try:
                 asset_type = algo.metadata["main"]["type"]
             except ValueError:
@@ -184,7 +186,7 @@ class WorkflowValidator:
                 return False
 
         algorithm_dict = StageAlgoSerializer(
-            self.consumer_address, self.provider_wallet, algo_data
+            self.consumer_address, self.provider_wallet, algo_data, self.algo_service
         ).serialize()
 
         valid, error_msg = validate_formatted_algorithm_dict(
