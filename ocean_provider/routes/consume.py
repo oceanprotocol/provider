@@ -9,6 +9,9 @@ import os
 from eth_utils import add_0x_prefix
 from flask import Response, jsonify, request
 from flask_sieve import validate
+from ocean_lib.common.agreements.service_types import ServiceTypes
+from ocean_lib.common.did import did_to_id
+from ocean_lib.common.http_requests.requests_session import get_requests_session
 from ocean_lib.models.data_token import DataToken
 from ocean_provider.log import setup_logging
 from ocean_provider.myapp import app
@@ -43,9 +46,6 @@ from ocean_provider.validation.requests import (
     NonceRequest,
     SimpleFlowConsumeRequest,
 )
-from ocean_utils.agreements.service_types import ServiceTypes
-from ocean_utils.did import did_to_id
-from ocean_utils.http_requests.requests_session import get_requests_session
 
 from . import services
 

@@ -10,6 +10,7 @@ from cgi import parse_header
 
 import requests
 from flask import Response
+from ocean_lib.common.agreements.service_agreement import ServiceAgreement
 from ocean_lib.models.data_token import DataToken
 from ocean_lib.ocean.util import to_base_18
 from ocean_lib.web3_internal.utils import add_ethereum_prefix_and_hash_msg
@@ -23,7 +24,6 @@ from ocean_provider.utils.basics import (
     get_provider_wallet,
 )
 from ocean_provider.utils.encryption import do_decrypt
-from ocean_utils.agreements.service_agreement import ServiceAgreement
 from osmosis_driver_interface.osmosis import Osmosis
 from websockets import ConnectionClosed
 

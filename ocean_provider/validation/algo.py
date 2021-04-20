@@ -5,6 +5,8 @@
 import json
 
 from eth_utils import add_0x_prefix
+from ocean_lib.common.agreements.service_types import ServiceTypes
+from ocean_lib.common.did import did_to_id
 from ocean_lib.models.data_token import DataToken
 from ocean_provider.myapp import app
 from ocean_provider.serializers import StageAlgoSerializer
@@ -21,8 +23,6 @@ from ocean_provider.util import (
     validate_transfer_not_used_for_other_service,
 )
 from ocean_provider.utils.basics import create_checksum, get_asset_from_metadatastore
-from ocean_utils.agreements.service_types import ServiceTypes
-from ocean_utils.did import did_to_id
 
 
 class WorkflowValidator:

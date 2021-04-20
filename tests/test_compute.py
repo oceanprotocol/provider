@@ -5,6 +5,8 @@
 
 import json
 
+from ocean_lib.common.agreements.service_agreement import ServiceAgreement
+from ocean_lib.common.agreements.service_types import ServiceTypes
 from ocean_lib.models.data_token import DataToken
 from ocean_lib.web3_internal.utils import add_ethereum_prefix_and_hash_msg
 from ocean_lib.web3_internal.web3helper import Web3Helper
@@ -12,8 +14,6 @@ from ocean_provider.constants import BaseURLs
 from ocean_provider.run import get_provider_address, get_services_endpoints
 from ocean_provider.util import build_stage_output_dict
 from ocean_provider.utils.basics import get_provider_wallet
-from ocean_utils.agreements.service_agreement import ServiceAgreement
-from ocean_utils.agreements.service_types import ServiceTypes
 from tests.test_helpers import (
     build_and_send_ddo_with_compute_service,
     comp_ds_no_rawalgo,
