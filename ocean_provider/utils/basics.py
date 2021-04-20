@@ -86,8 +86,6 @@ def get_wallet(index):
         with open(key_file) as _file:
             encr_key = json.loads(_file.read())
 
-    from ocean_lib.web3_internal.wallet import Wallet
-
     return Wallet(
         Web3Provider.get_web3(),
         private_key=key,
