@@ -155,7 +155,7 @@ def get_registered_ddo(client, wallet, metadata, service_descriptor):
     metadata_contract = MetadataContract(ddo_contract_address)
 
     tx_id = factory_contract.createToken(
-        metadata_store_url, "DataToken1", "DT1", to_base_18(1000000), wallet
+        metadata_store_url, "DataToken1", "DT1", to_base_18(1000000.00), wallet
     )
     dt_contract = DataToken(factory_contract.get_token_address(tx_id))
     if not dt_contract:
@@ -563,11 +563,11 @@ def _check_job_id(client, job_id, did, token_address, wait_time=20):
 
 def mint_tokens_and_wait(data_token_contract, receiver_wallet, minter_wallet):
     dtc = data_token_contract
-    tx_id = dtc.mint_tokens(receiver_wallet.address, 50, minter_wallet)
+    tx_id = dtc.mint_tokens(receiver_wallet.address, 50.00, minter_wallet)
     dtc.get_tx_receipt(tx_id)
     time.sleep(2)
 
-    def verify_supply(mint_amount=50):
+    def verify_supply(mint_amount=50.00):
         supply = dtc.contract_concise.totalSupply()
         if supply <= 0:
             _tx_id = dtc.mint(receiver_wallet.address, mint_amount, minter_wallet)
