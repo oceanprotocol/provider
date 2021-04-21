@@ -15,6 +15,15 @@ from pathlib import Path
 
 from eth_utils import remove_0x_prefix
 from ocean_lib.assets.asset import Asset
+from ocean_lib.common.agreements.service_agreement import ServiceAgreement
+from ocean_lib.common.agreements.service_factory import (
+    ServiceDescriptor,
+    ServiceFactory,
+)
+from ocean_lib.common.agreements.service_types import ServiceTypes
+from ocean_lib.common.aquarius.aquarius import Aquarius
+from ocean_lib.common.ddo.public_key_rsa import PUBLIC_KEY_TYPE_RSA
+from ocean_lib.common.utils.utilities import checksum
 from ocean_lib.models.data_token import DataToken
 from ocean_lib.models.dtfactory import DTFactory
 from ocean_lib.models.metadata import MetadataContract
@@ -30,13 +39,6 @@ from ocean_provider.utils.basics import (
     get_asset_from_metadatastore,
     get_datatoken_minter,
 )
-from ocean_utils.agreements.service_agreement import ServiceAgreement
-from ocean_utils.agreements.service_factory import ServiceDescriptor, ServiceFactory
-from ocean_utils.agreements.service_types import ServiceTypes
-from ocean_utils.aquarius.aquarius import Aquarius
-from ocean_utils.ddo.metadata import MetadataMain
-from ocean_utils.ddo.public_key_rsa import PUBLIC_KEY_TYPE_RSA
-from ocean_utils.utils.utilities import checksum
 
 
 def get_publisher_wallet():
@@ -107,9 +109,9 @@ def get_access_service_descriptor(address, metadata):
         "main": {
             "name": "dataAssetAccessServiceAgreement",
             "creator": address,
-            "cost": metadata[MetadataMain.KEY]["cost"],
+            "cost": metadata["main"]["cost"],
             "timeout": 3600,
-            "datePublished": metadata[MetadataMain.KEY]["dateCreated"],
+            "datePublished": metadata["main"]["dateCreated"],
         }
     }
 
@@ -124,9 +126,9 @@ def get_access_service_descriptor_different_provider(address, metadata):
         "main": {
             "name": "dataAssetAccessServiceAgreement",
             "creator": address,
-            "cost": metadata[MetadataMain.KEY]["cost"],
+            "cost": metadata["main"]["cost"],
             "timeout": 3600,
-            "datePublished": metadata[MetadataMain.KEY]["dateCreated"],
+            "datePublished": metadata["main"]["dateCreated"],
         }
     }
 
@@ -153,7 +155,7 @@ def get_registered_ddo(client, wallet, metadata, service_descriptor):
     metadata_contract = MetadataContract(ddo_contract_address)
 
     tx_id = factory_contract.createToken(
-        metadata_store_url, "DataToken1", "DT1", to_base_18(1000000), wallet
+        metadata_store_url, "DataToken1", "DT1", to_base_18(1000000.00), wallet
     )
     dt_contract = DataToken(factory_contract.get_token_address(tx_id))
     if not dt_contract:
@@ -243,7 +245,7 @@ def get_dataset_ddo_with_access_service(client, wallet):
     metadata = get_sample_ddo()["service"][0]["attributes"]
     metadata["main"]["files"][0]["checksum"] = str(uuid.uuid4())
     service_descriptor = get_access_service_descriptor(wallet.address, metadata)
-    metadata[MetadataMain.KEY].pop("cost")
+    metadata["main"].pop("cost")
     return get_registered_ddo(client, wallet, metadata, service_descriptor)
 
 
@@ -268,7 +270,7 @@ def get_dataset_with_invalid_url_ddo(client, wallet):
     metadata = get_invalid_url_ddo()["service"][0]["attributes"]
     metadata["main"]["files"][0]["checksum"] = str(uuid.uuid4())
     service_descriptor = get_access_service_descriptor(wallet.address, metadata)
-    metadata[MetadataMain.KEY].pop("cost")
+    metadata["main"].pop("cost")
     return get_registered_ddo(client, wallet, metadata, service_descriptor)
 
 
@@ -276,7 +278,7 @@ def get_dataset_with_ipfs_url_ddo(client, wallet):
     metadata = get_ipfs_url_ddo()["service"][0]["attributes"]
     metadata["main"]["files"][0]["checksum"] = str(uuid.uuid4())
     service_descriptor = get_access_service_descriptor(wallet.address, metadata)
-    metadata[MetadataMain.KEY].pop("cost")
+    metadata["main"].pop("cost")
     return get_registered_ddo(client, wallet, metadata, service_descriptor)
 
 
@@ -287,7 +289,7 @@ def get_compute_service_descriptor(address, price, metadata):
             "creator": address,
             "cost": price,
             "timeout": 3600,
-            "datePublished": metadata[MetadataMain.KEY]["dateCreated"],
+            "datePublished": metadata["main"]["dateCreated"],
             "privacy": {
                 "allowRawAlgorithm": True,
                 "allowAllPublishedAlgorithms": True,
@@ -316,7 +318,7 @@ def get_compute_service_descriptor_no_rawalgo(address, price, metadata):
                 "allowNetworkAccess": True,
             },
             "timeout": 3600,
-            "datePublished": metadata[MetadataMain.KEY]["dateCreated"],
+            "datePublished": metadata["main"]["dateCreated"],
         }
     }
 
@@ -339,7 +341,7 @@ def get_compute_service_descriptor_specific_algo_dids(address, price, metadata, 
                 "allowNetworkAccess": True,
             },
             "timeout": 3600,
-            "datePublished": metadata[MetadataMain.KEY]["dateCreated"],
+            "datePublished": metadata["main"]["dateCreated"],
         }
     }
 
@@ -386,7 +388,7 @@ def get_compute_service_descriptor_allow_all_published(address, price, metadata)
                 "publisherTrustedAlgorithms": [],
             },
             "timeout": 3600,
-            "datePublished": metadata[MetadataMain.KEY]["dateCreated"],
+            "datePublished": metadata["main"]["dateCreated"],
         }
     }
 
@@ -400,7 +402,7 @@ def get_algorithm_ddo(client, wallet):
     metadata = get_sample_algorithm_ddo()["service"][0]["attributes"]
     metadata["main"]["files"][0]["checksum"] = str(uuid.uuid4())
     service_descriptor = get_access_service_descriptor(wallet.address, metadata)
-    metadata[MetadataMain.KEY].pop("cost")
+    metadata["main"].pop("cost")
     return get_registered_ddo(client, wallet, metadata, service_descriptor)
 
 
@@ -410,7 +412,7 @@ def get_algorithm_ddo_different_provider(client, wallet):
     service_descriptor = get_access_service_descriptor_different_provider(
         wallet.address, metadata
     )
-    metadata[MetadataMain.KEY].pop("cost")
+    metadata["main"].pop("cost")
     return get_registered_ddo(client, wallet, metadata, service_descriptor)
 
 
@@ -418,9 +420,9 @@ def comp_ds(client, wallet):
     metadata = get_sample_ddo_with_compute_service()["service"][0]["attributes"]
     metadata["main"]["files"][0]["checksum"] = str(uuid.uuid4())
     service_descriptor = get_compute_service_descriptor(
-        wallet.address, metadata[MetadataMain.KEY]["cost"], metadata
+        wallet.address, metadata["main"]["cost"], metadata
     )
-    metadata[MetadataMain.KEY].pop("cost")
+    metadata["main"].pop("cost")
     return get_registered_ddo(client, wallet, metadata, service_descriptor)
 
 
@@ -428,9 +430,9 @@ def comp_ds_no_rawalgo(client, wallet):
     metadata = get_sample_ddo_with_compute_service()["service"][0]["attributes"]
     metadata["main"]["files"][0]["checksum"] = str(uuid.uuid4())
     service_descriptor = get_compute_service_descriptor_no_rawalgo(
-        wallet.address, metadata[MetadataMain.KEY]["cost"], metadata
+        wallet.address, metadata["main"]["cost"], metadata
     )
-    metadata[MetadataMain.KEY].pop("cost")
+    metadata["main"].pop("cost")
     return get_registered_ddo(client, wallet, metadata, service_descriptor)
 
 
@@ -438,9 +440,9 @@ def comp_ds_specific_algo_dids(client, wallet, algos):
     metadata = get_sample_ddo_with_compute_service()["service"][0]["attributes"]
     metadata["main"]["files"][0]["checksum"] = str(uuid.uuid4())
     service_descriptor = get_compute_service_descriptor_specific_algo_dids(
-        wallet.address, metadata[MetadataMain.KEY]["cost"], metadata, algos
+        wallet.address, metadata["main"]["cost"], metadata, algos
     )
-    metadata[MetadataMain.KEY].pop("cost")
+    metadata["main"].pop("cost")
     return get_registered_ddo(client, wallet, metadata, service_descriptor)
 
 
@@ -448,9 +450,9 @@ def comp_ds_allow_all_published(client, wallet):
     metadata = get_sample_ddo_with_compute_service()["service"][0]["attributes"]
     metadata["main"]["files"][0]["checksum"] = str(uuid.uuid4())
     service_descriptor = get_compute_service_descriptor_allow_all_published(
-        wallet.address, metadata[MetadataMain.KEY]["cost"], metadata
+        wallet.address, metadata["main"]["cost"], metadata
     )
-    metadata[MetadataMain.KEY].pop("cost")
+    metadata["main"].pop("cost")
     return get_registered_ddo(client, wallet, metadata, service_descriptor)
 
 
@@ -561,11 +563,11 @@ def _check_job_id(client, job_id, did, token_address, wait_time=20):
 
 def mint_tokens_and_wait(data_token_contract, receiver_wallet, minter_wallet):
     dtc = data_token_contract
-    tx_id = dtc.mint_tokens(receiver_wallet.address, 50, minter_wallet)
+    tx_id = dtc.mint_tokens(receiver_wallet.address, 50.00, minter_wallet)
     dtc.get_tx_receipt(tx_id)
     time.sleep(2)
 
-    def verify_supply(mint_amount=50):
+    def verify_supply(mint_amount=50.00):
         supply = dtc.contract_concise.totalSupply()
         if supply <= 0:
             _tx_id = dtc.mint(receiver_wallet.address, mint_amount, minter_wallet)

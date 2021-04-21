@@ -7,6 +7,10 @@ import mimetypes
 from copy import deepcopy
 from unittest.mock import MagicMock, Mock
 
+from ocean_lib.common.agreements.service_agreement import ServiceAgreement
+from ocean_lib.common.agreements.service_types import ServiceTypes
+from ocean_lib.common.aquarius.aquarius import Aquarius
+from ocean_lib.common.http_requests.requests_session import get_requests_session
 from ocean_lib.models.data_token import DataToken
 from ocean_lib.web3_internal.utils import add_ethereum_prefix_and_hash_msg
 from ocean_lib.web3_internal.web3helper import Web3Helper
@@ -19,10 +23,6 @@ from ocean_provider.utils.accounts import (
     is_auth_token_valid,
     verify_signature,
 )
-from ocean_utils.agreements.service_agreement import ServiceAgreement
-from ocean_utils.agreements.service_types import ServiceTypes
-from ocean_utils.aquarius.aquarius import Aquarius
-from ocean_utils.http_requests.requests_session import get_requests_session
 from tests.test_helpers import (
     get_consumer_wallet,
     get_dataset_ddo_with_access_service,
