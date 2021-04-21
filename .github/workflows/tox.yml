@@ -38,7 +38,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install tox tox-gh-actions
       - name: Test with tox and publish code coverage
-        working-directory: ${{ github.workspace }}
         uses: paambaati/codeclimate-action@v2.7.5
         env:
           CC_TEST_REPORTER_ID: d291a72f91dd7c61af8c5e41fa5fa698200f859a181a4dc157681613a3ec86b1
