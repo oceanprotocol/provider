@@ -154,9 +154,7 @@ def check_url_details(url, with_checksum=False):
         pass
     except requests.exceptions.MissingSchema:
         pass
-    except requests.exceptions.ConnectionError:
-        pass
-    except requests.exceptions.ReadTimeout:
+    except requests.exceptions.RequestException:
         pass
 
     return False, {}
