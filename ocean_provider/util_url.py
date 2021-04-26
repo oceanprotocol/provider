@@ -156,6 +156,8 @@ def check_url_details(url, with_checksum=False):
         pass
     except requests.exceptions.ConnectionError:
         pass
+    except requests.exceptions.ReadTimeout:
+        pass
 
     return False, {}
 
