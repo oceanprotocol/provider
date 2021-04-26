@@ -5,4 +5,4 @@
 
 
 class InvalidSignatureError(Exception):
-    """ User signature is not valid."""
+    """User signature is not valid."""

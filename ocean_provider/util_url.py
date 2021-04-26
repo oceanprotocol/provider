@@ -149,11 +149,6 @@ def check_url_details(url, with_checksum=False):
                     details.update(extra_data)
 
                 return True, details
-
-    except requests.exceptions.InvalidSchema:
-        pass
-    except requests.exceptions.MissingSchema:
-        pass
     except requests.exceptions.RequestException:
         pass
 
