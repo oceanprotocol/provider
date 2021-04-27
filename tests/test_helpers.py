@@ -193,11 +193,7 @@ def get_registered_ddo(client, wallet, metadata, service_descriptor):
     for service in services:
         ddo.add_service(service)
 
-    # ddo.proof['signatureValue'] = ocean_lib.sign_hash(
-    #     did_to_id_bytes(did), account)
-
     ddo.add_public_key(did, wallet.address)
-
     ddo.add_authentication(did, PUBLIC_KEY_TYPE_RSA)
 
     # if not plecos.is_valid_dict_local(ddo.metadata):
