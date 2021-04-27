@@ -66,7 +66,7 @@ dev_requirements = [
     "python-dotenv==0.15.0",
     "flake8",
     "isort",
-    "black",
+    "black==21.4b0",
     "pre-commit",
     "licenseheaders",
 ]
