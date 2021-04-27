@@ -9,7 +9,6 @@ from unittest.mock import MagicMock, Mock
 
 from ocean_lib.common.agreements.service_agreement import ServiceAgreement
 from ocean_lib.common.agreements.service_types import ServiceTypes
-from ocean_lib.common.aquarius.aquarius import Aquarius
 from ocean_lib.common.http_requests.requests_session import get_requests_session
 from ocean_lib.models.data_token import DataToken
 from ocean_lib.web3_internal.utils import add_ethereum_prefix_and_hash_msg
@@ -41,13 +40,6 @@ def dummy_callback(*_):
 
 
 def test_download_service(client):
-    aqua = Aquarius("http://localhost:5000")
-    try:
-        for did in aqua.list_assets():
-            aqua.retire_asset_ddo(did)
-    except (ValueError, Exception):
-        pass
-
     pub_wallet = get_publisher_wallet()
     cons_wallet = get_consumer_wallet()
 
