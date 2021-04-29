@@ -368,3 +368,19 @@ def get_service_at_index(asset, index):
         return None
 
     return matching_services[0]
+
+
+def service_unavailable(error, context, custom_logger=None):
+    text_items = []
+    for key, value in context.items():
+        text_items.append(key + "=" + value)
+
+    logger_message = "Payload was: " + ",".join(text_items)
+    custom_logger = custom_logger if custom_logger else logger
+    custom_logger.error(logger_message, exc_info=1)
+
+    return Response(
+        json.dumps({"error": str(error), "context": context}),
+        503,
+        headers={"content-type": "application/json"},
+    )

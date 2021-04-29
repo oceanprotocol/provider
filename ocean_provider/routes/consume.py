@@ -26,6 +26,7 @@ from ocean_provider.util import (
     get_request_data,
     process_consume_request,
     record_consume_request,
+    service_unavailable,
     validate_order,
     validate_transfer_not_used_for_other_service,
 )
@@ -106,13 +107,9 @@ def simple_flow_consume():
         return build_download_response(request, requests_session, url, download_url)
 
     except Exception as e:
-        logger.error(
-            f"Error: {e}. \n"
-            f"Payload was: dataToken={dt_address}, "
-            f"consumerAddress={consumer}",
-            exc_info=1,
+        return service_unavailable(
+            e, {"dataToken": dt_address, "consumerAddress": consumer}, logger
         )
-        return jsonify(error=str(e)), 500
 
 
 @services.route("/encrypt", methods=["POST"])
@@ -157,8 +154,8 @@ def encrypt():
     responses:
       201:
         description: document successfully encrypted.
-      500:
-        description: Error
+      503:
+        description: Service Unavailable
 
     return: the encrypted document (hex str)
     """
@@ -182,14 +179,14 @@ def encrypt():
         )
 
     except Exception as e:
-        logger.error(
-            f"Error: {e}. \n"
-            f"providerAddress={provider_wallet.address}\n"
-            f"Payload was: documentId={did}, "
-            f"publisherAddress={publisher_address}",
-            exc_info=1,
+        return service_unavailable(
+            e,
+            {
+                "providerAddress": provider_wallet.address if provider_wallet else "",
+                "documentId": did,
+                "publisherAddress": publisher_address,
+            },
         )
-        return jsonify(error=str(e)), 500
 
 
 @services.route("/fileinfo", methods=["POST"])
@@ -303,8 +300,7 @@ def initialize():
         )
 
     except Exception as e:
-        logger.error(f"Error: {e}. \n" f"Payload was: {data}", exc_info=1)
-        return jsonify(error=str(e)), 500
+        return service_unavailable(e, data, logger)
 
 
 @services.route("/download", methods=["GET"])
@@ -347,8 +343,8 @@ def download():
         description: One of the required attributes is missing.
       401:
         description: Invalid asset data.
-      500:
-        description: Error
+      503:
+        description: Service Unavailable
     """
     data = get_request_data(request)
     try:
@@ -399,12 +395,13 @@ def download():
         )
 
     except Exception as e:
-        logger.error(
-            f"Error: {e}. \n"
-            f"Payload was: documentId={data.get('did')}, "
-            f"consumerAddress={data.get('consumerAddress')},"
-            f"serviceId={data.get('serviceId')}"
-            f"serviceType={data.get('serviceType')}",
-            exc_info=1,
+        return service_unavailable(
+            e,
+            {
+                "documentId": data.get("did"),
+                "consumerAddress": data.get("consumerAddress"),
+                "serviceId": data.get("serviceId"),
+                "serviceType": data.get("serviceType"),
+            },
+            logger,
         )
-        return jsonify(error=str(e)), 500

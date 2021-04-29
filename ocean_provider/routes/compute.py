@@ -17,6 +17,7 @@ from ocean_provider.util import (
     get_compute_endpoint,
     get_request_data,
     process_compute_request,
+    service_unavailable,
 )
 from ocean_provider.utils.accounts import verify_signature
 from ocean_provider.utils.basics import (
@@ -78,8 +79,8 @@ def computeDelete():
         description: One of the required attributes is missing.
       401:
         description: Invalid asset data.
-      500:
-        description: Error
+      503:
+        description: Service Unavailable
     """
     data = get_request_data(request)
     try:
@@ -96,8 +97,7 @@ def computeDelete():
             headers={"content-type": "application/json"},
         )
     except (ValueError, Exception) as e:
-        logger.error(f"Error- {str(e)}", exc_info=1)
-        return jsonify(error=f"Error : {str(e)}"), 500
+        return service_unavailable(e, data, logger)
 
 
 @services.route("/compute", methods=["PUT"])
@@ -140,8 +140,8 @@ def computeStop():
         description: One of the required attributes is missing.
       401:
         description: Consumer signature is invalid or failed verification.
-      500:
-        description: General server error
+      503:
+        description: Service unavailable
     """
     data = get_request_data(request)
     try:
@@ -158,8 +158,7 @@ def computeStop():
             headers={"content-type": "application/json"},
         )
     except (ValueError, Exception) as e:
-        logger.error(f"Error- {str(e)}", exc_info=1)
-        return jsonify(error=f"Error : {str(e)}"), 500
+        return service_unavailable(e, data, logger)
 
 
 @services.route("/compute", methods=["GET"])
@@ -203,8 +202,8 @@ def computeStatus():
         description: One of the required attributes is missing.
       401:
         description: Consumer signature is invalid or failed verification.
-      500:
-        description: General server error
+      503:
+        description: Service Unavailable
     """
     data = get_request_data(request)
     try:
@@ -253,8 +252,7 @@ def computeStatus():
         )
 
     except (ValueError, Exception) as e:
-        logger.error(f"Error- {str(e)}", exc_info=1)
-        return jsonify(error=f"Error : {str(e)}"), 500
+        return service_unavailable(e, data, logger)
 
 
 @services.route("/compute", methods=["POST"])
@@ -302,8 +300,8 @@ def computeStart():
         description: One of the required attributes is missing.
       401:
         description: Consumer signature is invalid or failed verification
-      500:
-        description: General server error
+      503:
+        description: Service unavailable
     """
     data = get_request_data(request)
 
@@ -345,5 +343,4 @@ def computeStart():
             headers={"content-type": "application/json"},
         )
     except (ValueError, KeyError, Exception) as e:
-        logger.error(f"Error- {str(e)}", exc_info=1)
-        return jsonify(error=f"Error : {str(e)}"), 500
+        return service_unavailable(e, data, logger)
