@@ -8,8 +8,8 @@ import json
 from ocean_lib.common.agreements.service_agreement import ServiceAgreement
 from ocean_lib.common.agreements.service_types import ServiceTypes
 from ocean_lib.models.data_token import DataToken
+from ocean_lib.web3_internal.transactions import sign_hash
 from ocean_lib.web3_internal.utils import add_ethereum_prefix_and_hash_msg
-from ocean_lib.web3_internal.web3helper import Web3Helper
 from ocean_provider.constants import BaseURLs
 from ocean_provider.run import get_provider_address, get_services_endpoints
 from ocean_provider.util import build_stage_output_dict
@@ -83,7 +83,7 @@ def test_compute_norawalgo_allowed(client):
     # prepare consumer signature on did
     msg = f"{cons_wallet.address}{did}{nonce}"
     _hash = add_ethereum_prefix_and_hash_msg(msg)
-    signature = Web3Helper.sign_hash(_hash, cons_wallet)
+    signature = sign_hash(_hash, cons_wallet)
 
     # Start the compute job
     payload = dict(
@@ -132,7 +132,7 @@ def test_compute_specific_algo_dids(client):
     # prepare consumer signature on did
     msg = f"{cons_wallet.address}{did}{nonce}"
     _hash = add_ethereum_prefix_and_hash_msg(msg)
-    signature = Web3Helper.sign_hash(_hash, cons_wallet)
+    signature = sign_hash(_hash, cons_wallet)
 
     # Start the compute job
     payload = dict(
@@ -182,7 +182,7 @@ def test_compute(client):
     # prepare consumer signature on did
     msg = f"{cons_wallet.address}{did}{str(nonce)}"
     _hash = add_ethereum_prefix_and_hash_msg(msg)
-    signature = Web3Helper.sign_hash(_hash, cons_wallet)
+    signature = sign_hash(_hash, cons_wallet)
 
     # Start the compute job
     payload = dict(
@@ -206,7 +206,7 @@ def test_compute(client):
     # Start compute using invalid signature (withOUT nonce), should fail
     msg = f"{cons_wallet.address}{did}"
     _hash = add_ethereum_prefix_and_hash_msg(msg)
-    payload["signature"] = Web3Helper.sign_hash(_hash, cons_wallet)
+    payload["signature"] = sign_hash(_hash, cons_wallet)
     compute_endpoint = BaseURLs.ASSETS_URL + "/compute"
     response = client.post(
         compute_endpoint, data=json.dumps(payload), content_type="application/json"
@@ -227,7 +227,7 @@ def test_compute(client):
     nonce = get_nonce(client, cons_wallet.address)
     msg = f"{cons_wallet.address}{job_id}{did}{nonce}"
     _hash = add_ethereum_prefix_and_hash_msg(msg)
-    signature = Web3Helper.sign_hash(_hash, cons_wallet)
+    signature = sign_hash(_hash, cons_wallet)
 
     payload = dict(
         {
@@ -293,7 +293,7 @@ def test_compute_diff_provider(client):
     # prepare consumer signature on did
     msg = f"{cons_wallet.address}{did}{str(nonce)}"
     _hash = add_ethereum_prefix_and_hash_msg(msg)
-    signature = Web3Helper.sign_hash(_hash, cons_wallet)
+    signature = sign_hash(_hash, cons_wallet)
 
     # Start the compute job
     payload = dict(
@@ -344,7 +344,7 @@ def test_compute_allow_all_published(client):
     # prepare consumer signature on did
     msg = f"{cons_wallet.address}{did}{str(nonce)}"
     _hash = add_ethereum_prefix_and_hash_msg(msg)
-    signature = Web3Helper.sign_hash(_hash, cons_wallet)
+    signature = sign_hash(_hash, cons_wallet)
 
     # Start the compute job
     payload = dict(
@@ -396,7 +396,7 @@ def test_compute_not_an_algo(client):
     # prepare consumer signature on did
     msg = f"{cons_wallet.address}{did}{str(nonce)}"
     _hash = add_ethereum_prefix_and_hash_msg(msg)
-    signature = Web3Helper.sign_hash(_hash, cons_wallet)
+    signature = sign_hash(_hash, cons_wallet)
 
     # Start the compute job
     payload = dict(
@@ -452,7 +452,7 @@ def test_compute_additional_input(client):
     # prepare consumer signature on did
     msg = f"{cons_wallet.address}{did}{str(nonce)}"
     _hash = add_ethereum_prefix_and_hash_msg(msg)
-    signature = Web3Helper.sign_hash(_hash, cons_wallet)
+    signature = sign_hash(_hash, cons_wallet)
 
     # Start the compute job
     payload = dict(

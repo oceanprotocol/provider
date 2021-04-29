@@ -12,8 +12,8 @@ from ocean_lib.common.agreements.service_types import ServiceTypes
 from ocean_lib.common.aquarius.aquarius import Aquarius
 from ocean_lib.common.http_requests.requests_session import get_requests_session
 from ocean_lib.models.data_token import DataToken
+from ocean_lib.web3_internal.transactions import sign_hash
 from ocean_lib.web3_internal.utils import add_ethereum_prefix_and_hash_msg
-from ocean_lib.web3_internal.web3helper import Web3Helper
 from ocean_provider.constants import BaseURLs
 from ocean_provider.exceptions import InvalidSignatureError
 from ocean_provider.util import build_download_response, get_download_url
@@ -82,7 +82,7 @@ def test_download_service(client):
 
     # Consume using url index and signature (withOUT nonce), should fail
     _hash = add_ethereum_prefix_and_hash_msg(ddo.did)
-    payload["signature"] = Web3Helper.sign_hash(_hash, cons_wallet)
+    payload["signature"] = sign_hash(_hash, cons_wallet)
     request_url = (
         download_endpoint + "?" + "&".join([f"{k}={v}" for k, v in payload.items()])
     )
@@ -95,7 +95,7 @@ def test_download_service(client):
     # Consume using url index and signature (with nonce)
     nonce = get_nonce(client, cons_wallet.address)
     _hash = add_ethereum_prefix_and_hash_msg(f"{ddo.did}{nonce}")
-    payload["signature"] = Web3Helper.sign_hash(_hash, cons_wallet)
+    payload["signature"] = sign_hash(_hash, cons_wallet)
     request_url = (
         download_endpoint + "?" + "&".join([f"{k}={v}" for k, v in payload.items()])
     )
