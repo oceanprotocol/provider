@@ -4,9 +4,10 @@
 #
 
 import pytest
+from ocean_lib.web3_internal.transactions import send_ether
+from ocean_lib.web3_internal.utils import get_ether_balance
 from ocean_lib.web3_internal.wallet import Wallet
 from ocean_lib.web3_internal.web3_provider import Web3Provider
-from ocean_lib.web3_internal.web3helper import Web3Helper
 from ocean_provider.run import app
 from ocean_provider.utils.basics import get_provider_wallet, setup_network
 from tests.test_helpers import get_consumer_wallet
@@ -35,9 +36,9 @@ def setup_all():
         )
 
         provider = get_provider_wallet()
-        if web3.fromWei(Web3Helper.get_ether_balance(provider.address), "ether") < 10:
-            Web3Helper.send_ether(wallet, provider.address, 25)
+        if web3.fromWei(get_ether_balance(provider.address), "ether") < 10:
+            send_ether(wallet, provider.address, 25)
 
         consumer = get_consumer_wallet()
-        if web3.fromWei(Web3Helper.get_ether_balance(consumer.address), "ether") < 10:
-            Web3Helper.send_ether(wallet, consumer.address, 25)
+        if web3.fromWei(get_ether_balance(consumer.address), "ether") < 10:
+            send_ether(wallet, consumer.address, 25)
