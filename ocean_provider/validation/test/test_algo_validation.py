@@ -2,6 +2,7 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
+import json
 
 from ocean_lib.common.agreements.service_types import ServiceTypes
 from ocean_provider.validation.algo import WorkflowValidator, build_stage_output_dict
@@ -39,12 +40,14 @@ def test_passes(
         "output": build_stage_output_dict(
             dict(), sa.service_endpoint, consumer_address, publisher_wallet
         ),
-        "algorithmMeta": {
-            "rawcode": "console.log('Hello world'!)",
-            "format": "docker-image",
-            "version": "0.1",
-            "container": {"entrypoint": "node $ALGO", "image": "node", "tag": "10"},
-        },
+        "algorithmMeta": json.dumps(
+            {
+                "rawcode": "console.log('Hello world'!)",
+                "format": "docker-image",
+                "version": "0.1",
+                "container": {"entrypoint": "node $ALGO", "image": "node", "tag": "10"},
+            }
+        ),
     }
     validator = WorkflowValidator(consumer_address, provider_wallet, data)
     assert validator.validate() is True

@@ -8,9 +8,6 @@ import site
 
 import requests
 from ocean_lib.common.aquarius.aquarius import Aquarius
-from ocean_lib.common.http_requests.requests_session import (
-    get_requests_session as _get_requests_session,
-)
 from ocean_lib.models.data_token import DataToken
 from ocean_lib.ocean.util import get_web3_connection_provider
 from ocean_lib.web3_internal.contract_handler import ContractHandler
@@ -36,12 +33,6 @@ def get_artifacts_path(config):
 def get_config():
     config_file = os.getenv("CONFIG_FILE", "config.ini")
     return Config(filename=config_file)
-
-
-def get_requests_session():
-    requests_session = _get_requests_session()
-    requests_session.mount("file://", LocalFileAdapter())
-    return requests_session
 
 
 def init_account_envvars():
