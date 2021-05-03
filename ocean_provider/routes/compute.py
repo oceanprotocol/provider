@@ -8,8 +8,8 @@ import logging
 from flask import Response, jsonify, request
 from flask_sieve import validate
 from ocean_lib.common.http_requests.requests_session import get_requests_session
+from ocean_lib.web3_internal.transactions import sign_hash
 from ocean_lib.web3_internal.utils import add_ethereum_prefix_and_hash_msg
-from ocean_lib.web3_internal.web3helper import Web3Helper
 from ocean_provider.exceptions import InvalidSignatureError
 from ocean_provider.log import setup_logging
 from ocean_provider.user_nonce import get_nonce, increment_nonce
@@ -325,7 +325,7 @@ def computeStart():
 
         payload = {
             "workflow": workflow,
-            "providerSignature": Web3Helper.sign_hash(msg_hash, provider_wallet),
+            "providerSignature": sign_hash(msg_hash, provider_wallet),
             "documentId": did,
             "agreementId": tx_id,
             "owner": consumer_address,

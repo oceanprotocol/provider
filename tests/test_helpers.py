@@ -29,10 +29,10 @@ from ocean_lib.models.dtfactory import DTFactory
 from ocean_lib.models.metadata import MetadataContract
 from ocean_lib.ocean.util import to_base_18
 from ocean_lib.web3_internal.contract_handler import ContractHandler
+from ocean_lib.web3_internal.transactions import sign_hash
 from ocean_lib.web3_internal.utils import add_ethereum_prefix_and_hash_msg
 from ocean_lib.web3_internal.wallet import Wallet
 from ocean_lib.web3_internal.web3_provider import Web3Provider
-from ocean_lib.web3_internal.web3helper import Web3Helper
 from ocean_provider.constants import BaseURLs
 from ocean_provider.util import get_metadata_url
 from ocean_provider.utils.basics import (
@@ -469,7 +469,7 @@ def encrypt_document(client, did, document, wallet):
     nonce = get_nonce(client, wallet.address)
     text = f"{did}{nonce}"
     msg_hash = add_ethereum_prefix_and_hash_msg(text)
-    signature = Web3Helper.sign_hash(msg_hash, wallet)
+    signature = sign_hash(msg_hash, wallet)
     payload = {
         "documentId": did,
         "signature": signature,
@@ -528,7 +528,7 @@ def _check_job_id(client, job_id, did, token_address, wait_time=20):
     nonce = get_nonce(client, cons_wallet.address)
     msg = f"{cons_wallet.address}{job_id}{did}{nonce}"
     _id_hash = add_ethereum_prefix_and_hash_msg(msg)
-    signature = Web3Helper.sign_hash(_id_hash, cons_wallet)
+    signature = sign_hash(_id_hash, cons_wallet)
     payload = dict(
         {
             "signature": signature,
