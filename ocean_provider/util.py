@@ -16,7 +16,6 @@ from ocean_lib.ocean.util import to_base_18
 from ocean_lib.web3_internal.transactions import sign_hash
 from ocean_lib.web3_internal.utils import add_ethereum_prefix_and_hash_msg
 from ocean_lib.web3_internal.web3_provider import Web3Provider
-from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.basics import (
     get_asset_from_metadatastore,
     get_config,
@@ -34,9 +33,7 @@ def get_metadata_url():
     return get_config().aquarius_url
 
 
-def get_request_data(request, url_params_only=False):
-    if url_params_only:
-        return request.args
+def get_request_data(request):
     return request.args if request.args else request.json
 
 
@@ -199,21 +196,6 @@ def get_compute_address():
         return None
 
 
-def check_required_attributes(required_attributes, data, method):
-    assert isinstance(data, dict), "invalid payload format."
-    logger.info("got %s request: %s" % (method, data))
-    if not data:
-        logger.error("%s request failed: data is empty." % method)
-        return "payload seems empty.", 400
-    for attr in required_attributes:
-        if attr not in data:
-            logger.error(
-                "%s request failed: required attr %s missing." % (method, attr)
-            )
-            return '"%s" is required in the call to %s' % (attr, method), 400
-    return None, None
-
-
 def validate_order(sender, token_address, num_tokens, tx_id, did, service_id):
     dt_contract = DataToken(token_address)
 
@@ -303,36 +285,6 @@ def process_compute_request(data):
     return body
 
 
-def build_stage_output_dict(output_def, service_endpoint, owner, provider_wallet):
-    config = get_config()
-    if BaseURLs.ASSETS_URL in service_endpoint:
-        service_endpoint = service_endpoint.split(BaseURLs.ASSETS_URL)[0]
-
-    return dict(
-        {
-            "nodeUri": output_def.get("nodeUri", config.network_url),
-            "brizoUri": output_def.get("brizoUri", service_endpoint),
-            "brizoAddress": output_def.get("brizoAddress", provider_wallet.address),
-            "metadata": output_def.get(
-                "metadata",
-                dict(
-                    {
-                        "main": {"name": "Compute job output"},
-                        "additionalInformation": {
-                            "description": "Output from running the compute job."
-                        },
-                    }
-                ),
-            ),
-            "metadataUri": config.aquarius_url,
-            "owner": output_def.get("owner", owner),
-            "publishOutput": output_def.get("publishOutput", 1),
-            "publishAlgorithmLog": output_def.get("publishAlgorithmLog", 1),
-            "whitelist": output_def.get("whitelist", []),
-        }
-    )
-
-
 def filter_dictionary(dictionary, keys):
     """Filters a dictionary from a list of keys."""
     return {key: dictionary[key] for key in dictionary if key in keys}
@@ -358,16 +310,6 @@ def decode_from_data(data, key, dec_type="list"):
             return -1
 
     return data
-
-
-def get_service_at_index(asset, index):
-    """Gets asset's service at index."""
-    matching_services = [s for s in asset.services if s.index == int(index)]
-
-    if not matching_services:
-        return None
-
-    return matching_services[0]
 
 
 def service_unavailable(error, context, custom_logger=None):

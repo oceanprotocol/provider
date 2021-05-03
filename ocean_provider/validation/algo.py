@@ -9,21 +9,20 @@ from ocean_lib.assets.utils import create_checksum
 from ocean_lib.common.agreements.service_types import ServiceTypes
 from ocean_lib.common.did import did_to_id
 from ocean_lib.models.data_token import DataToken
+from ocean_provider.constants import BaseURLs
 from ocean_provider.myapp import app
 from ocean_provider.serializers import StageAlgoSerializer
 from ocean_provider.util import (
-    build_stage_output_dict,
     decode_from_data,
     filter_dictionary,
     filter_dictionary_starts_with,
     get_asset_download_urls,
     get_metadata_url,
-    get_service_at_index,
     record_consume_request,
     validate_order,
     validate_transfer_not_used_for_other_service,
 )
-from ocean_provider.utils.basics import get_asset_from_metadatastore
+from ocean_provider.utils.basics import get_asset_from_metadatastore, get_config
 
 
 class WorkflowValidator:
@@ -140,7 +139,7 @@ class WorkflowValidator:
                 event_logs = dt.events.OrderStarted().processReceipt(tx_receipt)
                 order_log = event_logs[0] if event_logs else None
                 algo_service_id = order_log.args.serviceId
-                self.algo_service = get_service_at_index(algo, algo_service_id)
+                self.algo_service = algo.get_service_by_index(algo_service_id)
 
                 if self.algo_service.type == ServiceTypes.CLOUD_COMPUTE:
                     asset_urls = get_asset_download_urls(
@@ -259,7 +258,7 @@ class InputItemValidator:
             self.error = f"Asset for did {self.did} not found."
             return False
 
-        self.service = get_service_at_index(self.asset, self.data["serviceId"])
+        self.service = self.asset.get_service_by_index(self.data["serviceId"])
 
         if not self.service:
             self.error = f"Service index {self.data['serviceId']} not found."
@@ -417,3 +416,33 @@ class InputItemValidator:
             return False
 
         return True
+
+
+def build_stage_output_dict(output_def, service_endpoint, owner, provider_wallet):
+    config = get_config()
+    if BaseURLs.ASSETS_URL in service_endpoint:
+        service_endpoint = service_endpoint.split(BaseURLs.ASSETS_URL)[0]
+
+    return dict(
+        {
+            "nodeUri": output_def.get("nodeUri", config.network_url),
+            "brizoUri": output_def.get("brizoUri", service_endpoint),
+            "brizoAddress": output_def.get("brizoAddress", provider_wallet.address),
+            "metadata": output_def.get(
+                "metadata",
+                dict(
+                    {
+                        "main": {"name": "Compute job output"},
+                        "additionalInformation": {
+                            "description": "Output from running the compute job."
+                        },
+                    }
+                ),
+            ),
+            "metadataUri": config.aquarius_url,
+            "owner": output_def.get("owner", owner),
+            "publishOutput": output_def.get("publishOutput", 1),
+            "publishAlgorithmLog": output_def.get("publishAlgorithmLog", 1),
+            "whitelist": output_def.get("whitelist", []),
+        }
+    )

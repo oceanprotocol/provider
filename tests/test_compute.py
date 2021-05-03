@@ -12,16 +12,14 @@ from ocean_lib.web3_internal.transactions import sign_hash
 from ocean_lib.web3_internal.utils import add_ethereum_prefix_and_hash_msg
 from ocean_provider.constants import BaseURLs
 from ocean_provider.run import get_provider_address, get_services_endpoints
-from ocean_provider.util import build_stage_output_dict
 from ocean_provider.utils.basics import get_provider_wallet
+from ocean_provider.validation.algo import build_stage_output_dict
 from tests.test_helpers import (
     build_and_send_ddo_with_compute_service,
     comp_ds_no_rawalgo,
     get_compute_job_info,
-    get_consumer_wallet,
     get_nonce,
     get_possible_compute_job_status_text,
-    get_publisher_wallet,
     mint_tokens_and_wait,
     send_order,
 )
