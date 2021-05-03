@@ -25,18 +25,12 @@ from ocean_lib.models.dtfactory import DTFactory
 from ocean_lib.models.metadata import MetadataContract
 from ocean_lib.ocean.util import to_base_18
 from ocean_lib.web3_internal.contract_handler import ContractHandler
-from ocean_lib.web3_internal.transactions import sign_hash
-from ocean_lib.web3_internal.utils import add_ethereum_prefix_and_hash_msg
+from ocean_lib.web3_internal.wallet import Wallet
 from ocean_lib.web3_internal.web3_provider import Web3Provider
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.basics import get_datatoken_minter
-from tests.helpers.service_descriptors import (
-    get_access_service_descriptor,
-    get_compute_service_descriptor,
-    get_compute_service_descriptor_allow_all_published,
-    get_compute_service_descriptor_no_rawalgo,
-    get_compute_service_descriptor_specific_algo_dids,
-)
+from ocean_provider.utils.encryption import do_encrypt
+from tests.helpers.service_descriptors import get_access_service_descriptor
 
 
 def new_factory_contract(ganache_wallet):
@@ -128,8 +122,9 @@ def get_registered_ddo(client, wallet, metadata, service_descriptor):
     #     assert False, f'invalid metadata: {plecos.validate_dict_local(ddo.metadata)}'
 
     files_list_str = json.dumps(metadata["main"]["files"])
-    encrypted_files = encrypt_document(client, did, files_list_str, wallet)
-    # encrypted_files = do_encrypt(files_list_str, provider_wallet)
+    pk = os.environ.get("PROVIDER_PRIVATE_KEY")
+    provider_wallet = Wallet(Web3Provider.get_web3(), private_key=pk)
+    encrypted_files = do_encrypt(files_list_str, provider_wallet)
 
     # only assign if the encryption worked
     if encrypted_files:
@@ -223,31 +218,6 @@ def get_algorithm_ddo_different_provider(client, wallet):
     return get_registered_ddo(client, wallet, metadata, service_descriptor)
 
 
-def comp_ds(client, wallet, compute_service_descriptor=None, algos=None):
-    metadata = get_sample_ddo_with_compute_service()["service"][0]["attributes"]
-    metadata["main"]["files"][0]["checksum"] = str(uuid.uuid4())
-
-    if compute_service_descriptor == "no_rawalgo":
-        service_descriptor = get_compute_service_descriptor_no_rawalgo(
-            wallet.address, metadata["main"]["cost"], metadata
-        )
-    elif compute_service_descriptor == "specific_algo_dids":
-        service_descriptor = get_compute_service_descriptor_specific_algo_dids(
-            wallet.address, metadata["main"]["cost"], metadata, algos
-        )
-    elif compute_service_descriptor == "allow_all_published":
-        service_descriptor = get_compute_service_descriptor_allow_all_published(
-            wallet.address, metadata["main"]["cost"], metadata
-        )
-    else:
-        service_descriptor = get_compute_service_descriptor(
-            wallet.address, metadata["main"]["cost"], metadata
-        )
-
-    metadata["main"].pop("cost")
-    return get_registered_ddo(client, wallet, metadata, service_descriptor)
-
-
 def get_nonce(client, address):
     endpoint = BaseURLs.ASSETS_URL + "/nonce"
     response = client.get(
@@ -259,62 +229,6 @@ def get_nonce(client, address):
 
     value = response.json if response.json else json.loads(response.data)
     return value["nonce"]
-
-
-def encrypt_document(client, did, document, wallet):
-    nonce = get_nonce(client, wallet.address)
-    text = f"{did}{nonce}"
-    msg_hash = add_ethereum_prefix_and_hash_msg(text)
-    signature = sign_hash(msg_hash, wallet)
-    payload = {
-        "documentId": did,
-        "signature": signature,
-        "document": document,
-        "publisherAddress": wallet.address,
-    }
-    response = client.post(
-        BaseURLs.ASSETS_URL + "/encrypt",
-        data=json.dumps(payload),
-        content_type="application/json",
-    )
-    assert (
-        response.status_code == 201 and response.data
-    ), f"encrypt endpoint failed: response status {response.status}, data {response.data}"
-    encrypted_document = response.json["encryptedDocument"]
-    return encrypted_document
-
-
-def get_possible_compute_job_status_text():
-    return {
-        1: "Warming up",
-        10: "Job started",
-        20: "Configuring volumes",
-        30: "Provisioning success",
-        31: "Data provisioning failed",
-        32: "Algorithm provisioning failed",
-        40: "Running algorithm",
-        50: "Filtering results",
-        60: "Publishing results",
-        70: "Job completed",
-    }.values()
-
-
-def get_compute_job_info(client, endpoint, params):
-    response = client.get(
-        endpoint + "?" + "&".join([f"{k}={v}" for k, v in params.items()]),
-        data=json.dumps(params),
-        content_type="application/json",
-    )
-    assert (
-        response.status_code == 200 and response.data
-    ), f"get compute job info failed: status {response.status}, data {response.data}"
-
-    job_info = response.json if response.json else json.loads(response.data)
-    if not job_info:
-        print(f"There is a problem with the job info response: {response.data}")
-        return None, None
-
-    return dict(job_info[0])
 
 
 def mint_tokens_and_wait(data_token_contract, receiver_wallet, minter_wallet):

@@ -1,19 +1,27 @@
 import itertools
 import json
+import uuid
 
 from ocean_lib.common.agreements.service_agreement import ServiceAgreement
 from ocean_lib.common.agreements.service_types import ServiceTypes
 from ocean_lib.models.data_token import DataToken
+from ocean_lib.web3_internal.transactions import sign_hash
+from ocean_lib.web3_internal.utils import add_ethereum_prefix_and_hash_msg
 from ocean_provider.constants import BaseURLs
+from tests.helpers.service_descriptors import (
+    get_compute_service_descriptor,
+    get_compute_service_descriptor_allow_all_published,
+    get_compute_service_descriptor_no_rawalgo,
+    get_compute_service_descriptor_specific_algo_dids,
+)
 from tests.test_helpers import (
-    add_ethereum_prefix_and_hash_msg,
-    comp_ds,
     get_algorithm_ddo,
     get_algorithm_ddo_different_provider,
     get_nonce,
+    get_registered_ddo,
+    get_sample_ddo_with_compute_service,
     mint_tokens_and_wait,
     send_order,
-    sign_hash,
 )
 
 
@@ -86,3 +94,61 @@ def post_to_compute(client, payload):
     return client.post(
         compute_endpoint, data=json.dumps(payload), content_type="application/json"
     )
+
+
+def get_possible_compute_job_status_text():
+    return {
+        1: "Warming up",
+        10: "Job started",
+        20: "Configuring volumes",
+        30: "Provisioning success",
+        31: "Data provisioning failed",
+        32: "Algorithm provisioning failed",
+        40: "Running algorithm",
+        50: "Filtering results",
+        60: "Publishing results",
+        70: "Job completed",
+    }.values()
+
+
+def get_compute_job_info(client, endpoint, params):
+    response = client.get(
+        endpoint + "?" + "&".join([f"{k}={v}" for k, v in params.items()]),
+        data=json.dumps(params),
+        content_type="application/json",
+    )
+    assert (
+        response.status_code == 200 and response.data
+    ), f"get compute job info failed: status {response.status}, data {response.data}"
+
+    job_info = response.json if response.json else json.loads(response.data)
+    if not job_info:
+        print(f"There is a problem with the job info response: {response.data}")
+        return None, None
+
+    return dict(job_info[0])
+
+
+def comp_ds(client, wallet, compute_service_descriptor=None, algos=None):
+    metadata = get_sample_ddo_with_compute_service()["service"][0]["attributes"]
+    metadata["main"]["files"][0]["checksum"] = str(uuid.uuid4())
+
+    if compute_service_descriptor == "no_rawalgo":
+        service_descriptor = get_compute_service_descriptor_no_rawalgo(
+            wallet.address, metadata["main"]["cost"], metadata
+        )
+    elif compute_service_descriptor == "specific_algo_dids":
+        service_descriptor = get_compute_service_descriptor_specific_algo_dids(
+            wallet.address, metadata["main"]["cost"], metadata, algos
+        )
+    elif compute_service_descriptor == "allow_all_published":
+        service_descriptor = get_compute_service_descriptor_allow_all_published(
+            wallet.address, metadata["main"]["cost"], metadata
+        )
+    else:
+        service_descriptor = get_compute_service_descriptor(
+            wallet.address, metadata["main"]["cost"], metadata
+        )
+
+    metadata["main"].pop("cost")
+    return get_registered_ddo(client, wallet, metadata, service_descriptor)

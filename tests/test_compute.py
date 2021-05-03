@@ -12,16 +12,13 @@ from ocean_provider.constants import BaseURLs
 from ocean_provider.validation.algo import build_stage_output_dict
 from tests.helpers.compute_helpers import (
     build_and_send_ddo_with_compute_service,
-    get_compute_signature,
-    post_to_compute,
-)
-from tests.test_helpers import (
     comp_ds,
     get_compute_job_info,
+    get_compute_signature,
     get_possible_compute_job_status_text,
-    mint_tokens_and_wait,
-    send_order,
+    post_to_compute,
 )
+from tests.test_helpers import mint_tokens_and_wait, send_order
 
 
 def test_compute_norawalgo_allowed(
