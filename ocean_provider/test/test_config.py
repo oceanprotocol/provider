@@ -11,7 +11,7 @@ from ocean_provider.config import NAME_STORAGE_PATH, Config, environ_names
 
 def test_config():
     test_config = os.path.join(
-        pathlib.Path(__file__).parent, "resources/test-config.txt"
+        pathlib.Path(__file__).parent.parent.parent, "tests/resources/test-config.txt"
     )
     _config = Config(filename=test_config)
 
