@@ -382,16 +382,6 @@ def comp_ds(client, wallet, compute_service_descriptor=None, algos=None):
     return get_registered_ddo(client, wallet, metadata, service_descriptor)
 
 
-def comp_ds_allow_all_published(client, wallet):
-    metadata = get_sample_ddo_with_compute_service()["service"][0]["attributes"]
-    metadata["main"]["files"][0]["checksum"] = str(uuid.uuid4())
-    service_descriptor = get_compute_service_descriptor_allow_all_published(
-        wallet.address, metadata["main"]["cost"], metadata
-    )
-    metadata["main"].pop("cost")
-    return get_registered_ddo(client, wallet, metadata, service_descriptor)
-
-
 def get_nonce(client, address):
     endpoint = BaseURLs.ASSETS_URL + "/nonce"
     response = client.get(
@@ -599,8 +589,8 @@ def build_and_send_ddo_with_compute_service(
 
     # publish a dataset asset
     if asset_type == "allow_all_published":
-        dataset_ddo_w_compute_service = comp_ds_allow_all_published(
-            client, publisher_wallet
+        dataset_ddo_w_compute_service = comp_ds(
+            client, publisher_wallet, "allow_all_published"
         )
     elif asset_type == "specific_algo_dids":
         algos = []
@@ -618,7 +608,6 @@ def build_and_send_ddo_with_compute_service(
     else:
         dataset_ddo_w_compute_service = comp_ds(client, publisher_wallet)
 
-    did = dataset_ddo_w_compute_service.did
     ddo = dataset_ddo_w_compute_service
     data_token = dataset_ddo_w_compute_service.data_token_address
     dt_contract = DataToken(data_token)
