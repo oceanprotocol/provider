@@ -17,13 +17,13 @@ from ocean_lib.web3_internal.transactions import sign_hash
 from ocean_lib.web3_internal.utils import add_ethereum_prefix_and_hash_msg
 from ocean_lib.web3_internal.web3_provider import Web3Provider
 from ocean_provider.constants import BaseURLs
-from ocean_provider.util_url import is_safe_url
 from ocean_provider.utils.basics import (
     get_asset_from_metadatastore,
     get_config,
     get_provider_wallet,
 )
 from ocean_provider.utils.encryption import do_decrypt
+from ocean_provider.utils.url import is_safe_url
 from osmosis_driver_interface.osmosis import Osmosis
 from websockets import ConnectionClosed
 

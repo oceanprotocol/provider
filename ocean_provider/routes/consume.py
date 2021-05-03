@@ -30,7 +30,6 @@ from ocean_provider.util import (
     validate_order,
     validate_transfer_not_used_for_other_service,
 )
-from ocean_provider.util_url import check_url_details
 from ocean_provider.utils.basics import (
     LocalFileAdapter,
     get_asset_from_metadatastore,
@@ -39,6 +38,7 @@ from ocean_provider.utils.basics import (
     setup_network,
 )
 from ocean_provider.utils.encryption import do_encrypt
+from ocean_provider.utils.url import check_url_details
 from ocean_provider.validation.requests import (
     DownloadRequest,
     EncryptRequest,

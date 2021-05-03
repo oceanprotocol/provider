@@ -12,7 +12,6 @@ from ocean_lib.web3_internal.utils import (
 )
 from ocean_provider.exceptions import InvalidSignatureError
 from ocean_provider.utils.basics import get_config
-from ocean_provider.utils.web3 import web3
 from web3 import Web3
 
 
@@ -38,7 +37,7 @@ def verify_signature(signer_address, signature, original_msg, nonce: int = None)
 def get_private_key(wallet):
     pk = wallet.private_key
     if not isinstance(pk, bytes):
-        pk = web3().toBytes(hexstr=pk)
+        pk = Web3.toBytes(hexstr=pk)
     return eth_keys.KeyAPI.PrivateKey(pk)
 
 

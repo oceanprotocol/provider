@@ -2,7 +2,6 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
-import hashlib
 import json
 import os
 import site
@@ -37,10 +36,6 @@ def get_artifacts_path(config):
 def get_config():
     config_file = os.getenv("CONFIG_FILE", "config.ini")
     return Config(filename=config_file)
-
-
-def get_env_property(env_variable, property_name):
-    return os.getenv(env_variable, get_config().get("osmosis", property_name))
 
 
 def get_requests_session():
@@ -156,7 +151,3 @@ class LocalFileAdapter(requests.adapters.HTTPAdapter):
 def get_asset_from_metadatastore(metadata_url, document_id):
     aqua = Aquarius(metadata_url)
     return aqua.get_asset_ddo(document_id)
-
-
-def create_checksum(text):
-    return hashlib.sha256(text.encode("utf-8")).hexdigest()
