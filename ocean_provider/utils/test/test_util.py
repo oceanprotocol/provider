@@ -8,7 +8,7 @@ from copy import deepcopy
 from unittest.mock import MagicMock, Mock
 
 from ocean_lib.common.http_requests.requests_session import get_requests_session
-from ocean_provider.util import (
+from ocean_provider.utils.util import (
     build_download_response,
     get_download_url,
     service_unavailable,

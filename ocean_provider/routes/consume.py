@@ -16,7 +16,16 @@ from ocean_lib.models.data_token import DataToken
 from ocean_provider.log import setup_logging
 from ocean_provider.myapp import app
 from ocean_provider.user_nonce import get_nonce, increment_nonce
-from ocean_provider.util import (
+from ocean_provider.utils.basics import (
+    LocalFileAdapter,
+    get_asset_from_metadatastore,
+    get_datatoken_minter,
+    get_provider_wallet,
+    setup_network,
+)
+from ocean_provider.utils.encryption import do_encrypt
+from ocean_provider.utils.url import check_url_details
+from ocean_provider.utils.util import (
     build_download_response,
     get_asset_download_urls,
     get_asset_url_at_index,
@@ -30,15 +39,6 @@ from ocean_provider.util import (
     validate_order,
     validate_transfer_not_used_for_other_service,
 )
-from ocean_provider.utils.basics import (
-    LocalFileAdapter,
-    get_asset_from_metadatastore,
-    get_datatoken_minter,
-    get_provider_wallet,
-    setup_network,
-)
-from ocean_provider.utils.encryption import do_encrypt
-from ocean_provider.utils.url import check_url_details
 from ocean_provider.validation.requests import (
     DownloadRequest,
     EncryptRequest,

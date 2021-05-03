@@ -12,8 +12,8 @@ from ocean_provider.config import Config
 from ocean_provider.constants import BaseURLs, ConfigSections, Metadata
 from ocean_provider.myapp import app
 from ocean_provider.routes import services
-from ocean_provider.util import get_compute_address
 from ocean_provider.utils.basics import get_provider_wallet
+from ocean_provider.utils.util import get_compute_address
 
 config = Config(filename=app.config["CONFIG_FILE"])
 provider_url = config.get(ConfigSections.RESOURCES, "ocean_provider.url")

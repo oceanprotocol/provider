@@ -12,7 +12,8 @@ from ocean_lib.models.data_token import DataToken
 from ocean_provider.constants import BaseURLs
 from ocean_provider.myapp import app
 from ocean_provider.serializers import StageAlgoSerializer
-from ocean_provider.util import (
+from ocean_provider.utils.basics import get_asset_from_metadatastore, get_config
+from ocean_provider.utils.util import (
     decode_from_data,
     filter_dictionary,
     filter_dictionary_starts_with,
@@ -22,7 +23,6 @@ from ocean_provider.util import (
     validate_order,
     validate_transfer_not_used_for_other_service,
 )
-from ocean_provider.utils.basics import get_asset_from_metadatastore, get_config
 
 
 class WorkflowValidator:

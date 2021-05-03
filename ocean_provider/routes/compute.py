@@ -13,17 +13,17 @@ from ocean_lib.web3_internal.utils import add_ethereum_prefix_and_hash_msg
 from ocean_provider.exceptions import InvalidSignatureError
 from ocean_provider.log import setup_logging
 from ocean_provider.user_nonce import get_nonce, increment_nonce
-from ocean_provider.util import (
-    get_compute_endpoint,
-    get_request_data,
-    process_compute_request,
-    service_unavailable,
-)
 from ocean_provider.utils.accounts import verify_signature
 from ocean_provider.utils.basics import (
     LocalFileAdapter,
     get_provider_wallet,
     setup_network,
+)
+from ocean_provider.utils.util import (
+    get_compute_endpoint,
+    get_request_data,
+    process_compute_request,
+    service_unavailable,
 )
 from ocean_provider.validation.algo import WorkflowValidator
 from ocean_provider.validation.requests import (
