@@ -10,14 +10,16 @@ from ocean_lib.web3_internal.transactions import sign_hash
 from ocean_lib.web3_internal.utils import add_ethereum_prefix_and_hash_msg
 from ocean_provider.constants import BaseURLs
 from ocean_provider.validation.algo import build_stage_output_dict
-from tests.test_helpers import (
+from tests.helpers.compute_helpers import (
     build_and_send_ddo_with_compute_service,
+    get_compute_signature,
+    post_to_compute,
+)
+from tests.test_helpers import (
     comp_ds,
     get_compute_job_info,
-    get_compute_signature,
     get_possible_compute_job_status_text,
     mint_tokens_and_wait,
-    post_to_compute,
     send_order,
 )
 

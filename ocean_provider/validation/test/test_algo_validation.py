@@ -5,7 +5,7 @@
 
 from ocean_lib.common.agreements.service_types import ServiceTypes
 from ocean_provider.validation.algo import WorkflowValidator, build_stage_output_dict
-from tests.test_helpers import build_and_send_ddo_with_compute_service
+from tests.helpers.compute_helpers import build_and_send_ddo_with_compute_service
 
 
 def test_passes(

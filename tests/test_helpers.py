@@ -3,8 +3,6 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-import hashlib
-import itertools
 import json
 import lzma
 import os
@@ -15,12 +13,10 @@ from pathlib import Path
 
 from eth_utils import remove_0x_prefix
 from ocean_lib.assets.asset import Asset
-from ocean_lib.common.agreements.service_agreement import ServiceAgreement
 from ocean_lib.common.agreements.service_factory import (
     ServiceDescriptor,
     ServiceFactory,
 )
-from ocean_lib.common.agreements.service_types import ServiceTypes
 from ocean_lib.common.aquarius.aquarius import Aquarius
 from ocean_lib.common.ddo.public_key_rsa import PUBLIC_KEY_TYPE_RSA
 from ocean_lib.common.utils.utilities import checksum
@@ -34,6 +30,13 @@ from ocean_lib.web3_internal.utils import add_ethereum_prefix_and_hash_msg
 from ocean_lib.web3_internal.web3_provider import Web3Provider
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.basics import get_datatoken_minter
+from tests.helpers.service_descriptors import (
+    get_access_service_descriptor,
+    get_compute_service_descriptor,
+    get_compute_service_descriptor_allow_all_published,
+    get_compute_service_descriptor_no_rawalgo,
+    get_compute_service_descriptor_specific_algo_dids,
+)
 
 
 def new_factory_contract(ganache_wallet):
@@ -58,27 +61,6 @@ def new_factory_contract(ganache_wallet):
             dt_address,
             ganache_wallet.address,
         )
-    )
-
-
-def get_access_service_descriptor(address, metadata, diff_provider=False):
-    access_service_attributes = {
-        "main": {
-            "name": "dataAssetAccessServiceAgreement",
-            "creator": address,
-            "cost": metadata["main"]["cost"],
-            "timeout": 3600,
-            "datePublished": metadata["main"]["dateCreated"],
-        }
-    }
-
-    base_provider_url = (
-        f"some_different_provider" if diff_provider else f"localhost:8030"
-    )
-    url_structure = f"http://{base_provider_url}{BaseURLs.ASSETS_URL}/download"
-
-    return ServiceDescriptor.access_service_descriptor(
-        access_service_attributes, url_structure
     )
 
 
@@ -221,122 +203,6 @@ def get_dataset_with_ipfs_url_ddo(client, wallet):
     service_descriptor = get_access_service_descriptor(wallet.address, metadata)
     metadata["main"].pop("cost")
     return get_registered_ddo(client, wallet, metadata, service_descriptor)
-
-
-def get_compute_service_descriptor(address, price, metadata):
-    compute_service_attributes = {
-        "main": {
-            "name": "dataAssetComputeServiceAgreement",
-            "creator": address,
-            "cost": price,
-            "timeout": 3600,
-            "datePublished": metadata["main"]["dateCreated"],
-            "privacy": {
-                "allowRawAlgorithm": True,
-                "allowAllPublishedAlgorithms": True,
-                "publisherTrustedAlgorithms": [],
-                "allowNetworkAccess": False,
-            },
-        }
-    }
-
-    return ServiceDescriptor.compute_service_descriptor(
-        compute_service_attributes,
-        f"http://localhost:8030{BaseURLs.ASSETS_URL}/compute",
-    )
-
-
-def get_compute_service_descriptor_no_rawalgo(address, price, metadata):
-    compute_service_attributes = {
-        "main": {
-            "name": "dataAssetComputeServiceAgreement",
-            "creator": address,
-            "cost": price,
-            "privacy": {
-                "allowRawAlgorithm": False,
-                "allowAllPublishedAlgorithms": False,
-                "publisherTrustedAlgorithms": [],
-                "allowNetworkAccess": True,
-            },
-            "timeout": 3600,
-            "datePublished": metadata["main"]["dateCreated"],
-        }
-    }
-
-    return ServiceDescriptor.compute_service_descriptor(
-        compute_service_attributes,
-        f"http://localhost:8030{BaseURLs.ASSETS_URL}/compute",
-    )
-
-
-def get_compute_service_descriptor_specific_algo_dids(address, price, metadata, algos):
-    compute_service_attributes = {
-        "main": {
-            "name": "dataAssetComputeServiceAgreement",
-            "creator": address,
-            "cost": price,
-            "privacy": {
-                "allowRawAlgorithm": False,
-                "allowAllPublishedAlgorithms": False,
-                "publisherTrustedAlgorithms": [],
-                "allowNetworkAccess": True,
-            },
-            "timeout": 3600,
-            "datePublished": metadata["main"]["dateCreated"],
-        }
-    }
-
-    for algo in algos:
-        service = algo.get_service(ServiceTypes.METADATA)
-        compute_service_attributes["main"]["privacy"][
-            "publisherTrustedAlgorithms"
-        ].append(
-            {
-                "did": algo.did,
-                "filesChecksum": hashlib.sha256(
-                    (
-                        service.attributes["encryptedFiles"]
-                        + json.dumps(service.main["files"], separators=(",", ":"))
-                    ).encode("utf-8")
-                ).hexdigest(),
-                "containerSectionChecksum": hashlib.sha256(
-                    (
-                        json.dumps(
-                            service.main["algorithm"]["container"],
-                            separators=(",", ":"),
-                        )
-                    ).encode("utf-8")
-                ).hexdigest(),
-            }
-        )
-
-    return ServiceDescriptor.compute_service_descriptor(
-        compute_service_attributes,
-        f"http://localhost:8030{BaseURLs.ASSETS_URL}/compute",
-    )
-
-
-def get_compute_service_descriptor_allow_all_published(address, price, metadata):
-    compute_service_attributes = {
-        "main": {
-            "name": "dataAssetComputeServiceAgreement",
-            "creator": address,
-            "cost": price,
-            "privacy": {
-                "allowRawAlgorithm": False,
-                "allowNetworkAccess": True,
-                "allowAllPublishedAlgorithms": True,
-                "publisherTrustedAlgorithms": [],
-            },
-            "timeout": 3600,
-            "datePublished": metadata["main"]["dateCreated"],
-        }
-    }
-
-    return ServiceDescriptor.compute_service_descriptor(
-        compute_service_attributes,
-        f"http://localhost:8030{BaseURLs.ASSETS_URL}/compute",
-    )
 
 
 def get_algorithm_ddo(client, wallet):
@@ -571,74 +437,3 @@ def send_order(client, ddo, datatoken, service, cons_wallet, expect_failure=Fals
         web3, tx_id, ddo.asset_id, service.index, amount, cons_wallet.address
     )
     return tx_id
-
-
-def build_and_send_ddo_with_compute_service(
-    client, publisher_wallet, consumer_wallet, alg_diff=False, asset_type=None
-):
-    # publish an algorithm asset (asset with metadata of type `algorithm`)
-    alg_ddo = (
-        get_algorithm_ddo_different_provider(client, consumer_wallet)
-        if alg_diff
-        else get_algorithm_ddo(client, consumer_wallet)
-    )
-    alg_data_token = alg_ddo.as_dictionary()["dataToken"]
-    alg_dt_contract = DataToken(alg_data_token)
-
-    mint_tokens_and_wait(alg_dt_contract, consumer_wallet, consumer_wallet)
-
-    # publish a dataset asset
-    if asset_type == "allow_all_published":
-        dataset_ddo_w_compute_service = comp_ds(
-            client, publisher_wallet, "allow_all_published"
-        )
-    elif asset_type == "specific_algo_dids":
-        algos = []
-
-        for _ in itertools.repeat(None, 2):
-            alg_ddo = get_algorithm_ddo(client, consumer_wallet)
-            alg_data_token = alg_ddo.as_dictionary()["dataToken"]
-            alg_dt_contract = DataToken(alg_data_token)
-            mint_tokens_and_wait(alg_dt_contract, consumer_wallet, consumer_wallet)
-            algos.append(alg_ddo)
-
-        dataset_ddo_w_compute_service = comp_ds(
-            client, publisher_wallet, "specific_algo_dids", algos
-        )
-    else:
-        dataset_ddo_w_compute_service = comp_ds(client, publisher_wallet)
-
-    ddo = dataset_ddo_w_compute_service
-    data_token = dataset_ddo_w_compute_service.data_token_address
-    dt_contract = DataToken(data_token)
-    mint_tokens_and_wait(dt_contract, consumer_wallet, publisher_wallet)
-
-    sa = ServiceAgreement.from_ddo(
-        ServiceTypes.CLOUD_COMPUTE, dataset_ddo_w_compute_service
-    )
-
-    tx_id = send_order(client, ddo, dt_contract, sa, consumer_wallet)
-    alg_service = ServiceAgreement.from_ddo(ServiceTypes.ASSET_ACCESS, alg_ddo)
-    alg_tx_id = send_order(
-        client, alg_ddo, alg_dt_contract, alg_service, consumer_wallet
-    )
-
-    return (dataset_ddo_w_compute_service, tx_id, alg_ddo, alg_tx_id)
-
-
-def get_compute_signature(client, consumer_wallet, did):
-    nonce = get_nonce(client, consumer_wallet.address)
-
-    # prepare consumer signature on did
-    msg = f"{consumer_wallet.address}{did}{nonce}"
-    _hash = add_ethereum_prefix_and_hash_msg(msg)
-    signature = sign_hash(_hash, consumer_wallet)
-
-    return signature
-
-
-def post_to_compute(client, payload):
-    compute_endpoint = BaseURLs.ASSETS_URL + "/compute"
-    return client.post(
-        compute_endpoint, data=json.dumps(payload), content_type="application/json"
-    )
