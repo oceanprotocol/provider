@@ -361,6 +361,16 @@ def test_compute_delete_job(
         "signature": signature,
     }
 
+    # stop job
+    response = client.put(
+        compute_endpoint, query_string=query_string, content_type="application/json"
+    )
+    assert response.status == "200 OK", f"delete compute job failed: {response.data}"
+
+    # delete job
+    signature = get_compute_signature(client, consumer_wallet, ddo.did, job_id)
+    query_string["signature"] = signature
+
     response = client.delete(
         compute_endpoint, query_string=query_string, content_type="application/json"
     )
