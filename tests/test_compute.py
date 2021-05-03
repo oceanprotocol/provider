@@ -317,3 +317,51 @@ def test_compute_additional_input(client, publisher_wallet, consumer_wallet):
 
     response = post_to_compute(client, payload)
     assert response.status == "200 OK", f"start compute job failed: {response.data}"
+
+
+def test_compute_delete_job(
+    client, publisher_wallet, consumer_wallet, consumer_address
+):
+    ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
+        client, publisher_wallet, consumer_wallet
+    )
+    sa = ddo.get_service(ServiceTypes.CLOUD_COMPUTE)
+    signature = get_compute_signature(client, consumer_wallet, ddo.did)
+
+    # Start the compute job
+    payload = dict(
+        {
+            "signature": signature,
+            "documentId": ddo.did,
+            "serviceId": sa.index,
+            "serviceType": sa.type,
+            "consumerAddress": consumer_address,
+            "transferTxId": tx_id,
+            "dataToken": ddo.data_token_address,
+            "output": build_stage_output_dict(
+                dict(), sa.service_endpoint, consumer_address, publisher_wallet
+            ),
+            "algorithmDid": alg_ddo.did,
+            "algorithmDataToken": alg_ddo.data_token_address,
+            "algorithmTransferTxId": alg_tx_id,
+        }
+    )
+
+    response = post_to_compute(client, payload)
+    assert response.status == "200 OK", f"start compute job failed: {response.data}"
+
+    job_id = response.json[0]["jobId"]
+    compute_endpoint = BaseURLs.ASSETS_URL + "/compute"
+    signature = get_compute_signature(client, consumer_wallet, ddo.did, job_id)
+
+    query_string = {
+        "consumerAddress": consumer_address,
+        "jobId": job_id,
+        "documentId": ddo.did,
+        "signature": signature,
+    }
+
+    response = client.delete(
+        compute_endpoint, query_string=query_string, content_type="application/json"
+    )
+    assert response.status == "200 OK", f"delete compute job failed: {response.data}"

@@ -78,11 +78,14 @@ def build_and_send_ddo_with_compute_service(
     return (dataset_ddo_w_compute_service, tx_id, alg_ddo, alg_tx_id)
 
 
-def get_compute_signature(client, consumer_wallet, did):
+def get_compute_signature(client, consumer_wallet, did, job_id=None):
     nonce = get_nonce(client, consumer_wallet.address)
 
     # prepare consumer signature on did
-    msg = f"{consumer_wallet.address}{did}{nonce}"
+    if job_id:
+        msg = f"{consumer_wallet.address}{job_id}{did}{nonce}"
+    else:
+        msg = f"{consumer_wallet.address}{did}{nonce}"
     _hash = add_ethereum_prefix_and_hash_msg(msg)
     signature = sign_hash(_hash, consumer_wallet)
 
