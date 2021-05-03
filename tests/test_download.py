@@ -24,17 +24,14 @@ def dummy_callback(*_):
     pass
 
 
-def test_download_service(client):
-    pub_wallet = get_publisher_wallet()
-    cons_wallet = get_consumer_wallet()
-
-    ddo = get_dataset_ddo_with_access_service(client, pub_wallet)
+def test_download_service(client, publisher_wallet, consumer_wallet):
+    ddo = get_dataset_ddo_with_access_service(client, publisher_wallet)
     dt_address = ddo.as_dictionary()["dataToken"]
     dt_token = DataToken(dt_address)
-    mint_tokens_and_wait(dt_token, cons_wallet, pub_wallet)
+    mint_tokens_and_wait(dt_token, consumer_wallet, publisher_wallet)
 
     sa = ServiceAgreement.from_ddo(ServiceTypes.ASSET_ACCESS, ddo)
-    tx_id = send_order(client, ddo, dt_token, sa, cons_wallet)
+    tx_id = send_order(client, ddo, dt_token, sa, consumer_wallet)
     index = 0
     download_endpoint = BaseURLs.ASSETS_URL + "/download"
     # Consume using url index and auth token
@@ -45,10 +42,10 @@ def test_download_service(client):
             "serviceId": sa.index,
             "serviceType": sa.type,
             "dataToken": dt_address,
-            "consumerAddress": cons_wallet.address,
+            "consumerAddress": consumer_wallet.address,
         }
     )
-    payload["signature"] = generate_auth_token(cons_wallet)
+    payload["signature"] = generate_auth_token(consumer_wallet)
     payload["transferTxId"] = tx_id
     payload["fileIndex"] = index
     request_url = (
@@ -59,7 +56,7 @@ def test_download_service(client):
 
     # Consume using url index and signature (withOUT nonce), should fail
     _hash = add_ethereum_prefix_and_hash_msg(ddo.did)
-    payload["signature"] = sign_hash(_hash, cons_wallet)
+    payload["signature"] = sign_hash(_hash, consumer_wallet)
     request_url = (
         download_endpoint + "?" + "&".join([f"{k}={v}" for k, v in payload.items()])
     )
@@ -70,9 +67,9 @@ def test_download_service(client):
     assert response.status_code == 400, f"{response.data}"
 
     # Consume using url index and signature (with nonce)
-    nonce = get_nonce(client, cons_wallet.address)
+    nonce = get_nonce(client, consumer_wallet.address)
     _hash = add_ethereum_prefix_and_hash_msg(f"{ddo.did}{nonce}")
-    payload["signature"] = sign_hash(_hash, cons_wallet)
+    payload["signature"] = sign_hash(_hash, consumer_wallet)
     request_url = (
         download_endpoint + "?" + "&".join([f"{k}={v}" for k, v in payload.items()])
     )
@@ -96,9 +93,8 @@ def test_exec_endpoint():
     pass
 
 
-def test_asset_info(client):
-    pub_wallet = get_publisher_wallet()
-    asset = get_dataset_ddo_with_access_service(client, pub_wallet)
+def test_asset_info(client, publisher_wallet):
+    asset = get_dataset_ddo_with_access_service(client, publisher_wallet)
     request_url = BaseURLs.ASSETS_URL + "/fileinfo"
     data = {"did": asset.did, "checksum": "true"}
     response = client.post(request_url, json=data)
@@ -116,7 +112,7 @@ def test_asset_info(client):
         )  # noqa
         assert file_info["checksumType"] == "sha256"
 
-    asset = get_dataset_with_invalid_url_ddo(client, pub_wallet)
+    asset = get_dataset_with_invalid_url_ddo(client, publisher_wallet)
     request_url = BaseURLs.ASSETS_URL + "/fileinfo"
     data = {"did": asset.did}
     response = client.post(request_url, json=data)
@@ -155,25 +151,19 @@ def test_check_url_bad(client):
         assert file_info["valid"] is False
 
 
-def test_initialize_on_bad_url(client):
-    pub_wallet = get_publisher_wallet()
-    cons_wallet = get_consumer_wallet()
-
-    ddo = get_dataset_with_invalid_url_ddo(client, pub_wallet)
+def test_initialize_on_bad_url(client, publisher_wallet, consumer_wallet):
+    ddo = get_dataset_with_invalid_url_ddo(client, publisher_wallet)
     data_token = ddo.data_token_address
     dt_contract = DataToken(data_token)
     sa = ServiceAgreement.from_ddo(ServiceTypes.ASSET_ACCESS, ddo)
 
-    send_order(client, ddo, dt_contract, sa, cons_wallet, expect_failure=True)
+    send_order(client, ddo, dt_contract, sa, consumer_wallet, expect_failure=True)
 
 
-def test_initialize_on_ipfs_url(client):
-    pub_wallet = get_publisher_wallet()
-    cons_wallet = get_consumer_wallet()
-
-    ddo = get_dataset_with_ipfs_url_ddo(client, pub_wallet)
+def test_initialize_on_ipfs_url(client, publisher_wallet, consumer_wallet):
+    ddo = get_dataset_with_ipfs_url_ddo(client, publisher_wallet)
     data_token = ddo.data_token_address
     dt_contract = DataToken(data_token)
     sa = ServiceAgreement.from_ddo(ServiceTypes.ASSET_ACCESS, ddo)
 
-    send_order(client, ddo, dt_contract, sa, cons_wallet)
+    send_order(client, ddo, dt_contract, sa, consumer_wallet)
