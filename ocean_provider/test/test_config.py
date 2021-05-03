@@ -23,3 +23,24 @@ def test_config():
     os.environ[environ_names[NAME_STORAGE_PATH][0]] = "new-storage.db"
     _config = Config(test_config)
     assert _config.storage_path == "new-storage.db"
+    assert _config.address_file
+    assert _config.provider_address == "0x00bd138abd70e2f00903268f3db08f2d25677c9e"
+
+
+def test_config_text():
+    config_text = """
+        [eth-network]
+        [resources]
+        aquarius.url = https://another-aqua.url
+    """
+    config = Config(text=config_text)
+    assert config.aquarius_url == "https://another-aqua.url"
+
+
+def test_config_dict():
+    config_dict = {
+        "eth-network": {},
+        "resources": {"aquarius.url": "https://another-aqua2.url"},
+    }
+    config = Config(options_dict=config_dict)
+    assert config.aquarius_url == "https://another-aqua2.url"
