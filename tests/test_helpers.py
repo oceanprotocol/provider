@@ -357,32 +357,27 @@ def get_algorithm_ddo_different_provider(client, wallet):
     return get_registered_ddo(client, wallet, metadata, service_descriptor)
 
 
-def comp_ds(client, wallet):
+def comp_ds(client, wallet, compute_service_descriptor=None, algos=None):
     metadata = get_sample_ddo_with_compute_service()["service"][0]["attributes"]
     metadata["main"]["files"][0]["checksum"] = str(uuid.uuid4())
-    service_descriptor = get_compute_service_descriptor(
-        wallet.address, metadata["main"]["cost"], metadata
-    )
-    metadata["main"].pop("cost")
-    return get_registered_ddo(client, wallet, metadata, service_descriptor)
 
+    if compute_service_descriptor == "no_rawalgo":
+        service_descriptor = get_compute_service_descriptor_no_rawalgo(
+            wallet.address, metadata["main"]["cost"], metadata
+        )
+    elif compute_service_descriptor == "specific_algo_dids":
+        service_descriptor = get_compute_service_descriptor_specific_algo_dids(
+            wallet.address, metadata["main"]["cost"], metadata, algos
+        )
+    elif compute_service_descriptor == "allow_all_published":
+        service_descriptor = get_compute_service_descriptor_allow_all_published(
+            wallet.address, metadata["main"]["cost"], metadata
+        )
+    else:
+        service_descriptor = get_compute_service_descriptor(
+            wallet.address, metadata["main"]["cost"], metadata
+        )
 
-def comp_ds_no_rawalgo(client, wallet):
-    metadata = get_sample_ddo_with_compute_service()["service"][0]["attributes"]
-    metadata["main"]["files"][0]["checksum"] = str(uuid.uuid4())
-    service_descriptor = get_compute_service_descriptor_no_rawalgo(
-        wallet.address, metadata["main"]["cost"], metadata
-    )
-    metadata["main"].pop("cost")
-    return get_registered_ddo(client, wallet, metadata, service_descriptor)
-
-
-def comp_ds_specific_algo_dids(client, wallet, algos):
-    metadata = get_sample_ddo_with_compute_service()["service"][0]["attributes"]
-    metadata["main"]["files"][0]["checksum"] = str(uuid.uuid4())
-    service_descriptor = get_compute_service_descriptor_specific_algo_dids(
-        wallet.address, metadata["main"]["cost"], metadata, algos
-    )
     metadata["main"].pop("cost")
     return get_registered_ddo(client, wallet, metadata, service_descriptor)
 
@@ -617,8 +612,8 @@ def build_and_send_ddo_with_compute_service(
             mint_tokens_and_wait(alg_dt_contract, consumer_wallet, consumer_wallet)
             algos.append(alg_ddo)
 
-        dataset_ddo_w_compute_service = comp_ds_specific_algo_dids(
-            client, publisher_wallet, algos
+        dataset_ddo_w_compute_service = comp_ds(
+            client, publisher_wallet, "specific_algo_dids", algos
         )
     else:
         dataset_ddo_w_compute_service = comp_ds(client, publisher_wallet)
@@ -640,3 +635,21 @@ def build_and_send_ddo_with_compute_service(
     )
 
     return (dataset_ddo_w_compute_service, tx_id, alg_ddo, alg_tx_id)
+
+
+def get_compute_signature(client, consumer_wallet, did):
+    nonce = get_nonce(client, consumer_wallet.address)
+
+    # prepare consumer signature on did
+    msg = f"{consumer_wallet.address}{did}{nonce}"
+    _hash = add_ethereum_prefix_and_hash_msg(msg)
+    signature = sign_hash(_hash, consumer_wallet)
+
+    return signature
+
+
+def post_to_compute(client, payload):
+    compute_endpoint = BaseURLs.ASSETS_URL + "/compute"
+    return client.post(
+        compute_endpoint, data=json.dumps(payload), content_type="application/json"
+    )
