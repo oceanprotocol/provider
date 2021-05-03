@@ -29,3 +29,8 @@ def test_expose_endpoints(client):
     assert "computeAddress" in result
     assert get_response.status == "200 OK"
     assert len(result["serviceEndpoints"]) == len(services_endpoints)
+
+
+def test_spec(client):
+    response = client.get("/spec")
+    assert response.status == "200 OK"
