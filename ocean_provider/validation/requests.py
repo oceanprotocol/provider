@@ -79,7 +79,7 @@ class CustomRulesProcessor(RulesProcessor):
             verify_signature(owner, value, original_msg, get_nonce(owner))
             return True
         except InvalidSignatureError:
-            return False
+            pass
 
         return False
 
@@ -104,7 +104,7 @@ class CustomRulesProcessor(RulesProcessor):
             verify_signature(owner, value, original_msg, get_nonce(owner))
             return True
         except InvalidSignatureError:
-            return False
+            pass
 
         return False
 

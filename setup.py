@@ -69,6 +69,7 @@ dev_requirements = [
     "black==21.4b0",
     "pre-commit",
     "licenseheaders",
+    "pytest-env",
 ]
 
 setup(

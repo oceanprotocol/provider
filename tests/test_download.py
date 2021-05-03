@@ -14,14 +14,8 @@ from ocean_lib.models.data_token import DataToken
 from ocean_lib.web3_internal.transactions import sign_hash
 from ocean_lib.web3_internal.utils import add_ethereum_prefix_and_hash_msg
 from ocean_provider.constants import BaseURLs
-from ocean_provider.exceptions import InvalidSignatureError
 from ocean_provider.util import build_download_response, get_download_url
-from ocean_provider.utils.accounts import (
-    check_auth_token,
-    generate_auth_token,
-    is_auth_token_valid,
-    verify_signature,
-)
+from ocean_provider.utils.accounts import generate_auth_token
 from tests.test_helpers import (
     get_consumer_wallet,
     get_dataset_ddo_with_access_service,
@@ -105,30 +99,6 @@ def test_empty_payload(client):
         BaseURLs.ASSETS_URL + "/encrypt", data=None, content_type="application/json"
     )
     assert publish.status_code == 400
-
-
-def test_auth_token():
-    token = (
-        "0x1d2741dee30e64989ef0203957c01b14f250f5d2f6ccb0"
-        "c88c9518816e4fcec16f84e545094eb3f377b7e214ded226"
-        "76fbde8ca2e41b4eb1b3565047ecd9acf300-1568372035"
-    )
-    pub_address = "0xe2DD09d719Da89e5a3D0F2549c7E24566e947260"
-    doc_id = "663516d306904651bbcf9fe45a00477c215c7303d8a24c5bad6005dd2f95e68e"
-    assert is_auth_token_valid(token), f"cannot recognize auth-token {token}"
-    address = check_auth_token(token)
-
-    match_address = (
-        f"address mismatch, got {address}, " f"" f"" f"expected {pub_address}"
-    )
-    assert address and address.lower() == pub_address.lower(), match_address
-
-    try:
-        verify_signature(pub_address, token, doc_id)
-    except InvalidSignatureError as e:
-        assert (
-            False
-        ), f"invalid signature/auth-token {token}, {pub_address}, {doc_id}: {e}"  # noqa
 
 
 def test_exec_endpoint():

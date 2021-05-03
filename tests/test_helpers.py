@@ -31,37 +31,9 @@ from ocean_lib.ocean.util import to_base_18
 from ocean_lib.web3_internal.contract_handler import ContractHandler
 from ocean_lib.web3_internal.transactions import sign_hash
 from ocean_lib.web3_internal.utils import add_ethereum_prefix_and_hash_msg
-from ocean_lib.web3_internal.wallet import Wallet
 from ocean_lib.web3_internal.web3_provider import Web3Provider
 from ocean_provider.constants import BaseURLs
-from ocean_provider.util import get_metadata_url
-from ocean_provider.utils.basics import (
-    get_asset_from_metadatastore,
-    get_datatoken_minter,
-)
-
-
-def get_publisher_wallet():
-    return Wallet(Web3Provider.get_web3(), private_key=os.getenv("TEST_PRIVATE_KEY1"))
-
-
-def get_consumer_wallet():
-    return Wallet(Web3Provider.get_web3(), private_key=os.getenv("TEST_PRIVATE_KEY2"))
-
-
-def get_ganache_wallet():
-    web3 = Web3Provider.get_web3()
-    if (
-        web3.eth.accounts
-        and web3.eth.accounts[0].lower()
-        == "0xe2DD09d719Da89e5a3D0F2549c7E24566e947260".lower()
-    ):
-        return Wallet(
-            web3,
-            private_key="0xfd5c1ccea015b6d663618850824154a3b3fb2882c46cefb05b9a93fea8c3d215",
-        )
-
-    return None
+from ocean_provider.utils.basics import get_datatoken_minter
 
 
 def get_address_file():
@@ -78,28 +50,27 @@ def get_contracts_addresses(address_file):
     return addresses
 
 
-def new_factory_contract():
+def new_factory_contract(ganache_wallet):
     web3 = Web3Provider.get_web3()
-    deployer_wallet = get_ganache_wallet()
     dt_address = DataToken.deploy(
         web3,
-        deployer_wallet,
+        ganache_wallet,
         ContractHandler.artifacts_path,
         "Template Contract",
         "TEMPLATE",
-        deployer_wallet.address,
+        ganache_wallet.address,
         DataToken.DEFAULT_CAP_BASE,
         DTFactory.FIRST_BLOB,
-        deployer_wallet.address,
+        ganache_wallet.address,
     )
 
     return DTFactory(
         DTFactory.deploy(
             web3,
-            deployer_wallet,
+            ganache_wallet,
             ContractHandler.artifacts_path,
             dt_address,
-            deployer_wallet.address,
+            ganache_wallet.address,
         )
     )
 
@@ -521,42 +492,6 @@ def get_compute_job_info(client, endpoint, params):
     return dict(job_info[0])
 
 
-def _check_job_id(client, job_id, did, token_address, wait_time=20):
-    endpoint = BaseURLs.ASSETS_URL + "/compute"
-    cons_wallet = get_consumer_wallet()
-
-    nonce = get_nonce(client, cons_wallet.address)
-    msg = f"{cons_wallet.address}{job_id}{did}{nonce}"
-    _id_hash = add_ethereum_prefix_and_hash_msg(msg)
-    signature = sign_hash(_id_hash, cons_wallet)
-    payload = dict(
-        {
-            "signature": signature,
-            "documentId": did,
-            "consumerAddress": cons_wallet.address,
-            "jobId": job_id,
-        }
-    )
-
-    job_info = get_compute_job_info(client, endpoint, payload)
-    assert job_info, f"Failed to get job info for jobId {job_id}"
-    print(f"got info for compute job {job_id}: {job_info}")
-    assert job_info["statusText"] in get_possible_compute_job_status_text()
-    did = None
-    # get did of results
-    for _ in range(wait_time * 4):
-        job_info = get_compute_job_info(client, endpoint, payload)
-        did = job_info["did"]
-        if did:
-            break
-        time.sleep(0.25)
-
-    assert did, f"Compute job has no results, job info {job_info}."
-    # check results ddo
-    ddo = get_asset_from_metadatastore(get_metadata_url(), did)
-    assert ddo, f"Failed to resolve ddo for did {did}"
-
-
 def mint_tokens_and_wait(data_token_contract, receiver_wallet, minter_wallet):
     dtc = data_token_contract
     tx_id = dtc.mint_tokens(receiver_wallet.address, 50.00, minter_wallet)
@@ -679,62 +614,55 @@ def send_order(client, ddo, datatoken, service, cons_wallet, expect_failure=Fals
     return tx_id
 
 
-def build_and_send_ddo_with_compute_service(client, alg_diff=False, asset_type=None):
-    pub_wallet = get_publisher_wallet()
-    cons_wallet = get_consumer_wallet()
-
+def build_and_send_ddo_with_compute_service(
+    client, publisher_wallet, consumer_wallet, alg_diff=False, asset_type=None
+):
     # publish an algorithm asset (asset with metadata of type `algorithm`)
     alg_ddo = (
-        get_algorithm_ddo_different_provider(client, cons_wallet)
+        get_algorithm_ddo_different_provider(client, consumer_wallet)
         if alg_diff
-        else get_algorithm_ddo(client, cons_wallet)
+        else get_algorithm_ddo(client, consumer_wallet)
     )
     alg_data_token = alg_ddo.as_dictionary()["dataToken"]
     alg_dt_contract = DataToken(alg_data_token)
 
-    mint_tokens_and_wait(alg_dt_contract, cons_wallet, cons_wallet)
+    mint_tokens_and_wait(alg_dt_contract, consumer_wallet, consumer_wallet)
 
     # publish a dataset asset
     if asset_type == "allow_all_published":
-        dataset_ddo_w_compute_service = comp_ds_allow_all_published(client, pub_wallet)
+        dataset_ddo_w_compute_service = comp_ds_allow_all_published(
+            client, publisher_wallet
+        )
     elif asset_type == "specific_algo_dids":
         algos = []
 
         for _ in itertools.repeat(None, 2):
-            alg_ddo = get_algorithm_ddo(client, cons_wallet)
+            alg_ddo = get_algorithm_ddo(client, consumer_wallet)
             alg_data_token = alg_ddo.as_dictionary()["dataToken"]
             alg_dt_contract = DataToken(alg_data_token)
-            mint_tokens_and_wait(alg_dt_contract, cons_wallet, cons_wallet)
+            mint_tokens_and_wait(alg_dt_contract, consumer_wallet, consumer_wallet)
             algos.append(alg_ddo)
 
         dataset_ddo_w_compute_service = comp_ds_specific_algo_dids(
-            client, pub_wallet, algos
+            client, publisher_wallet, algos
         )
     else:
-        dataset_ddo_w_compute_service = comp_ds(client, pub_wallet)
+        dataset_ddo_w_compute_service = comp_ds(client, publisher_wallet)
 
     did = dataset_ddo_w_compute_service.did
     ddo = dataset_ddo_w_compute_service
     data_token = dataset_ddo_w_compute_service.data_token_address
     dt_contract = DataToken(data_token)
-    mint_tokens_and_wait(dt_contract, cons_wallet, pub_wallet)
+    mint_tokens_and_wait(dt_contract, consumer_wallet, publisher_wallet)
 
     sa = ServiceAgreement.from_ddo(
         ServiceTypes.CLOUD_COMPUTE, dataset_ddo_w_compute_service
     )
 
-    tx_id = send_order(client, ddo, dt_contract, sa, cons_wallet)
+    tx_id = send_order(client, ddo, dt_contract, sa, consumer_wallet)
     alg_service = ServiceAgreement.from_ddo(ServiceTypes.ASSET_ACCESS, alg_ddo)
-    alg_tx_id = send_order(client, alg_ddo, alg_dt_contract, alg_service, cons_wallet)
-
-    return (
-        dataset_ddo_w_compute_service,
-        did,
-        tx_id,
-        sa,
-        data_token,
-        alg_ddo,
-        alg_data_token,
-        alg_dt_contract,
-        alg_tx_id,
+    alg_tx_id = send_order(
+        client, alg_ddo, alg_dt_contract, alg_service, consumer_wallet
     )
+
+    return (dataset_ddo_w_compute_service, tx_id, alg_ddo, alg_tx_id)

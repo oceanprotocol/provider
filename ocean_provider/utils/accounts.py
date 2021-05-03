@@ -2,12 +2,9 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
-import json
-import time
 from datetime import datetime
 
 import eth_keys
-from ocean_lib.common.http_requests.requests_session import get_requests_session
 from ocean_lib.web3_internal.transactions import sign_hash
 from ocean_lib.web3_internal.utils import (
     add_ethereum_prefix_and_hash_msg,
@@ -76,25 +73,3 @@ def generate_auth_token(wallet):
     _message = f"{raw_msg}\n{_time}"
     prefixed_msg_hash = add_ethereum_prefix_and_hash_msg(_message)
     return f"{sign_hash(prefixed_msg_hash, wallet)}-{_time}"
-
-
-def request_ether(faucet_url, wallet, wait=True):
-    requests = get_requests_session()
-
-    payload = {"address": wallet.address}
-    response = requests.post(
-        f"{faucet_url}/faucet",
-        data=json.dumps(payload),
-        headers={"content-type": "application/json"},
-        timeout=3,
-    )
-    try:
-        response_json = json.loads(response.content)
-        success = response_json.get("success", "false") == "true"
-        if success and wait:
-            time.sleep(5)
-
-        return success, response_json.get("message", "")
-    except (ValueError, Exception) as err:
-        print(f"Error parsing response {response}: {err}")
-        return None, None
