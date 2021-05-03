@@ -36,20 +36,6 @@ from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.basics import get_datatoken_minter
 
 
-def get_address_file():
-    return Path(os.getenv("ADDRESS_FILE")).expanduser().resolve()
-
-
-def get_dtfactory_address():
-    addresses = get_contracts_addresses(get_address_file())
-    return addresses.get(DTFactory.CONTRACT_NAME) if addresses else None
-
-
-def get_contracts_addresses(address_file):
-    addresses = ContractHandler.get_contracts_addresses("ganache", address_file)
-    return addresses
-
-
 def new_factory_contract(ganache_wallet):
     web3 = Web3Provider.get_web3()
     dt_address = DataToken.deploy(
@@ -75,7 +61,7 @@ def new_factory_contract(ganache_wallet):
     )
 
 
-def get_access_service_descriptor(address, metadata):
+def get_access_service_descriptor(address, metadata, diff_provider=False):
     access_service_attributes = {
         "main": {
             "name": "dataAssetAccessServiceAgreement",
@@ -86,26 +72,13 @@ def get_access_service_descriptor(address, metadata):
         }
     }
 
-    return ServiceDescriptor.access_service_descriptor(
-        access_service_attributes,
-        f"http://localhost:8030{BaseURLs.ASSETS_URL}/download",
+    base_provider_url = (
+        f"some_different_provider" if diff_provider else f"localhost:8030"
     )
-
-
-def get_access_service_descriptor_different_provider(address, metadata):
-    access_service_attributes = {
-        "main": {
-            "name": "dataAssetAccessServiceAgreement",
-            "creator": address,
-            "cost": metadata["main"]["cost"],
-            "timeout": 3600,
-            "datePublished": metadata["main"]["dateCreated"],
-        }
-    }
+    url_structure = f"http://{base_provider_url}{BaseURLs.ASSETS_URL}/download"
 
     return ServiceDescriptor.access_service_descriptor(
-        access_service_attributes,
-        f"http://some_different_provider{BaseURLs.ASSETS_URL}/download",
+        access_service_attributes, url_structure
     )
 
 
@@ -115,7 +88,8 @@ def get_registered_ddo(client, wallet, metadata, service_descriptor):
 
     metadata_store_url = json.dumps({"t": 1, "url": ddo_service_endpoint})
     # Create new data token contract
-    addresses = get_contracts_addresses(get_address_file())
+    address_file = Path(os.getenv("ADDRESS_FILE")).expanduser().resolve()
+    addresses = ContractHandler.get_contracts_addresses("ganache", address_file)
     dt_address = addresses.get(DTFactory.CONTRACT_NAME)
     if dt_address:
         factory_contract = DTFactory(dt_address)
@@ -376,8 +350,8 @@ def get_algorithm_ddo(client, wallet):
 def get_algorithm_ddo_different_provider(client, wallet):
     metadata = get_sample_algorithm_ddo()["service"][0]["attributes"]
     metadata["main"]["files"][0]["checksum"] = str(uuid.uuid4())
-    service_descriptor = get_access_service_descriptor_different_provider(
-        wallet.address, metadata
+    service_descriptor = get_access_service_descriptor(
+        wallet.address, metadata, diff_provider=True
     )
     metadata["main"].pop("cost")
     return get_registered_ddo(client, wallet, metadata, service_descriptor)
