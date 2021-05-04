@@ -288,7 +288,7 @@ def initialize():
         approve_params = {
             "from": consumer_address,
             "to": minter,
-            "numTokens": float(service.get_cost()),
+            "numTokens": service.get_cost(),
             "dataToken": token_address,
             "nonce": get_nonce(consumer_address),
             "computeAddress": get_compute_address(),
@@ -361,12 +361,7 @@ def download():
             did = add_0x_prefix(did_to_id(did))
 
         _tx, _order_log, _transfer_log = validate_order(
-            consumer_address,
-            token_address,
-            float(service.get_cost()),
-            tx_id,
-            did,
-            service_id,
+            consumer_address, token_address, service.get_cost(), tx_id, did, service_id
         )
         validate_transfer_not_used_for_other_service(
             did, service_id, tx_id, consumer_address, token_address

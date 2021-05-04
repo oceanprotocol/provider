@@ -159,7 +159,7 @@ class WorkflowValidator:
                 _tx, _order_log, _transfer_log = validate_order(
                     self.consumer_address,
                     algorithm_token_address,
-                    float(self.algo_service.get_cost()),
+                    self.algo_service.get_cost(),
                     algorithm_tx_id,
                     add_0x_prefix(did_to_id(algorithm_did))
                     if algorithm_did.startswith("did:")
@@ -389,7 +389,7 @@ class InputItemValidator:
             _tx, _order_log, _transfer_log = validate_order(
                 self.consumer_address,
                 token_address,
-                float(self.service.get_cost()),
+                self.service.get_cost(),
                 tx_id,
                 add_0x_prefix(did_to_id(self.did))
                 if self.did.startswith("did:")
