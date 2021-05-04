@@ -356,7 +356,6 @@ def download():
             token_address,
         ) = process_consume_request(data)
         service_id = data.get("serviceId")
-        service_type = data.get("serviceType")
         tx_id = data.get("transferTxId")
         if did.startswith("did:"):
             did = add_0x_prefix(did_to_id(did))
@@ -376,7 +375,7 @@ def download():
             did, service_id, tx_id, consumer_address, token_address, service.get_cost()
         )
 
-        assert service_type == ServiceTypes.ASSET_ACCESS
+        assert service.type == ServiceTypes.ASSET_ACCESS
 
         file_index = int(data.get("fileIndex"))
         file_attributes = asset.metadata["main"]["files"][file_index]

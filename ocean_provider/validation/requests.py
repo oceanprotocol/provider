@@ -175,7 +175,6 @@ class DownloadRequest(CustomJsonRequest):
         return {
             "documentId": ["bail", "required"],
             "serviceId": ["required"],
-            "serviceType": ["required"],
             "dataToken": ["required"],
             "consumerAddress": ["bail", "required"],
             "transferTxId": ["bail", "required"],

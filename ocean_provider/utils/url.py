@@ -41,17 +41,11 @@ def is_ip(address):
 
 def is_this_same_provider(url):
     result = urlparse(url)
+    address = DataServiceProvider.get_provider_address(
+        f"{result.scheme}://{result.netloc}/"
+    )
 
-    try:
-        return (
-            DataServiceProvider()
-            .get_provider_address(f"{result.scheme}://{result.netloc}/")
-            .lower()
-            == get_provider_wallet().address.lower()
-        )
-    # the try/except can be removed after changes in ocean.py
-    except requests.exceptions.ConnectionError:
-        return False
+    return address and address.lower() == get_provider_wallet().address.lower()
 
 
 def _get_records(domain, record_type):

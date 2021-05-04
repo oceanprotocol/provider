@@ -1,6 +1,5 @@
 import os
 
-from ocean_provider.exceptions import InvalidSignatureError
 from ocean_provider.utils.accounts import (
     check_auth_token,
     generate_auth_token,
@@ -39,12 +38,7 @@ def test_auth_token():
     )
     assert address and address.lower() == pub_address.lower(), match_address
 
-    try:
-        verify_signature(pub_address, token, doc_id)
-    except InvalidSignatureError as e:
-        assert (
-            False
-        ), f"invalid signature/auth-token {token}, {pub_address}, {doc_id}: {e}"
+    assert verify_signature(pub_address, token, doc_id)
 
 
 def test_generate_auth_token(consumer_wallet):

@@ -10,7 +10,6 @@ from cgi import parse_header
 
 import requests
 from flask import Response
-from ocean_lib.common.agreements.service_agreement import ServiceAgreement
 from ocean_lib.models.data_token import DataToken
 from ocean_lib.ocean.util import to_base_18
 from ocean_lib.web3_internal.transactions import sign_hash
@@ -242,17 +241,11 @@ def process_consume_request(data: dict):
     token_address = data.get("dataToken")
     consumer_address = data.get("consumerAddress")
     service_id = data.get("serviceId")
-    service_type = data.get("serviceType")
 
     # grab asset for did from the metadatastore associated with
     # the Data Token address
     asset = get_asset_from_metadatastore(get_metadata_url(), did)
-    service = ServiceAgreement.from_ddo(service_type, asset)
-    if service.type != service_type:
-        raise AssertionError(
-            f"Requested service with id {service_id} has type {service.type} "
-            f"which does not match the requested service type {service_type}."
-        )
+    service = asset.get_service_by_index(service_id)
 
     return asset, service, did, consumer_address, token_address
 

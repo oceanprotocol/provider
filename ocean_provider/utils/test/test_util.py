@@ -2,14 +2,21 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
+import json
 import logging
 import mimetypes
 from copy import deepcopy
 from unittest.mock import MagicMock, Mock
 
+import pytest
+from ocean_lib.assets.asset import Asset
 from ocean_lib.common.http_requests.requests_session import get_requests_session
+from ocean_provider.utils.encryption import do_encrypt
 from ocean_provider.utils.util import (
     build_download_response,
+    get_asset_files_list,
+    get_asset_url_at_index,
+    get_asset_urls,
     get_download_url,
     service_unavailable,
 )
@@ -136,3 +143,47 @@ def test_download_ipfs_file(client):
         request, requests_session, download_url, download_url, None
     )
     assert response.data, f"got no data {response.data}"
+
+
+def test_get_assets_files_list(provider_wallet):
+    asset = Mock(template=Asset)
+    encr = do_encrypt(json.dumps(["test1", "test2"]), provider_wallet)
+    asset.encrypted_files = json.dumps({"encryptedDocument": encr})
+    assert ["test1", "test2"] == get_asset_files_list(asset, provider_wallet)
+
+    # empty
+    asset.encrypted_files = ""
+    assert get_asset_files_list(asset, provider_wallet) is None
+
+    # not a list
+    encr = do_encrypt(json.dumps({"test": "test"}), provider_wallet)
+    asset.encrypted_files = json.dumps({"encryptedDocument": encr})
+    with pytest.raises(TypeError):
+        get_asset_files_list(asset, provider_wallet)
+
+
+def test_get_asset_urls(provider_wallet):
+    # empty
+    asset = Mock(template=Asset)
+    asset.encrypted_files = ""
+    assert get_asset_urls(asset, provider_wallet) is None
+    assert get_asset_url_at_index(0, asset, provider_wallet) is None
+
+    # not a list
+    encr = do_encrypt(json.dumps({"test": "test"}), provider_wallet)
+    asset.encrypted_files = json.dumps({"encryptedDocument": encr})
+    with pytest.raises(TypeError):
+        get_asset_urls(asset, provider_wallet)
+
+    # does not have url there
+    encr = do_encrypt(json.dumps([{"noturl": "test"}]), provider_wallet)
+    asset.encrypted_files = json.dumps({"encryptedDocument": encr})
+    with pytest.raises(ValueError):
+        get_asset_urls(asset, provider_wallet)
+
+    # correct with url
+    encr = do_encrypt(json.dumps([{"url": "test"}]), provider_wallet)
+    asset.encrypted_files = json.dumps({"encryptedDocument": encr})
+    assert get_asset_urls(asset, provider_wallet) == ["test"]
+    with pytest.raises(ValueError):
+        get_asset_url_at_index(3, asset, provider_wallet)
