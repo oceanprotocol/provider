@@ -11,7 +11,7 @@ from ocean_lib.web3_internal.utils import get_ether_balance
 from ocean_lib.web3_internal.wallet import Wallet
 from ocean_lib.web3_internal.web3_provider import Web3Provider
 from ocean_provider.run import app
-from ocean_provider.utils.basics import get_wallet, setup_network
+from ocean_provider.utils.basics import setup_network
 
 app = app
 
@@ -61,10 +61,7 @@ def ganache_wallet():
 @pytest.fixture
 def provider_wallet():
     pk = os.environ.get("PROVIDER_PRIVATE_KEY")
-    if pk:
-        return Wallet(Web3Provider.get_web3(), private_key=pk)
-
-    return get_wallet(0)
+    return Wallet(Web3Provider.get_web3(), private_key=pk)
 
 
 @pytest.fixture

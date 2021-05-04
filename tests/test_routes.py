@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
+from ocean_provider.constants import BaseURLs
 from ocean_provider.run import get_provider_address, get_services_endpoints
 from ocean_provider.utils.basics import get_provider_wallet
 
@@ -34,3 +35,10 @@ def test_expose_endpoints(client):
 def test_spec(client):
     response = client.get("/spec")
     assert response.status == "200 OK"
+
+
+def test_empty_payload_encryption(client):
+    publish = client.post(
+        BaseURLs.ASSETS_URL + "/encrypt", data=None, content_type="application/json"
+    )
+    assert publish.status_code == 400

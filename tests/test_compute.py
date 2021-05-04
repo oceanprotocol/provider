@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-from ocean_lib.common.agreements.service_agreement import ServiceAgreement
 from ocean_lib.common.agreements.service_types import ServiceTypes
 from ocean_lib.models.data_token import DataToken
 from ocean_lib.web3_internal.transactions import sign_hash
@@ -36,7 +35,7 @@ def test_compute_norawalgo_allowed(
         "container": {"entrypoint": "node $ALGO", "image": "node", "tag": "10"},
     }
 
-    sa = ServiceAgreement.from_ddo(ServiceTypes.CLOUD_COMPUTE, dataset)
+    sa = dataset.get_service(ServiceTypes.CLOUD_COMPUTE)
     tx_id = send_order(client, dataset, dt_contract, sa, consumer_wallet)
     signature = get_compute_signature(client, consumer_wallet, dataset.did)
 
