@@ -4,7 +4,6 @@
 #
 import json
 import logging
-import os
 
 from eth_utils import add_0x_prefix
 from flask import Response, jsonify, request
@@ -12,7 +11,6 @@ from flask_sieve import validate
 from ocean_lib.common.agreements.service_types import ServiceTypes
 from ocean_lib.common.did import did_to_id
 from ocean_lib.common.http_requests.requests_session import get_requests_session
-from ocean_lib.models.data_token import DataToken
 from ocean_provider.log import setup_logging
 from ocean_provider.myapp import app
 from ocean_provider.user_nonce import get_nonce, increment_nonce
@@ -45,7 +43,6 @@ from ocean_provider.validation.requests import (
     FileInfoRequest,
     InitializeRequest,
     NonceRequest,
-    SimpleFlowConsumeRequest,
 )
 
 from . import services
@@ -69,47 +66,6 @@ def nonce():
     return Response(
         json.dumps({"nonce": nonce}), 200, headers={"content-type": "application/json"}
     )
-
-
-@services.route("/", methods=["GET"])
-@validate(SimpleFlowConsumeRequest)
-def simple_flow_consume():
-    data = get_request_data(request)
-    consumer = data.get("consumerAddress")
-    dt_address = data.get("dataToken")
-
-    dt_map = None
-    dt_map_str = os.getenv("CONFIG", "")
-    if dt_map_str:
-        dt_map = json.loads(dt_map_str)
-
-    if not (dt_map_str and dt_map):  # or dt not in dt_map:
-        return jsonify(error="This request is not supported."), 400
-
-    try:
-        _ = DataToken(dt_address)
-        # TODO: verify that the datatoken is owned by this provider's account
-
-        # TODO: Enable this check for the token transfer.
-        # validate_order(
-        #     consumer,
-        #     dt_address,
-        #     1,
-        #     tx_id
-        # )
-
-        url = list(dt_map.values())[0]  # [dt_address]
-        download_url = get_download_url(url, app.config["CONFIG_FILE"])
-        logger.info(
-            f"Done processing consume request for data token {dt_address}, "
-            f" url {download_url}"
-        )
-        return build_download_response(request, requests_session, url, download_url)
-
-    except Exception as e:
-        return service_unavailable(
-            e, {"dataToken": dt_address, "consumerAddress": consumer}, logger
-        )
 
 
 @services.route("/encrypt", methods=["POST"])

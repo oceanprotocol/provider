@@ -114,15 +114,6 @@ class NonceRequest(CustomJsonRequest):
         return {"userAddress": ["required"]}
 
 
-class SimpleFlowConsumeRequest(CustomJsonRequest):
-    def rules(self):
-        return {
-            "consumerAddress": ["required"],
-            "dataToken": ["required"],
-            "transferTxId": ["required"],
-        }
-
-
 class EncryptRequest(CustomJsonRequest):
     def rules(self):
         return {
