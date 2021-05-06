@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import json
+import logging
 
 from eth_utils import add_0x_prefix
 from ocean_lib.common.agreements.service_types import ServiceTypes
@@ -23,6 +24,8 @@ from ocean_provider.util import (
     validate_transfer_not_used_for_other_service,
 )
 from ocean_provider.utils.basics import create_checksum, get_asset_from_metadatastore
+
+logger = logging.getLogger(__name__)
 
 
 class WorkflowValidator:
@@ -411,7 +414,8 @@ class InputItemValidator:
                 token_address,
                 self.service.get_cost(),
             )
-        except Exception:
+        except Exception as e:
+            logger.debug(f"validate_usage failed with {str(e)}.")
             self.error = f"Order for serviceId {self.service.index} is not valid."
             return False
 
