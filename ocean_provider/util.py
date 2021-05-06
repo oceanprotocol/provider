@@ -215,6 +215,11 @@ def check_required_attributes(required_attributes, data, method):
 
 
 def validate_order(sender, token_address, num_tokens, tx_id, did, service_id):
+    logger.debug(
+        f"validate_order: did={did}, service_id={service_id}, tx_id={tx_id}, "
+        f"sender={sender}, num_tokens={num_tokens}, token_address={token_address}"
+    )
+
     dt_contract = DataToken(token_address)
 
     amount = to_base_18(num_tokens)
