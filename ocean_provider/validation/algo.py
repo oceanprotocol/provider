@@ -159,6 +159,7 @@ class WorkflowValidator:
                     self.error = "Failed to retrieve purchased algorithm service id."
                     return False
 
+                logger.debug("validate_order called for ALGORITHM usage.")
                 _tx, _order_log, _transfer_log = validate_order(
                     self.consumer_address,
                     algorithm_token_address,
@@ -184,7 +185,10 @@ class WorkflowValidator:
                     algorithm_token_address,
                     self.algo_service.get_cost(),
                 )
-            except Exception:
+            except Exception as e:
+                logger.debug(
+                    f"validate_order for ALGORITHM failed with error {str(e)}."
+                )
                 self.error = "Algorithm is already in use or can not be found on chain."
                 return False
 
@@ -388,6 +392,7 @@ class InputItemValidator:
         """Verify that the tokens have been transferred to the provider's wallet."""
         tx_id = self.data.get("transferTxId")
         token_address = self.asset._other_values["dataToken"]
+        logger.debug("Validating ASSET usage.")
         try:
             _tx, _order_log, _transfer_log = validate_order(
                 self.consumer_address,

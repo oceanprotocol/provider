@@ -226,14 +226,25 @@ def validate_order(sender, token_address, num_tokens, tx_id, did, service_id):
     num_tries = 3
     i = 0
     while i < num_tries:
+        logger.debug(f"validate_order is on trial {i+1} in {num_tries}.")
         i += 1
         try:
             tx, order_event, transfer_event = dt_contract.verify_order_tx(
                 Web3Provider.get_web3(), tx_id, did, service_id, amount, sender
             )
+            logger.debug(
+                f"validate_order succeeded for: did={did}, service_id={service_id}, tx_id={tx_id}, "
+                f"sender={sender}, num_tokens={num_tokens}, token_address={token_address}. "
+                f"result is: tx={tx}, order_event={order_event}, transfer_event={transfer_event}"
+            )
+
             return tx, order_event, transfer_event
         except ConnectionClosed:
+            logger.debug("got ConnectionClosed error on validate_order.")
             if i == num_tries:
+                logger.debug(
+                    "reached max no. of tries, raise ConnectionClosed in validate_order."
+                )
                 raise
 
 
