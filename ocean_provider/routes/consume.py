@@ -316,6 +316,7 @@ def download():
         if did.startswith("did:"):
             did = add_0x_prefix(did_to_id(did))
 
+        logger.debug("validate_order called from download endpoint.")
         _tx, _order_log, _transfer_log = validate_order(
             consumer_address, token_address, service.get_cost(), tx_id, did, service_id
         )
