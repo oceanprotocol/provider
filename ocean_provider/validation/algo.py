@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import json
+import logging
 
 from eth_utils import add_0x_prefix
 from ocean_lib.common.agreements.service_types import ServiceTypes
@@ -23,6 +24,8 @@ from ocean_provider.util import (
     validate_transfer_not_used_for_other_service,
 )
 from ocean_provider.utils.basics import create_checksum, get_asset_from_metadatastore
+
+logger = logging.getLogger(__name__)
 
 
 class WorkflowValidator:
@@ -156,6 +159,7 @@ class WorkflowValidator:
                     self.error = "Failed to retrieve purchased algorithm service id."
                     return False
 
+                logger.debug("validate_order called for ALGORITHM usage.")
                 _tx, _order_log, _transfer_log = validate_order(
                     self.consumer_address,
                     algorithm_token_address,
@@ -181,7 +185,10 @@ class WorkflowValidator:
                     algorithm_token_address,
                     self.algo_service.get_cost(),
                 )
-            except Exception:
+            except Exception as e:
+                logger.debug(
+                    f"validate_order for ALGORITHM failed with error {str(e)}."
+                )
                 self.error = "Algorithm is already in use or can not be found on chain."
                 return False
 
@@ -385,6 +392,7 @@ class InputItemValidator:
         """Verify that the tokens have been transferred to the provider's wallet."""
         tx_id = self.data.get("transferTxId")
         token_address = self.asset._other_values["dataToken"]
+        logger.debug("Validating ASSET usage.")
         try:
             _tx, _order_log, _transfer_log = validate_order(
                 self.consumer_address,
@@ -411,7 +419,8 @@ class InputItemValidator:
                 token_address,
                 self.service.get_cost(),
             )
-        except Exception:
+        except Exception as e:
+            logger.debug(f"validate_usage failed with {str(e)}.")
             self.error = f"Order for serviceId {self.service.index} is not valid."
             return False
 
