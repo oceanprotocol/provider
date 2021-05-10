@@ -2,16 +2,11 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
-import hashlib
-import json
 import os
 import site
 
 import requests
 from ocean_lib.common.aquarius.aquarius import Aquarius
-from ocean_lib.common.http_requests.requests_session import (
-    get_requests_session as _get_requests_session,
-)
 from ocean_lib.models.data_token import DataToken
 from ocean_lib.ocean.util import get_web3_connection_provider
 from ocean_lib.web3_internal.contract_handler import ContractHandler
@@ -19,7 +14,6 @@ from ocean_lib.web3_internal.wallet import Wallet
 from ocean_lib.web3_internal.web3_provider import Web3Provider
 from ocean_provider.config import Config
 from requests_testadapter import Resp
-from web3 import Web3
 
 
 def get_artifacts_path(config):
@@ -39,70 +33,21 @@ def get_config():
     return Config(filename=config_file)
 
 
-def get_env_property(env_variable, property_name):
-    return os.getenv(env_variable, get_config().get("osmosis", property_name))
-
-
-def get_requests_session():
-    requests_session = _get_requests_session()
-    requests_session.mount("file://", LocalFileAdapter())
-    return requests_session
-
-
-def init_account_envvars():
-    os.environ["PARITY_ADDRESS"] = os.getenv("PROVIDER_ADDRESS", "")
-    os.environ["PARITY_PASSWORD"] = os.getenv("PROVIDER_PASSWORD", "")
-    os.environ["PARITY_KEY"] = os.getenv("PROVIDER_KEY", "")
-    os.environ["PARITY_KEYFILE"] = os.getenv("PROVIDER_KEYFILE", "")
-    os.environ["PARITY_ENCRYPTED_KEY"] = os.getenv("PROVIDER_ENCRYPTED_KEY", "")
-
-
 def get_provider_wallet():
     pk = os.environ.get("PROVIDER_PRIVATE_KEY")
-    if pk:
-        return Wallet(Web3Provider.get_web3(), private_key=pk)
-
-    return get_wallet(0)
-
-
-def get_wallet(index):
-    name = "PARITY_ADDRESS" if not index else f"PARITY_ADDRESS{index}"
-    pswrd_name = "PARITY_PASSWORD" if not index else f"PARITY_PASSWORD{index}"
-    key_name = "PARITY_KEY" if not index else f"PARITY_KEY{index}"
-    encrypted_key_name = (
-        "PARITY_ENCRYPTED_KEY" if not index else f"PARITY_ENCRYPTED_KEY{index}"
-    )
-    keyfile_name = "PARITY_KEYFILE" if not index else f"PARITY_KEYFILE{index}"
-
-    address = os.getenv(name)
-    if not address:
-        return None
-
-    pswrd = os.getenv(pswrd_name)
-    key = os.getenv(key_name)
-    encr_key = os.getenv(encrypted_key_name)
-    key_file = os.getenv(keyfile_name)
-    if key_file and not encr_key:
-        with open(key_file) as _file:
-            encr_key = json.loads(_file.read())
-
-    return Wallet(
-        Web3Provider.get_web3(),
-        private_key=key,
-        encrypted_key=encr_key,
-        address=Web3.toChecksumAddress(address),
-        password=pswrd,
-    )
+    return Wallet(Web3Provider.get_web3(), private_key=pk)
 
 
 def get_datatoken_minter(asset, datatoken_address):
     publisher = Web3Provider.get_web3().toChecksumAddress(asset.publisher)
     dt = DataToken(datatoken_address)
-    if not dt.contract_concise.isMinter(publisher):
-        raise AssertionError(
-            f"ddo publisher {publisher} is not the current "
-            f"minter for the DataToken contract at {datatoken_address}."
-        )
+
+    assertion_message = (
+        f"ddo publisher {publisher} is not the current "
+        f"minter for the DataToken contract at {datatoken_address}."
+    )
+    assert dt.contract_concise.isMinter(publisher), assertion_message
+
     return publisher
 
 
@@ -118,8 +63,6 @@ def setup_network(config_file=None):
         from web3.middleware import geth_poa_middleware
 
         Web3Provider.get_web3().middleware_stack.inject(geth_poa_middleware, layer=0)
-
-    init_account_envvars()
 
     wallet = get_provider_wallet()
     if wallet is None:
@@ -156,7 +99,3 @@ class LocalFileAdapter(requests.adapters.HTTPAdapter):
 def get_asset_from_metadatastore(metadata_url, document_id):
     aqua = Aquarius(metadata_url)
     return aqua.get_asset_ddo(document_id)
-
-
-def create_checksum(text):
-    return hashlib.sha256(text.encode("utf-8")).hexdigest()

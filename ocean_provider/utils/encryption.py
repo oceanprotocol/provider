@@ -23,8 +23,3 @@ def do_decrypt(encrypted_document, provider_wallet):
         ).decode(encoding="utf-8")
     except Exception:
         return None
-
-
-def get_address_from_public_key(public_key):
-    _hash = Web3.sha3(hexstr=public_key)
-    return Web3.toHex(_hash[-20:])

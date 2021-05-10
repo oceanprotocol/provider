@@ -2,44 +2,31 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
+import json
 
 from ocean_lib.common.agreements.service_types import ServiceTypes
-from ocean_provider.util import build_stage_output_dict
-from ocean_provider.utils.basics import get_provider_wallet
-from ocean_provider.validation.algo import WorkflowValidator
-from tests.test_helpers import (
-    build_and_send_ddo_with_compute_service,
-    get_consumer_wallet,
-    get_publisher_wallet,
-)
+from ocean_provider.validation.algo import WorkflowValidator, build_stage_output_dict
+from tests.helpers.compute_helpers import build_and_send_ddo_with_compute_service
 
 
-def test_passes(client):
-    provider_wallet = get_provider_wallet()
-    consumer_address = get_consumer_wallet().address
-    pub_wallet = get_publisher_wallet()
-
-    (
-        _,
-        did,
-        tx_id,
-        sa,
-        _,
-        alg_ddo,
-        alg_data_token,
-        _,
-        alg_tx_id,
-    ) = build_and_send_ddo_with_compute_service(client)
+def test_passes(
+    client, provider_wallet, consumer_wallet, consumer_address, publisher_wallet
+):
+    """Tests happy flow of validator with algo ddo and raw algo."""
+    ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
+        client, publisher_wallet, consumer_wallet
+    )
+    sa = ddo.get_service(ServiceTypes.CLOUD_COMPUTE)
 
     data = {
-        "documentId": did,
+        "documentId": ddo.did,
         "serviceId": sa.index,
         "transferTxId": tx_id,
         "output": build_stage_output_dict(
-            dict(), sa.service_endpoint, consumer_address, pub_wallet
+            dict(), sa.service_endpoint, consumer_address, publisher_wallet
         ),
         "algorithmDid": alg_ddo.did,
-        "algorithmDataToken": alg_data_token,
+        "algorithmDataToken": alg_ddo.data_token_address,
         "algorithmTransferTxId": alg_tx_id,
     }
 
@@ -47,39 +34,35 @@ def test_passes(client):
     assert validator.validate() is True
 
     data = {
-        "documentId": did,
+        "documentId": ddo.did,
         "serviceId": sa.index,
         "transferTxId": tx_id,
         "output": build_stage_output_dict(
-            dict(), sa.service_endpoint, consumer_address, pub_wallet
+            dict(), sa.service_endpoint, consumer_address, publisher_wallet
         ),
-        "algorithmMeta": {
-            "rawcode": "console.log('Hello world'!)",
-            "format": "docker-image",
-            "version": "0.1",
-            "container": {"entrypoint": "node $ALGO", "image": "node", "tag": "10"},
-        },
+        "algorithmMeta": json.dumps(
+            {
+                "rawcode": "console.log('Hello world'!)",
+                "format": "docker-image",
+                "version": "0.1",
+                "container": {"entrypoint": "node $ALGO", "image": "node", "tag": "10"},
+            }
+        ),
     }
     validator = WorkflowValidator(consumer_address, provider_wallet, data)
     assert validator.validate() is True
 
 
-def test_fails(client):
-    provider_wallet = get_provider_wallet()
-    consumer_address = get_consumer_wallet().address
-    pub_wallet = get_publisher_wallet()
-
-    (
-        dataset,
-        did,
-        tx_id,
-        sa,
-        _,
-        alg_ddo,
-        alg_data_token,
-        _,
-        alg_tx_id,
-    ) = build_and_send_ddo_with_compute_service(client)
+def test_fails(
+    client, provider_wallet, consumer_wallet, consumer_address, publisher_wallet
+):
+    """Tests possible failures of the algo validation."""
+    dataset, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
+        client, publisher_wallet, consumer_wallet
+    )
+    did = dataset.did
+    sa = dataset.get_service(ServiceTypes.CLOUD_COMPUTE)
+    alg_data_token = alg_ddo.data_token_address
 
     # output key is invalid
     data = {
@@ -102,7 +85,7 @@ def test_fails(client):
         "transferTxId": tx_id,
         "serviceId": sa.index,
         "output": build_stage_output_dict(
-            dict(), sa.service_endpoint, consumer_address, pub_wallet
+            dict(), sa.service_endpoint, consumer_address, publisher_wallet
         ),
         "algorithmDid": did,
         "algorithmDataToken": alg_data_token,
@@ -114,7 +97,7 @@ def test_fails(client):
     assert validator.error == f"DID {did} is not a valid algorithm"
 
     valid_output = build_stage_output_dict(
-        dict(), sa.service_endpoint, consumer_address, pub_wallet
+        dict(), sa.service_endpoint, consumer_address, publisher_wallet
     )
 
     # algorithmMeta doesn't contain 'url' or 'rawcode'
@@ -274,17 +257,10 @@ def test_fails(client):
     )
 
     # Additional input has other trusted algs
-    (
-        _,
-        trust_did,
-        trust_tx_id,
-        trust_sa,
-        _,
-        _,
-        _,
-        _,
-        _,
-    ) = build_and_send_ddo_with_compute_service(client, asset_type="specific_algo_dids")
+    trust_ddo, trust_tx_id, _, _ = build_and_send_ddo_with_compute_service(
+        client, publisher_wallet, consumer_wallet, asset_type="specific_algo_dids"
+    )
+    trust_sa = trust_ddo.get_service(ServiceTypes.CLOUD_COMPUTE)
 
     data = {
         "documentId": did,
@@ -296,7 +272,7 @@ def test_fails(client):
         "algorithmTransferTxId": alg_tx_id,
         "additionalInputs": [
             {
-                "documentId": trust_did,
+                "documentId": trust_ddo.did,
                 "transferTxId": trust_tx_id,
                 "serviceId": trust_sa.index,
             }

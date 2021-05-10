@@ -3,241 +3,156 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-import json
-
-from ocean_lib.common.agreements.service_agreement import ServiceAgreement
 from ocean_lib.common.agreements.service_types import ServiceTypes
 from ocean_lib.models.data_token import DataToken
 from ocean_lib.web3_internal.transactions import sign_hash
 from ocean_lib.web3_internal.utils import add_ethereum_prefix_and_hash_msg
 from ocean_provider.constants import BaseURLs
-from ocean_provider.run import get_provider_address, get_services_endpoints
-from ocean_provider.util import build_stage_output_dict
-from ocean_provider.utils.basics import get_provider_wallet
-from tests.test_helpers import (
+from ocean_provider.validation.algo import build_stage_output_dict
+from tests.helpers.compute_helpers import (
     build_and_send_ddo_with_compute_service,
-    comp_ds_no_rawalgo,
+    comp_ds,
     get_compute_job_info,
-    get_consumer_wallet,
-    get_nonce,
+    get_compute_signature,
     get_possible_compute_job_status_text,
-    get_publisher_wallet,
-    mint_tokens_and_wait,
-    send_order,
+    post_to_compute,
 )
+from tests.test_helpers import mint_tokens_and_wait, send_order
 
 
-def test_get_provider_address(client):
-    get_response = client.get("/")
-    result = get_response.get_json()
-    provider_address = get_provider_address()
-    assert "providerAddress" in result
-    assert provider_address == get_provider_wallet().address
-    assert result["providerAddress"] == get_provider_wallet().address
-    assert get_response.status == "200 OK"
-
-
-def test_compute_expose_endpoints(client):
-    get_response = client.get("/")
-    result = get_response.get_json()
-    services_endpoints = get_services_endpoints()
-    assert "serviceEndpoints" in result
-    assert "software" in result
-    assert "version" in result
-    assert "network-url" in result
-    assert "providerAddress" in result
-    assert "computeAddress" in result
-    assert get_response.status == "200 OK"
-    assert len(result["serviceEndpoints"]) == len(services_endpoints)
-
-
-def test_compute_norawalgo_allowed(client):
-    pub_wallet = get_publisher_wallet()
-    cons_wallet = get_consumer_wallet()
-
+def test_compute_norawalgo_allowed(
+    client, publisher_wallet, consumer_wallet, consumer_address
+):
     # publish a dataset asset
-    dataset_ddo_w_compute_service = comp_ds_no_rawalgo(client, pub_wallet)
-    did = dataset_ddo_w_compute_service.did
-    ddo = dataset_ddo_w_compute_service
+    dataset = comp_ds(client, publisher_wallet, "no_rawalgo")
+    dt_contract = DataToken(dataset.data_token_address)
+    mint_tokens_and_wait(dt_contract, consumer_wallet, publisher_wallet)
 
-    data_token = dataset_ddo_w_compute_service.data_token_address
-    dt_contract = DataToken(data_token)
-    mint_tokens_and_wait(dt_contract, cons_wallet, pub_wallet)
-
-    # CHECKPOINT 1
     algorithm_meta = {
         "rawcode": "console.log('Hello world'!)",
         "format": "docker-image",
         "version": "0.1",
         "container": {"entrypoint": "node $ALGO", "image": "node", "tag": "10"},
     }
-    # prepare parameter values for the compute endpoint
-    # signature, documentId, consumerAddress, and algorithmDid or algorithmMeta
 
-    sa = ServiceAgreement.from_ddo(
-        ServiceTypes.CLOUD_COMPUTE, dataset_ddo_w_compute_service
-    )
-    tx_id = send_order(client, ddo, dt_contract, sa, cons_wallet)
-    nonce = get_nonce(client, cons_wallet.address)
-
-    # prepare consumer signature on did
-    msg = f"{cons_wallet.address}{did}{nonce}"
-    _hash = add_ethereum_prefix_and_hash_msg(msg)
-    signature = sign_hash(_hash, cons_wallet)
+    sa = dataset.get_service(ServiceTypes.CLOUD_COMPUTE)
+    tx_id = send_order(client, dataset, dt_contract, sa, consumer_wallet)
+    signature = get_compute_signature(client, consumer_wallet, dataset.did)
 
     # Start the compute job
     payload = dict(
         {
             "signature": signature,
-            "documentId": did,
+            "documentId": dataset.did,
             "serviceId": sa.index,
             "serviceType": sa.type,
-            "consumerAddress": cons_wallet.address,
+            "consumerAddress": consumer_address,
             "transferTxId": tx_id,
-            "dataToken": data_token,
+            "dataToken": dataset.data_token_address,
             "output": build_stage_output_dict(
-                dict(), sa.service_endpoint, cons_wallet.address, pub_wallet
+                dict(), sa.service_endpoint, consumer_address, publisher_wallet
             ),
             "algorithmMeta": algorithm_meta,
             "algorithmDataToken": "",
         }
     )
 
-    compute_endpoint = BaseURLs.ASSETS_URL + "/compute"
-    response = client.post(
-        compute_endpoint, data=json.dumps(payload), content_type="application/json"
-    )
+    response = post_to_compute(client, payload)
+
     assert (
         response.status == "400 BAD REQUEST"
     ), f"start compute job failed: {response.status} , {response.data}"
 
 
-def test_compute_specific_algo_dids(client):
-    pub_wallet = get_publisher_wallet()
-    cons_wallet = get_consumer_wallet()
-
-    (
-        _,
-        did,
-        tx_id,
-        sa,
-        data_token,
-        alg_ddo,
-        alg_data_token,
-        _,
-        _,
-    ) = build_and_send_ddo_with_compute_service(client, asset_type="specific_algo_dids")
-    nonce = get_nonce(client, cons_wallet.address)
-
-    # prepare consumer signature on did
-    msg = f"{cons_wallet.address}{did}{nonce}"
-    _hash = add_ethereum_prefix_and_hash_msg(msg)
-    signature = sign_hash(_hash, cons_wallet)
+def test_compute_specific_algo_dids(
+    client, publisher_wallet, consumer_wallet, consumer_address
+):
+    ddo, tx_id, alg_ddo, _ = build_and_send_ddo_with_compute_service(
+        client, publisher_wallet, consumer_wallet, asset_type="specific_algo_dids"
+    )
+    sa = ddo.get_service(ServiceTypes.CLOUD_COMPUTE)
+    signature = get_compute_signature(client, consumer_wallet, ddo.did)
 
     # Start the compute job
     payload = dict(
         {
             "signature": signature,
-            "documentId": did,
+            "documentId": ddo.did,
             "serviceId": sa.index,
             "serviceType": sa.type,
-            "consumerAddress": cons_wallet.address,
+            "consumerAddress": consumer_address,
             "transferTxId": tx_id,
-            "dataToken": data_token,
+            "dataToken": ddo.data_token_address,
             "output": build_stage_output_dict(
-                dict(), sa.service_endpoint, cons_wallet.address, pub_wallet
+                dict(), sa.service_endpoint, consumer_address, publisher_wallet
             ),
             "algorithmDid": alg_ddo.did,
-            "algorithmDataToken": alg_data_token,
+            "algorithmDataToken": alg_ddo.data_token_address,
         }
     )
 
-    compute_endpoint = BaseURLs.ASSETS_URL + "/compute"
-    response = client.post(
-        compute_endpoint, data=json.dumps(payload), content_type="application/json"
-    )
+    response = post_to_compute(client, payload)
 
     assert (
         response.status == "400 BAD REQUEST"
     ), f"start compute job failed: {response.status} , {response.data}"
 
 
-def test_compute(client):
-    pub_wallet = get_publisher_wallet()
-    cons_wallet = get_consumer_wallet()
-
-    (
-        _,
-        did,
-        tx_id,
-        sa,
-        data_token,
-        alg_ddo,
-        alg_data_token,
-        _,
-        alg_tx_id,
-    ) = build_and_send_ddo_with_compute_service(client)
-
-    nonce = get_nonce(client, cons_wallet.address)
-    # prepare consumer signature on did
-    msg = f"{cons_wallet.address}{did}{str(nonce)}"
-    _hash = add_ethereum_prefix_and_hash_msg(msg)
-    signature = sign_hash(_hash, cons_wallet)
+def test_compute(client, publisher_wallet, consumer_wallet):
+    ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
+        client, publisher_wallet, consumer_wallet
+    )
+    sa = ddo.get_service(ServiceTypes.CLOUD_COMPUTE)
+    signature = get_compute_signature(client, consumer_wallet, ddo.did)
 
     # Start the compute job
     payload = dict(
         {
             "signature": signature,
-            "documentId": did,
+            "documentId": ddo.did,
             "serviceId": sa.index,
             "serviceType": sa.type,
-            "consumerAddress": cons_wallet.address,
+            "consumerAddress": consumer_wallet.address,
             "transferTxId": tx_id,
-            "dataToken": data_token,
+            "dataToken": ddo.data_token_address,
             "output": build_stage_output_dict(
-                dict(), sa.service_endpoint, cons_wallet.address, pub_wallet
+                dict(), sa.service_endpoint, consumer_wallet.address, publisher_wallet
             ),
             "algorithmDid": alg_ddo.did,
-            "algorithmDataToken": alg_data_token,
+            "algorithmDataToken": alg_ddo.data_token_address,
             "algorithmTransferTxId": alg_tx_id,
         }
     )
 
     # Start compute using invalid signature (withOUT nonce), should fail
-    msg = f"{cons_wallet.address}{did}"
+    msg = f"{consumer_wallet.address}{ddo.did}"
     _hash = add_ethereum_prefix_and_hash_msg(msg)
-    payload["signature"] = sign_hash(_hash, cons_wallet)
-    compute_endpoint = BaseURLs.ASSETS_URL + "/compute"
-    response = client.post(
-        compute_endpoint, data=json.dumps(payload), content_type="application/json"
-    )
+    payload["signature"] = sign_hash(_hash, consumer_wallet)
 
+    response = post_to_compute(client, payload)
     assert response.status_code == 400, f"{response.data}"
 
     # Start compute with valid signature
     payload["signature"] = signature
-    response = client.post(
-        compute_endpoint, data=json.dumps(payload), content_type="application/json"
-    )
+    response = post_to_compute(client, payload)
     assert response.status == "200 OK", f"start compute job failed: {response.data}"
+
     job_info = response.json[0]
     print(f"got response from starting compute job: {job_info}")
     job_id = job_info.get("jobId", "")
 
-    nonce = get_nonce(client, cons_wallet.address)
-    msg = f"{cons_wallet.address}{job_id}{did}{nonce}"
-    _hash = add_ethereum_prefix_and_hash_msg(msg)
-    signature = sign_hash(_hash, cons_wallet)
-
+    # get a new signature
+    signature = get_compute_signature(client, consumer_wallet, ddo.did)
     payload = dict(
         {
             "signature": signature,
-            "documentId": did,
-            "consumerAddress": cons_wallet.address,
+            "documentId": ddo.did,
+            "consumerAddress": consumer_wallet.address,
             "jobId": job_id,
         }
     )
 
+    compute_endpoint = BaseURLs.ASSETS_URL + "/compute"
     job_info = get_compute_job_info(client, compute_endpoint, payload)
     assert job_info, f"Failed to get job info for jobId {job_id}"
     print(f"got info for compute job {job_id}: {job_info}")
@@ -273,211 +188,189 @@ def test_compute(client):
     ), "resultsDid should not be in this status response"
 
 
-def test_compute_diff_provider(client):
-    pub_wallet = get_publisher_wallet()
-    cons_wallet = get_consumer_wallet()
-
-    (
-        _,
-        did,
-        tx_id,
-        sa,
-        data_token,
-        alg_ddo,
-        alg_data_token,
-        _,
-        alg_tx_id,
-    ) = build_and_send_ddo_with_compute_service(client, alg_diff=True)
-
-    nonce = get_nonce(client, cons_wallet.address)
-    # prepare consumer signature on did
-    msg = f"{cons_wallet.address}{did}{str(nonce)}"
-    _hash = add_ethereum_prefix_and_hash_msg(msg)
-    signature = sign_hash(_hash, cons_wallet)
+def test_compute_diff_provider(client, publisher_wallet, consumer_wallet):
+    ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
+        client, publisher_wallet, consumer_wallet, alg_diff=True
+    )
+    sa = ddo.get_service(ServiceTypes.CLOUD_COMPUTE)
+    signature = get_compute_signature(client, consumer_wallet, ddo.did)
 
     # Start the compute job
     payload = dict(
         {
             "signature": signature,
-            "documentId": did,
+            "documentId": ddo.did,
             "serviceId": sa.index,
             "serviceType": sa.type,
-            "consumerAddress": cons_wallet.address,
+            "consumerAddress": consumer_wallet.address,
             "transferTxId": tx_id,
-            "dataToken": data_token,
+            "dataToken": ddo.data_token_address,
             "output": build_stage_output_dict(
-                dict(), sa.service_endpoint, cons_wallet.address, pub_wallet
+                dict(), sa.service_endpoint, consumer_wallet.address, publisher_wallet
             ),
             "algorithmDid": alg_ddo.did,
-            "algorithmDataToken": alg_data_token,
+            "algorithmDataToken": alg_ddo.data_token_address,
             "algorithmTransferTxId": alg_tx_id,
         }
     )
 
-    compute_endpoint = BaseURLs.ASSETS_URL + "/compute"
-    response = client.post(
-        compute_endpoint, data=json.dumps(payload), content_type="application/json"
-    )
-
+    response = post_to_compute(client, payload)
     assert response.status == "200 OK", f"start compute job failed: {response.data}"
 
 
-def test_compute_allow_all_published(client):
-    pub_wallet = get_publisher_wallet()
-    cons_wallet = get_consumer_wallet()
-
-    (
-        _,
-        did,
-        tx_id,
-        sa,
-        data_token,
-        alg_ddo,
-        alg_data_token,
-        _,
-        alg_tx_id,
-    ) = build_and_send_ddo_with_compute_service(
-        client, asset_type="allow_all_published"
+def test_compute_allow_all_published(client, publisher_wallet, consumer_wallet):
+    ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
+        client, publisher_wallet, consumer_wallet, asset_type="allow_all_published"
     )
-
-    nonce = get_nonce(client, cons_wallet.address)
-    # prepare consumer signature on did
-    msg = f"{cons_wallet.address}{did}{str(nonce)}"
-    _hash = add_ethereum_prefix_and_hash_msg(msg)
-    signature = sign_hash(_hash, cons_wallet)
+    sa = ddo.get_service(ServiceTypes.CLOUD_COMPUTE)
+    signature = get_compute_signature(client, consumer_wallet, ddo.did)
 
     # Start the compute job
     payload = dict(
         {
             "signature": signature,
-            "documentId": did,
+            "documentId": ddo.did,
             "serviceId": sa.index,
             "serviceType": sa.type,
-            "consumerAddress": cons_wallet.address,
+            "consumerAddress": consumer_wallet.address,
             "transferTxId": tx_id,
-            "dataToken": data_token,
+            "dataToken": ddo.data_token_address,
             "output": build_stage_output_dict(
-                dict(), sa.service_endpoint, cons_wallet.address, pub_wallet
+                dict(), sa.service_endpoint, consumer_wallet.address, publisher_wallet
             ),
             "algorithmDid": alg_ddo.did,
-            "algorithmDataToken": alg_data_token,
+            "algorithmDataToken": alg_ddo.data_token_address,
             "algorithmTransferTxId": alg_tx_id,
         }
     )
 
-    # Start compute with valid signature
-    payload["signature"] = signature
-    compute_endpoint = BaseURLs.ASSETS_URL + "/compute"
-    response = client.post(
-        compute_endpoint, data=json.dumps(payload), content_type="application/json"
-    )
+    response = post_to_compute(client, payload)
     assert response.status == "200 OK"
 
 
-def test_compute_not_an_algo(client):
-    pub_wallet = get_publisher_wallet()
-    cons_wallet = get_consumer_wallet()
-
-    (
-        _,
-        did,
-        tx_id,
-        sa,
-        data_token,
-        _,
-        alg_data_token,
-        _,
-        alg_tx_id,
-    ) = build_and_send_ddo_with_compute_service(
-        client, asset_type="allow_all_published"
+def test_compute_not_an_algo(client, publisher_wallet, consumer_wallet):
+    ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
+        client, publisher_wallet, consumer_wallet, asset_type="allow_all_published"
     )
-
-    nonce = get_nonce(client, cons_wallet.address)
-    # prepare consumer signature on did
-    msg = f"{cons_wallet.address}{did}{str(nonce)}"
-    _hash = add_ethereum_prefix_and_hash_msg(msg)
-    signature = sign_hash(_hash, cons_wallet)
+    sa = ddo.get_service(ServiceTypes.CLOUD_COMPUTE)
+    signature = get_compute_signature(client, consumer_wallet, ddo.did)
 
     # Start the compute job
     payload = dict(
         {
             "signature": signature,
-            "documentId": did,
+            "documentId": ddo.did,
             "serviceId": sa.index,
             "serviceType": sa.type,
-            "consumerAddress": cons_wallet.address,
+            "consumerAddress": consumer_wallet.address,
             "transferTxId": tx_id,
-            "dataToken": data_token,
+            "dataToken": ddo.data_token_address,
             "output": build_stage_output_dict(
-                dict(), sa.service_endpoint, cons_wallet.address, pub_wallet
+                dict(), sa.service_endpoint, consumer_wallet.address, publisher_wallet
             ),
-            "algorithmDid": did,  # intentionally, should not be an algo did
-            "algorithmDataToken": alg_data_token,
+            "algorithmDid": ddo.did,  # intentionally, should not be an algo did
+            "algorithmDataToken": alg_ddo.data_token_address,
             "algorithmTransferTxId": alg_tx_id,
         }
     )
 
-    # Start compute with valid signature
-    payload["signature"] = signature
-    compute_endpoint = BaseURLs.ASSETS_URL + "/compute"
-    response = client.post(
-        compute_endpoint, data=json.dumps(payload), content_type="application/json"
-    )
+    response = post_to_compute(client, payload)
     assert response.status == "400 BAD REQUEST"
     error = response.get_json()["error"]
     assert "is not a valid algorithm" in error
 
 
-def test_compute_additional_input(client):
-    pub_wallet = get_publisher_wallet()
-    cons_wallet = get_consumer_wallet()
-
-    (
-        _,
-        did,
-        tx_id,
-        sa,
-        data_token,
-        alg_ddo,
-        alg_data_token,
-        _,
-        alg_tx_id,
-    ) = build_and_send_ddo_with_compute_service(client)
-
-    _, did2, tx_id2, sa2, _, _, _, _, _ = build_and_send_ddo_with_compute_service(
-        client
+def test_compute_additional_input(client, publisher_wallet, consumer_wallet):
+    ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
+        client, publisher_wallet, consumer_wallet
     )
+    sa = ddo.get_service(ServiceTypes.CLOUD_COMPUTE)
+    ddo2, tx_id2, _, _ = build_and_send_ddo_with_compute_service(
+        client, publisher_wallet, consumer_wallet
+    )
+    sa2 = ddo2.get_service(ServiceTypes.CLOUD_COMPUTE)
 
-    nonce = get_nonce(client, cons_wallet.address)
-    # prepare consumer signature on did
-    msg = f"{cons_wallet.address}{did}{str(nonce)}"
-    _hash = add_ethereum_prefix_and_hash_msg(msg)
-    signature = sign_hash(_hash, cons_wallet)
+    signature = get_compute_signature(client, consumer_wallet, ddo.did)
 
     # Start the compute job
     payload = dict(
         {
             "signature": signature,
-            "documentId": did,
+            "documentId": ddo.did,
             "serviceId": sa.index,
             "serviceType": sa.type,
-            "consumerAddress": cons_wallet.address,
+            "consumerAddress": consumer_wallet.address,
             "transferTxId": tx_id,
-            "dataToken": data_token,
+            "dataToken": ddo.data_token_address,
             "output": build_stage_output_dict(
-                dict(), sa.service_endpoint, cons_wallet.address, pub_wallet
+                dict(), sa.service_endpoint, consumer_wallet.address, publisher_wallet
             ),
             "algorithmDid": alg_ddo.did,
-            "algorithmDataToken": alg_data_token,
+            "algorithmDataToken": alg_ddo.data_token_address,
             "algorithmTransferTxId": alg_tx_id,
             "additionalInputs": [
-                {"documentId": did2, "transferTxId": tx_id2, "serviceId": sa2.index}
+                {"documentId": ddo2.did, "transferTxId": tx_id2, "serviceId": sa2.index}
             ],
         }
     )
 
-    compute_endpoint = BaseURLs.ASSETS_URL + "/compute"
-    response = client.post(
-        compute_endpoint, data=json.dumps(payload), content_type="application/json"
-    )
+    response = post_to_compute(client, payload)
     assert response.status == "200 OK", f"start compute job failed: {response.data}"
+
+
+def test_compute_delete_job(
+    client, publisher_wallet, consumer_wallet, consumer_address
+):
+    ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
+        client, publisher_wallet, consumer_wallet
+    )
+    sa = ddo.get_service(ServiceTypes.CLOUD_COMPUTE)
+    signature = get_compute_signature(client, consumer_wallet, ddo.did)
+
+    # Start the compute job
+    payload = dict(
+        {
+            "signature": signature,
+            "documentId": ddo.did,
+            "serviceId": sa.index,
+            "serviceType": sa.type,
+            "consumerAddress": consumer_address,
+            "transferTxId": tx_id,
+            "dataToken": ddo.data_token_address,
+            "output": build_stage_output_dict(
+                dict(), sa.service_endpoint, consumer_address, publisher_wallet
+            ),
+            "algorithmDid": alg_ddo.did,
+            "algorithmDataToken": alg_ddo.data_token_address,
+            "algorithmTransferTxId": alg_tx_id,
+        }
+    )
+
+    response = post_to_compute(client, payload)
+    assert response.status == "200 OK", f"start compute job failed: {response.data}"
+
+    job_id = response.json[0]["jobId"]
+    compute_endpoint = BaseURLs.ASSETS_URL + "/compute"
+    signature = get_compute_signature(client, consumer_wallet, ddo.did, job_id)
+
+    query_string = {
+        "consumerAddress": consumer_address,
+        "jobId": job_id,
+        "documentId": ddo.did,
+        "signature": signature,
+    }
+
+    # stop job
+    response = client.put(
+        compute_endpoint, query_string=query_string, content_type="application/json"
+    )
+    assert response.status == "200 OK", f"delete compute job failed: {response.data}"
+
+    # delete job
+    signature = get_compute_signature(client, consumer_wallet, ddo.did, job_id)
+    query_string["signature"] = signature
+
+    response = client.delete(
+        compute_endpoint, query_string=query_string, content_type="application/json"
+    )
+    assert response.status == "200 OK", f"delete compute job failed: {response.data}"
