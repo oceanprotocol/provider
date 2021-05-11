@@ -15,6 +15,7 @@ from ocean_provider.myapp import app
 from ocean_provider.serializers import StageAlgoSerializer
 from ocean_provider.utils.basics import get_asset_from_metadatastore, get_config
 from ocean_provider.utils.util import (
+    check_asset_consumable,
     decode_from_data,
     filter_dictionary,
     filter_dictionary_starts_with,
@@ -266,6 +267,14 @@ class InputItemValidator:
             return False
 
         self.service = self.asset.get_service_by_index(self.data["serviceId"])
+
+        consumable, message = check_asset_consumable(
+            self.asset, self.consumer_address, logger, self.service.service_endpoint
+        )
+
+        if not consumable:
+            self.error = message
+            return False
 
         if not self.service:
             self.error = f"Service index {self.data['serviceId']} not found."

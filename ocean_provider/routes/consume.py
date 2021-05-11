@@ -25,6 +25,7 @@ from ocean_provider.utils.encryption import do_encrypt
 from ocean_provider.utils.url import check_url_details
 from ocean_provider.utils.util import (
     build_download_response,
+    check_asset_consumable,
     get_asset_download_urls,
     get_asset_url_at_index,
     get_compute_address,
@@ -223,6 +224,10 @@ def initialize():
             data
         )
 
+        consumable, message = check_asset_consumable(asset, consumer_address, logger)
+        if not consumable:
+            return jsonify(error=message), 400
+
         url = get_asset_url_at_index(0, asset, provider_wallet)
         download_url = get_download_url(url, app.config["CONFIG_FILE"])
         valid, _ = check_url_details(download_url)
@@ -315,6 +320,10 @@ def download():
         tx_id = data.get("transferTxId")
         if did.startswith("did:"):
             did = add_0x_prefix(did_to_id(did))
+
+        consumable, message = check_asset_consumable(asset, consumer_address, logger)
+        if not consumable:
+            return jsonify(error=message), 400
 
         logger.debug("validate_order called from download endpoint.")
         _tx, _order_log, _transfer_log = validate_order(
