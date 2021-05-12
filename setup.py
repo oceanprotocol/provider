@@ -32,7 +32,7 @@ install_requirements = [
     "osmosis-on-premise-driver==0.1.0",
     "osmosis-ipfs-driver==0.1.0",
     "Werkzeug>=0.15.3",
-    "ocean-lib>=0.5.6",
+    "ocean-lib>=0.5.18",
     "requests_testadapter",
     "eciespy",
     "coincurve>=13,<15",
@@ -66,9 +66,10 @@ dev_requirements = [
     "python-dotenv==0.15.0",
     "flake8",
     "isort",
-    "black",
+    "black==21.4b0",
     "pre-commit",
     "licenseheaders",
+    "pytest-env",
 ]
 
 setup(
@@ -102,7 +103,7 @@ setup(
     url="https://github.com/oceanprotocol/provider-py",
     # fmt: off
     # bumpversion needs single quotes
-    version='0.4.7',
+    version='0.4.9',
     # fmt: on
     zip_safe=False,
 )
