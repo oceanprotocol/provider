@@ -340,7 +340,7 @@ def service_unavailable(error, context, custom_logger=None):
 
 def check_asset_consumable(asset, consumer_address, logger, custom_url=None):
     code = asset.is_consumable(
-        {"type": "addres", "value": consumer_address},
+        {"type": "address", "value": consumer_address},
         provider_uri=request.base_url if not custom_url else custom_url,
         with_connectivity_check=False,
     )
