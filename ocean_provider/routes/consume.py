@@ -208,13 +208,13 @@ def initialize():
 
     :return:
         json object as follows:
-        {
+        ```{
             "from": <consumer-address>,
             "to": <receiver-address>,
             "numTokens": <tokens-amount-in-base>
             "dataToken": <data-token-contract-address>,
             "nonce": <nonce-used-in-consumer-signature>
-        }
+        }```
     """
     data = get_request_data(request)
 
