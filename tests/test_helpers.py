@@ -58,7 +58,14 @@ def new_factory_contract(ganache_wallet):
     )
 
 
-def get_registered_ddo(client, wallet, metadata, service_descriptor):
+def get_registered_ddo(
+    client,
+    wallet,
+    metadata,
+    service_descriptor,
+    disabled=False,
+    custom_credentials=None,
+):
     aqua = Aquarius("http://localhost:5000")
     ddo_service_endpoint = aqua.get_service_endpoint()
 
@@ -117,6 +124,12 @@ def get_registered_ddo(client, wallet, metadata, service_descriptor):
     ddo.add_public_key(did, wallet.address)
     ddo.add_authentication(did, PUBLIC_KEY_TYPE_RSA)
 
+    if disabled:
+        ddo.disable()
+
+    if custom_credentials:
+        ddo._credentials = custom_credentials
+
     # if not plecos.is_valid_dict_local(ddo.metadata):
     #     print(f'invalid metadata: {plecos.validate_dict_local(ddo.metadata)}')
     #     assert False, f'invalid metadata: {plecos.validate_dict_local(ddo.metadata)}'
@@ -165,6 +178,32 @@ def get_dataset_ddo_with_access_service(client, wallet):
     service_descriptor = get_access_service_descriptor(wallet.address, metadata)
     metadata["main"].pop("cost")
     return get_registered_ddo(client, wallet, metadata, service_descriptor)
+
+
+def get_dataset_ddo_disabled(client, wallet):
+    metadata = get_sample_ddo()["service"][0]["attributes"]
+    metadata["main"]["files"][0]["checksum"] = str(uuid.uuid4())
+    service_descriptor = get_access_service_descriptor(wallet.address, metadata)
+    metadata["main"].pop("cost")
+
+    return get_registered_ddo(
+        client, wallet, metadata, service_descriptor, disabled=True
+    )
+
+
+def get_dataset_ddo_with_denied_consumer(client, wallet, consumer_addr):
+    metadata = get_sample_ddo()["service"][0]["attributes"]
+    metadata["main"]["files"][0]["checksum"] = str(uuid.uuid4())
+    service_descriptor = get_access_service_descriptor(wallet.address, metadata)
+    metadata["main"].pop("cost")
+
+    return get_registered_ddo(
+        client,
+        wallet,
+        metadata,
+        service_descriptor,
+        custom_credentials={"deny": [{"type": "address", "values": [consumer_addr]}]},
+    )
 
 
 def get_sample_algorithm_ddo():

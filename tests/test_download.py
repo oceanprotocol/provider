@@ -10,7 +10,9 @@ from ocean_lib.web3_internal.utils import add_ethereum_prefix_and_hash_msg
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import generate_auth_token
 from tests.test_helpers import (
+    get_dataset_ddo_disabled,
     get_dataset_ddo_with_access_service,
+    get_dataset_ddo_with_denied_consumer,
     get_dataset_with_invalid_url_ddo,
     get_dataset_with_ipfs_url_ddo,
     get_nonce,
@@ -82,3 +84,28 @@ def test_initialize_on_ipfs_url(client, publisher_wallet, consumer_wallet):
     sa = ddo.get_service(ServiceTypes.ASSET_ACCESS)
 
     send_order(client, ddo, dt_contract, sa, consumer_wallet)
+
+
+def test_initialize_on_disabled_asset(client, publisher_wallet, consumer_wallet):
+    ddo = get_dataset_ddo_disabled(client, publisher_wallet)
+    assert ddo.is_disabled
+    dt_contract = DataToken(ddo.data_token_address)
+    sa = ddo.get_service(ServiceTypes.ASSET_ACCESS)
+    mint_tokens_and_wait(dt_contract, consumer_wallet, publisher_wallet)
+
+    send_order(client, ddo, dt_contract, sa, consumer_wallet, expect_failure=True)
+
+
+def test_initialize_on_asset_with_custom_credentials(
+    client, publisher_wallet, consumer_wallet
+):
+    ddo = get_dataset_ddo_with_denied_consumer(
+        client, publisher_wallet, consumer_wallet.address
+    )
+    assert ddo.requires_address_credential
+    assert consumer_wallet.address not in ddo.allowed_addresses
+    dt_contract = DataToken(ddo.data_token_address)
+    sa = ddo.get_service(ServiceTypes.ASSET_ACCESS)
+    mint_tokens_and_wait(dt_contract, consumer_wallet, publisher_wallet)
+
+    send_order(client, ddo, dt_contract, sa, consumer_wallet, expect_failure=True)

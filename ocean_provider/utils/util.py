@@ -9,7 +9,8 @@ import os
 from cgi import parse_header
 
 import requests
-from flask import Response
+from flask import Response, request
+from ocean_lib.common.agreements.consumable import ConsumableCodes
 from ocean_lib.models.data_token import DataToken
 from ocean_lib.ocean.util import to_base_18
 from ocean_lib.web3_internal.transactions import sign_hash
@@ -335,3 +336,19 @@ def service_unavailable(error, context, custom_logger=None):
         503,
         headers={"content-type": "application/json"},
     )
+
+
+def check_asset_consumable(asset, consumer_address, logger, custom_url=None):
+    code = asset.is_consumable(
+        {"type": "address", "value": consumer_address},
+        provider_uri=request.base_url if not custom_url else custom_url,
+        with_connectivity_check=False,
+    )
+
+    if code == ConsumableCodes.OK:
+        return True, ""
+
+    message = f"Error: Access to asset {asset.did} was denied with code: {code}."
+    logger.error(message, exc_info=1)
+
+    return False, message
