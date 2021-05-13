@@ -12,13 +12,11 @@ from ocean_provider.config import Config
 from ocean_provider.constants import BaseURLs, ConfigSections, Metadata
 from ocean_provider.myapp import app
 from ocean_provider.routes import services
-from ocean_provider.util import get_compute_address
 from ocean_provider.utils.basics import get_provider_wallet
+from ocean_provider.utils.util import get_compute_address
 
 config = Config(filename=app.config["CONFIG_FILE"])
 provider_url = config.get(ConfigSections.RESOURCES, "ocean_provider.url")
-# not included URLs
-blocked_url = ["services.simple_flow_consume"]
 
 
 def get_services_endpoints():
@@ -26,8 +24,7 @@ def get_services_endpoints():
         map(
             lambda url: (url.endpoint.replace("services.", ""), url),
             filter(
-                lambda url: url.endpoint.startswith("services.")
-                and url.endpoint not in blocked_url,
+                lambda url: url.endpoint.startswith("services."),
                 app.url_map.iter_rules(),
             ),
         )
@@ -69,8 +66,7 @@ def version():
         - network url;
         - provider address;
         - service endpoints, which has all
-        the existing endpoints from routes.py
-        which are not in blocked_url.
+        the existing endpoints from routes.py.
     """
 
     info = dict()

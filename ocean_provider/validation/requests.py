@@ -8,8 +8,8 @@ from flask_sieve.rules_processor import RulesProcessor
 from flask_sieve.validator import Validator
 from ocean_provider.exceptions import InvalidSignatureError
 from ocean_provider.user_nonce import get_nonce
-from ocean_provider.util import get_request_data
 from ocean_provider.utils.accounts import verify_signature
+from ocean_provider.utils.util import get_request_data
 
 
 class CustomJsonRequest(JsonRequest):
@@ -79,7 +79,7 @@ class CustomRulesProcessor(RulesProcessor):
             verify_signature(owner, value, original_msg, get_nonce(owner))
             return True
         except InvalidSignatureError:
-            return False
+            pass
 
         return False
 
@@ -104,7 +104,7 @@ class CustomRulesProcessor(RulesProcessor):
             verify_signature(owner, value, original_msg, get_nonce(owner))
             return True
         except InvalidSignatureError:
-            return False
+            pass
 
         return False
 
@@ -112,15 +112,6 @@ class CustomRulesProcessor(RulesProcessor):
 class NonceRequest(CustomJsonRequest):
     def rules(self):
         return {"userAddress": ["required"]}
-
-
-class SimpleFlowConsumeRequest(CustomJsonRequest):
-    def rules(self):
-        return {
-            "consumerAddress": ["required"],
-            "dataToken": ["required"],
-            "transferTxId": ["required"],
-        }
 
 
 class EncryptRequest(CustomJsonRequest):
@@ -175,7 +166,6 @@ class DownloadRequest(CustomJsonRequest):
         return {
             "documentId": ["bail", "required"],
             "serviceId": ["required"],
-            "serviceType": ["required"],
             "dataToken": ["required"],
             "consumerAddress": ["bail", "required"],
             "transferTxId": ["bail", "required"],

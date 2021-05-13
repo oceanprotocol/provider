@@ -2,17 +2,16 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
-import json
-import time
 from datetime import datetime
 
 import eth_keys
-from ocean_lib.web3_internal.utils import add_ethereum_prefix_and_hash_msg
-from ocean_lib.web3_internal.web3helper import Web3Helper
+from ocean_lib.web3_internal.transactions import sign_hash
+from ocean_lib.web3_internal.utils import (
+    add_ethereum_prefix_and_hash_msg,
+    personal_ec_recover,
+)
 from ocean_provider.exceptions import InvalidSignatureError
 from ocean_provider.utils.basics import get_config
-from ocean_provider.utils.web3 import web3
-from ocean_utils.http_requests.requests_session import get_requests_session
 from web3 import Web3
 
 
@@ -22,7 +21,7 @@ def verify_signature(signer_address, signature, original_msg, nonce: int = None)
     else:
         assert nonce is not None, "nonce is required when not using user auth token."
         message = f"{original_msg}{str(nonce)}"
-        address = Web3Helper.personal_ec_recover(message, signature)
+        address = personal_ec_recover(message, signature)
 
     if address.lower() == signer_address.lower():
         return True
@@ -38,7 +37,7 @@ def verify_signature(signer_address, signature, original_msg, nonce: int = None)
 def get_private_key(wallet):
     pk = wallet.private_key
     if not isinstance(pk, bytes):
-        pk = web3().toBytes(hexstr=pk)
+        pk = Web3.toBytes(hexstr=pk)
     return eth_keys.KeyAPI.PrivateKey(pk)
 
 
@@ -63,7 +62,7 @@ def check_auth_token(token):
         return "0x0"
 
     message = f"{auth_token_message}\n{timestamp}"
-    address = Web3Helper.personal_ec_recover(message, sig)
+    address = personal_ec_recover(message, sig)
     return Web3.toChecksumAddress(address)
 
 
@@ -72,26 +71,4 @@ def generate_auth_token(wallet):
     _time = int(datetime.now().timestamp())
     _message = f"{raw_msg}\n{_time}"
     prefixed_msg_hash = add_ethereum_prefix_and_hash_msg(_message)
-    return f"{Web3Helper.sign_hash(prefixed_msg_hash, wallet)}-{_time}"
-
-
-def request_ether(faucet_url, wallet, wait=True):
-    requests = get_requests_session()
-
-    payload = {"address": wallet.address}
-    response = requests.post(
-        f"{faucet_url}/faucet",
-        data=json.dumps(payload),
-        headers={"content-type": "application/json"},
-        timeout=3,
-    )
-    try:
-        response_json = json.loads(response.content)
-        success = response_json.get("success", "false") == "true"
-        if success and wait:
-            time.sleep(5)
-
-        return success, response_json.get("message", "")
-    except (ValueError, Exception) as err:
-        print(f"Error parsing response {response}: {err}")
-        return None, None
+    return f"{sign_hash(prefixed_msg_hash, wallet)}-{_time}"

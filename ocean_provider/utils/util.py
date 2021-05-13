@@ -12,18 +12,16 @@ import requests
 from flask import Response
 from ocean_lib.models.data_token import DataToken
 from ocean_lib.ocean.util import to_base_18
+from ocean_lib.web3_internal.transactions import sign_hash
 from ocean_lib.web3_internal.utils import add_ethereum_prefix_and_hash_msg
 from ocean_lib.web3_internal.web3_provider import Web3Provider
-from ocean_lib.web3_internal.web3helper import Web3Helper
-from ocean_provider.constants import BaseURLs
-from ocean_provider.util_url import is_safe_url
 from ocean_provider.utils.basics import (
     get_asset_from_metadatastore,
     get_config,
     get_provider_wallet,
 )
 from ocean_provider.utils.encryption import do_decrypt
-from ocean_utils.agreements.service_agreement import ServiceAgreement
+from ocean_provider.utils.url import is_safe_url
 from osmosis_driver_interface.osmosis import Osmosis
 from websockets import ConnectionClosed
 
@@ -34,9 +32,7 @@ def get_metadata_url():
     return get_config().aquarius_url
 
 
-def get_request_data(request, url_params_only=False):
-    if url_params_only:
-        return request.args
+def get_request_data(request):
     return request.args if request.args else request.json
 
 
@@ -199,36 +195,37 @@ def get_compute_address():
         return None
 
 
-def check_required_attributes(required_attributes, data, method):
-    assert isinstance(data, dict), "invalid payload format."
-    logger.info("got %s request: %s" % (method, data))
-    if not data:
-        logger.error("%s request failed: data is empty." % method)
-        return "payload seems empty.", 400
-    for attr in required_attributes:
-        if attr not in data:
-            logger.error(
-                "%s request failed: required attr %s missing." % (method, attr)
-            )
-            return '"%s" is required in the call to %s' % (attr, method), 400
-    return None, None
-
-
 def validate_order(sender, token_address, num_tokens, tx_id, did, service_id):
+    logger.debug(
+        f"validate_order: did={did}, service_id={service_id}, tx_id={tx_id}, "
+        f"sender={sender}, num_tokens={num_tokens}, token_address={token_address}"
+    )
+
     dt_contract = DataToken(token_address)
 
     amount = to_base_18(num_tokens)
     num_tries = 3
     i = 0
     while i < num_tries:
+        logger.debug(f"validate_order is on trial {i+1} in {num_tries}.")
         i += 1
         try:
             tx, order_event, transfer_event = dt_contract.verify_order_tx(
                 Web3Provider.get_web3(), tx_id, did, service_id, amount, sender
             )
+            logger.debug(
+                f"validate_order succeeded for: did={did}, service_id={service_id}, tx_id={tx_id}, "
+                f"sender={sender}, num_tokens={num_tokens}, token_address={token_address}. "
+                f"result is: tx={tx}, order_event={order_event}, transfer_event={transfer_event}"
+            )
+
             return tx, order_event, transfer_event
         except ConnectionClosed:
+            logger.debug("got ConnectionClosed error on validate_order.")
             if i == num_tries:
+                logger.debug(
+                    "reached max no. of tries, raise ConnectionClosed in validate_order."
+                )
                 raise
 
 
@@ -260,17 +257,11 @@ def process_consume_request(data: dict):
     token_address = data.get("dataToken")
     consumer_address = data.get("consumerAddress")
     service_id = data.get("serviceId")
-    service_type = data.get("serviceType")
 
     # grab asset for did from the metadatastore associated with
     # the Data Token address
     asset = get_asset_from_metadatastore(get_metadata_url(), did)
-    service = ServiceAgreement.from_ddo(service_type, asset)
-    if service.type != service_type:
-        raise AssertionError(
-            f"Requested service with id {service_id} has type {service.type} "
-            f"which does not match the requested service type {service_type}."
-        )
+    service = asset.get_service_by_index(service_id)
 
     return asset, service, did, consumer_address, token_address
 
@@ -298,39 +289,9 @@ def process_compute_request(data):
         f'{body.get("documentId", "")}'
     )  # noqa
     msg_hash = add_ethereum_prefix_and_hash_msg(msg_to_sign)
-    body["providerSignature"] = Web3Helper.sign_hash(msg_hash, provider_wallet)
+    body["providerSignature"] = sign_hash(msg_hash, provider_wallet)
 
     return body
-
-
-def build_stage_output_dict(output_def, service_endpoint, owner, provider_wallet):
-    config = get_config()
-    if BaseURLs.ASSETS_URL in service_endpoint:
-        service_endpoint = service_endpoint.split(BaseURLs.ASSETS_URL)[0]
-
-    return dict(
-        {
-            "nodeUri": output_def.get("nodeUri", config.network_url),
-            "brizoUri": output_def.get("brizoUri", service_endpoint),
-            "brizoAddress": output_def.get("brizoAddress", provider_wallet.address),
-            "metadata": output_def.get(
-                "metadata",
-                dict(
-                    {
-                        "main": {"name": "Compute job output"},
-                        "additionalInformation": {
-                            "description": "Output from running the compute job."
-                        },
-                    }
-                ),
-            ),
-            "metadataUri": config.aquarius_url,
-            "owner": output_def.get("owner", owner),
-            "publishOutput": output_def.get("publishOutput", 1),
-            "publishAlgorithmLog": output_def.get("publishAlgorithmLog", 1),
-            "whitelist": output_def.get("whitelist", []),
-        }
-    )
 
 
 def filter_dictionary(dictionary, keys):
@@ -360,11 +321,17 @@ def decode_from_data(data, key, dec_type="list"):
     return data
 
 
-def get_service_at_index(asset, index):
-    """Gets asset's service at index."""
-    matching_services = [s for s in asset.services if s.index == int(index)]
+def service_unavailable(error, context, custom_logger=None):
+    text_items = []
+    for key, value in context.items():
+        text_items.append(key + "=" + value)
 
-    if not matching_services:
-        return None
+    logger_message = "Payload was: " + ",".join(text_items)
+    custom_logger = custom_logger if custom_logger else logger
+    custom_logger.error(logger_message, exc_info=1)
 
-    return matching_services[0]
+    return Response(
+        json.dumps({"error": str(error), "context": context}),
+        503,
+        headers={"content-type": "application/json"},
+    )
