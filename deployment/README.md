@@ -1,15 +1,14 @@
 
 
-- [Kubernetes deployment](#kubernetes-deployment) 
+- [Kubernetes deployment](#kubernetes-deployment)
 - [Docker Compose deployment](#docker-compose-deployment)
-
 
 
 #### Kubernetes deployment
 
 [Provider](https://github.com/oceanprotocol/provider) has the following dependencies:
 
-- [Aquarius](https://github.com/oceanprotocol/aquarius) 
+- [Aquarius](https://github.com/oceanprotocol/aquarius)
 - Ethereum network
 
 which means these components must be available before the deployment.
@@ -17,7 +16,7 @@ which means these components must be available before the deployment.
 In this example we will  run Provider as kubernetes deployment resource.
 
 Additional parameters could be [added](https://github.com/oceanprotocol/provider) and the template could be adjusted based on these considerations.
-One common case is the deployment for one of the following Ethereum networks: 
+One common case is the deployment for one of the following Ethereum networks:
 
 - mainnet
 - rinkeby
@@ -136,7 +135,7 @@ services:
       IPFS_GATEWAY: "< your IPFS gateway >"
       OCEAN_PROVIDER_TIMEOUT: "9000"
       OPERATOR_SERVICE_URL: "https://nextv.operator.dev-ocean.com/" => (use custom value for Operator Service URL)
-      AQUARIUS_URL: "http//localhost:5000" => (use custom value Aquarius URL) 
+      AQUARIUS_URL: "http//localhost:5000" => (use custom value Aquarius URL)
 networks:
   backend:
     driver: bridge
@@ -152,7 +151,7 @@ b) create */etc/systemd/system/docker-compose@provider.service* file
 [Unit]
 Description=%i service with docker compose
 Requires=docker.service
-After=docker.service 
+After=docker.service
 
 [Service]
 Type=oneshot
@@ -160,7 +159,7 @@ RemainAfterExit=true
 Environment="PROJECT=ocean"
 WorkingDirectory=/etc/docker/compose/%i
 ExecStartPre=/usr/bin/env docker-compose -p $PROJECT pull
-ExecStart=/usr/bin/env docker-compose -p $PROJECT up -d 
+ExecStart=/usr/bin/env docker-compose -p $PROJECT up -d
 ExecStop=/usr/bin/env docker-compose -p $PROJECT stop
 
 
