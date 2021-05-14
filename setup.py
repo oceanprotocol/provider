@@ -20,7 +20,7 @@ with open("README.md") as readme_file:
 install_requirements = [
     # Install ocean-utils first
     "Flask==1.1.2",
-    "Flask-Cors==3.0.8",
+    "Flask-Cors==3.0.9",
     "Flask-RESTful==0.3.8",
     "flask-swagger==0.2.14",
     "flask-swagger-ui==3.25.0",
