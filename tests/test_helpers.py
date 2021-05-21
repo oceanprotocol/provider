@@ -130,10 +130,6 @@ def get_registered_ddo(
     if custom_credentials:
         ddo._credentials = custom_credentials
 
-    # if not plecos.is_valid_dict_local(ddo.metadata):
-    #     print(f'invalid metadata: {plecos.validate_dict_local(ddo.metadata)}')
-    #     assert False, f'invalid metadata: {plecos.validate_dict_local(ddo.metadata)}'
-
     files_list_str = json.dumps(metadata["main"]["files"])
     pk = os.environ.get("PROVIDER_PRIVATE_KEY")
     provider_wallet = Wallet(Web3Provider.get_web3(), private_key=pk)
