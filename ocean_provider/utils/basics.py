@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import os
+import site
 
 import requests
 from ocean_lib.common.aquarius.aquarius import Aquarius
@@ -13,6 +14,18 @@ from ocean_lib.web3_internal.wallet import Wallet
 from ocean_lib.web3_internal.web3_provider import Web3Provider
 from ocean_provider.config import Config
 from requests_testadapter import Resp
+
+
+def get_artifacts_path(config):
+    path = config.artifacts_path
+    if not path or not os.path.exists(path):
+        if os.getenv("VIRTUAL_ENV"):
+            path = os.path.join(os.getenv("VIRTUAL_ENV"), "artifacts")
+        else:
+            path = os.path.join(site.PREFIXES[0], "artifacts")
+
+    print(f"get_artifacts_path: {config.artifacts_path}, {path}, {site.PREFIXES[0]}")
+    return path
 
 
 def get_config():
@@ -41,7 +54,7 @@ def get_datatoken_minter(asset, datatoken_address):
 def setup_network(config_file=None):
     config = Config(filename=config_file) if config_file else get_config()
     network_url = config.network_url
-    artifacts_path = config.artifacts_path
+    artifacts_path = get_artifacts_path(config)
 
     ContractHandler.set_artifacts_path(artifacts_path)
     w3_connection_provider = get_web3_connection_provider(network_url)
