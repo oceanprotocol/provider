@@ -17,7 +17,7 @@ from tests.test_helpers import (
     get_dataset_with_ipfs_url_ddo,
     get_nonce,
     mint_tokens_and_wait,
-    send_order,
+    send_order, get_algorithm_ddo,
 )
 
 
@@ -97,7 +97,7 @@ def test_initialize_on_disabled_asset(client, publisher_wallet, consumer_wallet)
 
 
 def test_initialize_on_asset_with_custom_credentials(
-    client, publisher_wallet, consumer_wallet
+        client, publisher_wallet, consumer_wallet
 ):
     ddo = get_dataset_ddo_with_denied_consumer(
         client, publisher_wallet, consumer_wallet.address
@@ -109,3 +109,72 @@ def test_initialize_on_asset_with_custom_credentials(
     mint_tokens_and_wait(dt_contract, consumer_wallet, publisher_wallet)
 
     send_order(client, ddo, dt_contract, sa, consumer_wallet, expect_failure=True)
+
+
+def test_download_multiple_services(client, publisher_wallet, consumer_wallet):
+    ddo = get_dataset_ddo_with_access_service(client, publisher_wallet)
+    dt_token = DataToken(ddo.data_token_address)
+
+    mint_tokens_and_wait(dt_token, consumer_wallet, publisher_wallet)
+
+    sa = ddo.get_service(ServiceTypes.ASSET_ACCESS)
+    tx_id = send_order(client, ddo, dt_token, sa, consumer_wallet)
+
+    # Consume using url index and auth token
+    # (let the provider do the decryption)
+    payload = {
+        "documentId": ddo.did,
+        "serviceId": sa.index,
+        "serviceType": sa.type,
+        "dataToken": ddo.data_token_address,
+        "consumerAddress": consumer_wallet.address,
+        "signature": generate_auth_token(consumer_wallet),
+        "transferTxId": tx_id,
+        "fileIndex": 0,
+    }
+    ddo_v2 = get_dataset_ddo_with_access_service(client, publisher_wallet)
+    dt_token_v2 = DataToken(ddo_v2.data_token_address)
+
+    mint_tokens_and_wait(dt_token_v2, consumer_wallet, publisher_wallet)
+
+    sa_v2 = ddo_v2.get_service(ServiceTypes.ASSET_ACCESS)
+    tx_id_v2 = send_order(client, ddo_v2, dt_token_v2, sa_v2, consumer_wallet)
+
+    payload_v2 = {
+        "documentId": ddo_v2.did,
+        "serviceId": sa_v2.index,
+        "serviceType": sa_v2.type,
+        "dataToken": ddo_v2.data_token_address,
+        "consumerAddress": consumer_wallet.address,
+        "signature": generate_auth_token(consumer_wallet),
+        "transferTxId": tx_id_v2,
+        "fileIndex": 0,
+    }
+
+    ddo_v3 = get_dataset_ddo_with_access_service(client, publisher_wallet)
+    dt_token_v3 = DataToken(ddo_v3.data_token_address)
+
+    mint_tokens_and_wait(dt_token_v3, consumer_wallet, publisher_wallet)
+
+    sa_v3 = ddo_v3.get_service(ServiceTypes.ASSET_ACCESS)
+    tx_id_v3 = send_order(client, ddo_v3, dt_token_v3, sa_v3, consumer_wallet)
+
+    payload_v3 = {
+        "documentId": ddo_v3.did,
+        "serviceId": sa_v3.index,
+        "serviceType": sa_v3.type,
+        "dataToken": ddo_v3.data_token_address,
+        "consumerAddress": consumer_wallet.address,
+        "signature": generate_auth_token(consumer_wallet),
+        "transferTxId": tx_id_v3,
+        "fileIndex": 0,
+    }
+    download_endpoint = BaseURLs.ASSETS_URL + "/download"
+    response = client.get(download_endpoint, query_string=payload)
+    assert response.status_code == 200, f"{response.data}"
+
+    response_v2 = client.get(download_endpoint, query_string=payload_v2)
+    assert response_v2.status_code == 200, f"{response_v2.data}"
+
+    response_v3 = client.get(download_endpoint, query_string=payload_v3)
+    assert response_v3.status_code == 200, f"{response_v3.data}"
