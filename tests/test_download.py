@@ -135,8 +135,11 @@ def test_download_multiple_files(client, publisher_wallet, consumer_wallet):
         "transferTxId": tx_id,
         "fileIndex": 0,
     }
+    download_endpoint = BaseURLs.ASSETS_URL + "/download"
+    response = client.get(download_endpoint, query_string=payload)
+    assert response.status_code == 200, f"{response.data}"
 
-    payload_v2 = {
+    payload = {
         "documentId": ddo.did,
         "serviceId": sa.index,
         "serviceType": sa.type,
@@ -146,8 +149,11 @@ def test_download_multiple_files(client, publisher_wallet, consumer_wallet):
         "transferTxId": tx_id,
         "fileIndex": 1,
     }
+    download_endpoint = BaseURLs.ASSETS_URL + "/download"
+    response = client.get(download_endpoint, query_string=payload)
+    assert response.status_code == 200, f"{response.data}"
 
-    payload_v3 = {
+    payload = {
         "documentId": ddo.did,
         "serviceId": sa.index,
         "serviceType": sa.type,
@@ -157,13 +163,6 @@ def test_download_multiple_files(client, publisher_wallet, consumer_wallet):
         "transferTxId": tx_id,
         "fileIndex": 2,
     }
-
     download_endpoint = BaseURLs.ASSETS_URL + "/download"
     response = client.get(download_endpoint, query_string=payload)
     assert response.status_code == 200, f"{response.data}"
-
-    response_v2 = client.get(download_endpoint, query_string=payload_v2)
-    assert response_v2.status_code == 200, f"{response_v2.data}"
-
-    response_v3 = client.get(download_endpoint, query_string=payload_v3)
-    assert response_v3.status_code == 200, f"{response_v3.data}"

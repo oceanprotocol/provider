@@ -178,9 +178,8 @@ def get_dataset_ddo_with_access_service(client, wallet):
 
 def get_dataset_ddo_with_multiple_files(client, wallet):
     metadata = get_sample_ddo_with_multiple_files()["service"][0]["attributes"]
-    metadata["main"]["files"][0]["checksum"] = str(uuid.uuid4())
-    metadata["main"]["files"][1]["checksum"] = str(uuid.uuid4())
-    metadata["main"]["files"][2]["checksum"] = str(uuid.uuid4())
+    for i in range(3):
+        metadata["main"]["files"][i]["checksum"] = str(uuid.uuid4())
     service_descriptor = get_access_service_descriptor(wallet.address, metadata)
     metadata["main"].pop("cost")
     return get_registered_ddo(client, wallet, metadata, service_descriptor)
