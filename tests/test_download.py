@@ -137,30 +137,14 @@ def test_download_multiple_files(client, publisher_wallet, consumer_wallet):
     response = client.get(download_endpoint, query_string=payload)
     assert response.status_code == 200, f"{response.data}"
 
-    payload = {
-        "documentId": ddo.did,
-        "serviceId": sa.index,
-        "serviceType": sa.type,
-        "dataToken": ddo.data_token_address,
-        "consumerAddress": consumer_wallet.address,
-        "signature": generate_auth_token(consumer_wallet),
-        "transferTxId": tx_id,
-        "fileIndex": 1,
-    }
+    payload["signature"] = generate_auth_token(consumer_wallet)
+    payload["fileIndex"] = 1
     download_endpoint = BaseURLs.ASSETS_URL + "/download"
     response = client.get(download_endpoint, query_string=payload)
     assert response.status_code == 200, f"{response.data}"
 
-    payload = {
-        "documentId": ddo.did,
-        "serviceId": sa.index,
-        "serviceType": sa.type,
-        "dataToken": ddo.data_token_address,
-        "consumerAddress": consumer_wallet.address,
-        "signature": generate_auth_token(consumer_wallet),
-        "transferTxId": tx_id,
-        "fileIndex": 2,
-    }
+    payload["signature"] = generate_auth_token(consumer_wallet)
+    payload["fileIndex"] = 2
     download_endpoint = BaseURLs.ASSETS_URL + "/download"
     response = client.get(download_endpoint, query_string=payload)
     assert response.status_code == 200, f"{response.data}"
