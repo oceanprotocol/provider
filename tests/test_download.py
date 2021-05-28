@@ -18,8 +18,6 @@ from tests.test_helpers import (
     get_nonce,
     mint_tokens_and_wait,
     send_order,
-    get_algorithm_ddo,
-    get_sample_ddo_with_compute_service,
     get_dataset_ddo_with_multiple_files,
 )
 
