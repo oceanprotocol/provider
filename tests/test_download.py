@@ -18,6 +18,7 @@ from tests.test_helpers import (
     get_nonce,
     mint_tokens_and_wait,
     send_order,
+    get_dataset_ddo_with_multiple_files,
 )
 
 
@@ -109,3 +110,41 @@ def test_initialize_on_asset_with_custom_credentials(
     mint_tokens_and_wait(dt_contract, consumer_wallet, publisher_wallet)
 
     send_order(client, ddo, dt_contract, sa, consumer_wallet, expect_failure=True)
+
+
+def test_download_multiple_files(client, publisher_wallet, consumer_wallet):
+    ddo = get_dataset_ddo_with_multiple_files(client, publisher_wallet)
+    dt_token = DataToken(ddo.data_token_address)
+
+    mint_tokens_and_wait(dt_token, consumer_wallet, publisher_wallet)
+
+    sa = ddo.get_service(ServiceTypes.ASSET_ACCESS)
+    tx_id = send_order(client, ddo, dt_token, sa, consumer_wallet)
+
+    # Consume using url index and auth token
+    # (let the provider do the decryption)
+    payload = {
+        "documentId": ddo.did,
+        "serviceId": sa.index,
+        "serviceType": sa.type,
+        "dataToken": ddo.data_token_address,
+        "consumerAddress": consumer_wallet.address,
+        "signature": generate_auth_token(consumer_wallet),
+        "transferTxId": tx_id,
+        "fileIndex": 0,
+    }
+    download_endpoint = BaseURLs.ASSETS_URL + "/download"
+    response = client.get(download_endpoint, query_string=payload)
+    assert response.status_code == 200, f"{response.data}"
+
+    payload["signature"] = generate_auth_token(consumer_wallet)
+    payload["fileIndex"] = 1
+    download_endpoint = BaseURLs.ASSETS_URL + "/download"
+    response = client.get(download_endpoint, query_string=payload)
+    assert response.status_code == 200, f"{response.data}"
+
+    payload["signature"] = generate_auth_token(consumer_wallet)
+    payload["fileIndex"] = 2
+    download_endpoint = BaseURLs.ASSETS_URL + "/download"
+    response = client.get(download_endpoint, query_string=payload)
+    assert response.status_code == 200, f"{response.data}"

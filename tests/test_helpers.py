@@ -176,6 +176,15 @@ def get_dataset_ddo_with_access_service(client, wallet):
     return get_registered_ddo(client, wallet, metadata, service_descriptor)
 
 
+def get_dataset_ddo_with_multiple_files(client, wallet):
+    metadata = get_sample_ddo_with_multiple_files()["service"][0]["attributes"]
+    for i in range(3):
+        metadata["main"]["files"][i]["checksum"] = str(uuid.uuid4())
+    service_descriptor = get_access_service_descriptor(wallet.address, metadata)
+    metadata["main"].pop("cost")
+    return get_registered_ddo(client, wallet, metadata, service_descriptor)
+
+
 def get_dataset_ddo_disabled(client, wallet):
     metadata = get_sample_ddo()["service"][0]["attributes"]
     metadata["main"]["files"][0]["checksum"] = str(uuid.uuid4())
@@ -299,6 +308,14 @@ def get_resource_path(dir_name, file_name):
 
 def get_sample_ddo():
     path = get_resource_path("ddo", "ddo_sa_sample.json")
+    assert path.exists(), f"{path} does not exist!"
+    with open(path, "r") as file_handle:
+        metadata = file_handle.read()
+    return json.loads(metadata)
+
+
+def get_sample_ddo_with_multiple_files():
+    path = get_resource_path("ddo", "ddo_sa_sample_multiple_files.json")
     assert path.exists(), f"{path} does not exist!"
     with open(path, "r") as file_handle:
         metadata = file_handle.read()
