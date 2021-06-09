@@ -2,13 +2,18 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
+import hashlib
+import json
 import os
 
 from flask import request as flask_request
 from flask_sieve import JsonRequest
 from flask_sieve.rules_processor import RulesProcessor
 from flask_sieve.validator import Validator
-from ocean_provider.exceptions import InvalidSignatureError
+from ocean_lib.web3_internal.transactions import sign_hash
+
+from ocean_provider.exceptions import InvalidSignatureError, RequestNotFound
+from ocean_provider.utils.basics import get_provider_wallet
 from ocean_provider.user_nonce import get_nonce
 from ocean_provider.utils.accounts import verify_signature
 from ocean_provider.utils.util import get_request_data
@@ -23,10 +28,16 @@ class CustomJsonRequest(JsonRequest):
     def __init__(self, request=None):
         request = request or flask_request
         request = get_request_data(request)
-        if os.getenv("RBAC_SERVER_URL"):
-            self._validator = RBACValidator(
-                request_type=self.__class__.__name__, request=request
-            )
+        class_name = self.__class__.__name__
+        if os.getenv("RBAC_SERVER_URL") and class_name in [
+            "InitializeRequest",
+            "DownloadRequest",
+            "ComputeStartRequest",
+            "ComputeRequest",
+            "FileInfoRequest",
+            "EncryptRequest",
+        ]:
+            self._validator = RBACValidator(request_name=class_name, request=request)
         else:
             self._validator = CustomValidator(
                 rules=self.rules(),
@@ -56,15 +67,44 @@ class CustomValidator(Validator):
 
 
 class RBACValidator:
-    def __init__(self, request_type=None, request=None):
-        self.request_type = request_type
+    def __init__(self, request_name=None, request=None):
         self.request = request
+        if not request:
+            raise RequestNotFound("Request not found.")
+        action_mapping = {
+            "EncryptRequest": "encryptUrl",
+            "InitializeRequest": "initialize",
+            "DownloadRequest": "access",
+            "ComputeRequest": "compute",
+            "ComputeStartRequest": "compute",
+        }
+        self.action = action_mapping[request_name]
+        self.credentials = {"type": "address", "address": get_provider_wallet().address}
+        self.component = "provider"
 
     def passes(self):
         return True
 
     def fails(self):
         return False
+
+    def build_payload(self):
+        payload = {
+            "eventType": self.action,
+            "component": self.component,
+            "providerAddress": get_provider_wallet().address,
+            "credentials": self.credentials,
+        }
+        payload.update(getattr(self, f"build_{self.action}_payload")())
+        return payload
+
+    def build_encryptUrl_payload(self):
+        message = "encryptUrl" + json.dumps(self.credentials)
+        signature = sign_hash(
+            hashlib.sha256(message.encode("utf-8")).hexdigest(), get_provider_wallet()
+        )
+
+        return {"signature": signature}
 
 
 class CustomRulesProcessor(RulesProcessor):
