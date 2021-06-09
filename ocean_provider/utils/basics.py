@@ -26,15 +26,8 @@ def get_provider_wallet():
 
 
 def get_datatoken_minter(asset, datatoken_address):
-    publisher = Web3Provider.get_web3().toChecksumAddress(asset.publisher)
     dt = DataToken(datatoken_address)
-
-    assertion_message = (
-        f"ddo publisher {publisher} is not the current "
-        f"minter for the DataToken contract at {datatoken_address}."
-    )
-    assert dt.contract_concise.isMinter(publisher), assertion_message
-
+    publisher = dt.contract_concise.minter()
     return publisher
 
 
