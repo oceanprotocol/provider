@@ -25,7 +25,7 @@ def get_provider_wallet():
     return Wallet(Web3Provider.get_web3(), private_key=pk)
 
 
-def get_datatoken_minter(asset, datatoken_address):
+def get_datatoken_minter(datatoken_address):
     dt = DataToken(datatoken_address)
     publisher = dt.minter()
     return publisher
