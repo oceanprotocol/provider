@@ -2,6 +2,8 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
+import os
+
 from flask import request as flask_request
 from flask_sieve import JsonRequest
 from flask_sieve.rules_processor import RulesProcessor
@@ -21,14 +23,19 @@ class CustomJsonRequest(JsonRequest):
     def __init__(self, request=None):
         request = request or flask_request
         request = get_request_data(request)
-        self._validator = CustomValidator(
-            rules=self.rules(),
-            messages={
-                "signature.signature": "Invalid signature provided.",
-                "signature.download_signature": "Invalid signature provided.",
-            },
-            request=request,
-        )
+        if os.getenv("RBAC_SERVER_URL"):
+            self._validator = RBACValidator(
+                request_type=self.__class__.__name__, request=request
+            )
+        else:
+            self._validator = CustomValidator(
+                rules=self.rules(),
+                messages={
+                    "signature.signature": "Invalid signature provided.",
+                    "signature.download_signature": "Invalid signature provided.",
+                },
+                request=request,
+            )
 
 
 class CustomValidator(Validator):
@@ -46,6 +53,18 @@ class CustomValidator(Validator):
             rules, request, custom_handlers, messages, **kwargs
         )
         self._processor = CustomRulesProcessor()
+
+
+class RBACValidator:
+    def __init__(self, request_type=None, request=None):
+        self.request_type = request_type
+        self.request = request
+
+    def passes(self):
+        return True
+
+    def fails(self):
+        return False
 
 
 class CustomRulesProcessor(RulesProcessor):
