@@ -27,7 +27,7 @@ def get_provider_wallet():
 
 def get_datatoken_minter(asset, datatoken_address):
     dt = DataToken(datatoken_address)
-    publisher = dt.contract_concise.minter()
+    publisher = dt.minter()
     return publisher
 
 
