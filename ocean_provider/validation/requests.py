@@ -149,6 +149,22 @@ class RBACValidator:
             ],
         }
 
+    def build_access_payload(self):
+        message = "access" + json.dumps(self.credentials)
+        signature = sign_hash(
+            hashlib.sha256(message.encode("utf-8")).hexdigest(), get_provider_wallet()
+        )
+        return {
+            "signature": signature,
+            "dids": [
+                {
+                    "did": asset.did,
+                    "serviceId": ServiceTypesIndices.DEFAULT_ACCESS_INDEX,
+                }
+                for asset in self.assets
+            ],
+        }
+
 
 class CustomRulesProcessor(RulesProcessor):
     """
