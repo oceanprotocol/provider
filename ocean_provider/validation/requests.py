@@ -10,7 +10,6 @@ from flask import request as flask_request
 from flask_sieve import JsonRequest
 from flask_sieve.rules_processor import RulesProcessor
 from flask_sieve.validator import Validator
-from ocean_lib.assets.asset import Asset
 from ocean_lib.common.agreements.service_types import ServiceTypesIndices
 from ocean_lib.web3_internal.transactions import sign_hash
 
