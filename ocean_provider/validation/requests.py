@@ -10,6 +10,8 @@ from flask import request as flask_request
 from flask_sieve import JsonRequest
 from flask_sieve.rules_processor import RulesProcessor
 from flask_sieve.validator import Validator
+from ocean_lib.assets.asset import Asset
+from ocean_lib.common.agreements.service_types import ServiceTypesIndices
 from ocean_lib.web3_internal.transactions import sign_hash
 
 from ocean_provider.exceptions import InvalidSignatureError, RequestNotFound
@@ -17,6 +19,7 @@ from ocean_provider.utils.basics import get_provider_wallet
 from ocean_provider.user_nonce import get_nonce
 from ocean_provider.utils.accounts import verify_signature
 from ocean_provider.utils.util import get_request_data
+from typing import Optional
 
 
 class CustomJsonRequest(JsonRequest):
@@ -67,8 +70,8 @@ class CustomValidator(Validator):
 
 
 class RBACValidator:
-    def __init__(self, request_name=None, request=None):
-        self.request = request
+    def __init__(self, request_name=None, request=None, assets: Optional[list] = None):
+        self._request = request
         if not request:
             raise RequestNotFound("Request not found.")
         action_mapping = {
@@ -78,9 +81,33 @@ class RBACValidator:
             "ComputeRequest": "compute",
             "ComputeStartRequest": "compute",
         }
-        self.action = action_mapping[request_name]
-        self.credentials = {"type": "address", "address": get_provider_wallet().address}
-        self.component = "provider"
+        self._action = action_mapping[request_name]
+        self._credentials = {
+            "type": "address",
+            "address": get_provider_wallet().address,
+        }
+        self._component = "provider"
+        self._assets = assets
+
+    @property
+    def credentials(self):
+        return self._credentials
+
+    @property
+    def component(self):
+        return self._component
+
+    @property
+    def action(self):
+        return self._action
+
+    @property
+    def assets(self):
+        return self._assets
+
+    @property
+    def request(self):
+        return self._request
 
     def passes(self):
         return True
@@ -105,6 +132,22 @@ class RBACValidator:
         )
 
         return {"signature": signature}
+
+    def build_initialize_payload(self):
+        message = "initialize" + json.dumps(self.credentials)
+        signature = sign_hash(
+            hashlib.sha256(message.encode("utf-8")).hexdigest(), get_provider_wallet()
+        )
+        return {
+            "signature": signature,
+            "dids": [
+                {
+                    "did": asset.did,
+                    "serviceId": ServiceTypesIndices.DEFAULT_ACCESS_INDEX,
+                }
+                for asset in self.assets
+            ],
+        }
 
 
 class CustomRulesProcessor(RulesProcessor):

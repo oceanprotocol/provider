@@ -71,6 +71,17 @@ def test_empty_payload(client):
     assert consume.status_code == 400
 
 
+def test_initialize_on_dataset_with_access_service(
+    client, publisher_wallet, consumer_wallet
+):
+    ddo = get_dataset_ddo_with_access_service(client, publisher_wallet)
+    dt_contract = DataToken(ddo.data_token_address)
+    sa = ddo.get_service(ServiceTypes.ASSET_ACCESS)
+    mint_tokens_and_wait(dt_contract, consumer_wallet, publisher_wallet)
+
+    send_order(client, ddo, dt_contract, sa, consumer_wallet, expect_failure=False)
+
+
 def test_initialize_on_bad_url(client, publisher_wallet, consumer_wallet):
     ddo = get_dataset_with_invalid_url_ddo(client, publisher_wallet)
     dt_contract = DataToken(ddo.data_token_address)
