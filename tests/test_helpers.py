@@ -145,7 +145,7 @@ def get_registered_ddo(
         metadata["encryptedFiles"] = encrypted_files
 
     web3 = Web3Provider.get_web3()
-    block = web3.eth.blockNumber
+    block = web3.eth.block_number
     try:
         data = lzma.compress(web3.toBytes(text=ddo.as_text()))
         tx_id = metadata_contract.create(ddo.asset_id, bytes([1]), data, wallet)
