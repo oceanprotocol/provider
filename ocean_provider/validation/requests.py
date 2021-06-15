@@ -141,6 +141,10 @@ class RBACValidator:
         return self._credentials
 
     @property
+    def provider_address(self):
+        return get_provider_wallet().address
+
+    @property
     def component(self):
         return self._component
 
@@ -171,7 +175,7 @@ class RBACValidator:
         payload = {
             "eventType": self.action,
             "component": self.component,
-            "providerAddress": get_provider_wallet().address,
+            "providerAddress": self.provider_address,
             "credentials": self.credentials,
         }
         payload.update(getattr(self, f"build_{self.action}_payload")())
