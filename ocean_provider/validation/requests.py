@@ -31,6 +31,7 @@ class CustomJsonRequest(JsonRequest):
         request = request or flask_request
         request = get_request_data(request)
         class_name = self.__class__.__name__
+        self._validator = MultiValidator()
         if os.getenv("RBAC_SERVER_URL") and class_name in [
             "InitializeRequest",
             "DownloadRequest",
@@ -39,9 +40,11 @@ class CustomJsonRequest(JsonRequest):
             "FileInfoRequest",
             "EncryptRequest",
         ]:
-            self._validator = RBACValidator(request_name=class_name, request=request)
-        else:
-            self._validator = CustomValidator(
+            self._validator.add_validator(
+                RBACValidator(request_name=class_name, request=request)
+            )
+        self._validator.add_validator(
+            CustomValidator(
                 rules=self.rules(),
                 messages={
                     "signature.signature": "Invalid signature provided.",
@@ -49,6 +52,24 @@ class CustomJsonRequest(JsonRequest):
                 },
                 request=request,
             )
+        )
+
+
+class MultiValidator(Validator):
+    def __init__(
+        self, rules=None, request=None, custom_handlers=None, messages=None, **kwargs
+    ):
+        super(MultiValidator, self).__init__(
+            rules, request, custom_handlers, messages, **kwargs
+        )
+        self._processor = CustomRulesProcessor()
+        self._validators = list()
+
+    def passes(self):
+        return all(map(lambda validator: validator.passes(), self._validators))
+
+    def add_validator(self, validator):
+        self._validators.append(validator)
 
 
 class CustomValidator(Validator):
@@ -69,7 +90,13 @@ class CustomValidator(Validator):
 
 
 class RBACValidator:
-    def __init__(self, request_name=None, request=None, assets: Optional[list] = None):
+    def __init__(
+        self,
+        request_name=None,
+        request=None,
+        assets: Optional[list] = None,
+        algorithms: Optional[list] = None,
+    ):
         self._request = request
         if not request:
             raise RequestNotFound("Request not found.")
@@ -87,6 +114,27 @@ class RBACValidator:
         }
         self._component = "provider"
         self._assets = assets
+        self._algorithms = algorithms
+        if self.assets is None:
+            self._assets = []
+        if self.algorithms is None:
+            self._algorithms = []
+        self._compute_dids = {
+            "dids": [
+                {
+                    "did": asset.did,
+                    "serviceId": ServiceTypesIndices.DEFAULT_COMPUTING_INDEX,
+                }
+                for asset in self.assets
+            ],
+            "algos": [
+                {
+                    "did": algorithm.did,
+                    "serviceId": ServiceTypesIndices.DEFAULT_COMPUTING_INDEX,
+                }
+                for algorithm in self.algorithms
+            ],
+        }
 
     @property
     def credentials(self):
@@ -108,8 +156,13 @@ class RBACValidator:
     def request(self):
         return self._request
 
-    def passes(self):
-        return True
+    @property
+    def compute_dids(self):
+        return self._compute_dids
+
+    @property
+    def algorithms(self):
+        return self._algorithms
 
     def fails(self):
         return False
@@ -162,6 +215,22 @@ class RBACValidator:
                 }
                 for asset in self.assets
             ],
+        }
+
+    def build_compute_payload(self):
+        message = (
+            "compute"
+            + json.dumps(self.credentials)
+            + json.dumps(self.compute_dids)
+            + json.dumps()
+        )
+        signature = sign_hash(
+            hashlib.sha256(message.encode("utf-8")).hexdigest(), get_provider_wallet()
+        )
+        return {
+            "signature": signature,
+            "dids": [compute_did for compute_did in self.compute_dids["dids"]],
+            "algos": [algo for algo in self.compute_dids["algos"]],
         }
 
 
