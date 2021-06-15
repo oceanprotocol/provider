@@ -171,6 +171,9 @@ class RBACValidator:
     def fails(self):
         return False
 
+    def msg_hash(self, message: str):
+        return hashlib.sha256(message.encode("utf-8")).hexdigest()
+
     def build_payload(self):
         payload = {
             "eventType": self.action,
@@ -183,17 +186,13 @@ class RBACValidator:
 
     def build_encryptUrl_payload(self):
         message = "encryptUrl" + json.dumps(self.credentials)
-        signature = sign_hash(
-            hashlib.sha256(message.encode("utf-8")).hexdigest(), get_provider_wallet()
-        )
+        signature = sign_hash(self.msg_hash(message), get_provider_wallet())
 
         return {"signature": signature}
 
     def build_initialize_payload(self):
         message = "initialize" + json.dumps(self.credentials)
-        signature = sign_hash(
-            hashlib.sha256(message.encode("utf-8")).hexdigest(), get_provider_wallet()
-        )
+        signature = sign_hash(self.msg_hash(message), get_provider_wallet())
         return {
             "signature": signature,
             "dids": [
@@ -207,9 +206,7 @@ class RBACValidator:
 
     def build_access_payload(self):
         message = "access" + json.dumps(self.credentials)
-        signature = sign_hash(
-            hashlib.sha256(message.encode("utf-8")).hexdigest(), get_provider_wallet()
-        )
+        signature = sign_hash(self.msg_hash(message), get_provider_wallet())
         return {
             "signature": signature,
             "dids": [
@@ -228,9 +225,7 @@ class RBACValidator:
             + json.dumps(self.compute_dids)
             + json.dumps()
         )
-        signature = sign_hash(
-            hashlib.sha256(message.encode("utf-8")).hexdigest(), get_provider_wallet()
-        )
+        signature = sign_hash(self.msg_hash(message), get_provider_wallet())
         return {
             "signature": signature,
             "dids": [compute_did for compute_did in self.compute_dids["dids"]],
