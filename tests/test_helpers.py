@@ -387,7 +387,7 @@ def send_order(client, ddo, datatoken, service, cons_wallet, expect_failure=Fals
     nonce = tx_params.get("nonce")
     receiver = tx_params["to"]
     assert tx_params["from"] == cons_wallet.address
-    assert receiver == get_datatoken_minter(ddo, datatoken.address)
+    assert receiver == get_datatoken_minter(datatoken.address)
     assert tx_params["dataToken"] == ddo.as_dictionary()["dataToken"]
     assert nonce is not None, f"expecting a `nonce` value in the response, got {nonce}"
     # Transfer tokens to provider account

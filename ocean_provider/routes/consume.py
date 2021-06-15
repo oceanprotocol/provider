@@ -242,15 +242,13 @@ def initialize():
             )
             return jsonify(error="Asset URL not found or not available."), 400
 
-        minter = get_datatoken_minter(asset, token_address)
-
         # Prepare the `transfer` tokens transaction with the appropriate number
         # of tokens required for this service
         # The consumer must sign and execute this transaction in order to be
         # able to consume the service
         approve_params = {
             "from": consumer_address,
-            "to": minter,
+            "to": get_datatoken_minter(token_address),
             "numTokens": service.get_cost(),
             "dataToken": token_address,
             "nonce": get_nonce(consumer_address),
