@@ -7,7 +7,7 @@ import json
 import os
 
 from flask import request as flask_request
-from flask_sieve import JsonRequest
+from flask_sieve import JsonRequest, ValidationException
 from flask_sieve.rules_processor import RulesProcessor
 from flask_sieve.validator import Validator
 from ocean_lib.common.agreements.service_types import ServiceTypesIndices
@@ -31,7 +31,7 @@ class CustomJsonRequest(JsonRequest):
         request = request or flask_request
         request = get_request_data(request)
         class_name = self.__class__.__name__
-        self._validator = MultiValidator()
+        self._validators = list()
         if os.getenv("RBAC_SERVER_URL") and class_name in [
             "InitializeRequest",
             "DownloadRequest",
@@ -40,10 +40,10 @@ class CustomJsonRequest(JsonRequest):
             "FileInfoRequest",
             "EncryptRequest",
         ]:
-            self._validator.add_validator(
+            self._validators.append(
                 RBACValidator(request_name=class_name, request=request)
             )
-        self._validator.add_validator(
+        self._validators.append(
             CustomValidator(
                 rules=self.rules(),
                 messages={
@@ -54,22 +54,11 @@ class CustomJsonRequest(JsonRequest):
             )
         )
 
-
-class MultiValidator(Validator):
-    def __init__(
-        self, rules=None, request=None, custom_handlers=None, messages=None, **kwargs
-    ):
-        super(MultiValidator, self).__init__(
-            rules, request, custom_handlers, messages, **kwargs
-        )
-        self._processor = CustomRulesProcessor()
-        self._validators = list()
-
-    def passes(self):
-        return all(map(lambda validator: validator.passes(), self._validators))
-
-    def add_validator(self, validator):
-        self._validators.append(validator)
+    def validate(self):
+        for validator in self._validators:
+            if validator.fails():
+                raise ValidationException(validator.messages())
+        return True
 
 
 class CustomValidator(Validator):
