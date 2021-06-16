@@ -42,7 +42,7 @@ def setup_network(config_file=None):
     if network_url.startswith("wss"):
         from web3.middleware import geth_poa_middleware
 
-        Web3Provider.get_web3().middleware_stack.inject(geth_poa_middleware, layer=0)
+        Web3Provider.get_web3().middleware_onion.inject(geth_poa_middleware, layer=0)
 
     wallet = get_provider_wallet()
     if wallet is None:
