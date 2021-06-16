@@ -11,7 +11,9 @@ from ocean_lib.models.data_token import DataToken
 from ocean_provider.constants import BaseURLs
 from ocean_provider.exceptions import RequestNotFound
 from ocean_provider.utils.accounts import generate_auth_token
+from ocean_provider.validation.algo import build_stage_output_dict
 from ocean_provider.validation.requests import RBACValidator
+from tests.helpers.compute_helpers import build_and_send_ddo_with_compute_service
 from tests.test_helpers import (
     mint_tokens_and_wait,
     get_dataset_ddo_with_access_service,
@@ -27,6 +29,7 @@ def test_null_validator():
 encrypt_endpoint = BaseURLs.ASSETS_URL + "/encrypt"
 init_endpoint = BaseURLs.ASSETS_URL + "/initialize"
 download_endpoint = BaseURLs.ASSETS_URL + "/download"
+compute_endpoint = BaseURLs.ASSETS_URL + "/compute"
 
 
 def test_encrypt_request_payload():
@@ -134,3 +137,61 @@ def test_access_request_payload(client, publisher_wallet, consumer_wallet):
     assert validator.assets[0].did == ddo.did
     assert validator_payload["dids"][0]["did"] == validator.assets[0].did
     assert validator_payload["dids"][0]["serviceId"] == sa.index
+
+
+def test_compute_request_payload(client, publisher_wallet, consumer_wallet):
+    dataset, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
+        client, publisher_wallet, consumer_wallet
+    )
+    did = dataset.did
+    sa = dataset.get_service(ServiceTypes.CLOUD_COMPUTE)
+    alg_data_token = alg_ddo.data_token_address
+
+    ddo2, tx_id2, _, _ = build_and_send_ddo_with_compute_service(
+        client, publisher_wallet, consumer_wallet
+    )
+    sa2 = ddo2.get_service(ServiceTypes.CLOUD_COMPUTE)
+
+    payload = {
+        "signature": generate_auth_token(consumer_wallet),
+        "documentId": did,
+        "serviceId": sa.index,
+        "serviceType": sa.type,
+        "consumerAddress": consumer_wallet.address,
+        "transferTxId": tx_id,
+        "dataToken": dataset.data_token_address,
+        "output": build_stage_output_dict(
+            dict(), sa.service_endpoint, consumer_wallet.address, publisher_wallet
+        ),
+        "algorithmDid": alg_ddo.did,
+        "algorithmDataToken": alg_data_token,
+        "algorithmTransferTxId": alg_tx_id,
+        "additionalInputs": [
+            {"documentId": ddo2.did, "transferTxId": tx_id2, "serviceId": sa2.index}
+        ],
+    }
+    req = {"document": json.dumps(payload)}
+    validator = RBACValidator(
+        request_name="ComputeRequest",
+        request=req,
+        payload=payload,
+        assets=[dataset],
+        algorithms=[alg_ddo],
+    )
+    validator_payload = validator.build_payload()
+    assert validator_payload
+    assert validator.request == req
+    assert validator_payload
+    assert validator_payload["eventType"] == validator.action
+    assert validator_payload["component"] == validator.component
+    assert validator_payload["credentials"] == validator.credentials
+    assert validator.assets[0].did == dataset.did
+    assert validator_payload["dids"][0]["did"] == validator.assets[0].did
+    assert validator_payload["dids"][0]["serviceId"] == sa.index
+    assert validator_payload["algos"][0]["did"] == validator.algorithms[0].did
+    assert validator_payload["algos"][0]["serviceId"] == sa.index
+    assert (
+        validator_payload["additionalDids"][0]["did"]
+        == validator.additional_inputs[0]["documentId"]
+    )
+    assert validator_payload["additionalDids"][0]["serviceId"] == sa2.index

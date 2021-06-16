@@ -16,7 +16,7 @@ from ocean_provider.exceptions import InvalidSignatureError
 from ocean_provider.user_nonce import get_nonce
 from ocean_provider.utils.accounts import verify_signature
 from ocean_provider.utils.util import get_request_data
-from ocean_provider.validation.RBACValidator import RBACValidator
+from ocean_provider.validation.RBAC import RBACValidator
 
 
 class CustomJsonRequest(JsonRequest):

@@ -18,10 +18,12 @@ class RBACValidator(ABC):
         self,
         request_name=None,
         request=None,
+        payload: dict = None,
         assets: Optional[list] = None,
         algorithms: Optional[list] = None,
     ):
         self._request = request
+        self._payload = payload if payload else dict()
         if not request:
             raise RequestNotFound("Request not found.")
         action_mapping = {
@@ -37,6 +39,7 @@ class RBACValidator(ABC):
             "address": get_provider_wallet().address,
         }
         self._component = "provider"
+        self._provider_address = get_provider_wallet().address
         self._assets = assets if assets else []
         self._algorithms = algorithms if algorithms else []
 
@@ -46,7 +49,7 @@ class RBACValidator(ABC):
 
     @property
     def provider_address(self):
-        return get_provider_wallet().address
+        return self._provider_address
 
     @property
     def component(self):
@@ -68,6 +71,10 @@ class RBACValidator(ABC):
     def algorithms(self):
         return self._algorithms
 
+    @property
+    def additional_inputs(self):
+        return self._payload["additionalInputs"]
+
     def fails(self):
         return False
 
@@ -86,6 +93,13 @@ class RBACValidator(ABC):
                     "serviceId": ServiceTypesIndices.DEFAULT_COMPUTING_INDEX,
                 }
                 for algorithm in self.algorithms
+            ],
+            "additionalDids": [
+                {
+                    "did": additional_input["documentId"],
+                    "serviceId": additional_input["serviceId"],
+                }
+                for additional_input in self.additional_inputs
             ],
         }
 
@@ -107,6 +121,8 @@ class RBACValidator(ABC):
             "providerAddress": self.provider_address,
             "credentials": self.credentials,
         }
+        # builds actions like build_encrtyptUrl_payload to update the dictionary
+        # with request - specific key-values.
         payload.update(getattr(self, f"build_{self.action}_payload")())
         return payload
 
@@ -137,15 +153,18 @@ class RBACValidator(ABC):
     def build_compute_payload(self):
         dids = self.get_compute_dict()["dids"]
         algos = self.get_compute_dict()["algos"]
+        additional_dids = self.get_compute_dict()["additionalDids"]
         message = (
             "compute"
             + json.dumps(self.credentials)
             + json.dumps(dids)
             + json.dumps(algos)
+            + json.dumps(additional_dids)
         )
         signature = sign_hash(msg_hash(message), get_provider_wallet())
         return {
             "signature": signature,
             "dids": dids,
             "algos": algos,
+            "additionalDids": additional_dids,
         }
