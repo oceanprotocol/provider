@@ -21,7 +21,7 @@ from tests.test_helpers import (
 
 def test_null_validator():
     with pytest.raises(RequestNotFound):
-        RBACValidator()
+        RBACValidator(request=None)
 
 
 encrypt_endpoint = BaseURLs.ASSETS_URL + "/encrypt"
@@ -57,15 +57,13 @@ def test_initialize_request_payload(client, publisher_wallet, consumer_wallet):
     sa = ddo.get_service(ServiceTypes.ASSET_ACCESS)
     mint_tokens_and_wait(dt_contract, consumer_wallet, publisher_wallet)
 
-    payload = dict(
-        {
-            "documentId": ddo.did,
-            "serviceId": sa.index,
-            "serviceType": sa.type,
-            "dataToken": ddo.data_token_address,
-            "consumerAddress": consumer_wallet.address,
-        }
-    )
+    payload = {
+        "documentId": ddo.did,
+        "serviceId": sa.index,
+        "serviceType": sa.type,
+        "dataToken": ddo.data_token_address,
+        "consumerAddress": consumer_wallet.address,
+    }
 
     request_url = (
         init_endpoint + "?" + "&".join([f"{k}={v}" for k, v in payload.items()])

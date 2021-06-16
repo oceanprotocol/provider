@@ -2,6 +2,7 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
+import hashlib
 import json
 import logging
 import mimetypes
@@ -35,6 +36,10 @@ def get_metadata_url():
 
 def get_request_data(request):
     return request.args if request.args else request.json
+
+
+def msg_hash(message: str):
+    return hashlib.sha256(message.encode("utf-8")).hexdigest()
 
 
 def build_download_response(
@@ -208,7 +213,7 @@ def validate_order(sender, token_address, num_tokens, tx_id, did, service_id):
     num_tries = 3
     i = 0
     while i < num_tries:
-        logger.debug(f"validate_order is on trial {i+1} in {num_tries}.")
+        logger.debug(f"validate_order is on trial {i + 1} in {num_tries}.")
         i += 1
         try:
             tx, order_event, transfer_event = dt_contract.verify_order_tx(
