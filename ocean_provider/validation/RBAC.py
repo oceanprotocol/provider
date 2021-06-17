@@ -4,13 +4,15 @@
 #
 
 import json
+from abc import ABC
+from typing import Optional
+
 from ocean_lib.common.agreements.service_types import ServiceTypesIndices
 from ocean_lib.web3_internal.transactions import sign_hash
+
 from ocean_provider.exceptions import RequestNotFound
 from ocean_provider.utils.basics import get_provider_wallet
 from ocean_provider.utils.util import msg_hash
-from typing import Optional
-from abc import ABC
 
 
 class RBACValidator(ABC):
@@ -18,14 +20,29 @@ class RBACValidator(ABC):
         self,
         request_name=None,
         request=None,
-        payload: dict = None,
+        payload: Optional[dict] = None,
         assets: Optional[list] = None,
         algorithms: Optional[list] = None,
     ):
-        self._request = request
-        self._payload = payload if payload else dict()
+        self.request = request
+        self.payload = payload if payload else dict()
         if not request:
             raise RequestNotFound("Request not found.")
+        action_mapping = self.get_action_mapping()
+        self.action = action_mapping[request_name]
+        self.credentials = {
+            "type": "address",
+            "address": get_provider_wallet().address,
+        }
+        self.component = "provider"
+        self.provider_address = get_provider_wallet().address
+        self.assets = assets if assets else []
+        self.algorithms = algorithms if algorithms else []
+        if request_name in ["ComputeRequest", "ComputeStartRequest"]:
+            self.additional_inputs = self.payload["additionalInputs"]
+
+    @staticmethod
+    def get_action_mapping():
         action_mapping = {
             "EncryptRequest": "encryptUrl",
             "InitializeRequest": "initialize",
@@ -33,47 +50,7 @@ class RBACValidator(ABC):
             "ComputeRequest": "compute",
             "ComputeStartRequest": "compute",
         }
-        self._action = action_mapping[request_name]
-        self._credentials = {
-            "type": "address",
-            "address": get_provider_wallet().address,
-        }
-        self._component = "provider"
-        self._provider_address = get_provider_wallet().address
-        self._assets = assets if assets else []
-        self._algorithms = algorithms if algorithms else []
-
-    @property
-    def credentials(self):
-        return self._credentials
-
-    @property
-    def provider_address(self):
-        return self._provider_address
-
-    @property
-    def component(self):
-        return self._component
-
-    @property
-    def action(self):
-        return self._action
-
-    @property
-    def assets(self):
-        return self._assets
-
-    @property
-    def request(self):
-        return self._request
-
-    @property
-    def algorithms(self):
-        return self._algorithms
-
-    @property
-    def additional_inputs(self):
-        return self._payload["additionalInputs"]
+        return action_mapping
 
     def fails(self):
         return False

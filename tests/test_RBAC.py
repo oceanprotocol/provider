@@ -15,8 +15,8 @@ from ocean_provider.validation.algo import build_stage_output_dict
 from ocean_provider.validation.requests import RBACValidator
 from tests.helpers.compute_helpers import build_and_send_ddo_with_compute_service
 from tests.test_helpers import (
-    mint_tokens_and_wait,
     get_dataset_ddo_with_access_service,
+    mint_tokens_and_wait,
     send_order,
 )
 
@@ -27,9 +27,6 @@ def test_null_validator():
 
 
 encrypt_endpoint = BaseURLs.ASSETS_URL + "/encrypt"
-init_endpoint = BaseURLs.ASSETS_URL + "/initialize"
-download_endpoint = BaseURLs.ASSETS_URL + "/download"
-compute_endpoint = BaseURLs.ASSETS_URL + "/compute"
 
 
 def test_encrypt_request_payload():
@@ -68,21 +65,9 @@ def test_initialize_request_payload(client, publisher_wallet, consumer_wallet):
         "consumerAddress": consumer_wallet.address,
     }
 
-    request_url = (
-        init_endpoint + "?" + "&".join([f"{k}={v}" for k, v in payload.items()])
-    )
-    document = {
-        "url": request_url,
-        "index": 0,
-        "checksum": "foo_checksum",
-        "contentLength": "4535431",
-        "contentType": "text/csv",
-        "encoding": "UTF-8",
-        "compression": "zip",
-    }
-    req = {"document": json.dumps(document)}
+    req = {"document": json.dumps(payload)}
     validator = RBACValidator(
-        request_name="InitializeRequest", request=req, assets=[ddo]
+        request_name="InitializeRequest", request=req, payload=payload, assets=[ddo]
     )
     validator_payload = validator.build_payload()
     assert validator.request == req
@@ -114,20 +99,11 @@ def test_access_request_payload(client, publisher_wallet, consumer_wallet):
         "transferTxId": tx_id,
         "fileIndex": 0,
     }
-    request_url = (
-        download_endpoint + "?" + "&".join([f"{k}={v}" for k, v in payload.items()])
+
+    req = {"document": json.dumps(payload)}
+    validator = RBACValidator(
+        request_name="DownloadRequest", request=req, payload=payload, assets=[ddo]
     )
-    document = {
-        "url": request_url,
-        "index": 0,
-        "checksum": "foo_checksum",
-        "contentLength": "4535431",
-        "contentType": "text/csv",
-        "encoding": "UTF-8",
-        "compression": "zip",
-    }
-    req = {"document": json.dumps(document)}
-    validator = RBACValidator(request_name="DownloadRequest", request=req, assets=[ddo])
     validator_payload = validator.build_payload()
     assert validator.request == req
     assert validator_payload
