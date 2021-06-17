@@ -4,7 +4,6 @@
 #
 
 import json
-from abc import ABC
 from typing import Optional
 
 from ocean_lib.common.agreements.service_types import ServiceTypesIndices
@@ -15,7 +14,7 @@ from ocean_provider.utils.basics import get_provider_wallet
 from ocean_provider.utils.util import msg_hash
 
 
-class RBACValidator(ABC):
+class RBACValidator:
     def __init__(
         self,
         request_name=None,

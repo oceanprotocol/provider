@@ -46,9 +46,12 @@ def test_encrypt_request_payload():
     payload = validator.build_payload()
     assert validator.request == req
     assert payload
-    assert payload["eventType"] == validator.action
-    assert payload["component"] == validator.component
-    assert payload["credentials"] == validator.credentials
+    assert payload["eventType"] == "encryptUrl"
+    assert payload["component"] == "provider"
+    assert payload["credentials"] == {
+        "type": "address",
+        "address": validator.provider_address,
+    }
 
 
 def test_initialize_request_payload(client, publisher_wallet, consumer_wallet):
@@ -71,10 +74,12 @@ def test_initialize_request_payload(client, publisher_wallet, consumer_wallet):
     )
     validator_payload = validator.build_payload()
     assert validator.request == req
-    assert validator_payload
-    assert validator_payload["eventType"] == validator.action
-    assert validator_payload["component"] == validator.component
-    assert validator_payload["credentials"] == validator.credentials
+    assert validator_payload["eventType"] == "initialize"
+    assert validator_payload["component"] == "provider"
+    assert validator_payload["credentials"] == {
+        "type": "address",
+        "address": validator.provider_address,
+    }
     assert validator.assets[0].did == ddo.did
     assert validator_payload["dids"][0]["did"] == validator.assets[0].did
     assert validator_payload["dids"][0]["serviceId"] == sa.index
@@ -107,9 +112,12 @@ def test_access_request_payload(client, publisher_wallet, consumer_wallet):
     validator_payload = validator.build_payload()
     assert validator.request == req
     assert validator_payload
-    assert validator_payload["eventType"] == validator.action
-    assert validator_payload["component"] == validator.component
-    assert validator_payload["credentials"] == validator.credentials
+    assert validator_payload["eventType"] == "access"
+    assert validator_payload["component"] == "provider"
+    assert validator_payload["credentials"] == {
+        "type": "address",
+        "address": validator.provider_address,
+    }
     assert validator.assets[0].did == ddo.did
     assert validator_payload["dids"][0]["did"] == validator.assets[0].did
     assert validator_payload["dids"][0]["serviceId"] == sa.index
@@ -158,9 +166,12 @@ def test_compute_request_payload(client, publisher_wallet, consumer_wallet):
     assert validator_payload
     assert validator.request == req
     assert validator_payload
-    assert validator_payload["eventType"] == validator.action
-    assert validator_payload["component"] == validator.component
-    assert validator_payload["credentials"] == validator.credentials
+    assert validator_payload["eventType"] == "compute"
+    assert validator_payload["component"] == "provider"
+    assert validator_payload["credentials"] == {
+        "type": "address",
+        "address": validator.provider_address,
+    }
     assert validator.assets[0].did == dataset.did
     assert validator_payload["dids"][0]["did"] == validator.assets[0].did
     assert validator_payload["dids"][0]["serviceId"] == sa.index
