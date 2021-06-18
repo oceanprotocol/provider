@@ -24,12 +24,12 @@ class RBACValidator:
         if request_name not in action_mapping.keys():
             raise RequestNotFound("Request name is not valid!")
         self.action = action_mapping[request_name]
+        self.provider_address = get_provider_wallet().address
         self.credentials = {
             "type": "address",
-            "address": get_provider_wallet().address,
+            "address": self.provider_address,
         }
         self.component = "provider"
-        self.provider_address = get_provider_wallet().address
 
     @staticmethod
     def get_action_mapping():
@@ -44,32 +44,23 @@ class RBACValidator:
     def fails(self):
         return False
 
-    def get_request_dict(self):
-        return json.loads(self.request["document"])
-
     def get_dids(self, service_index: int):
-        req_dict = self.get_request_dict()
-        assets = list()
-        assets.append(req_dict["documentId"])
-        return [{"did": asset_did, "serviceId": service_index} for asset_did in assets]
+        return [{"did": self.request["documentId"], "serviceId": service_index}]
 
     def get_algos(self):
-        req_dict = self.get_request_dict()
-        algorithms = list()
-        algorithms.append(req_dict["algorithmDid"])
+        if "algorithmDid" not in self.request.keys():
+            return []
         return [
             {
-                "did": algorithm_did,
+                "did": self.request["algorithmDid"],
                 "serviceId": ServiceTypesIndices.DEFAULT_COMPUTING_INDEX,
             }
-            for algorithm_did in algorithms
         ]
 
     def get_additional_dids(self):
-        req_dict = self.get_request_dict()
-        additional_inputs = (
-            req_dict["additionalInputs"] if "additionalInputs" in req_dict else []
-        )
+        if "additionalInputs" not in self.request.keys():
+            return []
+        additional_inputs = self.request["additionalInputs"]
         return [
             {
                 "did": additional_input["documentId"],
@@ -117,29 +108,20 @@ class RBACValidator:
     def build_compute_payload(self):
         dids = self.get_dids(ServiceTypesIndices.DEFAULT_COMPUTING_INDEX)
         algos = self.get_algos()
-        additional_dids = (
-            self.get_additional_dids() if self.get_additional_dids() else []
-        )
-        if not additional_dids:
-            message = (
-                "compute"
-                + json.dumps(self.credentials)
-                + json.dumps(dids)
-                + json.dumps(algos)
-            )
-            signature = sign_hash(msg_hash(message), get_provider_wallet())
-            return {"signature": signature, "dids": dids, "algos": algos}
+        algos_text = json.dumps(algos) if algos else ""
+        additional_dids = self.get_additional_dids()
+        additional_dids_text = json.dumps(additional_dids) if additional_dids else ""
         message = (
             "compute"
             + json.dumps(self.credentials)
             + json.dumps(dids)
-            + json.dumps(algos)
-            + json.dumps(additional_dids)
+            + algos_text
+            + additional_dids_text
         )
         signature = sign_hash(msg_hash(message), get_provider_wallet())
-        return {
-            "signature": signature,
-            "dids": dids,
-            "algos": algos,
-            "additionalDids": additional_dids,
-        }
+        compute_payload = {"signature": signature, "dids": dids}
+        if algos:
+            compute_payload["algos"] = algos
+        if additional_dids:
+            compute_payload["additionalDids"] = additional_dids
+        return compute_payload
