@@ -4,7 +4,6 @@
 #
 
 import json
-from typing import Optional
 
 from ocean_lib.common.agreements.service_types import ServiceTypesIndices
 from ocean_lib.web3_internal.transactions import sign_hash
@@ -17,17 +16,13 @@ from ocean_provider.utils.util import msg_hash
 class RBACValidator:
     def __init__(
         self,
-        request_name=None,
-        request=None,
-        payload: Optional[dict] = None,
-        assets: Optional[list] = None,
-        algorithms: Optional[list] = None,
+        request_name,
+        request,
     ):
         self.request = request
-        self.payload = payload if payload else dict()
-        if not request:
-            raise RequestNotFound("Request not found.")
         action_mapping = self.get_action_mapping()
+        if request_name not in action_mapping.keys():
+            raise RequestNotFound("Request name is not valid!")
         self.action = action_mapping[request_name]
         self.credentials = {
             "type": "address",
@@ -35,60 +30,53 @@ class RBACValidator:
         }
         self.component = "provider"
         self.provider_address = get_provider_wallet().address
-        self.assets = assets if assets else []
-        self.algorithms = algorithms if algorithms else []
-        if request_name in ["ComputeRequest", "ComputeStartRequest"]:
-            self.additional_inputs = self.payload["additionalInputs"]
 
     @staticmethod
     def get_action_mapping():
-        action_mapping = {
+        return {
             "EncryptRequest": "encryptUrl",
             "InitializeRequest": "initialize",
             "DownloadRequest": "access",
             "ComputeRequest": "compute",
             "ComputeStartRequest": "compute",
         }
-        return action_mapping
 
     def fails(self):
         return False
 
-    def get_compute_dict(self):
-        return {
-            "dids": [
-                {
-                    "did": asset.did,
-                    "serviceId": ServiceTypesIndices.DEFAULT_COMPUTING_INDEX,
-                }
-                for asset in self.assets
-            ],
-            "algos": [
-                {
-                    "did": algorithm.did,
-                    "serviceId": ServiceTypesIndices.DEFAULT_COMPUTING_INDEX,
-                }
-                for algorithm in self.algorithms
-            ],
-            "additionalDids": [
-                {
-                    "did": additional_input["documentId"],
-                    "serviceId": additional_input["serviceId"],
-                }
-                for additional_input in self.additional_inputs
-            ],
-        }
+    def get_request_dict(self):
+        return json.loads(self.request["document"])
 
-    def get_dids(self):
-        return {
-            "dids": [
-                {
-                    "did": asset.did,
-                    "serviceId": ServiceTypesIndices.DEFAULT_ACCESS_INDEX,
-                }
-                for asset in self.assets
-            ],
-        }
+    def get_dids(self, service_index: int):
+        req_dict = self.get_request_dict()
+        assets = list()
+        assets.append(req_dict["documentId"])
+        return [{"did": asset_did, "serviceId": service_index} for asset_did in assets]
+
+    def get_algos(self):
+        req_dict = self.get_request_dict()
+        algorithms = list()
+        algorithms.append(req_dict["algorithmDid"])
+        return [
+            {
+                "did": algorithm_did,
+                "serviceId": ServiceTypesIndices.DEFAULT_COMPUTING_INDEX,
+            }
+            for algorithm_did in algorithms
+        ]
+
+    def get_additional_dids(self):
+        req_dict = self.get_request_dict()
+        additional_inputs = (
+            req_dict["additionalInputs"] if "additionalInputs" in req_dict else []
+        )
+        return [
+            {
+                "did": additional_input["documentId"],
+                "serviceId": additional_input["serviceId"],
+            }
+            for additional_input in additional_inputs
+        ]
 
     def build_payload(self):
         payload = {
@@ -109,7 +97,7 @@ class RBACValidator:
         return {"signature": signature}
 
     def build_initialize_payload(self):
-        dids = self.get_dids()["dids"]
+        dids = self.get_dids(ServiceTypesIndices.DEFAULT_ACCESS_INDEX)
         message = "initialize" + json.dumps(self.credentials)
         signature = sign_hash(msg_hash(message), get_provider_wallet())
         return {
@@ -118,7 +106,7 @@ class RBACValidator:
         }
 
     def build_access_payload(self):
-        dids = self.get_dids()["dids"]
+        dids = self.get_dids(ServiceTypesIndices.DEFAULT_ACCESS_INDEX)
         message = "access" + json.dumps(self.credentials)
         signature = sign_hash(msg_hash(message), get_provider_wallet())
         return {
@@ -127,9 +115,20 @@ class RBACValidator:
         }
 
     def build_compute_payload(self):
-        dids = self.get_compute_dict()["dids"]
-        algos = self.get_compute_dict()["algos"]
-        additional_dids = self.get_compute_dict()["additionalDids"]
+        dids = self.get_dids(ServiceTypesIndices.DEFAULT_COMPUTING_INDEX)
+        algos = self.get_algos()
+        additional_dids = (
+            self.get_additional_dids() if self.get_additional_dids() else []
+        )
+        if not additional_dids:
+            message = (
+                "compute"
+                + json.dumps(self.credentials)
+                + json.dumps(dids)
+                + json.dumps(algos)
+            )
+            signature = sign_hash(msg_hash(message), get_provider_wallet())
+            return {"signature": signature, "dids": dids, "algos": algos}
         message = (
             "compute"
             + json.dumps(self.credentials)
