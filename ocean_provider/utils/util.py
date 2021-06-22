@@ -145,7 +145,7 @@ def get_asset_urls(asset, wallet):
     try:
         files_list = get_asset_files_list(asset, wallet)
         if not files_list:
-            return None
+            return []
         input_urls = []
         for i, file_meta_dict in enumerate(files_list):
             if not file_meta_dict or not isinstance(file_meta_dict, dict):
