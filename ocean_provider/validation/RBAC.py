@@ -4,7 +4,9 @@
 #
 
 import json
+import os
 
+import requests
 from ocean_lib.common.agreements.service_types import ServiceTypesIndices
 from ocean_lib.web3_internal.transactions import sign_hash
 
@@ -42,7 +44,9 @@ class RBACValidator:
         }
 
     def fails(self):
-        return False
+        payload = self.build_payload()
+        response = requests.post(f"http://{os.getenv('RBAC_SERVER_URL')}", json=payload)
+        return not bool(response)
 
     def get_dids(self, service_index: int):
         return [{"did": self.request["documentId"], "serviceId": service_index}]

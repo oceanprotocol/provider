@@ -10,6 +10,7 @@ from flask_sieve import validate
 from ocean_lib.common.http_requests.requests_session import get_requests_session
 from ocean_lib.web3_internal.transactions import sign_hash
 from ocean_lib.web3_internal.utils import add_ethereum_prefix_and_hash_msg
+
 from ocean_provider.exceptions import InvalidSignatureError
 from ocean_provider.log import setup_logging
 from ocean_provider.user_nonce import get_nonce, increment_nonce
@@ -26,7 +27,7 @@ from ocean_provider.utils.util import (
     service_unavailable,
 )
 from ocean_provider.validation.algo import WorkflowValidator
-from ocean_provider.validation.requests import (
+from ocean_provider.validation.provider_requests import (
     ComputeRequest,
     ComputeStartRequest,
     UnsignedComputeRequest,

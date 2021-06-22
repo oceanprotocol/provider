@@ -11,6 +11,7 @@ from flask_sieve import validate
 from ocean_lib.common.agreements.service_types import ServiceTypes
 from ocean_lib.common.did import did_to_id
 from ocean_lib.common.http_requests.requests_session import get_requests_session
+
 from ocean_provider.log import setup_logging
 from ocean_provider.myapp import app
 from ocean_provider.user_nonce import get_nonce, increment_nonce
@@ -38,7 +39,7 @@ from ocean_provider.utils.util import (
     validate_order,
     validate_transfer_not_used_for_other_service,
 )
-from ocean_provider.validation.requests import (
+from ocean_provider.validation.provider_requests import (
     DownloadRequest,
     EncryptRequest,
     FileInfoRequest,

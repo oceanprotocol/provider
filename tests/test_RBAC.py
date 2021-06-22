@@ -12,7 +12,7 @@ from ocean_provider.constants import BaseURLs
 from ocean_provider.exceptions import RequestNotFound
 from ocean_provider.utils.accounts import generate_auth_token
 from ocean_provider.validation.algo import build_stage_output_dict
-from ocean_provider.validation.requests import RBACValidator
+from ocean_provider.validation.provider_requests import RBACValidator
 from tests.helpers.compute_helpers import build_and_send_ddo_with_compute_service
 from tests.test_helpers import (
     get_dataset_ddo_with_access_service,
@@ -206,3 +206,35 @@ def test_compute_request_payload(
     assert payload["algos"][0]["serviceId"] == sa.index
     assert payload["additionalDids"][0]["did"] == ddo2.did
     assert payload["additionalDids"][0]["serviceId"] == sa2.index
+
+
+def test_fails(
+    client, provider_wallet, consumer_wallet, consumer_address, publisher_wallet
+):
+    """Tests possible failures of the compute request."""
+    dataset, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
+        client, publisher_wallet, consumer_wallet
+    )
+    did = dataset.did
+    sa = dataset.get_service(ServiceTypes.CLOUD_COMPUTE)
+    alg_data_token = alg_ddo.data_token_address
+
+    # output key is invalid
+    req = {
+        "signature": generate_auth_token(consumer_wallet),
+        "documentId": did,
+        "serviceId": sa.index,
+        "serviceType": sa.type,
+        "consumerAddress": consumer_wallet.address,
+        "transferTxId": tx_id,
+        "output": "this can not be decoded",
+        "algorithmDid": alg_ddo.did,
+        "algorithmDataToken": alg_data_token,
+        "algorithmTransferTxId": alg_tx_id,
+    }
+
+    validator = RBACValidator(request_name="ComputeRequest", request=req)
+    assert validator.fails() is False
+    import pdb
+
+    pdb.set_trace()
