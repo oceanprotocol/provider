@@ -45,8 +45,8 @@ class RBACValidator:
 
     def fails(self):
         payload = self.build_payload()
-        response = requests.post(f"http://{os.getenv('RBAC_SERVER_URL')}", json=payload)
-        return not bool(response)
+        response = requests.post(os.getenv("RBAC_SERVER_URL"), json=payload)
+        return not response.json()
 
     def get_dids(self, service_index: int):
         return [{"did": self.request["documentId"], "serviceId": service_index}]
