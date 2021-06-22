@@ -235,6 +235,3 @@ def test_fails(
 
     validator = RBACValidator(request_name="ComputeRequest", request=req)
     assert validator.fails() is False
-    import pdb
-
-    pdb.set_trace()
