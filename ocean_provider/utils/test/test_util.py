@@ -166,7 +166,7 @@ def test_get_asset_urls(provider_wallet):
     # empty
     asset = Mock(template=Asset)
     asset.encrypted_files = ""
-    assert get_asset_urls(asset, provider_wallet) is None
+    assert get_asset_urls(asset, provider_wallet) == []
     assert get_asset_url_at_index(0, asset, provider_wallet) is None
 
     # not a list
