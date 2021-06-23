@@ -132,18 +132,20 @@ def check_url_details(url, with_checksum=False):
         if result.status_code == 200:
             content_type = result.headers.get("Content-Type")
             content_length = result.headers.get("Content-Length")
+            content_range = result.headers.get("Content-Range")
 
-            if not content_length:
+            if not content_length and content_range:
                 # sometimes servers send content-range instead
                 try:
-                    content_length = result.headers.get("Content-Range", "").split("-")[
-                        1
-                    ]
+                    content_length = content_range.split("-")[1]
                 except IndexError:
                     pass
 
             if content_type:
-                content_type = content_type.split(";")[0]
+                try:
+                    content_type = content_type.split(";")[0]
+                except IndexError:
+                    pass
 
             if content_type or content_length:
                 details = {
