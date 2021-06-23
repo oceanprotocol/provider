@@ -150,15 +150,17 @@ def check_url_details(url, with_checksum=False):
 
 
 def _get_result_from_url(url, with_checksum=False):
-    result = requests.options(url, timeout=REQUEST_TIMEOUT)
+    for method in ["head", "options"]:
+        func = getattr(requests, method)
+        result = func(url, timeout=REQUEST_TIMEOUT)
 
-    if (
-        not with_checksum
-        and result.status_code == 200
-        and result.headers.get("Content-Type")
-        and result.headers.get("Content-Length")
-    ):
-        return result, {}
+        if (
+            not with_checksum
+            and result.status_code == 200
+            and result.headers.get("Content-Type")
+            and result.headers.get("Content-Length")
+        ):
+            return result, {}
 
     if not with_checksum:
         # fallback on GET request
