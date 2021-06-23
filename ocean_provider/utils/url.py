@@ -30,7 +30,7 @@ def is_safe_url(url):
 def is_safe_schema(url):
     try:
         result = urlparse(url)
-        return all([result.scheme, result.netloc, result.path])
+        return all([result.scheme, result.netloc])
     except:  # noqa
         return False
 
