@@ -133,6 +133,13 @@ def check_url_details(url, with_checksum=False):
             content_type = result.headers.get("Content-Type")
             content_length = result.headers.get("Content-Length")
 
+            if not content_length:
+                # sometimes servers send content-range instead
+                try:
+                    content_length = result.headers.get("Content-Range", "").split('-')[1]
+                except IndexError:
+                    pass
+
             if content_type or content_length:
                 details = {
                     "contentLength": content_length or "",
@@ -157,7 +164,7 @@ def _get_result_from_url(url, with_checksum=False):
         if (
             not with_checksum
             and result.status_code == 200
-            and result.headers.get("Content-Type")
+            and (result.headers.get("Content-Type") or result.headers.get("Content-Range"))
             and result.headers.get("Content-Length")
         ):
             return result, {}
