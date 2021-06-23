@@ -43,6 +43,9 @@ class RBACValidator:
             "ComputeStartRequest": "compute",
         }
 
+    def messages(self):
+        return [{"RBAC": "RBAC Validation failed!"}]
+
     def fails(self):
         payload = self.build_payload()
         response = requests.post(os.getenv("RBAC_SERVER_URL"), json=payload)
