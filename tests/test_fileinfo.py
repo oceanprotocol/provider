@@ -23,7 +23,7 @@ def test_asset_info(client, publisher_wallet):
 
     for file_info in result:
         assert file_info["contentLength"]
-        assert file_info["contentType"] == "text/plain; charset=utf-8"
+        assert file_info["contentType"] == "text/plain"
         assert file_info["valid"] is True
         assert (
             file_info["checksum"]
