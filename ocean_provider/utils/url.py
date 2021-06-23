@@ -132,6 +132,20 @@ def check_url_details(url, with_checksum=False):
         if result.status_code == 200:
             content_type = result.headers.get("Content-Type")
             content_length = result.headers.get("Content-Length")
+            content_range = result.headers.get("Content-Range")
+
+            if not content_length and content_range:
+                # sometimes servers send content-range instead
+                try:
+                    content_length = content_range.split("-")[1]
+                except IndexError:
+                    pass
+
+            if content_type:
+                try:
+                    content_type = content_type.split(";")[0]
+                except IndexError:
+                    pass
 
             if content_type or content_length:
                 details = {
@@ -150,15 +164,20 @@ def check_url_details(url, with_checksum=False):
 
 
 def _get_result_from_url(url, with_checksum=False):
-    result = requests.options(url, timeout=REQUEST_TIMEOUT)
+    for method in ["head", "options"]:
+        func = getattr(requests, method)
+        result = func(url, timeout=REQUEST_TIMEOUT)
 
-    if (
-        not with_checksum
-        and result.status_code == 200
-        and result.headers.get("Content-Type")
-        and result.headers.get("Content-Length")
-    ):
-        return result, {}
+        if (
+            not with_checksum
+            and result.status_code == 200
+            and (
+                result.headers.get("Content-Type")
+                or result.headers.get("Content-Range")
+            )
+            and result.headers.get("Content-Length")
+        ):
+            return result, {}
 
     if not with_checksum:
         # fallback on GET request
