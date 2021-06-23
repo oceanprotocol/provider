@@ -209,9 +209,15 @@ def test_compute_request_payload(
 
 
 def test_fails(
-    client, provider_wallet, consumer_wallet, consumer_address, publisher_wallet
+    monkeypatch,
+    client,
+    provider_wallet,
+    consumer_wallet,
+    consumer_address,
+    publisher_wallet,
 ):
     """Tests possible failures of the compute request."""
+    monkeypatch.setenv("RBAC_SERVER_URL", "http://172.15.0.8:3000")
     dataset, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
         client, publisher_wallet, consumer_wallet
     )
