@@ -70,7 +70,6 @@ class Config(configparser.ConfigParser):
 
         [eth-network]
         network = http://localhost:8545                            # ocean-contracts url.
-        artifacts.path = artifacts                                       # Path of json abis.
 
         [resources]
         aquarius.url = http://localhost:5000
