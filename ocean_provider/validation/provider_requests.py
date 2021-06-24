@@ -2,14 +2,19 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
+
+import os
+
 from flask import request as flask_request
-from flask_sieve import JsonRequest
+from flask_sieve import JsonRequest, ValidationException
 from flask_sieve.rules_processor import RulesProcessor
 from flask_sieve.validator import Validator
+
 from ocean_provider.exceptions import InvalidSignatureError
 from ocean_provider.user_nonce import get_nonce
 from ocean_provider.utils.accounts import verify_signature
 from ocean_provider.utils.util import get_request_data
+from ocean_provider.validation.RBAC import RBACValidator
 
 
 class CustomJsonRequest(JsonRequest):
@@ -21,14 +26,29 @@ class CustomJsonRequest(JsonRequest):
     def __init__(self, request=None):
         request = request or flask_request
         request = get_request_data(request)
-        self._validator = CustomValidator(
-            rules=self.rules(),
-            messages={
-                "signature.signature": "Invalid signature provided.",
-                "signature.download_signature": "Invalid signature provided.",
-            },
-            request=request,
+        class_name = self.__class__.__name__
+        self._validators = list()
+        action_mapping = RBACValidator.get_action_mapping()
+        if os.getenv("RBAC_SERVER_URL") and class_name in action_mapping.keys():
+            self._validators.append(
+                RBACValidator(request_name=class_name, request=request)
+            )
+        self._validators.append(
+            CustomValidator(
+                rules=self.rules(),
+                messages={
+                    "signature.signature": "Invalid signature provided.",
+                    "signature.download_signature": "Invalid signature provided.",
+                },
+                request=request,
+            )
         )
+
+    def validate(self):
+        for validator in self._validators:
+            if validator.fails():
+                raise ValidationException(validator.messages())
+        return True
 
 
 class CustomValidator(Validator):

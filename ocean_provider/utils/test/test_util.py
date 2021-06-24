@@ -11,6 +11,8 @@ from unittest.mock import MagicMock, Mock
 import pytest
 from ocean_lib.assets.asset import Asset
 from ocean_lib.common.http_requests.requests_session import get_requests_session
+from werkzeug.utils import get_content_type
+
 from ocean_provider.utils.encryption import do_encrypt
 from ocean_provider.utils.util import (
     build_download_response,
@@ -18,11 +20,18 @@ from ocean_provider.utils.util import (
     get_asset_url_at_index,
     get_asset_urls,
     get_download_url,
+    msg_hash,
     service_unavailable,
 )
-from werkzeug.utils import get_content_type
 
 test_logger = logging.getLogger(__name__)
+
+
+def test_msg_hash():
+    msg = "Hello World!"
+    hashed = msg_hash(msg)
+    expected = "7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069"
+    assert hashed == expected
 
 
 def test_service_unavailable(caplog):
@@ -80,7 +89,7 @@ def test_build_download_response():
     assert response.headers["content-type"] == content_type
 
     matched_cd = (
-        f"attachment;filename={filename+mimetypes.guess_extension(content_type)}"
+        f"attachment;filename={filename + mimetypes.guess_extension(content_type)}"
     )
     assert response.headers.get_all("Content-Disposition")[0] == matched_cd
 
