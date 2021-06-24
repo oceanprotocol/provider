@@ -12,6 +12,7 @@ import uuid
 from pathlib import Path
 
 from eth_utils import remove_0x_prefix
+from jsonsempai import magic  # noqa: F401
 from ocean_lib.assets.asset import Asset
 from ocean_lib.common.agreements.service_factory import (
     ServiceDescriptor,
@@ -24,9 +25,11 @@ from ocean_lib.models.data_token import DataToken
 from ocean_lib.models.dtfactory import DTFactory
 from ocean_lib.models.metadata import MetadataContract
 from ocean_lib.ocean.util import to_base_18
-from ocean_lib.web3_internal.contract_handler import ContractHandler
 from ocean_lib.web3_internal.wallet import Wallet
 from ocean_lib.web3_internal.web3_provider import Web3Provider
+
+from artifacts import DTFactory as DTFactoryArtifact
+from artifacts import Metadata as MetadataArtifact
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.basics import get_datatoken_minter
 from ocean_provider.utils.encryption import do_encrypt
@@ -66,21 +69,28 @@ def get_registered_ddo(
     disabled=False,
     custom_credentials=None,
 ):
+    web3 = Web3Provider.get_web3()
     aqua = Aquarius("http://localhost:5000")
     ddo_service_endpoint = aqua.get_service_endpoint()
 
     metadata_store_url = json.dumps({"t": 1, "url": ddo_service_endpoint})
     # Create new data token contract
     address_file = Path(os.getenv("ADDRESS_FILE")).expanduser().resolve()
-    addresses = ContractHandler.get_contracts_addresses("ganache", address_file)
-    dt_address = addresses.get(DTFactory.CONTRACT_NAME)
+    with open(address_file) as f:
+        address_json = json.load(f)
+
+    network = "development"
+    dt_address = address_json[network]["DTFactory"]
+    metadata_address = address_json[network]["Metadata"]
+
     if dt_address:
-        factory_contract = DTFactory(dt_address)
+        factory_contract = DTFactory(dt_address, abi_path=DTFactoryArtifact.abi)
     else:
         factory_contract = new_factory_contract()
 
-    ddo_contract_address = addresses.get(MetadataContract.CONTRACT_NAME)
-    metadata_contract = MetadataContract(ddo_contract_address)
+    metadata_contract = MetadataContract(
+        metadata_address, abi_path=MetadataArtifact.abi
+    )
 
     tx_id = factory_contract.createToken(
         metadata_store_url, "DataToken1", "DT1", to_base_18(1000000.00), wallet
@@ -144,7 +154,6 @@ def get_registered_ddo(
             del file["url"]
         metadata["encryptedFiles"] = encrypted_files
 
-    web3 = Web3Provider.get_web3()
     block = web3.eth.block_number
     try:
         data = lzma.compress(web3.toBytes(text=ddo.as_text()))

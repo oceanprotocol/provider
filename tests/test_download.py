@@ -7,18 +7,19 @@ from ocean_lib.common.agreements.service_types import ServiceTypes
 from ocean_lib.models.data_token import DataToken
 from ocean_lib.web3_internal.transactions import sign_hash
 from ocean_lib.web3_internal.utils import add_ethereum_prefix_and_hash_msg
+
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import generate_auth_token
 from tests.test_helpers import (
     get_dataset_ddo_disabled,
     get_dataset_ddo_with_access_service,
     get_dataset_ddo_with_denied_consumer,
+    get_dataset_ddo_with_multiple_files,
     get_dataset_with_invalid_url_ddo,
     get_dataset_with_ipfs_url_ddo,
     get_nonce,
     mint_tokens_and_wait,
     send_order,
-    get_dataset_ddo_with_multiple_files,
 )
 
 

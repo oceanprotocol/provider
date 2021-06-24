@@ -52,8 +52,6 @@ spec:
     spec:
       containers:
       - env:
-        - name: ARTIFACTS_PATH
-          value: /ocean-provider/artifacts
         - name: NETWORK_URL
           value: < mainnet, rinkeby, ropsten or custom Openethereum service >
         - name: PROVIDER_PRIVATE_KEY
@@ -125,7 +123,6 @@ services:
     networks:
       backend:
     environment:
-      ARTIFACTS_PATH: "/ocean-contracts/artifacts"
       NETWORK_URL: ropsten
       INFURA_PROJECT_ID: "< your INFURA project id"
       PROVIDER_PRIVATE_KEY: "< your private key >"

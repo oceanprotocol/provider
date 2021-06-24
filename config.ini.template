@@ -1,6 +1,5 @@
 [eth-network]
 network = ${NETWORK_URL}
-artifacts.path = ${ARTIFACTS_PATH}
 
 [resources]
 ocean_provider.url = ${OCEAN_PROVIDER_URL}

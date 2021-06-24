@@ -17,6 +17,9 @@ from ocean_lib.ocean.util import to_base_18
 from ocean_lib.web3_internal.transactions import sign_hash
 from ocean_lib.web3_internal.utils import add_ethereum_prefix_and_hash_msg
 from ocean_lib.web3_internal.web3_provider import Web3Provider
+from osmosis_driver_interface.osmosis import Osmosis
+from websockets import ConnectionClosed
+
 from ocean_provider.utils.basics import (
     get_asset_from_metadatastore,
     get_config,
@@ -24,8 +27,6 @@ from ocean_provider.utils.basics import (
 )
 from ocean_provider.utils.encryption import do_decrypt
 from ocean_provider.utils.url import is_safe_url
-from osmosis_driver_interface.osmosis import Osmosis
-from websockets import ConnectionClosed
 
 logger = logging.getLogger(__name__)
 

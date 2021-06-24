@@ -32,7 +32,7 @@ install_requirements = [
     "osmosis-on-premise-driver==0.1.0",
     "osmosis-ipfs-driver==0.1.0",
     "Werkzeug>=0.15.3",
-    "ocean-lib>=0.5.22",
+    "ocean-lib>=0.5.24",
     "requests_testadapter",
     "eciespy",
     "coincurve>=13,<15",
@@ -40,6 +40,7 @@ install_requirements = [
     "dnspython",
     "flask-sieve==1.2.2",
     "SQLAlchemy==1.3.23",
+    "json-sempai==0.4.0",
 ]
 
 # Required to run setup.py:

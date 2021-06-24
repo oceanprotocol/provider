@@ -10,6 +10,7 @@ from ocean_lib.web3_internal.transactions import send_ether
 from ocean_lib.web3_internal.utils import get_ether_balance
 from ocean_lib.web3_internal.wallet import Wallet
 from ocean_lib.web3_internal.web3_provider import Web3Provider
+
 from ocean_provider.run import app
 from ocean_provider.utils.basics import setup_network
 

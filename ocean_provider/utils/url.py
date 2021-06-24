@@ -10,6 +10,7 @@ from urllib.parse import urlparse
 import dns.resolver
 import requests
 from ocean_lib.data_provider.data_service_provider import DataServiceProvider
+
 from ocean_provider.utils.basics import get_config, get_provider_wallet
 
 logger = logging.getLogger(__name__)

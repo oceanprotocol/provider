@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import os
+from pathlib import Path
 
 import requests
 from ocean_lib.common.aquarius.aquarius import Aquarius
@@ -11,8 +12,10 @@ from ocean_lib.ocean.util import get_web3_connection_provider
 from ocean_lib.web3_internal.contract_handler import ContractHandler
 from ocean_lib.web3_internal.wallet import Wallet
 from ocean_lib.web3_internal.web3_provider import Web3Provider
-from ocean_provider.config import Config
 from requests_testadapter import Resp
+
+import artifacts
+from ocean_provider.config import Config
 
 
 def get_config():
@@ -34,9 +37,10 @@ def get_datatoken_minter(datatoken_address):
 def setup_network(config_file=None):
     config = Config(filename=config_file) if config_file else get_config()
     network_url = config.network_url
-    artifacts_path = config.artifacts_path
 
-    ContractHandler.set_artifacts_path(artifacts_path)
+    ContractHandler.set_artifacts_path(
+        Path(artifacts.__file__).parent.expanduser().resolve()
+    )
     w3_connection_provider = get_web3_connection_provider(network_url)
     Web3Provider.init_web3(provider=w3_connection_provider)
     if network_url.startswith("wss"):
