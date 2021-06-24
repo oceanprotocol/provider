@@ -11,6 +11,7 @@ import time
 import uuid
 from pathlib import Path
 
+import artifacts
 from eth_utils import remove_0x_prefix
 from jsonsempai import magic  # noqa: F401
 from ocean_lib.assets.asset import Asset
@@ -27,13 +28,12 @@ from ocean_lib.models.metadata import MetadataContract
 from ocean_lib.ocean.util import to_base_18
 from ocean_lib.web3_internal.wallet import Wallet
 from ocean_lib.web3_internal.web3_provider import Web3Provider
-
-from artifacts import DTFactory as DTFactoryArtifact
-from artifacts import Metadata as MetadataArtifact
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.basics import get_datatoken_minter
 from ocean_provider.utils.encryption import do_encrypt
 from tests.helpers.service_descriptors import get_access_service_descriptor
+
+ARTIFACTS_PATH = Path(artifacts.__file__).parent.expanduser().resolve()
 
 
 def new_factory_contract(ganache_wallet):
@@ -41,7 +41,7 @@ def new_factory_contract(ganache_wallet):
     dt_address = DataToken.deploy(
         web3,
         ganache_wallet,
-        ContractHandler.artifacts_path,
+        ARTIFACTS_PATH,
         "Template Contract",
         "TEMPLATE",
         ganache_wallet.address,
@@ -52,11 +52,7 @@ def new_factory_contract(ganache_wallet):
 
     return DTFactory(
         DTFactory.deploy(
-            web3,
-            ganache_wallet,
-            ContractHandler.artifacts_path,
-            dt_address,
-            ganache_wallet.address,
+            web3, ganache_wallet, ARTIFACTS_PATH, dt_address, ganache_wallet.address
         )
     )
 
@@ -84,13 +80,11 @@ def get_registered_ddo(
     metadata_address = address_json[network]["Metadata"]
 
     if dt_address:
-        factory_contract = DTFactory(dt_address, abi_path=DTFactoryArtifact.abi)
+        factory_contract = DTFactory(dt_address)
     else:
         factory_contract = new_factory_contract()
 
-    metadata_contract = MetadataContract(
-        metadata_address, abi_path=MetadataArtifact.abi
-    )
+    metadata_contract = MetadataContract(metadata_address)
 
     tx_id = factory_contract.createToken(
         metadata_store_url, "DataToken1", "DT1", to_base_18(1000000.00), wallet
