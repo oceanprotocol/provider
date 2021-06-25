@@ -36,27 +36,6 @@ from tests.helpers.service_descriptors import get_access_service_descriptor
 ARTIFACTS_PATH = Path(artifacts.__file__).parent.expanduser().resolve()
 
 
-def new_factory_contract(ganache_wallet):
-    web3 = Web3Provider.get_web3()
-    dt_address = DataToken.deploy(
-        web3,
-        ganache_wallet,
-        ARTIFACTS_PATH,
-        "Template Contract",
-        "TEMPLATE",
-        ganache_wallet.address,
-        DataToken.DEFAULT_CAP_BASE,
-        DTFactory.FIRST_BLOB,
-        ganache_wallet.address,
-    )
-
-    return DTFactory(
-        DTFactory.deploy(
-            web3, ganache_wallet, ARTIFACTS_PATH, dt_address, ganache_wallet.address
-        )
-    )
-
-
 def get_registered_ddo(
     client,
     wallet,
@@ -79,11 +58,7 @@ def get_registered_ddo(
     dt_address = address_json[network]["DTFactory"]
     metadata_address = address_json[network]["Metadata"]
 
-    if dt_address:
-        factory_contract = DTFactory(dt_address)
-    else:
-        factory_contract = new_factory_contract()
-
+    factory_contract = DTFactory(dt_address)
     metadata_contract = MetadataContract(metadata_address)
 
     tx_id = factory_contract.createToken(
