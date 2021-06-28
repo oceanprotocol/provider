@@ -31,7 +31,7 @@ from ocean_lib.web3_internal.web3_provider import Web3Provider
 from artifacts import DTFactory as DTFactoryArtifact
 from artifacts import Metadata as MetadataArtifact
 from ocean_provider.constants import BaseURLs
-from ocean_provider.utils.basics import get_datatoken_minter
+from ocean_provider.utils.basics import get_datatoken_minter, get_artifacts_path
 from ocean_provider.utils.encryption import do_encrypt
 from tests.helpers.service_descriptors import get_access_service_descriptor
 
@@ -41,7 +41,7 @@ def new_factory_contract(ganache_wallet):
     dt_address = DataToken.deploy(
         web3,
         ganache_wallet,
-        ContractHandler.artifacts_path,
+        get_artifacts_path(),
         "Template Contract",
         "TEMPLATE",
         ganache_wallet.address,
@@ -54,7 +54,7 @@ def new_factory_contract(ganache_wallet):
         DTFactory.deploy(
             web3,
             ganache_wallet,
-            ContractHandler.artifacts_path,
+            get_artifacts_path(),
             dt_address,
             ganache_wallet.address,
         )

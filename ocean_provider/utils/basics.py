@@ -9,7 +9,6 @@ import requests
 from ocean_lib.common.aquarius.aquarius import Aquarius
 from ocean_lib.models.data_token import DataToken
 from ocean_lib.ocean.util import get_web3_connection_provider
-from ocean_lib.web3_internal.contract_handler import ContractHandler
 from ocean_lib.web3_internal.wallet import Wallet
 from ocean_lib.web3_internal.web3_provider import Web3Provider
 from requests_testadapter import Resp
@@ -34,13 +33,14 @@ def get_datatoken_minter(datatoken_address):
     return publisher
 
 
+def get_artifacts_path():
+    return Path(artifacts.__file__).parent.expanduser().resolve()
+
+
 def setup_network(config_file=None):
     config = Config(filename=config_file) if config_file else get_config()
     network_url = config.network_url
 
-    ContractHandler.set_artifacts_path(
-        Path(artifacts.__file__).parent.expanduser().resolve()
-    )
     w3_connection_provider = get_web3_connection_provider(network_url)
     Web3Provider.init_web3(provider=w3_connection_provider)
     if network_url.startswith("wss"):
