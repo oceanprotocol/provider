@@ -29,11 +29,9 @@ from ocean_lib.ocean.util import to_base_18
 from ocean_lib.web3_internal.wallet import Wallet
 from ocean_lib.web3_internal.web3_provider import Web3Provider
 from ocean_provider.constants import BaseURLs
-from ocean_provider.utils.basics import get_datatoken_minter
+from ocean_provider.utils.basics import get_datatoken_minter, get_artifacts_path
 from ocean_provider.utils.encryption import do_encrypt
 from tests.helpers.service_descriptors import get_access_service_descriptor
-
-ARTIFACTS_PATH = Path(artifacts.__file__).parent.expanduser().resolve()
 
 
 def get_registered_ddo(
