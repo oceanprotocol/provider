@@ -5,11 +5,9 @@
 
 from ocean_lib.common.agreements.service_types import ServiceTypes
 from ocean_lib.models.data_token import DataToken
-from ocean_lib.web3_internal.transactions import sign_hash
-from ocean_lib.web3_internal.utils import add_ethereum_prefix_and_hash_msg
 
 from ocean_provider.constants import BaseURLs
-from ocean_provider.utils.accounts import generate_auth_token
+from ocean_provider.utils.accounts import generate_auth_token, sign_message
 from tests.test_helpers import (
     get_dataset_ddo_disabled,
     get_dataset_ddo_with_access_service,
@@ -50,8 +48,7 @@ def test_download_service(client, publisher_wallet, consumer_wallet):
     assert response.status_code == 200, f"{response.data}"
 
     # Consume using url index and signature (withOUT nonce), should fail
-    _hash = add_ethereum_prefix_and_hash_msg(ddo.did)
-    payload["signature"] = sign_hash(_hash, consumer_wallet)
+    payload["signature"] = sign_message(ddo.did, consumer_wallet)
     print(">>>> Expecting InvalidSignatureError from the download endpoint <<<<")
 
     response = client.get(download_endpoint, query_string=payload)
@@ -59,8 +56,8 @@ def test_download_service(client, publisher_wallet, consumer_wallet):
 
     # Consume using url index and signature (with nonce)
     nonce = get_nonce(client, consumer_wallet.address)
-    _hash = add_ethereum_prefix_and_hash_msg(f"{ddo.did}{nonce}")
-    payload["signature"] = sign_hash(_hash, consumer_wallet)
+    _msg = f"{ddo.did}{nonce}"
+    payload["signature"] = sign_message(_msg, consumer_wallet)
     response = client.get(download_endpoint, query_string=payload)
     assert response.status_code == 200, f"{response.data}"
 

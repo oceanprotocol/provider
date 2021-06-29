@@ -5,12 +5,10 @@
 from datetime import datetime
 
 import eth_keys
-from ocean_lib.web3_internal.transactions import sign_hash
-from ocean_lib.web3_internal.utils import (
-    add_ethereum_prefix_and_hash_msg,
-    personal_ec_recover,
-)
+from eth_account.messages import encode_defunct
+from ocean_lib.web3_internal.utils import personal_ec_recover
 from web3 import Web3
+from ocean_lib.web3_internal.web3_provider import Web3Provider
 
 from ocean_provider.exceptions import InvalidSignatureError
 from ocean_provider.utils.basics import get_config
@@ -71,5 +69,15 @@ def generate_auth_token(wallet):
     raw_msg = get_config().auth_token_message or "Ocean Protocol Authentication"
     _time = int(datetime.now().timestamp())
     _message = f"{raw_msg}\n{_time}"
-    prefixed_msg_hash = add_ethereum_prefix_and_hash_msg(_message)
-    return f"{sign_hash(prefixed_msg_hash, wallet)}-{_time}"
+    signed = sign_message(_message, wallet)
+
+    return f"{signed}-{_time}"
+
+
+def sign_message(message, wallet):
+    w3 = Web3Provider.get_web3()
+    signed = w3.eth.account.sign_message(
+        encode_defunct(text=message), private_key=wallet.private_key
+    )
+
+    return signed.signature.hex()

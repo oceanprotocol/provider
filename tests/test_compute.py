@@ -2,13 +2,11 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
-
 from ocean_lib.common.agreements.service_types import ServiceTypes
 from ocean_lib.models.data_token import DataToken
-from ocean_lib.web3_internal.transactions import sign_hash
-from ocean_lib.web3_internal.utils import add_ethereum_prefix_and_hash_msg
 
 from ocean_provider.constants import BaseURLs
+from ocean_provider.utils.accounts import sign_message
 from ocean_provider.validation.algo import build_stage_output_dict
 from tests.helpers.compute_helpers import (
     build_and_send_ddo_with_compute_service,
@@ -127,8 +125,7 @@ def test_compute(client, publisher_wallet, consumer_wallet):
 
     # Start compute using invalid signature (withOUT nonce), should fail
     msg = f"{consumer_wallet.address}{ddo.did}"
-    _hash = add_ethereum_prefix_and_hash_msg(msg)
-    payload["signature"] = sign_hash(_hash, consumer_wallet)
+    payload["signature"] = sign_message(msg, consumer_wallet)
 
     response = post_to_compute(client, payload)
     assert response.status_code == 400, f"{response.data}"
@@ -375,3 +372,5 @@ def test_compute_delete_job(
         compute_endpoint, query_string=query_string, content_type="application/json"
     )
     assert response.status == "200 OK", f"delete compute job failed: {response.data}"
+
+
