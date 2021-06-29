@@ -5,10 +5,9 @@ import uuid
 from ocean_lib.common.agreements.service_agreement import ServiceAgreement
 from ocean_lib.common.agreements.service_types import ServiceTypes
 from ocean_lib.models.data_token import DataToken
-from ocean_lib.web3_internal.transactions import sign_hash
-from ocean_lib.web3_internal.utils import add_ethereum_prefix_and_hash_msg
 
 from ocean_provider.constants import BaseURLs
+from ocean_provider.utils.accounts import sign_message
 from tests.helpers.service_descriptors import (
     get_compute_service_descriptor,
     get_compute_service_descriptor_allow_all_published,
@@ -87,8 +86,7 @@ def get_compute_signature(client, consumer_wallet, did, job_id=None):
         msg = f"{consumer_wallet.address}{job_id}{did}{nonce}"
     else:
         msg = f"{consumer_wallet.address}{did}{nonce}"
-    _hash = add_ethereum_prefix_and_hash_msg(msg)
-    signature = sign_hash(_hash, consumer_wallet)
+    signature = sign_message(msg, consumer_wallet)
 
     return signature
 

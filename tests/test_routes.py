@@ -5,11 +5,9 @@
 
 import json
 
-from ocean_lib.web3_internal.transactions import sign_hash
-from ocean_lib.web3_internal.utils import add_ethereum_prefix_and_hash_msg
-
 from ocean_provider.constants import BaseURLs
 from ocean_provider.run import get_provider_address, get_services_endpoints
+from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.basics import get_provider_wallet
 from tests.test_helpers import (
     get_dataset_ddo_with_access_service,
@@ -61,8 +59,8 @@ def test_encrypt_endpoint(client, provider_wallet, publisher_wallet):
     files_list_str = json.dumps(metadata["main"]["files"])
 
     nonce = get_nonce(client, provider_wallet.address)
-    msg_hash = add_ethereum_prefix_and_hash_msg(f"{ddo.did}{nonce}")
-    signature = sign_hash(msg_hash, provider_wallet)
+    msg = f"{ddo.did}{nonce}"
+    signature = sign_message(msg, provider_wallet)
 
     payload = {
         "documentId": ddo.did,

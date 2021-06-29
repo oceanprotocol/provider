@@ -8,13 +8,11 @@ import logging
 from flask import Response, jsonify, request
 from flask_sieve import validate
 from ocean_lib.common.http_requests.requests_session import get_requests_session
-from ocean_lib.web3_internal.transactions import sign_hash
-from ocean_lib.web3_internal.utils import add_ethereum_prefix_and_hash_msg
 
 from ocean_provider.exceptions import InvalidSignatureError
 from ocean_provider.log import setup_logging
 from ocean_provider.user_nonce import get_nonce, increment_nonce
-from ocean_provider.utils.accounts import verify_signature
+from ocean_provider.utils.accounts import verify_signature, sign_message
 from ocean_provider.utils.basics import (
     LocalFileAdapter,
     get_provider_wallet,
@@ -322,11 +320,10 @@ def computeStart():
         did = data.get("documentId")
 
         msg_to_sign = f"{provider_wallet.address}{did}"
-        msg_hash = add_ethereum_prefix_and_hash_msg(msg_to_sign)
 
         payload = {
             "workflow": workflow,
-            "providerSignature": sign_hash(msg_hash, provider_wallet),
+            "providerSignature": sign_message(msg_to_sign, provider_wallet),
             "documentId": did,
             "agreementId": tx_id,
             "owner": consumer_address,
