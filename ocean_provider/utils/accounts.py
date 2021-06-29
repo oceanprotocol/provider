@@ -5,8 +5,8 @@
 from datetime import datetime
 
 import eth_keys
-from eth_account.messages import encode_defunct
-from ocean_lib.web3_internal.utils import personal_ec_recover
+from eth_account.messages import encode_defunct, _hash_eip191_message
+from ocean_lib.web3_internal.utils import ec_recover
 from web3 import Web3
 from ocean_lib.web3_internal.web3_provider import Web3Provider
 
@@ -20,7 +20,8 @@ def verify_signature(signer_address, signature, original_msg, nonce: int = None)
     else:
         assert nonce is not None, "nonce is required when not using user auth token."
         message = f"{original_msg}{str(nonce)}"
-        address = personal_ec_recover(message, signature)
+        hashed = _hash_eip191_message(encode_defunct(text=message)).hex()
+        address = ec_recover(hashed, signature)
 
     if address.lower() == signer_address.lower():
         return True
@@ -61,7 +62,8 @@ def check_auth_token(token):
         return "0x0"
 
     message = f"{auth_token_message}\n{timestamp}"
-    address = personal_ec_recover(message, sig)
+    hashed = _hash_eip191_message(encode_defunct(text=message)).hex()
+    address = ec_recover(hashed, sig)
     return Web3.toChecksumAddress(address)
 
 
