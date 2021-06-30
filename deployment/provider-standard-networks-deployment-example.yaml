@@ -23,8 +23,6 @@ spec:
     spec:
       containers:
       - env:
-        - name: ARTIFACTS_PATH
-          value: /ocean-provider/artifacts
         - name: NETWORK_URL
           value: < mainnet, rinkeby, ropsten or custom Openethereum service >
         - name: PROVIDER_PRIVATE_KEY

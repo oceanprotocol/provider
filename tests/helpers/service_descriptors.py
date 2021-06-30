@@ -3,6 +3,7 @@ import json
 
 from ocean_lib.common.agreements.service_factory import ServiceDescriptor
 from ocean_lib.common.agreements.service_types import ServiceTypes
+
 from ocean_provider.constants import BaseURLs
 
 

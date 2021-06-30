@@ -4,8 +4,9 @@
 #
 import ecies
 from ocean_lib.web3_internal.wallet import Wallet
-from ocean_provider.utils.accounts import get_private_key
 from web3 import Web3
+
+from ocean_provider.utils.accounts import get_private_key
 
 
 def do_encrypt(document, wallet: Wallet = None, public_key=None):

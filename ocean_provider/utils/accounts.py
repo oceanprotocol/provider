@@ -10,9 +10,10 @@ from ocean_lib.web3_internal.utils import (
     add_ethereum_prefix_and_hash_msg,
     personal_ec_recover,
 )
+from web3 import Web3
+
 from ocean_provider.exceptions import InvalidSignatureError
 from ocean_provider.utils.basics import get_config
-from web3 import Web3
 
 
 def verify_signature(signer_address, signature, original_msg, nonce: int = None):

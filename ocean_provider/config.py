@@ -13,7 +13,6 @@ import os
 from pathlib import Path
 
 NAME_NETWORK_URL = "network"
-NAME_ARTIFACTS_PATH = "artifacts.path"
 NAME_ADDRESS_FILE = "address.file"
 NAME_AUTH_TOKEN_MESSAGE = "auth_token_message"
 NAME_AUTH_TOKEN_EXPIRATION = "auth_token_expiration"
@@ -28,11 +27,6 @@ environ_names = {
     NAME_NETWORK_URL: [
         "NETWORK_URL",
         "Network URL (e.g. Main, Kovan etc.)",
-        "eth-network",
-    ],
-    NAME_ARTIFACTS_PATH: [
-        "ARTIFACTS_PATH",
-        "Path to the ocean contracts",
         "eth-network",
     ],
     NAME_ADDRESS_FILE: [
@@ -76,7 +70,6 @@ class Config(configparser.ConfigParser):
 
         [eth-network]
         network = http://localhost:8545                            # ocean-contracts url.
-        artifacts.path = artifacts                                       # Path of json abis.
 
         [resources]
         aquarius.url = http://localhost:5000
@@ -114,19 +107,10 @@ class Config(configparser.ConfigParser):
                 self.set(environ_item[2], option_name, value)
 
     @property
-    def artifacts_path(self):
-        """Path where the eth-network artifacts are allocated."""
-        _path_string = self.get(self._section_name, NAME_ARTIFACTS_PATH, fallback=None)
-        return Path(_path_string).expanduser().resolve() if _path_string else ""
-
-    @property
     def address_file(self):
         file_path = self.get(self._section_name, NAME_ADDRESS_FILE)
         if file_path:
             file_path = Path(file_path).expanduser().resolve()
-
-        if not file_path or not os.path.exists(file_path):
-            file_path = os.path.join(self.artifacts_path, "address.json")
 
         return file_path
 

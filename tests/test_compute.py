@@ -7,6 +7,7 @@ from ocean_lib.common.agreements.service_types import ServiceTypes
 from ocean_lib.models.data_token import DataToken
 from ocean_lib.web3_internal.transactions import sign_hash
 from ocean_lib.web3_internal.utils import add_ethereum_prefix_and_hash_msg
+
 from ocean_provider.constants import BaseURLs
 from ocean_provider.validation.algo import build_stage_output_dict
 from tests.helpers.compute_helpers import (

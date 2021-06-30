@@ -1,6 +1,3 @@
-
-ARTIFACTS_PATH=/ocean-provider/artifacts
-
 PARITY_ADDRESS1=0x00bd138abd70e2f00903268f3db08f2d25677c9e
 PARITY_PASSWORD1=node0
 PARITY_KEYFILE1=/ocean-provider/tests/resources/consumer_key_file.json

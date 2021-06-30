@@ -1,10 +1,11 @@
 import os
 from os.path import abspath, dirname
 
-from ocean_provider.utils.basics import get_config
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+
+from ocean_provider.utils.basics import get_config
 
 PROJECT_ROOT = dirname(dirname(abspath(__file__)))
 SQLALCHEMY_DATABASE_URL = "sqlite:////" + os.path.join(

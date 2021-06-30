@@ -52,8 +52,6 @@ spec:
     spec:
       containers:
       - env:
-        - name: ARTIFACTS_PATH
-          value: /ocean-provider/artifacts
         - name: NETWORK_URL
           value: < mainnet, rinkeby, ropsten or custom Openethereum service >
         - name: PROVIDER_PRIVATE_KEY
@@ -125,7 +123,6 @@ services:
     networks:
       backend:
     environment:
-      ARTIFACTS_PATH: "/ocean-contracts/artifacts"
       NETWORK_URL: ropsten
       INFURA_PROJECT_ID: "< your INFURA project id"
       PROVIDER_PRIVATE_KEY: "< your private key >"
@@ -250,19 +247,16 @@ $ docker logs --follow e8aa7813ce76
 [2021-04-05 11:06:56 +0000] [12] [INFO] Booting worker with pid: 12
 2021-04-05 11:06:57 e8aa7813ce76 config[12] DEBUG Config: loading config file /ocean-provider/config.ini
 2021-04-05 11:06:57 e8aa7813ce76 config[12] DEBUG Config: setting environ network = ropsten
-2021-04-05 11:06:57 e8aa7813ce76 config[12] DEBUG Config: setting environ artifacts.path = /ocean-contracts/artifacts
 2021-04-05 11:06:57 e8aa7813ce76 config[12] DEBUG Config: setting environ aquarius.url = http//localhost:5000
 2021-04-05 11:06:57 e8aa7813ce76 config[12] DEBUG Config: setting environ operator_service.url = https://nextv.operator.dev-ocean.com/
 2021-04-05 11:06:57 e8aa7813ce76 config[12] DEBUG Config: setting environ allow_non_public_ip = False
 2021-04-05 11:06:57 e8aa7813ce76 config[12] DEBUG Config: loading config file /ocean-provider/config.ini
 2021-04-05 11:06:57 e8aa7813ce76 config[12] DEBUG Config: setting environ network = ropsten
-2021-04-05 11:06:57 e8aa7813ce76 config[12] DEBUG Config: setting environ artifacts.path = /ocean-contracts/artifacts
 2021-04-05 11:06:57 e8aa7813ce76 config[12] DEBUG Config: setting environ aquarius.url = http//localhost:5000
 2021-04-05 11:06:57 e8aa7813ce76 config[12] DEBUG Config: setting environ operator_service.url = https://nextv.operator.dev-ocean.com/
 2021-04-05 11:06:57 e8aa7813ce76 config[12] DEBUG Config: setting environ allow_non_public_ip = False
 2021-04-05 11:06:57 e8aa7813ce76 config[12] DEBUG Config: loading config file /ocean-provider/config.ini
 2021-04-05 11:06:57 e8aa7813ce76 config[12] DEBUG Config: setting environ network = ropsten
-2021-04-05 11:06:57 e8aa7813ce76 config[12] DEBUG Config: setting environ artifacts.path = /ocean-contracts/artifacts
 2021-04-05 11:06:57 e8aa7813ce76 config[12] DEBUG Config: setting environ aquarius.url = http//localhost:5000
 2021-04-05 11:06:57 e8aa7813ce76 config[12] DEBUG Config: setting environ operator_service.url = https://nextv.operator.dev-ocean.com/
 2021-04-05 11:06:57 e8aa7813ce76 config[12] DEBUG Config: setting environ allow_non_public_ip = False

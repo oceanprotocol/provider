@@ -11,7 +11,9 @@ import time
 import uuid
 from pathlib import Path
 
+import artifacts
 from eth_utils import remove_0x_prefix
+from jsonsempai import magic  # noqa: F401
 from ocean_lib.assets.asset import Asset
 from ocean_lib.common.agreements.service_factory import (
     ServiceDescriptor,
@@ -24,7 +26,6 @@ from ocean_lib.models.data_token import DataToken
 from ocean_lib.models.dtfactory import DTFactory
 from ocean_lib.models.metadata import MetadataContract
 from ocean_lib.ocean.util import to_base_18
-from ocean_lib.web3_internal.contract_handler import ContractHandler
 from ocean_lib.web3_internal.wallet import Wallet
 from ocean_lib.web3_internal.web3_provider import Web3Provider
 from ocean_provider.constants import BaseURLs
@@ -32,30 +33,7 @@ from ocean_provider.utils.basics import get_datatoken_minter
 from ocean_provider.utils.encryption import do_encrypt
 from tests.helpers.service_descriptors import get_access_service_descriptor
 
-
-def new_factory_contract(ganache_wallet):
-    web3 = Web3Provider.get_web3()
-    dt_address = DataToken.deploy(
-        web3,
-        ganache_wallet,
-        ContractHandler.artifacts_path,
-        "Template Contract",
-        "TEMPLATE",
-        ganache_wallet.address,
-        DataToken.DEFAULT_CAP_BASE,
-        DTFactory.FIRST_BLOB,
-        ganache_wallet.address,
-    )
-
-    return DTFactory(
-        DTFactory.deploy(
-            web3,
-            ganache_wallet,
-            ContractHandler.artifacts_path,
-            dt_address,
-            ganache_wallet.address,
-        )
-    )
+ARTIFACTS_PATH = Path(artifacts.__file__).parent.expanduser().resolve()
 
 
 def get_registered_ddo(
@@ -66,21 +44,22 @@ def get_registered_ddo(
     disabled=False,
     custom_credentials=None,
 ):
+    web3 = Web3Provider.get_web3()
     aqua = Aquarius("http://localhost:5000")
     ddo_service_endpoint = aqua.get_service_endpoint()
 
     metadata_store_url = json.dumps({"t": 1, "url": ddo_service_endpoint})
     # Create new data token contract
     address_file = Path(os.getenv("ADDRESS_FILE")).expanduser().resolve()
-    addresses = ContractHandler.get_contracts_addresses("ganache", address_file)
-    dt_address = addresses.get(DTFactory.CONTRACT_NAME)
-    if dt_address:
-        factory_contract = DTFactory(dt_address)
-    else:
-        factory_contract = new_factory_contract()
+    with open(address_file) as f:
+        address_json = json.load(f)
 
-    ddo_contract_address = addresses.get(MetadataContract.CONTRACT_NAME)
-    metadata_contract = MetadataContract(ddo_contract_address)
+    network = "development"
+    dt_address = address_json[network]["DTFactory"]
+    metadata_address = address_json[network]["Metadata"]
+
+    factory_contract = DTFactory(dt_address)
+    metadata_contract = MetadataContract(metadata_address)
 
     tx_id = factory_contract.createToken(
         metadata_store_url, "DataToken1", "DT1", to_base_18(1000000.00), wallet
@@ -144,7 +123,6 @@ def get_registered_ddo(
             del file["url"]
         metadata["encryptedFiles"] = encrypted_files
 
-    web3 = Web3Provider.get_web3()
     block = web3.eth.block_number
     try:
         data = lzma.compress(web3.toBytes(text=ddo.as_text()))
