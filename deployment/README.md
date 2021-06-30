@@ -218,7 +218,7 @@ confirm provider service is accessible on localhost port 8030/tcp:
 
 ```shell
 $ curl localhost:8030
-{"computeAddress":null,"network-url":"ropsten","providerAddress":"0xe08A1dAe983BC701D05E492DB80e0144f8f4b909","serviceEndpoints":{"computeDelete":["DELETE","/api/v1/services/compute"],"computeStart":["POST","/api/v1/services/compute"],"computeStatus":["GET","/api/v1/services/compute"],"computeStop":["PUT","/api/v1/services/compute"],"download":["GET","/api/v1/services/download"],"encrypt":["POST","/api/v1/services/encrypt"],"fileinfo":["POST","/api/v1/services/fileinfo"],"initialize":["GET","/api/v1/services/initialize"],"nonce":["GET","/api/v1/services/nonce"]},"software":"Provider","version":"0.4.8"}
+{"computeAddress":null,"chainId":"1","providerAddress":"0xe08A1dAe983BC701D05E492DB80e0144f8f4b909","serviceEndpoints":{"computeDelete":["DELETE","/api/v1/services/compute"],"computeStart":["POST","/api/v1/services/compute"],"computeStatus":["GET","/api/v1/services/compute"],"computeStop":["PUT","/api/v1/services/compute"],"download":["GET","/api/v1/services/download"],"encrypt":["POST","/api/v1/services/encrypt"],"fileinfo":["POST","/api/v1/services/fileinfo"],"initialize":["GET","/api/v1/services/initialize"],"nonce":["GET","/api/v1/services/nonce"]},"software":"Provider","version":"0.4.8"}
 
 ```
 
