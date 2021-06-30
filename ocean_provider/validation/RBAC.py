@@ -8,9 +8,9 @@ import os
 
 import requests
 from ocean_lib.common.agreements.service_types import ServiceTypesIndices
-from ocean_lib.web3_internal.transactions import sign_hash
 
 from ocean_provider.exceptions import RequestNotFound
+from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.basics import get_provider_wallet
 from ocean_provider.utils.util import msg_hash
 
@@ -90,14 +90,14 @@ class RBACValidator:
 
     def build_encryptUrl_payload(self):
         message = "encryptUrl" + json.dumps(self.credentials)
-        signature = sign_hash(msg_hash(message), get_provider_wallet())
+        signature = sign_message(message, get_provider_wallet())
 
         return {"signature": signature}
 
     def build_initialize_payload(self):
         dids = self.get_dids(ServiceTypesIndices.DEFAULT_ACCESS_INDEX)
         message = "initialize" + json.dumps(self.credentials)
-        signature = sign_hash(msg_hash(message), get_provider_wallet())
+        signature = sign_message(message, get_provider_wallet())
         return {
             "signature": signature,
             "dids": dids,
@@ -106,7 +106,7 @@ class RBACValidator:
     def build_access_payload(self):
         dids = self.get_dids(ServiceTypesIndices.DEFAULT_ACCESS_INDEX)
         message = "access" + json.dumps(self.credentials)
-        signature = sign_hash(msg_hash(message), get_provider_wallet())
+        signature = sign_message(message, get_provider_wallet())
         return {
             "signature": signature,
             "dids": dids,
@@ -125,7 +125,7 @@ class RBACValidator:
             + algos_text
             + additional_dids_text
         )
-        signature = sign_hash(msg_hash(message), get_provider_wallet())
+        signature = sign_message(message, get_provider_wallet())
         compute_payload = {"signature": signature, "dids": dids}
         if algos:
             compute_payload["algos"] = algos

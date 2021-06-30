@@ -5,12 +5,10 @@
 from datetime import datetime
 
 import eth_keys
-from ocean_lib.web3_internal.transactions import sign_hash
-from ocean_lib.web3_internal.utils import (
-    add_ethereum_prefix_and_hash_msg,
-    personal_ec_recover,
-)
+from eth_account.messages import encode_defunct, _hash_eip191_message
+from ocean_lib.web3_internal.utils import ec_recover
 from web3 import Web3
+from ocean_lib.web3_internal.web3_provider import Web3Provider
 
 from ocean_provider.exceptions import InvalidSignatureError
 from ocean_provider.utils.basics import get_config
@@ -22,7 +20,8 @@ def verify_signature(signer_address, signature, original_msg, nonce: int = None)
     else:
         assert nonce is not None, "nonce is required when not using user auth token."
         message = f"{original_msg}{str(nonce)}"
-        address = personal_ec_recover(message, signature)
+        hashed = _hash_eip191_message(encode_defunct(text=message)).hex()
+        address = ec_recover(hashed, signature)
 
     if address.lower() == signer_address.lower():
         return True
@@ -63,7 +62,8 @@ def check_auth_token(token):
         return "0x0"
 
     message = f"{auth_token_message}\n{timestamp}"
-    address = personal_ec_recover(message, sig)
+    hashed = _hash_eip191_message(encode_defunct(text=message)).hex()
+    address = ec_recover(hashed, sig)
     return Web3.toChecksumAddress(address)
 
 
@@ -71,5 +71,15 @@ def generate_auth_token(wallet):
     raw_msg = get_config().auth_token_message or "Ocean Protocol Authentication"
     _time = int(datetime.now().timestamp())
     _message = f"{raw_msg}\n{_time}"
-    prefixed_msg_hash = add_ethereum_prefix_and_hash_msg(_message)
-    return f"{sign_hash(prefixed_msg_hash, wallet)}-{_time}"
+    signed = sign_message(_message, wallet)
+
+    return f"{signed}-{_time}"
+
+
+def sign_message(message, wallet):
+    w3 = Web3Provider.get_web3()
+    signed = w3.eth.account.sign_message(
+        encode_defunct(text=message), private_key=wallet.private_key
+    )
+
+    return signed.signature.hex()

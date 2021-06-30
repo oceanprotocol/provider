@@ -14,12 +14,11 @@ from flask import Response, request
 from ocean_lib.common.agreements.consumable import ConsumableCodes
 from ocean_lib.models.data_token import DataToken
 from ocean_lib.ocean.util import to_base_18
-from ocean_lib.web3_internal.transactions import sign_hash
-from ocean_lib.web3_internal.utils import add_ethereum_prefix_and_hash_msg
 from ocean_lib.web3_internal.web3_provider import Web3Provider
 from osmosis_driver_interface.osmosis import Osmosis
 from websockets import ConnectionClosed
 
+from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.basics import (
     get_asset_from_metadatastore,
     get_config,
@@ -295,8 +294,7 @@ def process_compute_request(data):
         f'{body.get("jobId", "")}'
         f'{body.get("documentId", "")}'
     )  # noqa
-    msg_hash = add_ethereum_prefix_and_hash_msg(msg_to_sign)
-    body["providerSignature"] = sign_hash(msg_hash, provider_wallet)
+    body["providerSignature"] = sign_message(msg_to_sign, provider_wallet)
 
     return body
 
