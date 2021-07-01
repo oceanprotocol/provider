@@ -56,6 +56,8 @@ spec:
           value: < mainnet, rinkeby, ropsten or custom Openethereum service >
         - name: PROVIDER_PRIVATE_KEY
           value: < private key>
+        - name: PROVIDER_PASSWORD
+          value: < password >
         - name: LOG_LEVEL
           value: INFO
         - name: OCEAN_PROVIDER_URL
@@ -126,6 +128,7 @@ services:
       NETWORK_URL: ropsten
       INFURA_PROJECT_ID: "< your INFURA project id"
       PROVIDER_PRIVATE_KEY: "< your private key >"
+      PROVIDER_PASSWORD: "< password >"
       LOG_LEVEL: DEBUG
       OCEAN_PROVIDER_URL: 'http://0.0.0.0:8030'
       OCEAN_PROVIDER_WORKERS: "1"
