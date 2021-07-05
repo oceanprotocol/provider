@@ -13,7 +13,6 @@ from pathlib import Path
 import artifacts
 from eth_utils import remove_0x_prefix
 from jsonsempai import magic  # noqa: F401
-from web3.main import Web3
 from ocean_lib.assets.asset import Asset
 from ocean_lib.common.agreements.service_factory import (
     ServiceDescriptor,
@@ -21,17 +20,14 @@ from ocean_lib.common.agreements.service_factory import (
 )
 from ocean_lib.common.aquarius.aquarius import Aquarius
 from ocean_lib.common.utils.utilities import checksum
-from ocean_lib.example_config import ExampleConfig
 from ocean_lib.models.data_token import DataToken
 from ocean_lib.models.dtfactory import DTFactory
 from ocean_lib.models.metadata import MetadataContract
-from ocean_lib.ocean.util import to_base_18, get_web3_connection_provider
+from ocean_lib.ocean.util import to_base_18
 from ocean_lib.web3_internal.wallet import Wallet
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.basics import (
     get_datatoken_minter,
-    get_artifacts_path,
-    get_config,
     get_web3,
 )
 from ocean_provider.utils.encryption import do_encrypt
@@ -335,7 +331,6 @@ def wait_for_ddo(ddo_store, did, timeout=30):
 
 
 def send_order(client, ddo, datatoken, service, cons_wallet, expect_failure=False):
-    web3 = get_web3()
     init_endpoint = BaseURLs.ASSETS_URL + "/initialize"
     # initialize the service
     payload = dict(

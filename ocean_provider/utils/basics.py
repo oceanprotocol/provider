@@ -19,11 +19,9 @@ from web3.main import Web3
 
 
 def get_config(config_file: Optional[str] = None) -> Config:
-    config_file = config_file if config_file else os.getenv("CONFIG_FILE", "config.ini")
-
-    return (
-        Config(filename=config_file)
-        if config_file
+    return Config(
+        filename=config_file
+        if config_file is not None
         else os.getenv("CONFIG_FILE", "config.ini")
     )
 
