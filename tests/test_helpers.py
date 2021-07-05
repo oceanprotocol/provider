@@ -32,6 +32,7 @@ from ocean_provider.utils.basics import (
     get_datatoken_minter,
     get_artifacts_path,
     get_config,
+    get_web3,
 )
 from ocean_provider.utils.encryption import do_encrypt
 from tests.helpers.service_descriptors import get_access_service_descriptor
@@ -259,11 +260,11 @@ def mint_tokens_and_wait(data_token_contract, receiver_wallet, minter_wallet):
     time.sleep(2)
 
     def verify_supply(mint_amount=50.00):
-        supply = dtc.contract.caller.totalSupply()
+        supply = dtc.totalSupply()
         if supply <= 0:
             _tx_id = dtc.mint(receiver_wallet.address, mint_amount, minter_wallet)
             dtc.get_tx_receipt(web3, _tx_id)
-            supply = dtc.contract.caller.totalSupply()
+            supply = dtc.totalSupply()
         return supply
 
     while True:
@@ -380,7 +381,3 @@ def send_order(client, ddo, datatoken, service, cons_wallet, expect_failure=Fals
         tx_id, ddo.asset_id, service.index, amount, cons_wallet.address
     )
     return tx_id
-
-
-def get_web3():
-    return Web3(provider=get_web3_connection_provider(get_config().network_url))

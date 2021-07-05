@@ -11,8 +11,7 @@ from ocean_lib.web3_internal.utils import get_ether_balance
 from ocean_lib.web3_internal.wallet import Wallet
 
 from ocean_provider.run import app
-from ocean_provider.utils.basics import setup_network
-from tests.test_helpers import get_web3
+from ocean_provider.utils.basics import get_web3
 
 app = app
 
@@ -72,7 +71,6 @@ def provider_address(provider_wallet):
 
 @pytest.fixture(autouse=True)
 def setup_all(provider_address, consumer_address):
-    setup_network()
     web3 = get_web3()
     if (
         web3.eth.accounts

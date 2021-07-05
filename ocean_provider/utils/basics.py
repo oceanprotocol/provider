@@ -4,6 +4,7 @@
 #
 import os
 from pathlib import Path
+from typing import Optional
 
 import requests
 from ocean_lib.common.aquarius.aquarius import Aquarius
@@ -17,14 +18,36 @@ from ocean_provider.config import Config
 from web3.main import Web3
 
 
-def get_config():
-    config_file = os.getenv("CONFIG_FILE", "config.ini")
-    return Config(filename=config_file)
+def get_config(config_file: Optional[str] = None) -> Config:
+    config_file = config_file if config_file else os.getenv("CONFIG_FILE", "config.ini")
+
+    return (
+        Config(filename=config_file)
+        if config_file
+        else os.getenv("CONFIG_FILE", "config.ini")
+    )
 
 
-def get_provider_wallet(config_file=None):
+def get_provider_wallet(web3: Optional[Web3] = None) -> Wallet:
+    if web3 is None:
+        web3 = get_web3()
+
     pk = os.environ.get("PROVIDER_PRIVATE_KEY")
-    return Wallet(get_web3(config_file), private_key=pk)
+    wallet = Wallet(web3, private_key=pk)
+
+    if wallet is None:
+        raise AssertionError(
+            f"Ocean Provider cannot run without a valid "
+            f"ethereum account. `PROVIDER_PRIVATE_KEY` was not found in the environment "
+            f"variables. \nENV WAS: {sorted(os.environ.items())}"
+        )
+
+    if not wallet.private_key:
+        raise AssertionError(
+            "Ocean Provider cannot run without a valid ethereum private key."
+        )
+
+    return wallet
 
 
 def get_datatoken_minter(datatoken_address):
@@ -37,9 +60,9 @@ def get_artifacts_path():
     return Path(artifacts.__file__).parent.expanduser().resolve()
 
 
-def get_web3(config_file=None):
-    config = Config(filename=config_file) if config_file else get_config()
-    network_url = config.network_url
+def get_web3(network_url: Optional[str] = None) -> Web3:
+    if network_url is None:
+        network_url = get_config().network_url
 
     web3 = Web3(provider=get_web3_connection_provider(network_url))
 
@@ -49,23 +72,6 @@ def get_web3(config_file=None):
         web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
     return web3
-
-
-def setup_network(config_file=None):
-    get_web3(config_file)
-
-    wallet = get_provider_wallet(config_file)
-    if wallet is None:
-        raise AssertionError(
-            f"Ocean Provider cannot run without a valid "
-            f"ethereum account. `PROVIDER_PRIVATE_KEY` was not found in the environment "
-            f"variables. \nENV WAS: {sorted(os.environ.items())}"
-        )
-
-    if not wallet.private_key:
-        raise AssertionError(
-            "Ocean Provider cannot run without a valid ethereum private key."
-        )
 
 
 class LocalFileAdapter(requests.adapters.HTTPAdapter):

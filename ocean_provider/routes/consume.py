@@ -21,7 +21,6 @@ from ocean_provider.utils.basics import (
     get_datatoken_minter,
     get_provider_wallet,
     get_web3,
-    setup_network,
 )
 from ocean_provider.utils.encryption import do_encrypt
 from ocean_provider.utils.url import check_url_details
@@ -51,7 +50,6 @@ from ocean_provider.validation.provider_requests import (
 from . import services
 
 setup_logging()
-setup_network()
 provider_wallet = get_provider_wallet()
 requests_session = get_requests_session()
 requests_session.mount("file://", LocalFileAdapter())
