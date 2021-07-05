@@ -10,11 +10,11 @@ from ocean_lib.common.aquarius.aquarius import Aquarius
 from ocean_lib.models.data_token import DataToken
 from ocean_lib.ocean.util import get_web3_connection_provider
 from ocean_lib.web3_internal.wallet import Wallet
-from ocean_lib.web3_internal.web3_provider import Web3Provider
 from requests_testadapter import Resp
 
 import artifacts
 from ocean_provider.config import Config
+from web3.main import Web3
 
 
 def get_config():
@@ -22,13 +22,13 @@ def get_config():
     return Config(filename=config_file)
 
 
-def get_provider_wallet():
+def get_provider_wallet(config_file=None):
     pk = os.environ.get("PROVIDER_PRIVATE_KEY")
-    return Wallet(Web3Provider.get_web3(), private_key=pk)
+    return Wallet(get_web3(config_file), private_key=pk)
 
 
 def get_datatoken_minter(datatoken_address):
-    dt = DataToken(datatoken_address)
+    dt = DataToken(get_web3(), datatoken_address)
     publisher = dt.minter()
     return publisher
 
@@ -37,18 +37,24 @@ def get_artifacts_path():
     return Path(artifacts.__file__).parent.expanduser().resolve()
 
 
-def setup_network(config_file=None):
+def get_web3(config_file=None):
     config = Config(filename=config_file) if config_file else get_config()
     network_url = config.network_url
 
-    w3_connection_provider = get_web3_connection_provider(network_url)
-    Web3Provider.init_web3(provider=w3_connection_provider)
+    web3 = Web3(provider=get_web3_connection_provider(network_url))
+
     if network_url.startswith("wss"):
         from web3.middleware import geth_poa_middleware
 
-        Web3Provider.get_web3().middleware_onion.inject(geth_poa_middleware, layer=0)
+        web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
-    wallet = get_provider_wallet()
+    return web3
+
+
+def setup_network(config_file=None):
+    get_web3(config_file)
+
+    wallet = get_provider_wallet(config_file)
     if wallet is None:
         raise AssertionError(
             f"Ocean Provider cannot run without a valid "

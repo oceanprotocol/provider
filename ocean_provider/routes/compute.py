@@ -16,6 +16,7 @@ from ocean_provider.utils.accounts import verify_signature, sign_message
 from ocean_provider.utils.basics import (
     LocalFileAdapter,
     get_provider_wallet,
+    get_web3,
     setup_network,
 )
 from ocean_provider.utils.util import (
@@ -306,7 +307,9 @@ def computeStart():
 
     try:
         consumer_address = data.get("consumerAddress")
-        validator = WorkflowValidator(consumer_address, provider_wallet, data)
+        validator = WorkflowValidator(
+            get_web3(), consumer_address, provider_wallet, data
+        )
 
         status = validator.validate()
         if not status:

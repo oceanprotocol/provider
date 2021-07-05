@@ -20,6 +20,7 @@ from ocean_provider.utils.basics import (
     get_asset_from_metadatastore,
     get_datatoken_minter,
     get_provider_wallet,
+    get_web3,
     setup_network,
 )
 from ocean_provider.utils.encryption import do_encrypt
@@ -328,7 +329,13 @@ def download():
 
         logger.debug("validate_order called from download endpoint.")
         _tx, _order_log, _transfer_log = validate_order(
-            consumer_address, token_address, service.get_cost(), tx_id, did, service_id
+            get_web3(),
+            consumer_address,
+            token_address,
+            service.get_cost(),
+            tx_id,
+            did,
+            service_id,
         )
         validate_transfer_not_used_for_other_service(
             did, service_id, tx_id, consumer_address, token_address
