@@ -1,4 +1,3 @@
-#
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -20,16 +19,17 @@ from ocean_lib.common.agreements.service_factory import (
     ServiceFactory,
 )
 from ocean_lib.common.aquarius.aquarius import Aquarius
-from ocean_lib.common.ddo.public_key_rsa import PUBLIC_KEY_TYPE_RSA
 from ocean_lib.common.utils.utilities import checksum
 from ocean_lib.models.data_token import DataToken
 from ocean_lib.models.dtfactory import DTFactory
 from ocean_lib.models.metadata import MetadataContract
 from ocean_lib.ocean.util import to_base_18
 from ocean_lib.web3_internal.wallet import Wallet
-from ocean_lib.web3_internal.web3_provider import Web3Provider
 from ocean_provider.constants import BaseURLs
-from ocean_provider.utils.basics import get_datatoken_minter, get_artifacts_path
+from ocean_provider.utils.basics import (
+    get_datatoken_minter,
+    get_web3,
+)
 from ocean_provider.utils.encryption import do_encrypt
 from tests.helpers.service_descriptors import get_access_service_descriptor
 
@@ -42,7 +42,7 @@ def get_registered_ddo(
     disabled=False,
     custom_credentials=None,
 ):
-    web3 = Web3Provider.get_web3()
+    web3 = get_web3()
     aqua = Aquarius("http://localhost:5000")
     ddo_service_endpoint = aqua.get_service_endpoint()
 
@@ -56,13 +56,13 @@ def get_registered_ddo(
     dt_address = address_json[network]["DTFactory"]
     metadata_address = address_json[network]["Metadata"]
 
-    factory_contract = DTFactory(dt_address)
-    metadata_contract = MetadataContract(metadata_address)
+    factory_contract = DTFactory(web3, dt_address)
+    metadata_contract = MetadataContract(web3, metadata_address)
 
     tx_id = factory_contract.createToken(
         metadata_store_url, "DataToken1", "DT1", to_base_18(1000000.00), wallet
     )
-    dt_contract = DataToken(factory_contract.get_token_address(tx_id))
+    dt_contract = DataToken(web3, factory_contract.get_token_address(tx_id))
     if not dt_contract:
         raise AssertionError("Creation of data token contract failed.")
 
@@ -98,9 +98,6 @@ def get_registered_ddo(
     for service in services:
         ddo.add_service(service)
 
-    ddo.add_public_key(did, wallet.address)
-    ddo.add_authentication(did, PUBLIC_KEY_TYPE_RSA)
-
     if disabled:
         ddo.disable()
 
@@ -109,7 +106,7 @@ def get_registered_ddo(
 
     files_list_str = json.dumps(metadata["main"]["files"])
     pk = os.environ.get("PROVIDER_PRIVATE_KEY")
-    provider_wallet = Wallet(Web3Provider.get_web3(), private_key=pk)
+    provider_wallet = Wallet(web3, private_key=pk)
     encrypted_files = do_encrypt(files_list_str, provider_wallet)
 
     # only assign if the encryption worked
@@ -252,17 +249,18 @@ def get_nonce(client, address):
 
 
 def mint_tokens_and_wait(data_token_contract, receiver_wallet, minter_wallet):
+    web3 = get_web3()
     dtc = data_token_contract
     tx_id = dtc.mint_tokens(receiver_wallet.address, 50.00, minter_wallet)
-    dtc.get_tx_receipt(tx_id)
+    dtc.get_tx_receipt(web3, tx_id)
     time.sleep(2)
 
     def verify_supply(mint_amount=50.00):
-        supply = dtc.contract_concise.totalSupply()
+        supply = dtc.totalSupply()
         if supply <= 0:
             _tx_id = dtc.mint(receiver_wallet.address, mint_amount, minter_wallet)
-            dtc.get_tx_receipt(_tx_id)
-            supply = dtc.contract_concise.totalSupply()
+            dtc.get_tx_receipt(web3, _tx_id)
+            supply = dtc.totalSupply()
         return supply
 
     while True:
@@ -333,7 +331,6 @@ def wait_for_ddo(ddo_store, did, timeout=30):
 
 
 def send_order(client, ddo, datatoken, service, cons_wallet, expect_failure=False):
-    web3 = Web3Provider.get_web3()
     init_endpoint = BaseURLs.ASSETS_URL + "/initialize"
     # initialize the service
     payload = dict(
@@ -376,6 +373,6 @@ def send_order(client, ddo, datatoken, service, cons_wallet, expect_failure=Fals
         cons_wallet,
     )
     datatoken.verify_order_tx(
-        web3, tx_id, ddo.asset_id, service.index, amount, cons_wallet.address
+        tx_id, ddo.asset_id, service.index, amount, cons_wallet.address
     )
     return tx_id

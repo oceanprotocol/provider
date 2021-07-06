@@ -20,11 +20,11 @@ from tests.test_helpers import mint_tokens_and_wait, send_order
 
 
 def test_compute_norawalgo_allowed(
-    client, publisher_wallet, consumer_wallet, consumer_address
+    client, publisher_wallet, consumer_wallet, consumer_address, web3
 ):
     # publish a dataset asset
     dataset = comp_ds(client, publisher_wallet, "no_rawalgo")
-    dt_contract = DataToken(dataset.data_token_address)
+    dt_contract = DataToken(web3, dataset.data_token_address)
     mint_tokens_and_wait(dt_contract, consumer_wallet, publisher_wallet)
 
     algorithm_meta = {

@@ -20,6 +20,7 @@ from tests.test_helpers import (
     get_nonce,
     get_registered_ddo,
     get_sample_ddo_with_compute_service,
+    get_web3,
     mint_tokens_and_wait,
     send_order,
 )
@@ -28,6 +29,7 @@ from tests.test_helpers import (
 def build_and_send_ddo_with_compute_service(
     client, publisher_wallet, consumer_wallet, alg_diff=False, asset_type=None
 ):
+    web3 = get_web3()
     # publish an algorithm asset (asset with metadata of type `algorithm`)
     alg_ddo = (
         get_algorithm_ddo_different_provider(client, consumer_wallet)
@@ -35,7 +37,7 @@ def build_and_send_ddo_with_compute_service(
         else get_algorithm_ddo(client, consumer_wallet)
     )
     alg_data_token = alg_ddo.as_dictionary()["dataToken"]
-    alg_dt_contract = DataToken(alg_data_token)
+    alg_dt_contract = DataToken(web3, alg_data_token)
 
     mint_tokens_and_wait(alg_dt_contract, consumer_wallet, consumer_wallet)
 
@@ -50,7 +52,7 @@ def build_and_send_ddo_with_compute_service(
         for _ in itertools.repeat(None, 2):
             alg_ddo = get_algorithm_ddo(client, consumer_wallet)
             alg_data_token = alg_ddo.as_dictionary()["dataToken"]
-            alg_dt_contract = DataToken(alg_data_token)
+            alg_dt_contract = DataToken(web3, alg_data_token)
             mint_tokens_and_wait(alg_dt_contract, consumer_wallet, consumer_wallet)
             algos.append(alg_ddo)
 
@@ -62,7 +64,7 @@ def build_and_send_ddo_with_compute_service(
 
     ddo = dataset_ddo_w_compute_service
     data_token = dataset_ddo_w_compute_service.data_token_address
-    dt_contract = DataToken(data_token)
+    dt_contract = DataToken(web3, data_token)
     mint_tokens_and_wait(dt_contract, consumer_wallet, publisher_wallet)
 
     sa = ServiceAgreement.from_ddo(

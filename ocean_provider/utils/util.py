@@ -14,7 +14,6 @@ from flask import Response, request
 from ocean_lib.common.agreements.consumable import ConsumableCodes
 from ocean_lib.models.data_token import DataToken
 from ocean_lib.ocean.util import to_base_18
-from ocean_lib.web3_internal.web3_provider import Web3Provider
 from osmosis_driver_interface.osmosis import Osmosis
 from websockets import ConnectionClosed
 
@@ -23,6 +22,7 @@ from ocean_provider.utils.basics import (
     get_asset_from_metadatastore,
     get_config,
     get_provider_wallet,
+    get_web3,
 )
 from ocean_provider.utils.encryption import do_decrypt
 from ocean_provider.utils.url import is_safe_url
@@ -201,13 +201,13 @@ def get_compute_address():
         return None
 
 
-def validate_order(sender, token_address, num_tokens, tx_id, did, service_id):
+def validate_order(web3, sender, token_address, num_tokens, tx_id, did, service_id):
     logger.debug(
         f"validate_order: did={did}, service_id={service_id}, tx_id={tx_id}, "
         f"sender={sender}, num_tokens={num_tokens}, token_address={token_address}"
     )
 
-    dt_contract = DataToken(token_address)
+    dt_contract = DataToken(web3, token_address)
 
     amount = to_base_18(num_tokens)
     num_tries = 3
@@ -217,7 +217,7 @@ def validate_order(sender, token_address, num_tokens, tx_id, did, service_id):
         i += 1
         try:
             tx, order_event, transfer_event = dt_contract.verify_order_tx(
-                Web3Provider.get_web3(), tx_id, did, service_id, amount, sender
+                tx_id, did, service_id, amount, sender
             )
             logger.debug(
                 f"validate_order succeeded for: did={did}, service_id={service_id}, tx_id={tx_id}, "
@@ -329,7 +329,7 @@ def decode_from_data(data, key, dec_type="list"):
 def service_unavailable(error, context, custom_logger=None):
     text_items = []
     for key, value in context.items():
-        text_items.append(key + "=" + value)
+        text_items.append(key + "=" + str(value))
 
     logger_message = "Payload was: " + ",".join(text_items)
     custom_logger = custom_logger if custom_logger else logger
