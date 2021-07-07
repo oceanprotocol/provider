@@ -4,11 +4,13 @@
 #
 import hashlib
 import ipaddress
+import json
 import logging
 from urllib.parse import urlparse
 
 import dns.resolver
 import requests
+from requests.models import PreparedRequest
 from ocean_lib.data_provider.data_service_provider import DataServiceProvider
 
 from ocean_provider.utils.basics import get_config, get_provider_wallet
@@ -192,3 +194,24 @@ def _get_result_from_url(url, with_checksum=False):
             sha.update(chunk)
 
     return r, {"checksum": sha.hexdigest(), "checksumType": "sha256"}
+
+
+def append_userdata(url, data):
+    userdata = data.get("userdata")
+
+    if not userdata:
+        return url
+
+    try:
+        userdata = json.loads(userdata)
+        req = PreparedRequest()
+        req.prepare_url(url, userdata)
+        return req.url
+
+    except json.decoder.JSONDecodeError:
+        logger.info(
+            "Can not decode sent userdata for asset, sending without extra GET parameters."
+        )
+        return url
+
+    return url
