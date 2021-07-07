@@ -54,10 +54,10 @@ def test_encrypt_request_payload(provider_address):
 
 
 def test_initialize_request_payload(
-    client, publisher_wallet, consumer_wallet, provider_address
+    client, publisher_wallet, consumer_wallet, provider_address, web3
 ):
     ddo = get_dataset_ddo_with_access_service(client, publisher_wallet)
-    dt_contract = DataToken(ddo.data_token_address)
+    dt_contract = DataToken(web3, ddo.data_token_address)
     sa = ddo.get_service(ServiceTypes.ASSET_ACCESS)
     mint_tokens_and_wait(dt_contract, consumer_wallet, publisher_wallet)
 
@@ -83,10 +83,10 @@ def test_initialize_request_payload(
 
 
 def test_access_request_payload(
-    client, publisher_wallet, consumer_wallet, provider_address
+    client, publisher_wallet, consumer_wallet, provider_address, web3
 ):
     ddo = get_dataset_ddo_with_access_service(client, publisher_wallet)
-    dt_token = DataToken(ddo.data_token_address)
+    dt_token = DataToken(web3, ddo.data_token_address)
 
     mint_tokens_and_wait(dt_token, consumer_wallet, publisher_wallet)
 

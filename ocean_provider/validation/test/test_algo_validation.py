@@ -11,7 +11,7 @@ from tests.helpers.compute_helpers import build_and_send_ddo_with_compute_servic
 
 
 def test_passes(
-    client, provider_wallet, consumer_wallet, consumer_address, publisher_wallet
+    client, provider_wallet, consumer_wallet, consumer_address, publisher_wallet, web3
 ):
     """Tests happy flow of validator with algo ddo and raw algo."""
     ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
@@ -31,7 +31,7 @@ def test_passes(
         "algorithmTransferTxId": alg_tx_id,
     }
 
-    validator = WorkflowValidator(consumer_address, provider_wallet, data)
+    validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
     assert validator.validate() is True
 
     data = {
@@ -50,12 +50,12 @@ def test_passes(
             }
         ),
     }
-    validator = WorkflowValidator(consumer_address, provider_wallet, data)
+    validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
     assert validator.validate() is True
 
 
 def test_fails(
-    client, provider_wallet, consumer_wallet, consumer_address, publisher_wallet
+    client, provider_wallet, consumer_wallet, consumer_address, publisher_wallet, web3
 ):
     """Tests possible failures of the algo validation."""
     dataset, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
@@ -76,7 +76,7 @@ def test_fails(
         "algorithmTransferTxId": alg_tx_id,
     }
 
-    validator = WorkflowValidator(consumer_address, provider_wallet, data)
+    validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
     assert validator.validate() is False
     assert validator.error == "Output is invalid or can not be decoded."
 
@@ -93,7 +93,7 @@ def test_fails(
         "algorithmTransferTxId": alg_tx_id,
     }
 
-    validator = WorkflowValidator(consumer_address, provider_wallet, data)
+    validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
     assert validator.validate() is False
     assert validator.error == f"DID {did} is not a valid algorithm"
 
@@ -110,7 +110,7 @@ def test_fails(
         "algorithmMeta": {},
     }
 
-    validator = WorkflowValidator(consumer_address, provider_wallet, data)
+    validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
     assert validator.validate() is False
     assert (
         validator.error
@@ -131,7 +131,7 @@ def test_fails(
         },
     }
 
-    validator = WorkflowValidator(consumer_address, provider_wallet, data)
+    validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
     assert validator.validate() is False
     assert (
         validator.error
@@ -152,7 +152,7 @@ def test_fails(
         },
     }
 
-    validator = WorkflowValidator(consumer_address, provider_wallet, data)
+    validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
     assert validator.validate() is False
     assert (
         validator.error
@@ -171,7 +171,7 @@ def test_fails(
         "additionalInputs": "",
     }
 
-    validator = WorkflowValidator(consumer_address, provider_wallet, data)
+    validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
     assert validator.validate() is True
 
     # additional input is invalid
@@ -186,7 +186,7 @@ def test_fails(
         "additionalInputs": "i can not be decoded in json!",
     }
 
-    validator = WorkflowValidator(consumer_address, provider_wallet, data)
+    validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
     assert validator.validate() is False
     assert validator.error == "Additional input is invalid or can not be decoded."
 
@@ -202,7 +202,7 @@ def test_fails(
         "additionalInputs": [{"transferTxId": tx_id, "serviceId": sa.index}],
     }
 
-    validator = WorkflowValidator(consumer_address, provider_wallet, data)
+    validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
     assert validator.validate() is False
     assert validator.error == "Error in input at index 1: No documentId in input item."
 
@@ -224,7 +224,7 @@ def test_fails(
         ],
     }
 
-    validator = WorkflowValidator(consumer_address, provider_wallet, data)
+    validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
     assert validator.validate() is False
     assert (
         validator.error
@@ -250,7 +250,7 @@ def test_fails(
         ],
     }
 
-    validator = WorkflowValidator(consumer_address, provider_wallet, data)
+    validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
     assert validator.validate() is False
     assert (
         validator.error
@@ -280,7 +280,7 @@ def test_fails(
         ],
     }
 
-    validator = WorkflowValidator(consumer_address, provider_wallet, data)
+    validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
     assert validator.validate() is False
     assert (
         validator.error

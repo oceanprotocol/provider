@@ -81,12 +81,7 @@ Add the corresponding environment variables in your `.env` file. Here is an exam
 FLASK_APP=ocean_provider/run.py
 CONFIG_FILE=config.ini
 PROVIDER_ADDRESS=your ethereum address goes here
-# Set one of the following
 PROVIDER_KEY=the private key
-PROVIDER_ENCRYPTED_KEY=The encrypted key json from the keyfile
-PROVIDER_KEYFILE=path to the keyfile which has the encrypted key
-# and set the password if using either PROVIDER_KEYFILE or PROVIDER_ENCRYPTED_KEY
-PROVIDER_PASSWORD=password to allow decrypting the encrypted key
 ```
 
 You might also want to set `FLASK_ENV=development`. Then run ```flask run --port=8030```

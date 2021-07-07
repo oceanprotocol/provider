@@ -21,9 +21,9 @@ from tests.test_helpers import (
 )
 
 
-def test_download_service(client, publisher_wallet, consumer_wallet):
+def test_download_service(client, publisher_wallet, consumer_wallet, web3):
     ddo = get_dataset_ddo_with_access_service(client, publisher_wallet)
-    dt_token = DataToken(ddo.data_token_address)
+    dt_token = DataToken(web3, ddo.data_token_address)
 
     mint_tokens_and_wait(dt_token, consumer_wallet, publisher_wallet)
 
@@ -69,26 +69,26 @@ def test_empty_payload(client):
     assert consume.status_code == 400
 
 
-def test_initialize_on_bad_url(client, publisher_wallet, consumer_wallet):
+def test_initialize_on_bad_url(client, publisher_wallet, consumer_wallet, web3):
     ddo = get_dataset_with_invalid_url_ddo(client, publisher_wallet)
-    dt_contract = DataToken(ddo.data_token_address)
+    dt_contract = DataToken(web3, ddo.data_token_address)
     sa = ddo.get_service(ServiceTypes.ASSET_ACCESS)
 
     send_order(client, ddo, dt_contract, sa, consumer_wallet, expect_failure=True)
 
 
-def test_initialize_on_ipfs_url(client, publisher_wallet, consumer_wallet):
+def test_initialize_on_ipfs_url(client, publisher_wallet, consumer_wallet, web3):
     ddo = get_dataset_with_ipfs_url_ddo(client, publisher_wallet)
-    dt_contract = DataToken(ddo.data_token_address)
+    dt_contract = DataToken(web3, ddo.data_token_address)
     sa = ddo.get_service(ServiceTypes.ASSET_ACCESS)
 
     send_order(client, ddo, dt_contract, sa, consumer_wallet)
 
 
-def test_initialize_on_disabled_asset(client, publisher_wallet, consumer_wallet):
+def test_initialize_on_disabled_asset(client, publisher_wallet, consumer_wallet, web3):
     ddo = get_dataset_ddo_disabled(client, publisher_wallet)
     assert ddo.is_disabled
-    dt_contract = DataToken(ddo.data_token_address)
+    dt_contract = DataToken(web3, ddo.data_token_address)
     sa = ddo.get_service(ServiceTypes.ASSET_ACCESS)
     mint_tokens_and_wait(dt_contract, consumer_wallet, publisher_wallet)
 
@@ -96,23 +96,23 @@ def test_initialize_on_disabled_asset(client, publisher_wallet, consumer_wallet)
 
 
 def test_initialize_on_asset_with_custom_credentials(
-    client, publisher_wallet, consumer_wallet
+    client, publisher_wallet, consumer_wallet, web3
 ):
     ddo = get_dataset_ddo_with_denied_consumer(
         client, publisher_wallet, consumer_wallet.address
     )
     assert ddo.requires_address_credential
     assert consumer_wallet.address not in ddo.allowed_addresses
-    dt_contract = DataToken(ddo.data_token_address)
+    dt_contract = DataToken(web3, ddo.data_token_address)
     sa = ddo.get_service(ServiceTypes.ASSET_ACCESS)
     mint_tokens_and_wait(dt_contract, consumer_wallet, publisher_wallet)
 
     send_order(client, ddo, dt_contract, sa, consumer_wallet, expect_failure=True)
 
 
-def test_download_multiple_files(client, publisher_wallet, consumer_wallet):
+def test_download_multiple_files(client, publisher_wallet, consumer_wallet, web3):
     ddo = get_dataset_ddo_with_multiple_files(client, publisher_wallet)
-    dt_token = DataToken(ddo.data_token_address)
+    dt_token = DataToken(web3, ddo.data_token_address)
 
     mint_tokens_and_wait(dt_token, consumer_wallet, publisher_wallet)
 

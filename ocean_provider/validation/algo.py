@@ -31,8 +31,9 @@ logger = logging.getLogger(__name__)
 
 
 class WorkflowValidator:
-    def __init__(self, consumer_address, provider_wallet, data):
+    def __init__(self, web3, consumer_address, provider_wallet, data):
         """Initializes the validator."""
+        self.web3 = web3
         self.consumer_address = consumer_address
         self.provider_wallet = provider_wallet
         self.data = data
@@ -81,7 +82,11 @@ class WorkflowValidator:
         for index, input_item in enumerate(all_data):
             input_item.update(algo_data)
             input_item_validator = InputItemValidator(
-                self.consumer_address, self.provider_wallet, input_item, index
+                self.web3,
+                self.consumer_address,
+                self.provider_wallet,
+                input_item,
+                index,
             )
 
             status = input_item_validator.validate()
@@ -139,8 +144,8 @@ class WorkflowValidator:
                 return False
 
             try:
-                dt = DataToken(self.consumer_address)
-                tx_receipt = dt.get_tx_receipt(algorithm_tx_id)
+                dt = DataToken(self.web3, self.consumer_address)
+                tx_receipt = dt.get_tx_receipt(self.web3, algorithm_tx_id)
                 event_logs = dt.events.OrderStarted().processReceipt(tx_receipt)
                 order_log = event_logs[0] if event_logs else None
                 algo_service_id = order_log.args.serviceId
@@ -163,6 +168,7 @@ class WorkflowValidator:
 
                 logger.debug("validate_order called for ALGORITHM usage.")
                 _tx, _order_log, _transfer_log = validate_order(
+                    self.web3,
                     self.consumer_address,
                     algorithm_token_address,
                     self.algo_service.get_cost(),
@@ -241,8 +247,9 @@ def validate_formatted_algorithm_dict(algorithm_dict, algorithm_did):
 
 
 class InputItemValidator:
-    def __init__(self, consumer_address, provider_wallet, data, index):
+    def __init__(self, web3, consumer_address, provider_wallet, data, index):
         """Initializes the input item validator."""
+        self.web3 = web3
         self.consumer_address = consumer_address
         self.provider_wallet = provider_wallet
         self.data = data
@@ -405,6 +412,7 @@ class InputItemValidator:
         logger.debug("Validating ASSET usage.")
         try:
             _tx, _order_log, _transfer_log = validate_order(
+                self.web3,
                 self.consumer_address,
                 token_address,
                 self.service.get_cost(),

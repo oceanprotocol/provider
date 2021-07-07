@@ -8,10 +8,9 @@ import eth_keys
 from eth_account.messages import encode_defunct, _hash_eip191_message
 from ocean_lib.web3_internal.utils import ec_recover
 from web3 import Web3
-from ocean_lib.web3_internal.web3_provider import Web3Provider
 
 from ocean_provider.exceptions import InvalidSignatureError
-from ocean_provider.utils.basics import get_config
+from ocean_provider.utils.basics import get_config, get_web3
 
 
 def verify_signature(signer_address, signature, original_msg, nonce: int = None):
@@ -77,7 +76,7 @@ def generate_auth_token(wallet):
 
 
 def sign_message(message, wallet):
-    w3 = Web3Provider.get_web3()
+    w3 = get_web3()
     signed = w3.eth.account.sign_message(
         encode_defunct(text=message), private_key=wallet.private_key
     )
