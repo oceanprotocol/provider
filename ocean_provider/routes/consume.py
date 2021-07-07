@@ -11,6 +11,7 @@ from flask_sieve import validate
 from ocean_lib.common.agreements.service_types import ServiceTypes
 from ocean_lib.common.did import did_to_id
 from ocean_lib.common.http_requests.requests_session import get_requests_session
+from requests.models import PreparedRequest
 
 from ocean_provider.log import setup_logging
 from ocean_provider.myapp import app
@@ -352,6 +353,19 @@ def download():
             return jsonify(error="Cannot decrypt files for this asset."), 400
 
         download_url = get_download_url(url, app.config["CONFIG_FILE"])
+
+        userdata = data.get("userdata")
+        if userdata:
+            try:
+                userdata = json.loads(userdata)
+                req = PreparedRequest()
+                req.prepare_url(download_url, userdata)
+                download_url = req.url
+            except json.decoder.JSONDecodeError:
+                logger.info(
+                    f"Can not decode sent userdata fo asset {did}, sending without extra GET parameters."
+                )
+
         logger.info(
             f"Done processing consume request for asset {did}, " f" url {download_url}"
         )

@@ -2,6 +2,7 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
+import pytest
 
 from ocean_lib.common.agreements.service_types import ServiceTypes
 from ocean_lib.models.data_token import DataToken
@@ -21,7 +22,8 @@ from tests.test_helpers import (
 )
 
 
-def test_download_service(client, publisher_wallet, consumer_wallet, web3):
+@pytest.mark.parametrize("userdata", [False, "valid", "invalid"])
+def test_download_service(client, publisher_wallet, consumer_wallet, web3, userdata):
     ddo = get_dataset_ddo_with_access_service(client, publisher_wallet)
     dt_token = DataToken(web3, ddo.data_token_address)
 
@@ -42,6 +44,11 @@ def test_download_service(client, publisher_wallet, consumer_wallet, web3):
         "transferTxId": tx_id,
         "fileIndex": 0,
     }
+
+    if userdata:
+        payload["userdata"] = (
+            '{"surname":"XXX", "age":12}' if userdata == "valid" else "cannotdecode"
+        )
 
     download_endpoint = BaseURLs.ASSETS_URL + "/download"
     response = client.get(download_endpoint, query_string=payload)
