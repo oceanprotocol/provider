@@ -313,7 +313,7 @@ class InputItemValidator:
                 return False
 
         if asset_urls:
-            asset_urls = append_userdata(asset_urls, self.data)
+            asset_urls = [append_userdata(a_url, self.data) for a_url in asset_urls]
             self.validated_inputs = dict(
                 {"index": self.index, "id": self.did, "url": asset_urls}
             )

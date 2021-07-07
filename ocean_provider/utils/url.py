@@ -202,16 +202,15 @@ def append_userdata(url, data, key="userdata"):
     if not userdata:
         return url
 
-    try:
-        userdata = json.loads(userdata)
-        req = PreparedRequest()
-        req.prepare_url(url, userdata)
-        return req.url
+    if not isinstance(userdata, dict):
+        try:
+            userdata = json.loads(userdata)
+        except json.decoder.JSONDecodeError:
+            logger.info(
+                "Can not decode sent userdata for asset, sending without extra GET parameters."
+            )
+            return url
 
-    except json.decoder.JSONDecodeError:
-        logger.info(
-            "Can not decode sent userdata for asset, sending without extra GET parameters."
-        )
-        return url
-
-    return url
+    req = PreparedRequest()
+    req.prepare_url(url, userdata)
+    return req.url

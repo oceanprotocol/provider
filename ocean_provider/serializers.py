@@ -44,7 +44,7 @@ class StageAlgoSerializer:
 
         asset_urls = get_asset_url_at_index(0, algo_asset, self.provider_wallet)
         if asset_urls:
-            asset_urls = append_userdata(asset_urls, self.algo_data, "algouserdata")
+            asset_urls = [append_userdata(a_url, self.data) for a_url in asset_urls]
             dict_template["url"] = asset_urls
         else:
             dict_template["remote"] = {
