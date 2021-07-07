@@ -73,7 +73,13 @@ def version():
     info = dict()
     info["software"] = Metadata.TITLE
     info["version"] = get_version()
-    info["chainId"] = get_web3().eth.chain_id
+
+    chain_id = app.config.get("chain_id")
+    if not chain_id:
+        chain_id = get_web3().eth.chain_id
+        app.config["chain_id"] = chain_id
+
+    info["chainId"] = chain_id
     info["providerAddress"] = get_provider_address()
     info["computeAddress"] = get_compute_address()
     info["serviceEndpoints"] = get_services_endpoints()
