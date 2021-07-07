@@ -15,6 +15,7 @@ from ocean_provider.constants import BaseURLs
 from ocean_provider.myapp import app
 from ocean_provider.serializers import StageAlgoSerializer
 from ocean_provider.utils.basics import get_asset_from_metadatastore, get_config
+from ocean_provider.utils.url import append_userdata
 from ocean_provider.utils.util import (
     check_asset_consumable,
     decode_from_data,
@@ -312,20 +313,23 @@ class InputItemValidator:
                 return False
 
         if asset_urls:
+            asset_urls = append_userdata(asset_urls, self.data)
             self.validated_inputs = dict(
                 {"index": self.index, "id": self.did, "url": asset_urls}
             )
         else:
-            self.validated_inputs = dict(
-                {
-                    "index": self.index,
-                    "id": self.did,
-                    "remote": {
-                        "txid": self.data.get("transferTxId"),
-                        "serviceIndex": self.service.index,
-                    },
-                }
-            )
+            self.validated_inputs = {
+                "index": self.index,
+                "id": self.did,
+                "remote": {
+                    "txid": self.data.get("transferTxId"),
+                    "serviceIndex": self.service.index,
+                },
+            }
+
+            userdata = self.data.get('userdata')
+            if userdata:
+                self.validate_inputs['remote']['userdata'] = userdata
 
         return self.validate_usage()
 
