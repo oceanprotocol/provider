@@ -13,7 +13,7 @@ from ocean_provider.config import Config
 from ocean_provider.constants import BaseURLs, ConfigSections, Metadata
 from ocean_provider.myapp import app
 from ocean_provider.routes import services
-from ocean_provider.utils.basics import get_provider_wallet
+from ocean_provider.utils.basics import get_provider_wallet, get_web3
 from ocean_provider.utils.util import get_compute_address
 
 config = Config(filename=app.config["CONFIG_FILE"])
@@ -73,7 +73,13 @@ def version():
     info = dict()
     info["software"] = Metadata.TITLE
     info["version"] = get_version()
-    info["network-url"] = config.network_url
+
+    chain_id = app.config.get("chain_id")
+    if not chain_id:
+        chain_id = get_web3().eth.chain_id
+        app.config["chain_id"] = chain_id
+
+    info["chainId"] = chain_id
     info["providerAddress"] = get_provider_address()
     info["computeAddress"] = get_compute_address()
     info["serviceEndpoints"] = get_services_endpoints()
