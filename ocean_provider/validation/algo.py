@@ -77,6 +77,8 @@ class WorkflowValidator:
 
         all_data = main_input + additional_inputs
         algo_data = filter_dictionary_starts_with(self.data, "algorithm")
+        if self.data.get("algouserdata"):
+            algo_data["algouserdata"] = self.data["algouserdata"]
 
         self.validated_inputs = []
 
@@ -327,9 +329,9 @@ class InputItemValidator:
                 },
             }
 
-            userdata = self.data.get('userdata')
+            userdata = self.data.get("userdata")
             if userdata:
-                self.validate_inputs['remote']['userdata'] = userdata
+                self.validate_inputs["remote"]["userdata"] = userdata
 
         return self.validate_usage()
 

@@ -42,10 +42,10 @@ class StageAlgoSerializer:
         dict_template["id"] = algorithm_did
         dict_template["rawcode"] = ""
 
-        asset_urls = get_asset_url_at_index(0, algo_asset, self.provider_wallet)
-        if asset_urls:
-            asset_urls = [append_userdata(a_url, self.data) for a_url in asset_urls]
-            dict_template["url"] = asset_urls
+        asset_url = get_asset_url_at_index(0, algo_asset, self.provider_wallet)
+        if asset_url:
+            asset_url = append_userdata(asset_url, self.algo_data, "algouserdata")
+            dict_template["url"] = asset_url
         else:
             dict_template["remote"] = {
                 "serviceEndpoint": self.algo_service.service_endpoint,
@@ -53,7 +53,7 @@ class StageAlgoSerializer:
                 "serviceIndex": self.algo_service.index,
             }
 
-            userdata = self.algo_data.get('algouserdata')
+            userdata = self.algo_data.get("algouserdata")
             if userdata:
                 dict_template["remote"]["algouserdata"] = userdata
 
