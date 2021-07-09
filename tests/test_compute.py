@@ -307,8 +307,15 @@ def test_compute_additional_input(client, publisher_wallet, consumer_wallet):
             "algorithmDataToken": alg_ddo.data_token_address,
             "algorithmTransferTxId": alg_tx_id,
             "additionalInputs": [
-                {"documentId": ddo2.did, "transferTxId": tx_id2, "serviceId": sa2.index}
+                {
+                    "documentId": ddo2.did,
+                    "transferTxId": tx_id2,
+                    "serviceId": sa2.index,
+                    "userdata": {"test_key": "test_value"},
+                }
             ],
+            "userdata": '{"surname":"XXX", "age":12}',
+            "algouserdata": '{"surname":"YYY", "age":21}',
         }
     )
 

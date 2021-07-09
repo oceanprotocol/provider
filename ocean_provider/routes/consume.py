@@ -23,7 +23,7 @@ from ocean_provider.utils.basics import (
     get_web3,
 )
 from ocean_provider.utils.encryption import do_encrypt
-from ocean_provider.utils.url import check_url_details
+from ocean_provider.utils.url import check_url_details, append_userdata
 from ocean_provider.utils.util import (
     build_download_response,
     check_asset_consumable,
@@ -352,6 +352,8 @@ def download():
             return jsonify(error="Cannot decrypt files for this asset."), 400
 
         download_url = get_download_url(url, app.config["CONFIG_FILE"])
+        download_url = append_userdata(download_url, data)
+
         logger.info(
             f"Done processing consume request for asset {did}, " f" url {download_url}"
         )
