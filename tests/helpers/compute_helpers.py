@@ -13,6 +13,7 @@ from tests.helpers.service_descriptors import (
     get_compute_service_descriptor_allow_all_published,
     get_compute_service_descriptor_no_rawalgo,
     get_compute_service_descriptor_specific_algo_dids,
+    get_compute_service_descriptor_specific_algo_publishers,
 )
 from tests.test_helpers import (
     get_algorithm_ddo,
@@ -58,6 +59,15 @@ def build_and_send_ddo_with_compute_service(
 
         dataset_ddo_w_compute_service = comp_ds(
             client, publisher_wallet, "specific_algo_dids", algos
+        )
+    elif asset_type == "specific_algo_publishers":
+        alg_ddo = get_algorithm_ddo(client, consumer_wallet)
+        alg_data_token = alg_ddo.as_dictionary()["dataToken"]
+        alg_dt_contract = DataToken(web3, alg_data_token)
+        mint_tokens_and_wait(alg_dt_contract, consumer_wallet, consumer_wallet)
+
+        dataset_ddo_w_compute_service = comp_ds(
+            client, publisher_wallet, "specific_algo_publishers", publishers=[alg_ddo.publisher]
         )
     else:
         dataset_ddo_w_compute_service = comp_ds(client, publisher_wallet)
@@ -133,7 +143,7 @@ def get_compute_job_info(client, endpoint, params):
     return dict(job_info[0])
 
 
-def comp_ds(client, wallet, compute_service_descriptor=None, algos=None):
+def comp_ds(client, wallet, compute_service_descriptor=None, algos=None, publishers=None):
     metadata = get_sample_ddo_with_compute_service()["service"][0]["attributes"]
     metadata["main"]["files"][0]["checksum"] = str(uuid.uuid4())
 
@@ -144,6 +154,10 @@ def comp_ds(client, wallet, compute_service_descriptor=None, algos=None):
     elif compute_service_descriptor == "specific_algo_dids":
         service_descriptor = get_compute_service_descriptor_specific_algo_dids(
             wallet.address, metadata["main"]["cost"], metadata, algos
+        )
+    elif compute_service_descriptor == "specific_algo_publishers":
+        service_descriptor = get_compute_service_descriptor_specific_algo_publishers(
+            wallet.address, metadata["main"]["cost"], metadata, publishers
         )
     elif compute_service_descriptor == "allow_all_published":
         service_descriptor = get_compute_service_descriptor_allow_all_published(
