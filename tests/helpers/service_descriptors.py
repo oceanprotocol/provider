@@ -118,7 +118,10 @@ def get_compute_service_descriptor_specific_algo_dids(address, price, metadata, 
         f"http://localhost:8030{BaseURLs.ASSETS_URL}/compute",
     )
 
-def get_compute_service_descriptor_specific_algo_publishers(address, price, metadata, publishers):
+
+def get_compute_service_descriptor_specific_algo_publishers(
+    address, price, metadata, publishers
+):
     compute_service_attributes = {
         "main": {
             "name": "dataAssetComputeServiceAgreement",
@@ -140,6 +143,7 @@ def get_compute_service_descriptor_specific_algo_publishers(address, price, meta
         compute_service_attributes,
         f"http://localhost:8030{BaseURLs.ASSETS_URL}/compute",
     )
+
 
 def get_compute_service_descriptor_allow_all_published(address, price, metadata):
     compute_service_attributes = {

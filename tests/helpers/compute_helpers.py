@@ -67,7 +67,10 @@ def build_and_send_ddo_with_compute_service(
         mint_tokens_and_wait(alg_dt_contract, consumer_wallet, consumer_wallet)
 
         dataset_ddo_w_compute_service = comp_ds(
-            client, publisher_wallet, "specific_algo_publishers", publishers=[alg_ddo.publisher]
+            client,
+            publisher_wallet,
+            "specific_algo_publishers",
+            publishers=[alg_ddo.publisher],
         )
     else:
         dataset_ddo_w_compute_service = comp_ds(client, publisher_wallet)
@@ -143,7 +146,9 @@ def get_compute_job_info(client, endpoint, params):
     return dict(job_info[0])
 
 
-def comp_ds(client, wallet, compute_service_descriptor=None, algos=None, publishers=None):
+def comp_ds(
+    client, wallet, compute_service_descriptor=None, algos=None, publishers=None
+):
     metadata = get_sample_ddo_with_compute_service()["service"][0]["attributes"]
     metadata["main"]["files"][0]["checksum"] = str(uuid.uuid4())
 
