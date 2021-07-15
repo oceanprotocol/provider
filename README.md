@@ -24,7 +24,7 @@ Uses the rinkeby network with a remote metadatastore instance running at https:/
 git clone git@github.com:oceanprotocol/provider.git
 cd provider/
 
-virtualenv venv -p python3.8
+python3 -m venv venv
 source venv/bin/activate
 
 pip install -r requirements_dev.txt
