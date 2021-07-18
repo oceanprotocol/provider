@@ -12,12 +12,19 @@ db = app.session
 
 
 def get_nonce(address):
+    """
+    :return: `nonce`
+    """
     result = models.UserNonce.query.filter_by(address=address).first()
 
     return result.nonce if result else models.UserNonce.FIRST_NONCE
 
 
 def increment_nonce(address):
+    """
+    Increatements the value of `nonce`
+    :param: address
+    """
     nonce_object = models.UserNonce.query.filter_by(address=address).first()
     if nonce_object:
         nonce_value = nonce_object.nonce

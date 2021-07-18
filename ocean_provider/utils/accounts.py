@@ -14,6 +14,9 @@ from ocean_provider.utils.basics import get_config, get_web3
 
 
 def verify_signature(signer_address, signature, original_msg, nonce: int = None):
+    """
+    :return: True if signature is valid
+    """
     if is_auth_token_valid(signature):
         address = check_auth_token(signature)
     else:
@@ -34,6 +37,7 @@ def verify_signature(signer_address, signature, original_msg, nonce: int = None)
 
 
 def get_private_key(wallet):
+    """Returns private key of the given wallet"""
     pk = wallet.private_key
     if not isinstance(pk, bytes):
         pk = Web3.toBytes(hexstr=pk)
@@ -41,12 +45,20 @@ def get_private_key(wallet):
 
 
 def is_auth_token_valid(token):
+    """
+    :param token: str
+    :return: `True` if token is valid else `False`
+    """
     return (
         isinstance(token, str) and token.startswith("0x") and len(token.split("-")) == 2
     )
 
 
 def check_auth_token(token):
+    """
+    :param token: str
+    :return: String
+    """
     parts = token.split("-")
     if len(parts) < 2:
         return "0x0"
@@ -67,6 +79,10 @@ def check_auth_token(token):
 
 
 def generate_auth_token(wallet):
+    """
+    :param wallet: Wallet instance
+    :return: `str`
+    """
     raw_msg = get_config().auth_token_message or "Ocean Protocol Authentication"
     _time = int(datetime.now().timestamp())
     _message = f"{raw_msg}\n{_time}"
@@ -76,6 +92,11 @@ def generate_auth_token(wallet):
 
 
 def sign_message(message, wallet):
+    """
+    :param message: str
+    :param wallet: Wallet instance
+    :return: `hex` value of the signed message
+    """
     w3 = get_web3()
     signed = w3.eth.account.sign_message(
         encode_defunct(text=message), private_key=wallet.private_key

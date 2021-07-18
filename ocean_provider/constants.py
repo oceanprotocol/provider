@@ -5,17 +5,39 @@
 
 
 class ConfigSections:
+    """
+    This class stores values for:
+
+    - `RESOURCES`
+    - `OSMOSIS`
+    """
+
     RESOURCES = "resources"
     OSMOSIS = "osmosis"
 
 
 class BaseURLs:
+    """
+    This class stores values for:
+
+    - `BASE_PROVIDER_URL`
+    - `SWAGGER_URL`
+    - `ASSETS_URL`
+    """
+
     BASE_PROVIDER_URL = "/api/v1"
     SWAGGER_URL = "/api/v1/docs"  # URL for exposing Swagger UI (without trailing '/')
     ASSETS_URL = BASE_PROVIDER_URL + "/services"
 
 
 class Metadata:
+    """
+    This class stores values for:
+
+    - `TITLE`
+    - `DESCRIPTION`
+    """
+
     TITLE = "Provider"
     DESCRIPTION = (
         "Ocean Provider is the technical component executed by Data Providers allowing them to "
