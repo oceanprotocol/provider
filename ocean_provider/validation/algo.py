@@ -336,7 +336,7 @@ class InputItemValidator:
             self.error = (
                 "Using algorithmDid but allowAllPublishedAlgorithms is False and no "
                 "trusted algorithms are set in publisherTrustedAlgorithms, "
-                "nor are trustedAlgorithmPublishers set."
+                "nor are publisherTrustedAlgorithmPublishers set."
             )
             return False
 
@@ -406,7 +406,7 @@ class InputItemValidator:
             return self._validate_trusted_algos(
                 algorithm_did,
                 privacy_options.get("publisherTrustedAlgorithms", []),
-                privacy_options.get("trustedAlgorithmPublishers", []),
+                privacy_options.get("publisherTrustedAlgorithmPublishers", []),
             )
 
         allow_raw_algo = privacy_options.get("allowRawAlgorithm", False)

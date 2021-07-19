@@ -131,7 +131,7 @@ def get_compute_service_descriptor_specific_algo_publishers(
                 "allowRawAlgorithm": False,
                 "allowAllPublishedAlgorithms": False,
                 "publisherTrustedAlgorithms": [],
-                "trustedAlgorithmPublishers": publishers,
+                "publisherTrustedAlgorithmPublishers": publishers,
                 "allowNetworkAccess": True,
             },
             "timeout": 3600,
