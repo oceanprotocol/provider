@@ -335,13 +335,22 @@ class InputItemValidator:
 
         return self.validate_usage()
 
-    def _validate_trusted_algos(self, algorithm_did, trusted_algorithms):
-        if not trusted_algorithms:
+    def _validate_trusted_algos(
+        self, algorithm_did, trusted_algorithms, trusted_publishers
+    ):
+        if not trusted_algorithms and not trusted_publishers:
             self.error = (
                 "Using algorithmDid but allowAllPublishedAlgorithms is False and no "
-                "trusted algorithms are set in publisherTrustedAlgorithms."
+                "trusted algorithms are set in publisherTrustedAlgorithms, "
+                "nor are publisherTrustedAlgorithmPublishers set."
             )
             return False
+
+        if trusted_publishers:
+            algo_ddo = get_asset_from_metadatastore(get_metadata_url(), algorithm_did)
+            if not algo_ddo.publisher in trusted_publishers:
+                self.error = "this algorithm is not from a trusted publisher"
+                return False
 
         try:
             did_to_trusted_algo_dict = {
@@ -401,7 +410,9 @@ class InputItemValidator:
 
         if algorithm_did:
             return self._validate_trusted_algos(
-                algorithm_did, privacy_options.get("publisherTrustedAlgorithms", [])
+                algorithm_did,
+                privacy_options.get("publisherTrustedAlgorithms", []),
+                privacy_options.get("publisherTrustedAlgorithmPublishers", []),
             )
 
         allow_raw_algo = privacy_options.get("allowRawAlgorithm", False)

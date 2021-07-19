@@ -286,3 +286,34 @@ def test_fails(
         validator.error
         == f"Error in input at index 1: this algorithm did {alg_ddo.did} is not trusted."
     )
+
+    # Additional input has other trusted publishers
+    trust_ddo, trust_tx_id, _, _ = build_and_send_ddo_with_compute_service(
+        client, publisher_wallet, consumer_wallet, asset_type="specific_algo_publishers"
+    )
+    trust_sa = trust_ddo.get_service(ServiceTypes.CLOUD_COMPUTE)
+
+    data = {
+        "documentId": did,
+        "transferTxId": tx_id,
+        "serviceId": sa.index,
+        "output": valid_output,
+        "algorithmDid": alg_ddo.did,
+        "algorithmDataToken": alg_data_token,
+        "algorithmTransferTxId": alg_tx_id,
+        "additionalInputs": [
+            {
+                "documentId": trust_ddo.did,
+                "transferTxId": trust_tx_id,
+                "serviceId": trust_sa.index,
+            }
+        ],
+    }
+
+    validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
+    # passes through the trusted Publishers, but fails on trusted dids
+    assert validator.validate() is False
+    assert (
+        validator.error
+        == f"Error in input at index 1: this algorithm did {alg_ddo.did} is not trusted."
+    )

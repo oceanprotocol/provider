@@ -119,6 +119,32 @@ def get_compute_service_descriptor_specific_algo_dids(address, price, metadata, 
     )
 
 
+def get_compute_service_descriptor_specific_algo_publishers(
+    address, price, metadata, publishers
+):
+    compute_service_attributes = {
+        "main": {
+            "name": "dataAssetComputeServiceAgreement",
+            "creator": address,
+            "cost": price,
+            "privacy": {
+                "allowRawAlgorithm": False,
+                "allowAllPublishedAlgorithms": False,
+                "publisherTrustedAlgorithms": [],
+                "publisherTrustedAlgorithmPublishers": publishers,
+                "allowNetworkAccess": True,
+            },
+            "timeout": 3600,
+            "datePublished": metadata["main"]["dateCreated"],
+        }
+    }
+
+    return ServiceDescriptor.compute_service_descriptor(
+        compute_service_attributes,
+        f"http://localhost:8030{BaseURLs.ASSETS_URL}/compute",
+    )
+
+
 def get_compute_service_descriptor_allow_all_published(address, price, metadata):
     compute_service_attributes = {
         "main": {
