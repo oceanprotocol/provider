@@ -232,6 +232,7 @@ def initialize():
 
         url = get_asset_url_at_index(0, asset, provider_wallet)
         download_url = get_download_url(url, app.config["CONFIG_FILE"])
+        download_url = append_userdata(download_url, data)
         valid, _ = check_url_details(download_url)
 
         if not valid:
