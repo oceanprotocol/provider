@@ -75,8 +75,8 @@ def computeDelete():
       503:
         description: Service Unavailable
     """
-    logger.debug("computeDelete called")
     data = get_request_data(request)
+    logger.debug(f"computeDelete called. {data}")
     try:
         body = process_compute_request(data)
         response = requests_session.delete(
@@ -137,8 +137,8 @@ def computeStop():
       503:
         description: Service unavailable
     """
-    logger.debug("computeStop called")
     data = get_request_data(request)
+    logger.debug(f"computeStop called. {data}")
     try:
         body = process_compute_request(data)
         response = requests_session.put(
@@ -200,8 +200,8 @@ def computeStatus():
       503:
         description: Service Unavailable
     """
-    logger.debug("computeStatus called")
     data = get_request_data(request)
+    logger.debug(f"computeStatus called. {data}")
     try:
         body = process_compute_request(data)
 
@@ -299,8 +299,8 @@ def computeStart():
       503:
         description: Service unavailable
     """
-    logger.debug("computeStart called")
     data = get_request_data(request)
+    logger.debug(f"computeStart called. {data}")
 
     try:
         consumer_address = data.get("consumerAddress")

@@ -116,8 +116,8 @@ def encrypt():
 
     return: the encrypted document (hex str)
     """
-    logger.debug("encrypt endpoint called")
     data = get_request_data(request)
+    logger.debug(f"encrypt endpoint called. {data}")
     did = data.get("documentId")
     document = json.dumps(json.loads(data.get("document")), separators=(",", ":"))
     publisher_address = data.get("publisherAddress")
@@ -169,8 +169,8 @@ def fileinfo():
 
     return: list of file info (index, valid, contentLength, contentType)
     """
-    logger.debug("fileinfo endpoint called")
     data = get_request_data(request)
+    logger.debug(f"fileinfo endpoint called. {data}")
     did = data.get("did")
     url = data.get("url")
 
@@ -221,8 +221,8 @@ def initialize():
         }
         ```
     """
-    logger.debug("initialize endpoint called")
     data = get_request_data(request)
+    logger.debug(f"initialize endpoint called. {data}")
 
     try:
         (asset, service, _, consumer_address, token_address) = process_consume_request(
@@ -310,8 +310,8 @@ def download():
       503:
         description: Service Unavailable
     """
-    logger.debug("download endpoint called")
     data = get_request_data(request)
+    logger.debug(f"download endpoint called. {data}")
     try:
         (
             asset,
