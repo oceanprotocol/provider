@@ -12,7 +12,6 @@ from ocean_lib.common.agreements.service_types import ServiceTypesIndices
 from ocean_provider.exceptions import RequestNotFound
 from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.basics import get_provider_wallet
-from ocean_provider.utils.util import msg_hash
 
 
 class RBACValidator:
@@ -27,10 +26,12 @@ class RBACValidator:
             raise RequestNotFound("Request name is not valid!")
         self.action = action_mapping[request_name]
         self.provider_address = get_provider_wallet().address
-        self.credentials = {
-            "type": "address",
-            "address": self.provider_address,
-        }
+        address = (
+            self.request["consumerAddress"]
+            if "consumerAddress" in self.request and self.request["consumerAddress"]
+            else self.request["publisherAddress"]
+        )
+        self.credentials = {"type": "address", "address": address}
         self.component = "provider"
 
     @staticmethod
