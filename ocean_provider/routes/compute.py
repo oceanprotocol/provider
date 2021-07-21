@@ -8,16 +8,11 @@ import logging
 from flask import Response, jsonify, request
 from flask_sieve import validate
 from ocean_lib.common.http_requests.requests_session import get_requests_session
-
 from ocean_provider.exceptions import InvalidSignatureError
 from ocean_provider.log import setup_logging
 from ocean_provider.user_nonce import get_nonce, increment_nonce
-from ocean_provider.utils.accounts import verify_signature, sign_message
-from ocean_provider.utils.basics import (
-    LocalFileAdapter,
-    get_provider_wallet,
-    get_web3,
-)
+from ocean_provider.utils.accounts import sign_message, verify_signature
+from ocean_provider.utils.basics import LocalFileAdapter, get_provider_wallet, get_web3
 from ocean_provider.utils.util import (
     get_compute_endpoint,
     get_request_data,
@@ -80,6 +75,7 @@ def computeDelete():
       503:
         description: Service Unavailable
     """
+    logger.debug("computeDelete called")
     data = get_request_data(request)
     try:
         body = process_compute_request(data)
@@ -141,6 +137,7 @@ def computeStop():
       503:
         description: Service unavailable
     """
+    logger.debug("computeStop called")
     data = get_request_data(request)
     try:
         body = process_compute_request(data)
@@ -203,6 +200,7 @@ def computeStatus():
       503:
         description: Service Unavailable
     """
+    logger.debug("computeStatus called")
     data = get_request_data(request)
     try:
         body = process_compute_request(data)
@@ -301,6 +299,7 @@ def computeStart():
       503:
         description: Service unavailable
     """
+    logger.debug("computeStart called")
     data = get_request_data(request)
 
     try:

@@ -4,11 +4,11 @@
 #
 
 import configparser
+import logging
 
 from flask import jsonify
 from flask_swagger import swagger
 from flask_swagger_ui import get_swaggerui_blueprint
-
 from ocean_provider.config import Config
 from ocean_provider.constants import BaseURLs, ConfigSections, Metadata
 from ocean_provider.myapp import app
@@ -18,6 +18,8 @@ from ocean_provider.utils.util import get_compute_address
 
 config = Config(filename=app.config["CONFIG_FILE"])
 provider_url = config.get(ConfigSections.RESOURCES, "ocean_provider.url")
+
+logger = logging.getLogger(__name__)
 
 
 def get_services_endpoints():
@@ -69,7 +71,7 @@ def version():
         - service endpoints, which has all
         the existing endpoints from routes.py.
     """
-
+    logger.debug("root endpoint called")
     info = dict()
     info["software"] = Metadata.TITLE
     info["version"] = get_version()
@@ -88,6 +90,7 @@ def version():
 
 @app.route("/spec")
 def spec():
+    logger.debug("spec endpoint called")
     swag = swagger(app)
     swag["info"]["version"] = get_version()
     swag["info"]["title"] = Metadata.TITLE

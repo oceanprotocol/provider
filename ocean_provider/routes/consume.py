@@ -11,7 +11,6 @@ from flask_sieve import validate
 from ocean_lib.common.agreements.service_types import ServiceTypes
 from ocean_lib.common.did import did_to_id
 from ocean_lib.common.http_requests.requests_session import get_requests_session
-
 from ocean_provider.log import setup_logging
 from ocean_provider.myapp import app
 from ocean_provider.user_nonce import get_nonce, increment_nonce
@@ -23,7 +22,7 @@ from ocean_provider.utils.basics import (
     get_web3,
 )
 from ocean_provider.utils.encryption import do_encrypt
-from ocean_provider.utils.url import check_url_details, append_userdata
+from ocean_provider.utils.url import append_userdata, check_url_details
 from ocean_provider.utils.util import (
     build_download_response,
     check_asset_consumable,
@@ -60,6 +59,7 @@ logger = logging.getLogger(__name__)
 @services.route("/nonce", methods=["GET"])
 @validate(NonceRequest)
 def nonce():
+    logger.debug("nonce endpoint called")
     data = get_request_data(request)
     address = data.get("userAddress")
     nonce = get_nonce(address)
@@ -116,6 +116,7 @@ def encrypt():
 
     return: the encrypted document (hex str)
     """
+    logger.debug("encrypt endpoint called")
     data = get_request_data(request)
     did = data.get("documentId")
     document = json.dumps(json.loads(data.get("document")), separators=(",", ":"))
@@ -168,6 +169,7 @@ def fileinfo():
 
     return: list of file info (index, valid, contentLength, contentType)
     """
+    logger.debug("fileinfo endpoint called")
     data = get_request_data(request)
     did = data.get("did")
     url = data.get("url")
@@ -219,6 +221,7 @@ def initialize():
         }
         ```
     """
+    logger.debug("initialize endpoint called")
     data = get_request_data(request)
 
     try:
@@ -307,6 +310,7 @@ def download():
       503:
         description: Service Unavailable
     """
+    logger.debug("download endpoint called")
     data = get_request_data(request)
     try:
         (
