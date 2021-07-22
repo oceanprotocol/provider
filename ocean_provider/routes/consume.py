@@ -60,6 +60,7 @@ logger = logging.getLogger(__name__)
 @services.route("/nonce", methods=["GET"])
 @validate(NonceRequest)
 def nonce():
+    """Returns a `nonce` for the given account address."""
     data = get_request_data(request)
     address = data.get("userAddress")
     nonce = get_nonce(address)

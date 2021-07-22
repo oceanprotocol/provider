@@ -19,6 +19,9 @@ from web3.main import Web3
 
 
 def get_config(config_file: Optional[str] = None) -> Config:
+    """
+    :return: Config instance
+    """
     return Config(
         filename=config_file
         if config_file is not None
@@ -27,6 +30,9 @@ def get_config(config_file: Optional[str] = None) -> Config:
 
 
 def get_provider_wallet(web3: Optional[Web3] = None) -> Wallet:
+    """
+    :return: Wallet instance
+    """
     if web3 is None:
         web3 = get_web3()
 
@@ -49,16 +55,25 @@ def get_provider_wallet(web3: Optional[Web3] = None) -> Wallet:
 
 
 def get_datatoken_minter(datatoken_address):
+    """
+    :return: Eth account address of the Datatoken minter
+    """
     dt = DataToken(get_web3(), datatoken_address)
     publisher = dt.minter()
     return publisher
 
 
 def get_artifacts_path():
+    """
+    :return: Path to the artifact directory
+    """
     return Path(artifacts.__file__).parent.expanduser().resolve()
 
 
 def get_web3(network_url: Optional[str] = None) -> Web3:
+    """
+    :return: `Web3` instance
+    """
     if network_url is None:
         network_url = get_config().network_url
 
@@ -91,5 +106,8 @@ class LocalFileAdapter(requests.adapters.HTTPAdapter):
 
 
 def get_asset_from_metadatastore(metadata_url, document_id):
+    """
+    :return: `Ddo` instance
+    """
     aqua = Aquarius(metadata_url)
     return aqua.get_asset_ddo(document_id)

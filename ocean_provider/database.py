@@ -1,3 +1,6 @@
+"""
+Defines sqlite database related variables.
+"""
 import os
 from os.path import abspath, dirname
 
