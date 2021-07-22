@@ -60,7 +60,7 @@ logger = logging.getLogger(__name__)
 @validate(NonceRequest)
 def nonce():
     """Returns a `nonce` for the given account address."""
-    logger.debug("nonce endpoint called")
+    logger.info("nonce endpoint called")
     data = get_request_data(request)
     address = data.get("userAddress")
     nonce = get_nonce(address)
@@ -118,7 +118,7 @@ def encrypt():
     return: the encrypted document (hex str)
     """
     data = get_request_data(request)
-    logger.debug(f"encrypt endpoint called. {data}")
+    logger.info(f"encrypt endpoint called. {data}")
     did = data.get("documentId")
     document = json.dumps(json.loads(data.get("document")), separators=(",", ":"))
     publisher_address = data.get("publisherAddress")
@@ -171,7 +171,7 @@ def fileinfo():
     return: list of file info (index, valid, contentLength, contentType)
     """
     data = get_request_data(request)
-    logger.debug(f"fileinfo endpoint called. {data}")
+    logger.info(f"fileinfo endpoint called. {data}")
     did = data.get("did")
     url = data.get("url")
 
@@ -223,7 +223,7 @@ def initialize():
         ```
     """
     data = get_request_data(request)
-    logger.debug(f"initialize endpoint called. {data}")
+    logger.info(f"initialize endpoint called. {data}")
 
     try:
         (asset, service, _, consumer_address, token_address) = process_consume_request(
@@ -313,7 +313,7 @@ def download():
         description: Service Unavailable
     """
     data = get_request_data(request)
-    logger.debug(f"download endpoint called. {data}")
+    logger.info(f"download endpoint called. {data}")
     try:
         (
             asset,
@@ -331,7 +331,7 @@ def download():
         if not consumable:
             return jsonify(error=message), 400
 
-        logger.debug("validate_order called from download endpoint.")
+        logger.info("validate_order called from download endpoint.")
         _tx, _order_log, _transfer_log = validate_order(
             get_web3(),
             consumer_address,

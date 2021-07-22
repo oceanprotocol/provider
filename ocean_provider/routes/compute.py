@@ -76,7 +76,7 @@ def computeDelete():
         description: Service Unavailable
     """
     data = get_request_data(request)
-    logger.debug(f"computeDelete called. {data}")
+    logger.info(f"computeDelete called. {data}")
     try:
         body = process_compute_request(data)
         response = requests_session.delete(
@@ -138,7 +138,7 @@ def computeStop():
         description: Service unavailable
     """
     data = get_request_data(request)
-    logger.debug(f"computeStop called. {data}")
+    logger.info(f"computeStop called. {data}")
     try:
         body = process_compute_request(data)
         response = requests_session.put(
@@ -201,7 +201,7 @@ def computeStatus():
         description: Service Unavailable
     """
     data = get_request_data(request)
-    logger.debug(f"computeStatus called. {data}")
+    logger.info(f"computeStatus called. {data}")
     try:
         body = process_compute_request(data)
 
@@ -300,7 +300,7 @@ def computeStart():
         description: Service unavailable
     """
     data = get_request_data(request)
-    logger.debug(f"computeStart called. {data}")
+    logger.info(f"computeStart called. {data}")
 
     try:
         consumer_address = data.get("consumerAddress")

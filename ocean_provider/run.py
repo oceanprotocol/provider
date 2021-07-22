@@ -71,7 +71,7 @@ def version():
         - service endpoints, which has all
         the existing endpoints from routes.py.
     """
-    logger.debug("root endpoint called")
+    logger.info("root endpoint called")
     info = dict()
     info["software"] = Metadata.TITLE
     info["version"] = get_version()
@@ -90,7 +90,7 @@ def version():
 
 @app.route("/spec")
 def spec():
-    logger.debug("spec endpoint called")
+    logger.info("spec endpoint called")
     swag = swagger(app)
     swag["info"]["version"] = get_version()
     swag["info"]["title"] = Metadata.TITLE
