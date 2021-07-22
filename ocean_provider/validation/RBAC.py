@@ -26,10 +26,8 @@ class RBACValidator:
             raise RequestNotFound("Request name is not valid!")
         self.action = action_mapping[request_name]
         self.provider_address = get_provider_wallet().address
-        address = (
-            self.request["consumerAddress"]
-            if "consumerAddress" in self.request and self.request["consumerAddress"]
-            else self.request["publisherAddress"]
+        address = self.request.get(
+            "consumerAddress", self.request.get("publisherAddress")
         )
         self.credentials = {"type": "address", "address": address}
         self.component = "provider"
