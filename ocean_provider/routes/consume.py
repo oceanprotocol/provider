@@ -11,7 +11,6 @@ from flask_sieve import validate
 from ocean_lib.common.agreements.service_types import ServiceTypes
 from ocean_lib.common.did import did_to_id
 from ocean_lib.common.http_requests.requests_session import get_requests_session
-
 from ocean_provider.log import setup_logging
 from ocean_provider.myapp import app
 from ocean_provider.user_nonce import get_nonce, increment_nonce
@@ -23,7 +22,7 @@ from ocean_provider.utils.basics import (
     get_web3,
 )
 from ocean_provider.utils.encryption import do_encrypt
-from ocean_provider.utils.url import check_url_details, append_userdata
+from ocean_provider.utils.url import append_userdata, check_url_details
 from ocean_provider.utils.util import (
     build_download_response,
     check_asset_consumable,
@@ -61,6 +60,7 @@ logger = logging.getLogger(__name__)
 @validate(NonceRequest)
 def nonce():
     """Returns a `nonce` for the given account address."""
+    logger.info("nonce endpoint called")
     data = get_request_data(request)
     address = data.get("userAddress")
     nonce = get_nonce(address)
@@ -118,6 +118,7 @@ def encrypt():
     return: the encrypted document (hex str)
     """
     data = get_request_data(request)
+    logger.info(f"encrypt endpoint called. {data}")
     did = data.get("documentId")
     document = json.dumps(json.loads(data.get("document")), separators=(",", ":"))
     publisher_address = data.get("publisherAddress")
@@ -170,6 +171,7 @@ def fileinfo():
     return: list of file info (index, valid, contentLength, contentType)
     """
     data = get_request_data(request)
+    logger.info(f"fileinfo endpoint called. {data}")
     did = data.get("did")
     url = data.get("url")
 
@@ -221,6 +223,7 @@ def initialize():
         ```
     """
     data = get_request_data(request)
+    logger.info(f"initialize endpoint called. {data}")
 
     try:
         (asset, service, _, consumer_address, token_address) = process_consume_request(
@@ -310,6 +313,7 @@ def download():
         description: Service Unavailable
     """
     data = get_request_data(request)
+    logger.info(f"download endpoint called. {data}")
     try:
         (
             asset,
@@ -327,7 +331,7 @@ def download():
         if not consumable:
             return jsonify(error=message), 400
 
-        logger.debug("validate_order called from download endpoint.")
+        logger.info("validate_order called from download endpoint.")
         _tx, _order_log, _transfer_log = validate_order(
             get_web3(),
             consumer_address,
