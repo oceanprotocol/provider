@@ -10,6 +10,7 @@ from ocean_lib.assets.utils import create_checksum
 from ocean_lib.common.agreements.service_types import ServiceTypes
 from ocean_lib.common.did import did_to_id
 from ocean_lib.models.data_token import DataToken
+from web3.logs import DISCARD
 
 from ocean_provider.constants import BaseURLs
 from ocean_provider.myapp import app
@@ -149,7 +150,9 @@ class WorkflowValidator:
             try:
                 dt = DataToken(self.web3, self.consumer_address)
                 tx_receipt = dt.get_tx_receipt(self.web3, algorithm_tx_id)
-                event_logs = dt.events.OrderStarted().processReceipt(tx_receipt)
+                event_logs = dt.events.OrderStarted().processReceipt(
+                    tx_receipt, errors=DISCARD
+                )
                 order_log = event_logs[0] if event_logs else None
                 algo_service_id = order_log.args.serviceId
                 self.algo_service = algo.get_service_by_index(algo_service_id)
