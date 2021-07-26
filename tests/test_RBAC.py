@@ -31,7 +31,7 @@ def test_invalid_request_name():
 encrypt_endpoint = BaseURLs.ASSETS_URL + "/encrypt"
 
 
-def test_encrypt_request_payload(provider_address):
+def test_encrypt_request_payload(consumer_wallet, publisher_wallet):
     document = {
         "url": "http://localhost:8030" + encrypt_endpoint,
         "index": 0,
@@ -41,7 +41,10 @@ def test_encrypt_request_payload(provider_address):
         "encoding": "UTF-8",
         "compression": "zip",
     }
-    req = {"document": json.dumps(document)}
+    req = {
+        "document": json.dumps(document),
+        "publisherAddress": publisher_wallet.address,
+    }
     validator = RBACValidator(request_name="EncryptRequest", request=req)
     payload = validator.build_payload()
     assert validator.request == req
@@ -49,7 +52,7 @@ def test_encrypt_request_payload(provider_address):
     assert payload["component"] == "provider"
     assert payload["credentials"] == {
         "type": "address",
-        "address": provider_address,
+        "address": publisher_wallet.address,
     }
 
 
@@ -76,7 +79,7 @@ def test_initialize_request_payload(
     assert payload["component"] == "provider"
     assert payload["credentials"] == {
         "type": "address",
-        "address": provider_address,
+        "address": consumer_wallet.address,
     }
     assert payload["dids"][0]["did"] == ddo.did
     assert payload["dids"][0]["serviceId"] == sa.index
@@ -111,7 +114,7 @@ def test_access_request_payload(
     assert payload["component"] == "provider"
     assert payload["credentials"] == {
         "type": "address",
-        "address": provider_address,
+        "address": consumer_wallet.address,
     }
     assert payload["dids"][0]["did"] == ddo.did
     assert payload["dids"][0]["serviceId"] == sa.index
@@ -150,7 +153,7 @@ def test_compute_payload_without_additional_inputs(
     assert payload["component"] == "provider"
     assert payload["credentials"] == {
         "type": "address",
-        "address": provider_address,
+        "address": consumer_wallet.address,
     }
     assert payload["dids"][0]["did"] == dataset.did
     assert payload["dids"][0]["serviceId"] == sa.index
@@ -198,7 +201,7 @@ def test_compute_request_payload(
     assert payload["component"] == "provider"
     assert payload["credentials"] == {
         "type": "address",
-        "address": provider_address,
+        "address": consumer_wallet.address,
     }
     assert payload["dids"][0]["did"] == dataset.did
     assert payload["dids"][0]["serviceId"] == sa.index
