@@ -161,7 +161,7 @@ class WorkflowValidator:
                     asset_urls = get_asset_download_urls(
                         algo,
                         self.provider_wallet,
-                        config_file=app.config["CONFIG_FILE"],
+                        config_file=app.config["PROVIDER_CONFIG_FILE"],
                     )
 
                     if not asset_urls:
@@ -306,7 +306,9 @@ class InputItemValidator:
             return False
 
         asset_urls = get_asset_download_urls(
-            self.asset, self.provider_wallet, config_file=app.config["CONFIG_FILE"]
+            self.asset,
+            self.provider_wallet,
+            config_file=app.config["PROVIDER_CONFIG_FILE"],
         )
 
         if self.service.type == ServiceTypes.CLOUD_COMPUTE and not asset_urls:

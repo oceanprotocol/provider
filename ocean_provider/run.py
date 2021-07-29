@@ -18,7 +18,7 @@ from ocean_provider.utils.basics import get_provider_wallet, get_web3
 from ocean_provider.utils.util import get_compute_address
 
 setup_logging()
-config = Config(filename=app.config["CONFIG_FILE"])
+config = Config(filename=app.config["PROVIDER_CONFIG_FILE"])
 provider_url = config.get(ConfigSections.RESOURCES, "ocean_provider.url")
 
 logger = logging.getLogger(__name__)

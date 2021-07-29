@@ -5,7 +5,7 @@
 
 """
 This module creates an instance of flask `app`, creates `user_nonce` table if not exists, and sets the environment configuration.
-If `CONFIG_FILE` is not found in environment variables, default `config.ini` file is used.
+If `PROVIDER_CONFIG_FILE` is not found in environment variables, default `config.ini` file is used.
 """
 
 import os
@@ -34,7 +34,7 @@ Sieve(app)
 app.session = scoped_session(SessionLocal, scopefunc=_app_ctx_stack.__ident_func__)
 Base.query = app.session.query_property()
 
-if "CONFIG_FILE" in os.environ and os.environ["CONFIG_FILE"]:
-    app.config["CONFIG_FILE"] = os.environ["CONFIG_FILE"]
+if "PROVIDER_CONFIG_FILE" in os.environ and os.environ["PROVIDER_CONFIG_FILE"]:
+    app.config["PROVIDER_CONFIG_FILE"] = os.environ["PROVIDER_CONFIG_FILE"]
 else:
-    app.config["CONFIG_FILE"] = "config.ini"
+    app.config["PROVIDER_CONFIG_FILE"] = "config.ini"
