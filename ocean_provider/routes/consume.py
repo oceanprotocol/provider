@@ -178,10 +178,10 @@ def fileinfo():
     if did:
         asset = get_asset_from_metadatastore(get_metadata_url(), did)
         url_list = get_asset_download_urls(
-            asset, provider_wallet, config_file=app.config["CONFIG_FILE"]
+            asset, provider_wallet, config_file=app.config["PROVIDER_CONFIG_FILE"]
         )
     else:
-        url_list = [get_download_url(url, app.config["CONFIG_FILE"])]
+        url_list = [get_download_url(url, app.config["PROVIDER_CONFIG_FILE"])]
 
     with_checksum = data.get("checksum", False)
 
@@ -235,7 +235,7 @@ def initialize():
             return jsonify(error=message), 400
 
         url = get_asset_url_at_index(0, asset, provider_wallet)
-        download_url = get_download_url(url, app.config["CONFIG_FILE"])
+        download_url = get_download_url(url, app.config["PROVIDER_CONFIG_FILE"])
         download_url = append_userdata(download_url, data)
         valid, _ = check_url_details(download_url)
 
@@ -357,7 +357,7 @@ def download():
         if not url:
             return jsonify(error="Cannot decrypt files for this asset."), 400
 
-        download_url = get_download_url(url, app.config["CONFIG_FILE"])
+        download_url = get_download_url(url, app.config["PROVIDER_CONFIG_FILE"])
         download_url = append_userdata(download_url, data)
 
         logger.info(

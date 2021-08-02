@@ -79,7 +79,7 @@ Add the corresponding environment variables in your `.env` file. Here is an exam
 
 ```
 FLASK_APP=ocean_provider/run.py
-CONFIG_FILE=config.ini
+PROVIDER_CONFIG_FILE=config.ini
 PROVIDER_ADDRESS=your ethereum address goes here
 PROVIDER_KEY=the private key
 ```
