@@ -21,7 +21,9 @@ def verify_signature(signer_address, signature, original_msg, nonce: int = None)
     else:
         assert nonce is not None, "nonce is required when not using user auth token."
         message = f"{original_msg}{str(nonce)}"
-        address = Account.recover_message(message, signature=signature)
+        address = Account.recover_message(
+            encode_defunct(text=message), signature=signature
+        )
 
     if address.lower() == signer_address.lower():
         return True
@@ -71,7 +73,7 @@ def check_auth_token(token):
         return "0x0"
 
     message = f"{auth_token_message}\n{timestamp}"
-    address = Account.recover_message(message, signature=sig)
+    address = Account.recover_message(encode_defunct(message), signature=sig)
     return Web3.toChecksumAddress(address)
 
 
