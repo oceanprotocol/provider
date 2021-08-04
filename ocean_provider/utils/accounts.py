@@ -73,7 +73,7 @@ def check_auth_token(token):
         return "0x0"
 
     message = f"{auth_token_message}\n{timestamp}"
-    address = Account.recover_message(encode_defunct(message), signature=sig)
+    address = Account.recover_message(encode_defunct(text=message), signature=sig)
     return Web3.toChecksumAddress(address)
 
 
