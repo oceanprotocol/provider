@@ -24,6 +24,8 @@ from ocean_provider.validation.provider_requests import (
     ComputeRequest,
     ComputeStartRequest,
     UnsignedComputeRequest,
+    ComputeGetResult
+
 )
 
 from . import services
