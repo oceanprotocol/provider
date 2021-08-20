@@ -40,7 +40,7 @@ logger = logging.getLogger(__name__)
 
 @services.route("/compute", methods=["DELETE"])
 @validate(ComputeRequest)
-def computeDelete():
+def ComputeRequest():
     """Deletes a workflow.
 
     ---
