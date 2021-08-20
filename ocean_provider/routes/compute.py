@@ -40,7 +40,7 @@ logger = logging.getLogger(__name__)
 
 @services.route("/compute", methods=["DELETE"])
 @validate(ComputeRequest)
-def ComputeRequest():
+def computeDelete():
     """Deletes a workflow.
 
     ---
@@ -347,7 +347,7 @@ def computeStart():
 
 @services.route("/computeResult", methods=["GET"])
 @validate(ComputeGetResult)
-def download():
+def ComputeResult():
     """Allows download of asset data file.
 
     ---
