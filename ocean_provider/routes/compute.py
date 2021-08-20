@@ -342,3 +342,73 @@ def computeStart():
         )
     except (ValueError, KeyError, Exception) as e:
         return service_unavailable(e, data, logger)
+
+@services.route("/computeResult", methods=["GET"])
+@validate(ComputeGetResult)
+def download():
+    """Allows download of asset data file.
+
+    ---
+    tags:
+      - services
+    consumes:
+      - application/json
+    parameters:
+      - name: consumerAddress
+        in: query
+        description: The consumer address.
+        required: true
+        type: string
+      - name: jobId
+        in: query
+        description: JobId
+        required: true
+        type: string
+      - name: index
+        in: query
+        description: Result index
+        required: true
+      - name: signature
+        in: query
+        description: Signature of (jobId+index+consumerAddress) to verify that the consumer has rights to download the result
+    responses:
+      200:
+        description: Content of the result
+      400:
+        description: One of the required attributes is missing.
+      404:
+        description: Result not found
+      503:
+        description: Service Unavailable
+    """
+    data = get_request_data(request)
+    logger.info(f"computeResult endpoint called. {data}")
+    url = get_compute_endpoint()
+    msg_to_sign = f"{data.get('jobId')}{data.get('index')}{data.get('consumerAddress')}"
+    # we sign the same message as consumer does, but using our key
+    providerSignature = sign_message(msg_to_sign, provider_wallet)
+    result_url = (
+            f"{url}?"
+            f"index={data.get('index')}"
+            f"&consumerAddress={data.get('consumerAddress')}"
+            f"&jobId={data.get('jobId')}"
+            f"&consumerSignature={data.get('signature')}"
+            f"&providerSignature={providerSignature}"
+        )
+    logger.debug(
+            f"Done processing computeResult , " f" url {result_url}"
+        )
+    try:
+      return build_download_response(
+            request, requests_session, result_url, result_url, None
+    )
+    except Exception as e:
+        return service_unavailable(
+            e,
+            {
+                "jobId": data.get("jobId"),
+                "index": data.get("index"),
+                "consumerAddress": data.get("consumerAddress"),
+            },
+            logger,
+        )
