@@ -88,6 +88,7 @@ def build_download_response(
             download_response_headers = {
                 "Content-Disposition": f"attachment;filename={filename}",
                 "Access-Control-Expose-Headers": "Content-Disposition",
+                "Connection": "close"
             }
         logger.error(download_response_headers)
         def _generate(_response):

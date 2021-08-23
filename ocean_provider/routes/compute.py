@@ -41,7 +41,7 @@ requests_session.mount("file://", LocalFileAdapter())
 
 logger = logging.getLogger(__name__)
 
-
+standard_headers = {"Content-type": "application/json", "Connection": "close"}
 @services.route("/compute", methods=["DELETE"])
 @validate(ComputeRequest)
 def computeDelete():
@@ -88,13 +88,13 @@ def computeDelete():
         response = requests_session.delete(
             get_compute_endpoint(),
             params=body,
-            headers={"content-type": "application/json"},
+            headers=standard_headers,
         )
         increment_nonce(body["owner"])
         return Response(
             response.content,
             response.status_code,
-            headers={"content-type": "application/json"},
+            headers=standard_headers,
         )
     except (ValueError, Exception) as e:
         return service_unavailable(e, data, logger)
@@ -150,13 +150,13 @@ def computeStop():
         response = requests_session.put(
             get_compute_endpoint(),
             params=body,
-            headers={"content-type": "application/json"},
+            headers=standard_headers,
         )
         increment_nonce(body["owner"])
         return Response(
             response.content,
             response.status_code,
-            headers={"content-type": "application/json"},
+            headers=standard_headers,
         )
     except (ValueError, Exception) as e:
         return service_unavailable(e, data, logger)
@@ -214,7 +214,7 @@ def computeStatus():
         response = requests_session.get(
             get_compute_endpoint(),
             params=body,
-            headers={"content-type": "application/json"},
+            headers=standard_headers,
         )
 
         _response = response.content
@@ -250,7 +250,7 @@ def computeStatus():
         return Response(
             _response,
             response.status_code,
-            headers={"content-type": "application/json"},
+            headers=standard_headers,
         )
 
     except (ValueError, Exception) as e:
@@ -338,13 +338,13 @@ def computeStart():
         response = requests_session.post(
             get_compute_endpoint(),
             data=json.dumps(payload),
-            headers={"content-type": "application/json"},
+            headers=standard_headers,
         )
         increment_nonce(consumer_address)
         return Response(
             response.content,
             response.status_code,
-            headers={"content-type": "application/json"},
+            headers=standard_headers,
         )
     except (ValueError, KeyError, Exception) as e:
         return service_unavailable(e, data, logger)
