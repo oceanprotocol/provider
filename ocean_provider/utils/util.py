@@ -61,7 +61,7 @@ def build_download_response(
         response = requests_session.get(
             download_url, headers=download_request_headers, stream=True, timeout=3
         )
-        logger.error(f'{response.headers}')
+        logger.error(f"{response.headers}")
         if not is_range_request:
             filename = url.split("/")[-1]
 
@@ -88,9 +88,10 @@ def build_download_response(
             download_response_headers = {
                 "Content-Disposition": f"attachment;filename={filename}",
                 "Access-Control-Expose-Headers": "Content-Disposition",
-                "Connection": "close"
+                "Connection": "close",
             }
         logger.error(download_response_headers)
+
         def _generate(_response):
             for chunk in _response.iter_content(chunk_size=4096):
                 if chunk:
@@ -193,6 +194,7 @@ def get_download_url(url, config_file):
 
 def get_compute_endpoint():
     return get_config().operator_service_url + "/api/v1/operator/compute"
+
 
 def get_compute_result_endpoint():
     return get_config().operator_service_url + "/api/v1/operator/getResult"

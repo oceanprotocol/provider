@@ -15,6 +15,7 @@ from web3 import Web3
 setup_logging()
 logger = logging.getLogger(__name__)
 
+
 def verify_signature(signer_address, signature, original_msg, nonce: int = None):
     """
     :return: True if signature is valid

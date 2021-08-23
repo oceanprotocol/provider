@@ -180,6 +180,7 @@ class ComputeStartRequest(CustomJsonRequest):
             "signature": ["required", "signature:consumerAddress,documentId,jobId"],
         }
 
+
 class ComputeGetResult(CustomJsonRequest):
     def rules(self):
         return {
@@ -188,6 +189,7 @@ class ComputeGetResult(CustomJsonRequest):
             "consumerAddress": ["bail", "required"],
             "signature": ["required", "signature:consumerAddress,index,jobId"],
         }
+
 
 class DownloadRequest(CustomJsonRequest):
     def rules(self):

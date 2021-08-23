@@ -28,8 +28,7 @@ from ocean_provider.validation.provider_requests import (
     ComputeRequest,
     ComputeStartRequest,
     UnsignedComputeRequest,
-    ComputeGetResult
-
+    ComputeGetResult,
 )
 
 from . import services
@@ -42,6 +41,8 @@ requests_session.mount("file://", LocalFileAdapter())
 logger = logging.getLogger(__name__)
 
 standard_headers = {"Content-type": "application/json", "Connection": "close"}
+
+
 @services.route("/compute", methods=["DELETE"])
 @validate(ComputeRequest)
 def computeDelete():
@@ -349,6 +350,7 @@ def computeStart():
     except (ValueError, KeyError, Exception) as e:
         return service_unavailable(e, data, logger)
 
+
 @services.route("/computeResult", methods=["GET"])
 @validate(ComputeGetResult)
 def computeResult():
@@ -394,23 +396,21 @@ def computeResult():
     # we sign the same message as consumer does, but using our key
     provider_signature = sign_message(msg_to_sign, provider_wallet)
     params = {
-            "index": data.get('index'),
-            "consumerAddress": data.get('consumerAddress'),
-            "jobId": data.get('jobId'),
-            "consumerSignature": data.get('signature'),
-            "providerSignature": provider_signature
+        "index": data.get("index"),
+        "consumerAddress": data.get("consumerAddress"),
+        "jobId": data.get("jobId"),
+        "consumerSignature": data.get("signature"),
+        "providerSignature": provider_signature,
     }
     req = PreparedRequest()
     req.prepare_url(url, params)
     result_url = req.url
-    logger.debug(
-            f"Done processing computeResult, url: {result_url}"
-        )
-    increment_nonce(data.get('consumerAddress'))
+    logger.debug(f"Done processing computeResult, url: {result_url}")
+    increment_nonce(data.get("consumerAddress"))
     try:
-      return build_download_response(
+        return build_download_response(
             request, requests_session, result_url, result_url, None
-    )
+        )
     except Exception as e:
         return service_unavailable(
             e,
