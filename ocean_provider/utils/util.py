@@ -335,7 +335,10 @@ def decode_from_data(data, key, dec_type="list"):
 def service_unavailable(error, context, custom_logger=None):
     text_items = []
     for key, value in context.items():
-        text_items.append(key + "=" + str(value))
+        if isinstance(value, str):
+            text_items.append(key + "=" + str(value))
+        else:
+            text_items.append(key + "=" + json.dumps(value))
 
     logger_message = "Payload was: " + ",".join(text_items)
     custom_logger = custom_logger if custom_logger else logger
