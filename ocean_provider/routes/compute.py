@@ -14,11 +14,14 @@ from ocean_provider.user_nonce import get_nonce, increment_nonce
 from ocean_provider.utils.accounts import sign_message, verify_signature
 from ocean_provider.utils.basics import LocalFileAdapter, get_provider_wallet, get_web3
 from ocean_provider.utils.util import (
+    build_download_response,
     get_compute_endpoint,
+    get_compute_result_endpoint,
     get_request_data,
     process_compute_request,
     service_unavailable,
 )
+
 from ocean_provider.validation.algo import WorkflowValidator
 from ocean_provider.validation.provider_requests import (
     ComputeRequest,
@@ -235,7 +238,7 @@ def computeStatus():
             if not isinstance(resp_content, list):
                 resp_content = [resp_content]
             _response = []
-            keys_to_filter = ["resultsUrl", "algorithmLogUrl", "resultsDid", "owner"]
+            keys_to_filter = ["results", "owner"]
             for job_info in resp_content:
                 for k in keys_to_filter:
                     job_info.pop(k)
@@ -347,7 +350,7 @@ def computeStart():
 
 @services.route("/computeResult", methods=["GET"])
 @validate(ComputeGetResult)
-def ComputeResult():
+def computeResult():
     """Allows download of asset data file.
 
     ---
@@ -372,7 +375,7 @@ def ComputeResult():
         required: true
       - name: signature
         in: query
-        description: Signature of (jobId+index+consumerAddress) to verify that the consumer has rights to download the result
+        description: Signature of (consumerAddress+jobId+index+nonce) to verify that the consumer has rights to download the result
     responses:
       200:
         description: Content of the result
@@ -385,21 +388,24 @@ def ComputeResult():
     """
     data = get_request_data(request)
     logger.info(f"computeResult endpoint called. {data}")
-    url = get_compute_endpoint()
+    url = get_compute_result_endpoint()
     msg_to_sign = f"{data.get('jobId')}{data.get('index')}{data.get('consumerAddress')}"
     # we sign the same message as consumer does, but using our key
-    providerSignature = sign_message(msg_to_sign, provider_wallet)
-    result_url = (
-            f"{url}?"
-            f"index={data.get('index')}"
-            f"&consumerAddress={data.get('consumerAddress')}"
-            f"&jobId={data.get('jobId')}"
-            f"&consumerSignature={data.get('signature')}"
-            f"&providerSignature={providerSignature}"
-        )
+    provider_signature = sign_message(msg_to_sign, provider_wallet)
+    params = {
+            "index": data.get('index'),
+            "consumerAddress": data.get('consumerAddress'),
+            "jobId": data.get('jobId'),
+            "consumerSignature": data.get('signature'),
+            "providerSignature": provider_signature
+    }
+    req = PreparedRequest()
+    req.prepare_url(url, params)
+    result_url = req.url
     logger.debug(
-            f"Done processing computeResult , " f" url {result_url}"
+            f"Done processing computeResult, url: {result_url}"
         )
+    increment_nonce(data.get('consumerAddress'))
     try:
       return build_download_response(
             request, requests_session, result_url, result_url, None

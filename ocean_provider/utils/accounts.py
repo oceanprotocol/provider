@@ -3,14 +3,17 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 from datetime import datetime
-
+import logging
 import eth_keys
 from eth_account.account import Account
 from eth_account.messages import encode_defunct
 from ocean_provider.exceptions import InvalidSignatureError
+from ocean_provider.log import setup_logging
 from ocean_provider.utils.basics import get_config, get_web3
 from web3 import Web3
 
+setup_logging()
+logger = logging.getLogger(__name__)
 
 def verify_signature(signer_address, signature, original_msg, nonce: int = None):
     """
@@ -30,9 +33,10 @@ def verify_signature(signer_address, signature, original_msg, nonce: int = None)
 
     msg = (
         f"Invalid signature {signature} for "
-        f"ethereum address {signer_address}, documentId {original_msg}"
-        f"and nonce {nonce}."
+        f"ethereum address {signer_address}, message {original_msg} "
+        f"and nonce {nonce}. Expected: {signer_address.lower()} but got {address.lower()}"
     )
+    logger.error(msg)
     raise InvalidSignatureError(msg)
 
 
