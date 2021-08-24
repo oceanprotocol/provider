@@ -5,7 +5,6 @@ import uuid
 from ocean_lib.common.agreements.service_agreement import ServiceAgreement
 from ocean_lib.common.agreements.service_types import ServiceTypes
 from ocean_lib.models.data_token import DataToken
-from requests.models import PreparedRequest
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
 from tests.helpers.service_descriptors import (
@@ -147,9 +146,7 @@ def get_compute_job_info(client, endpoint, params):
 
 
 def get_compute_result(client, endpoint, params):
-    req = PreparedRequest()
-    req.prepare_url(endpoint, params)
-    response = client.get(req.url)
+    response = client.get(endpoint + "?" + "&".join([f"{k}={v}" for k, v in params.items()]))
     assert (
         response.status_code == 200 and response.data
     ), f"get compute result failed: status {response.status}, data {response.data}"
