@@ -150,7 +150,7 @@ def get_compute_result(client, endpoint, params):
         endpoint + "?" + "&".join([f"{k}={v}" for k, v in params.items()])
     )
     assert (
-        response.status_code == 200 and response.data
+        response.status_code == 200
     ), f"get compute result failed: status {response.status}, data {response.data}"
 
     return response.data

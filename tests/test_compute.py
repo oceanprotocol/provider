@@ -193,11 +193,11 @@ def test_compute(client, publisher_wallet, consumer_wallet):
         if job_info["status"] > 60:
             break
         tries = tries + 1
-        if tries > 100:
+        if tries > 200:
             break
         time.sleep(5)
 
-    assert (tries > 100, "Timeout waiting for the job to be completed")
+    assert (tries > 200, "Timeout waiting for the job to be completed")
     index = 0
     signature = get_compute_signature(client, consumer_wallet, index, job_id)
     payload = dict(
