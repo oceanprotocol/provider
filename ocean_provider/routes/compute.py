@@ -240,11 +240,17 @@ def computeStatus():
             if not isinstance(resp_content, list):
                 resp_content = [resp_content]
             _response = []
-            keys_to_filter = ["resultsUrl", "algorithmLogUrl", "resultsDid", "results", "owner"]
+            keys_to_filter = [
+                "resultsUrl",
+                "algorithmLogUrl",
+                "resultsDid",
+                "results",
+                "owner",
+            ]
             for job_info in resp_content:
                 for k in keys_to_filter:
                     if k in job_info:
-                      job_info.pop(k)
+                        job_info.pop(k)
                 _response.append(job_info)
 
             _response = json.dumps(_response)
