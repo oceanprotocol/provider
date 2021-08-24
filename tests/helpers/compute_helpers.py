@@ -146,7 +146,9 @@ def get_compute_job_info(client, endpoint, params):
 
 
 def get_compute_result(client, endpoint, params):
-    response = client.get(endpoint + "?" + "&".join([f"{k}={v}" for k, v in params.items()]))
+    response = client.get(
+        endpoint + "?" + "&".join([f"{k}={v}" for k, v in params.items()])
+    )
     assert (
         response.status_code == 200 and response.data
     ), f"get compute result failed: status {response.status}, data {response.data}"
