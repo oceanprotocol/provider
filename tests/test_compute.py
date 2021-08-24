@@ -193,7 +193,8 @@ def test_compute(client, publisher_wallet, consumer_wallet):
         if job_info["status"] > 60:
             break
         tries = tries + 1
-        if tries>100: break
+        if tries > 100:
+            break
         time.sleep(5)
 
     assert (tries > 100, "Timeout waiting for the job to be completed")
