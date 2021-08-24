@@ -205,6 +205,7 @@ def test_compute(client, publisher_wallet, consumer_wallet):
         }
     )
     result_data = get_compute_result(client, BaseURLs.ASSETS_URL + "/computeResult", payload)
+    assert (result_data, 'We should have a result')
 
         
 

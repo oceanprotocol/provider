@@ -145,6 +145,18 @@ def get_compute_job_info(client, endpoint, params):
 
     return dict(job_info[0])
 
+def get_compute_result(client, endpoint, params):
+    response = client.get(
+        endpoint + "?" + "&".join([f"{k}={v}" for k, v in params.items()]),
+        data=json.dumps(params),
+        content_type="application/json",
+    )
+    assert (
+        response.status_code == 200 and response.data
+    ), f"get compute result failed: status {response.status}, data {response.data}"
+
+    return response.data
+
 
 def comp_ds(
     client, wallet, compute_service_descriptor=None, algos=None, publishers=None
