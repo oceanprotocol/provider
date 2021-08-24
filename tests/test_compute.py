@@ -195,11 +195,12 @@ def test_compute(client, publisher_wallet, consumer_wallet):
         tries = tries + 1
         assert (tries > 100, "Timeout waiting for the job to be completed")
         time.sleep(5)
+    index = 0
     signature = get_compute_signature(client, consumer_wallet, index, job_id)
     payload = dict(
         {
             "signature": signature,
-            "index": 0,
+            "index": index,
             "consumerAddress": consumer_wallet.address,
             "jobId": job_id,
         }
