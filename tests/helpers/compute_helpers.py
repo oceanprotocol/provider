@@ -145,6 +145,7 @@ def get_compute_job_info(client, endpoint, params):
 
     return dict(job_info[0])
 
+
 def get_compute_result(client, endpoint, params):
     response = client.get(
         endpoint + "?" + "&".join([f"{k}={v}" for k, v in params.items()]),

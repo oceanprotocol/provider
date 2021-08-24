@@ -190,10 +190,10 @@ def test_compute(client, publisher_wallet, consumer_wallet):
     tries = 0
     while True:
         job_info = get_compute_job_info(client, compute_endpoint, payload)
-        if job_info['status'] > 60:
+        if job_info["status"] > 60:
             break
         tries = tries + 1
-        assert (tries > 100, 'Timeout waiting for the job to be completed')
+        assert (tries > 100, "Timeout waiting for the job to be completed")
         time.sleep(5)
     signature = get_compute_signature(client, consumer_wallet, index, job_id)
     payload = dict(
@@ -204,11 +204,10 @@ def test_compute(client, publisher_wallet, consumer_wallet):
             "jobId": job_id,
         }
     )
-    result_data = get_compute_result(client, BaseURLs.ASSETS_URL + "/computeResult", payload)
-    assert (result_data, 'We should have a result')
-
-        
-
+    result_data = get_compute_result(
+        client, BaseURLs.ASSETS_URL + "/computeResult", payload
+    )
+    assert (result_data, "We should have a result")
 
 
 def test_compute_diff_provider(client, publisher_wallet, consumer_wallet):
