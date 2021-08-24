@@ -2,6 +2,7 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
+import time
 from ocean_lib.common.agreements.service_types import ServiceTypes
 from ocean_lib.models.data_token import DataToken
 
@@ -15,6 +16,7 @@ from tests.helpers.compute_helpers import (
     get_compute_signature,
     get_possible_compute_job_status_text,
     post_to_compute,
+    get_compute_result,
 )
 from tests.test_helpers import mint_tokens_and_wait, send_order
 
@@ -184,6 +186,28 @@ def test_compute(client, publisher_wallet, consumer_wallet):
     assert (
         "resultsDid" not in job_info
     ), "resultsDid should not be in this status response"
+    # wait until job is done
+    tries = 0
+    while True:
+        job_info = get_compute_job_info(client, compute_endpoint, payload)
+        if job_info['status'] > 60:
+            break
+        tries = tries + 1
+        assert (tries > 100, 'Timeout waiting for the job to be completed')
+        time.sleep(5)
+    signature = get_compute_signature(client, consumer_wallet, index, job_id)
+    payload = dict(
+        {
+            "signature": signature,
+            "index": 0,
+            "consumerAddress": consumer_wallet.address,
+            "jobId": job_id,
+        }
+    )
+    result_data = get_compute_result(client, BaseURLs.ASSETS_URL + "/computeResult", payload)
+
+        
+
 
 
 def test_compute_diff_provider(client, publisher_wallet, consumer_wallet):
