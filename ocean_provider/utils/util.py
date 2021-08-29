@@ -89,7 +89,6 @@ def build_download_response(
                 "Access-Control-Expose-Headers": "Content-Disposition",
                 "Connection": "close",
             }
-        
 
         def _generate(_response):
             for chunk in _response.iter_content(chunk_size=4096):
@@ -337,7 +336,7 @@ def service_unavailable(error, context, custom_logger=None):
     text_items = []
     for key, value in context.items():
         value = value if isinstance(value, str) else json.dumps(value)
-        text_items.append(key + '=' + value)
+        text_items.append(key + "=" + value)
 
     logger_message = "Payload was: " + ",".join(text_items)
     custom_logger = custom_logger if custom_logger else logger
