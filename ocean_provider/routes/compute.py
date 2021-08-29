@@ -249,8 +249,7 @@ def computeStatus():
             ]
             for job_info in resp_content:
                 for k in keys_to_filter:
-                    if k in job_info:
-                        job_info.pop(k)
+                    job_info.pop(k, None)
                 _response.append(job_info)
 
             _response = json.dumps(_response)
