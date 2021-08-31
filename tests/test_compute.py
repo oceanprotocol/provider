@@ -3,9 +3,9 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import time
+
 from ocean_lib.common.agreements.service_types import ServiceTypes
 from ocean_lib.models.data_token import DataToken
-
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
 from ocean_provider.validation.algo import build_stage_output_dict
@@ -13,10 +13,10 @@ from tests.helpers.compute_helpers import (
     build_and_send_ddo_with_compute_service,
     comp_ds,
     get_compute_job_info,
+    get_compute_result,
     get_compute_signature,
     get_possible_compute_job_status_text,
     post_to_compute,
-    get_compute_result,
 )
 from tests.test_helpers import mint_tokens_and_wait, send_order
 
@@ -186,7 +186,9 @@ def test_compute(client, publisher_wallet, consumer_wallet):
     assert (
         "resultsDid" not in job_info
     ), "resultsDid should not be in this status response"
-    # wait until job is done
+
+    # wait until job is done, see:
+    # https://github.com/oceanprotocol/operator-service/blob/main/API.md#status-description
     tries = 0
     while tries < 200:
         job_info = get_compute_job_info(client, compute_endpoint, payload)
