@@ -146,6 +146,8 @@ def get_compute_job_info(client, endpoint, params):
 
 
 def get_compute_result(client, endpoint, params):
+    # not possible to use PrepparedRequest here,
+    # since we don't have the full url (schema, host) in the tests
     response = client.get(
         endpoint + "?" + "&".join([f"{k}={v}" for k, v in params.items()])
     )
