@@ -2,9 +2,10 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
+import time
+
 from ocean_lib.common.agreements.service_types import ServiceTypes
 from ocean_lib.models.data_token import DataToken
-
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
 from ocean_provider.validation.algo import build_stage_output_dict
@@ -12,6 +13,7 @@ from tests.helpers.compute_helpers import (
     build_and_send_ddo_with_compute_service,
     comp_ds,
     get_compute_job_info,
+    get_compute_result,
     get_compute_signature,
     get_possible_compute_job_status_text,
     post_to_compute,
@@ -184,6 +186,32 @@ def test_compute(client, publisher_wallet, consumer_wallet):
     assert (
         "resultsDid" not in job_info
     ), "resultsDid should not be in this status response"
+
+    # wait until job is done, see:
+    # https://github.com/oceanprotocol/operator-service/blob/main/API.md#status-description
+    tries = 0
+    while tries < 200:
+        job_info = get_compute_job_info(client, compute_endpoint, payload)
+        if job_info["status"] > 60:
+            break
+        tries = tries + 1
+        time.sleep(5)
+
+    assert tries <= 200, "Timeout waiting for the job to be completed"
+    index = 0
+    signature = get_compute_signature(client, consumer_wallet, index, job_id)
+    payload = dict(
+        {
+            "signature": signature,
+            "index": index,
+            "consumerAddress": consumer_wallet.address,
+            "jobId": job_id,
+        }
+    )
+    result_data = get_compute_result(
+        client, BaseURLs.ASSETS_URL + "/computeResult", payload
+    )
+    assert result_data, "We should have a result"
 
 
 def test_compute_diff_provider(client, publisher_wallet, consumer_wallet):

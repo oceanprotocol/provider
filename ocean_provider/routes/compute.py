@@ -7,6 +7,7 @@ import logging
 
 from flask import Response, jsonify, request
 from flask_sieve import validate
+from requests.models import PreparedRequest
 from ocean_lib.common.http_requests.requests_session import get_requests_session
 from ocean_provider.exceptions import InvalidSignatureError
 from ocean_provider.log import setup_logging
@@ -14,16 +15,20 @@ from ocean_provider.user_nonce import get_nonce, increment_nonce
 from ocean_provider.utils.accounts import sign_message, verify_signature
 from ocean_provider.utils.basics import LocalFileAdapter, get_provider_wallet, get_web3
 from ocean_provider.utils.util import (
+    build_download_response,
     get_compute_endpoint,
+    get_compute_result_endpoint,
     get_request_data,
     process_compute_request,
     service_unavailable,
 )
+
 from ocean_provider.validation.algo import WorkflowValidator
 from ocean_provider.validation.provider_requests import (
     ComputeRequest,
     ComputeStartRequest,
     UnsignedComputeRequest,
+    ComputeGetResult,
 )
 
 from . import services
@@ -34,6 +39,8 @@ requests_session = get_requests_session()
 requests_session.mount("file://", LocalFileAdapter())
 
 logger = logging.getLogger(__name__)
+
+standard_headers = {"Content-type": "application/json", "Connection": "close"}
 
 
 @services.route("/compute", methods=["DELETE"])
@@ -82,13 +89,13 @@ def computeDelete():
         response = requests_session.delete(
             get_compute_endpoint(),
             params=body,
-            headers={"content-type": "application/json"},
+            headers=standard_headers,
         )
         increment_nonce(body["owner"])
         return Response(
             response.content,
             response.status_code,
-            headers={"content-type": "application/json"},
+            headers=standard_headers,
         )
     except (ValueError, Exception) as e:
         return service_unavailable(e, data, logger)
@@ -144,13 +151,13 @@ def computeStop():
         response = requests_session.put(
             get_compute_endpoint(),
             params=body,
-            headers={"content-type": "application/json"},
+            headers=standard_headers,
         )
         increment_nonce(body["owner"])
         return Response(
             response.content,
             response.status_code,
-            headers={"content-type": "application/json"},
+            headers=standard_headers,
         )
     except (ValueError, Exception) as e:
         return service_unavailable(e, data, logger)
@@ -208,7 +215,7 @@ def computeStatus():
         response = requests_session.get(
             get_compute_endpoint(),
             params=body,
-            headers={"content-type": "application/json"},
+            headers=standard_headers,
         )
 
         _response = response.content
@@ -233,10 +240,16 @@ def computeStatus():
             if not isinstance(resp_content, list):
                 resp_content = [resp_content]
             _response = []
-            keys_to_filter = ["resultsUrl", "algorithmLogUrl", "resultsDid", "owner"]
+            keys_to_filter = [
+                "resultsUrl",
+                "algorithmLogUrl",
+                "resultsDid",
+                "results",
+                "owner",
+            ]
             for job_info in resp_content:
                 for k in keys_to_filter:
-                    job_info.pop(k)
+                    job_info.pop(k, None)
                 _response.append(job_info)
 
             _response = json.dumps(_response)
@@ -244,7 +257,7 @@ def computeStatus():
         return Response(
             _response,
             response.status_code,
-            headers={"content-type": "application/json"},
+            headers=standard_headers,
         )
 
     except (ValueError, Exception) as e:
@@ -332,13 +345,85 @@ def computeStart():
         response = requests_session.post(
             get_compute_endpoint(),
             data=json.dumps(payload),
-            headers={"content-type": "application/json"},
+            headers=standard_headers,
         )
         increment_nonce(consumer_address)
         return Response(
             response.content,
             response.status_code,
-            headers={"content-type": "application/json"},
+            headers=standard_headers,
         )
     except (ValueError, KeyError, Exception) as e:
         return service_unavailable(e, data, logger)
+
+
+@services.route("/computeResult", methods=["GET"])
+@validate(ComputeGetResult)
+def computeResult():
+    """Allows download of asset data file.
+
+    ---
+    tags:
+      - services
+    consumes:
+      - application/json
+    parameters:
+      - name: consumerAddress
+        in: query
+        description: The consumer address.
+        required: true
+        type: string
+      - name: jobId
+        in: query
+        description: JobId
+        required: true
+        type: string
+      - name: index
+        in: query
+        description: Result index
+        required: true
+      - name: signature
+        in: query
+        description: Signature of (consumerAddress+jobId+index+nonce) to verify that the consumer has rights to download the result
+    responses:
+      200:
+        description: Content of the result
+      400:
+        description: One of the required attributes is missing.
+      404:
+        description: Result not found
+      503:
+        description: Service Unavailable
+    """
+    data = get_request_data(request)
+    logger.info(f"computeResult endpoint called. {data}")
+    url = get_compute_result_endpoint()
+    msg_to_sign = f"{data.get('jobId')}{data.get('index')}{data.get('consumerAddress')}"
+    # we sign the same message as consumer does, but using our key
+    provider_signature = sign_message(msg_to_sign, provider_wallet)
+    params = {
+        "index": data.get("index"),
+        "consumerAddress": data.get("consumerAddress"),
+        "jobId": data.get("jobId"),
+        "consumerSignature": data.get("signature"),
+        "providerSignature": provider_signature,
+    }
+    req = PreparedRequest()
+    req.prepare_url(url, params)
+    result_url = req.url
+    logger.debug(f"Done processing computeResult, url: {result_url}")
+    increment_nonce(data.get("consumerAddress"))
+    try:
+        return build_download_response(
+            request, requests_session, result_url, result_url, None
+        )
+    except Exception as e:
+        return service_unavailable(
+            e,
+            {
+                "jobId": data.get("jobId"),
+                "index": data.get("index"),
+                "consumerAddress": data.get("consumerAddress"),
+            },
+            logger,
+        )

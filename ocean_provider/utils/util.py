@@ -25,8 +25,10 @@ from ocean_provider.utils.basics import (
     get_web3,
 )
 from ocean_provider.utils.encryption import do_decrypt
+from ocean_provider.log import setup_logging
 from ocean_provider.utils.url import is_safe_url
 
+setup_logging()
 logger = logging.getLogger(__name__)
 
 
@@ -59,7 +61,6 @@ def build_download_response(
         response = requests_session.get(
             download_url, headers=download_request_headers, stream=True, timeout=3
         )
-
         if not is_range_request:
             filename = url.split("/")[-1]
 
@@ -86,6 +87,7 @@ def build_download_response(
             download_response_headers = {
                 "Content-Disposition": f"attachment;filename={filename}",
                 "Access-Control-Expose-Headers": "Content-Disposition",
+                "Connection": "close",
             }
 
         def _generate(_response):
@@ -190,6 +192,10 @@ def get_download_url(url, config_file):
 
 def get_compute_endpoint():
     return get_config().operator_service_url + "/api/v1/operator/compute"
+
+
+def get_compute_result_endpoint():
+    return get_config().operator_service_url + "/api/v1/operator/getResult"
 
 
 def get_compute_address():
@@ -329,7 +335,8 @@ def decode_from_data(data, key, dec_type="list"):
 def service_unavailable(error, context, custom_logger=None):
     text_items = []
     for key, value in context.items():
-        text_items.append(key + "=" + str(value))
+        value = value if isinstance(value, str) else json.dumps(value)
+        text_items.append(key + "=" + value)
 
     logger_message = "Payload was: " + ",".join(text_items)
     custom_logger = custom_logger if custom_logger else logger
