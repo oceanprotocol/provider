@@ -145,12 +145,16 @@ def get_compute_job_info(client, endpoint, params):
     return dict(job_info[0])
 
 
-def get_compute_result(client, endpoint, params):
+def get_compute_result(client, endpoint, params, raw_response=False):
     # not possible to use PrepparedRequest here,
     # since we don't have the full url (schema, host) in the tests
     response = client.get(
         endpoint + "?" + "&".join([f"{k}={v}" for k, v in params.items()])
     )
+
+    if raw_response:
+        return response
+
     assert (
         response.status_code == 200
     ), f"get compute result failed: status {response.status}, data {response.data}"
