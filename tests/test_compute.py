@@ -199,15 +199,23 @@ def test_compute(client, publisher_wallet, consumer_wallet):
 
     assert tries <= 200, "Timeout waiting for the job to be completed"
     index = 0
-    signature = get_compute_signature(client, consumer_wallet, index, job_id)
-    payload = dict(
-        {
-            "signature": signature,
-            "index": index,
-            "consumerAddress": consumer_wallet.address,
-            "jobId": job_id,
-        }
+    payload = {
+        "index": index,
+        "consumerAddress": consumer_wallet.address,
+        "jobId": job_id,
+    }
+
+    result_without_signature = get_compute_result(
+        client, BaseURLs.ASSETS_URL + "/computeResult", payload, raw_response=True
     )
+    assert result_without_signature.status_code == 400
+    assert (
+        result_without_signature.json["errors"]["signature"][0]
+        == "The signature field is required."
+    ), "Signature should be required"
+
+    signature = get_compute_signature(client, consumer_wallet, index, job_id)
+    payload["signature"] = signature
     result_data = get_compute_result(
         client, BaseURLs.ASSETS_URL + "/computeResult", payload
     )

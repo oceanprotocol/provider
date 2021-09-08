@@ -187,7 +187,7 @@ class ComputeGetResult(CustomJsonRequest):
             "jobId": ["bail", "required"],
             "index": ["bail", "required"],
             "consumerAddress": ["bail", "required"],
-            "signature": ["required", "signature:consumerAddress,index,jobId"],
+            "signature": ["bail", "required", "signature:consumerAddress,index,jobId"],
         }
 
 
