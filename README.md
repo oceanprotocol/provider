@@ -92,3 +92,6 @@ Refer to the [API.md](API.md) file for endpoints and payloads.
 If you are a contributor, make sure you install the pre-commit hooks using the command `pre-commit install`. This will make sure your imports are sorted and your code is properly formatted before committing. We use `black`, `isort` and `flake8` to keep code clean.
 
 Licensing your commits is also available: use the command `licenseheaders -t .copyright.tmpl -x venv` (or replace "venv" with your local virtual environment path). This option is not available as a precommit since it takes longer.
+
+#### Versioning and releases
+To release a new version of Provider, please follow the steps decribed in [the release process](release-process.md)
