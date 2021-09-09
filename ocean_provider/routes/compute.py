@@ -244,8 +244,6 @@ def computeStatus():
                 "resultsUrl",
                 "algorithmLogUrl",
                 "resultsDid",
-                "results",
-                "owner",
             ]
             for job_info in resp_content:
                 for k in keys_to_filter:
