@@ -251,7 +251,7 @@ def initialize():
         # of tokens required for this service
         # The consumer must sign and execute this transaction in order to be
         # able to consume the service
-        compute_address , compute_limits = get_compute_info()
+        compute_address, compute_limits = get_compute_info()
         approve_params = {
             "from": consumer_address,
             "to": get_datatoken_minter(token_address),
