@@ -207,6 +207,18 @@ def get_compute_address():
         return None
 
 
+def get_compute_limits():
+    try:
+        limits = dict()
+        compute_info = requests.get(get_config().operator_service_url).json()
+        limits["algoTimeLimit"] = compute_info.get("algoTimeLimit", None)
+        limits["storageExpiry"] = compute_info.get("storageExpiry", None)
+        return limits
+    except Exception as e:
+        logger.error(f"Error getting CtD limits: {str(e)}")
+        return None
+
+
 def validate_order(web3, sender, token_address, num_tokens, tx_id, did, service_id):
     logger.debug(
         f"validate_order: did={did}, service_id={service_id}, tx_id={tx_id}, "

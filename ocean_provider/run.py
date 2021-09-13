@@ -87,6 +87,7 @@ def version():
     info["providerAddress"] = get_provider_address()
     info["computeAddress"] = get_compute_address()
     info["serviceEndpoints"] = get_services_endpoints()
+    info["computeLimits"] = get_compute_limits()
     return jsonify(info)
 
 

@@ -220,6 +220,7 @@ def computeStatus():
 
         _response = response.content
 
+        # The following sections is needed only to ensure back compat. It will be removed soon, make sure you are going to update your C2D backends
         signed_request = bool(data.get("signature"))
         if signed_request:
             owner = data.get("consumerAddress")
