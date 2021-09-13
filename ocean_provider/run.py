@@ -15,7 +15,7 @@ from ocean_provider.log import setup_logging
 from ocean_provider.myapp import app
 from ocean_provider.routes import services
 from ocean_provider.utils.basics import get_provider_wallet, get_web3
-from ocean_provider.utils.util import get_compute_address
+from ocean_provider.utils.util import get_compute_info
 
 setup_logging()
 config = Config(filename=app.config["PROVIDER_CONFIG_FILE"])
@@ -85,9 +85,8 @@ def version():
 
     info["chainId"] = chain_id
     info["providerAddress"] = get_provider_address()
-    info["computeAddress"] = get_compute_address()
     info["serviceEndpoints"] = get_services_endpoints()
-    info["computeLimits"] = get_compute_limits()
+    info["computeAddress"],info["computeLimits"] = get_compute_info()
     return jsonify(info)
 
 
