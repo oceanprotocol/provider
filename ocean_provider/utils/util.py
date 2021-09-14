@@ -200,10 +200,11 @@ def get_compute_result_endpoint():
 
 def get_compute_info():
     try:
-        limits = dict()
         compute_info = requests.get(get_config().operator_service_url).json()
-        limits["algoTimeLimit"] = compute_info.get("algoTimeLimit", None)
-        limits["storageExpiry"] = compute_info.get("storageExpiry", None)
+        limits = {
+            "algoTimeLimit": compute_info.get("algoTimeLimit"),
+            "storageExpiry": compute_info.get("storageExpiry")
+        }
         compute_address = compute_info.get("address", None)
         return compute_address, limits
     except Exception as e:
