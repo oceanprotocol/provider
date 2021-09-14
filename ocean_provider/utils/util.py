@@ -203,7 +203,7 @@ def get_compute_info():
         compute_info = requests.get(get_config().operator_service_url).json()
         limits = {
             "algoTimeLimit": compute_info.get("algoTimeLimit"),
-            "storageExpiry": compute_info.get("storageExpiry")
+            "storageExpiry": compute_info.get("storageExpiry"),
         }
         compute_address = compute_info.get("address", None)
         return compute_address, limits
