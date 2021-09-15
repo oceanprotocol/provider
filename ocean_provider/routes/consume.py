@@ -28,7 +28,7 @@ from ocean_provider.utils.util import (
     check_asset_consumable,
     get_asset_download_urls,
     get_asset_url_at_index,
-    get_compute_address,
+    get_compute_info,
     get_download_url,
     get_metadata_url,
     get_request_data,
@@ -251,13 +251,14 @@ def initialize():
         # of tokens required for this service
         # The consumer must sign and execute this transaction in order to be
         # able to consume the service
+        compute_address, compute_limits = get_compute_info()
         approve_params = {
             "from": consumer_address,
             "to": get_datatoken_minter(token_address),
             "numTokens": service.get_cost(),
             "dataToken": token_address,
             "nonce": get_nonce(consumer_address),
-            "computeAddress": get_compute_address(),
+            "computeAddress": compute_address,
         }
         return Response(
             json.dumps(approve_params),

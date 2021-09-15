@@ -198,13 +198,18 @@ def get_compute_result_endpoint():
     return get_config().operator_service_url + "/api/v1/operator/getResult"
 
 
-def get_compute_address():
+def get_compute_info():
     try:
         compute_info = requests.get(get_config().operator_service_url).json()
-        return compute_info.get("address", None)
+        limits = {
+            "algoTimeLimit": compute_info.get("algoTimeLimit"),
+            "storageExpiry": compute_info.get("storageExpiry"),
+        }
+        compute_address = compute_info.get("address", None)
+        return compute_address, limits
     except Exception as e:
         logger.error(f"Error getting CtD address: {str(e)}")
-        return None
+        return None, None
 
 
 def validate_order(web3, sender, token_address, num_tokens, tx_id, did, service_id):
