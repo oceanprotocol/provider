@@ -430,7 +430,7 @@ class InputItemValidator:
     def validate_usage(self):
         """Verify that the tokens have been transferred to the provider's wallet."""
         tx_id = self.data.get("transferTxId")
-        token_address = self.asset._other_values["dataToken"]
+        token_address = self.asset.other_values["dataToken"]
         logger.debug("Validating ASSET usage.")
         try:
             _tx, _order_log, _transfer_log = validate_order(
