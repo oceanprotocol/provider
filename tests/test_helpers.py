@@ -23,7 +23,7 @@ from ocean_lib.common.utils.utilities import checksum
 from ocean_lib.models.data_token import DataToken
 from ocean_lib.models.dtfactory import DTFactory
 from ocean_lib.models.metadata import MetadataContract
-from ocean_lib.ocean.util import to_base_18
+from ocean_lib.web3_internal.currency import to_wei
 from ocean_lib.web3_internal.wallet import Wallet
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.basics import (
@@ -60,7 +60,7 @@ def get_registered_ddo(
     metadata_contract = MetadataContract(web3, metadata_address)
 
     tx_id = factory_contract.createToken(
-        metadata_store_url, "DataToken1", "DT1", to_base_18(1000000.00), wallet
+        metadata_store_url, "DataToken1", "DT1", to_wei(1000000), wallet
     )
     dt_contract = DataToken(web3, factory_contract.get_token_address(tx_id))
     if not dt_contract:
@@ -88,9 +88,9 @@ def get_registered_ddo(
     # Adding proof to the ddo.
     ddo.add_proof(checksums, wallet)
 
-    did = ddo.assign_did(f"did:op:{remove_0x_prefix(ddo.data_token_address)}")
+    ddo.did = did = f"did:op:{remove_0x_prefix(ddo.data_token_address)}"
     ddo_service_endpoint.replace("{did}", did)
-    services[0].set_service_endpoint(ddo_service_endpoint)
+    services[0].service_endpoint = ddo_service_endpoint
 
     stype_to_service = {s.type: s for s in services}
     _ = stype_to_service[service_type]
@@ -251,11 +251,11 @@ def get_nonce(client, address):
 def mint_tokens_and_wait(data_token_contract, receiver_wallet, minter_wallet):
     web3 = get_web3()
     dtc = data_token_contract
-    tx_id = dtc.mint_tokens(receiver_wallet.address, 50.00, minter_wallet)
+    tx_id = dtc.mint(receiver_wallet.address, to_wei(50), minter_wallet)
     dtc.get_tx_receipt(web3, tx_id)
     time.sleep(2)
 
-    def verify_supply(mint_amount=50.00):
+    def verify_supply(mint_amount=to_wei(50)):
         supply = dtc.totalSupply()
         if supply <= 0:
             _tx_id = dtc.mint(receiver_wallet.address, mint_amount, minter_wallet)
@@ -364,11 +364,11 @@ def send_order(client, ddo, datatoken, service, cons_wallet, expect_failure=Fals
     assert tx_params["dataToken"] == ddo.as_dictionary()["dataToken"]
     assert nonce is not None, f"expecting a `nonce` value in the response, got {nonce}"
     # Transfer tokens to provider account
-    amount = to_base_18(num_tokens)
+    amount = to_wei(str(num_tokens))
     tx_id = datatoken.startOrder(
         cons_wallet.address,
         amount,
-        service.index,
+        int(service.index),
         "0xF9f2DB837b3db03Be72252fAeD2f6E0b73E428b9",
         cons_wallet,
     )

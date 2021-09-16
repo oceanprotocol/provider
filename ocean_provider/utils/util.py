@@ -13,7 +13,7 @@ import requests
 from flask import Response, request
 from ocean_lib.common.agreements.consumable import ConsumableCodes
 from ocean_lib.models.data_token import DataToken
-from ocean_lib.ocean.util import to_base_18
+from ocean_lib.web3_internal.currency import to_wei
 from osmosis_driver_interface.osmosis import Osmosis
 from websockets import ConnectionClosed
 
@@ -215,7 +215,7 @@ def validate_order(web3, sender, token_address, num_tokens, tx_id, did, service_
 
     dt_contract = DataToken(web3, token_address)
 
-    amount = to_base_18(num_tokens)
+    amount = to_wei(num_tokens)
     num_tries = 3
     i = 0
     while i < num_tries:
@@ -223,7 +223,7 @@ def validate_order(web3, sender, token_address, num_tokens, tx_id, did, service_
         i += 1
         try:
             tx, order_event, transfer_event = dt_contract.verify_order_tx(
-                tx_id, did, service_id, amount, sender
+                tx_id, did, int(service_id), amount, sender
             )
             logger.debug(
                 f"validate_order succeeded for: did={did}, service_id={service_id}, tx_id={tx_id}, "
@@ -268,7 +268,7 @@ def process_consume_request(data: dict):
     did = data.get("documentId")
     token_address = data.get("dataToken")
     consumer_address = data.get("consumerAddress")
-    service_id = data.get("serviceId")
+    service_id = int(data.get("serviceId"))
 
     # grab asset for did from the metadatastore associated with
     # the Data Token address
