@@ -215,7 +215,7 @@ def validate_order(web3, sender, token_address, num_tokens, tx_id, did, service_
 
     dt_contract = DataToken(web3, token_address)
 
-    amount = to_wei(num_tokens)
+    amount = to_wei(str(num_tokens))
     num_tries = 3
     i = 0
     while i < num_tries:
