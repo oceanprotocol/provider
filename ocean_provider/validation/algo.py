@@ -280,7 +280,7 @@ class InputItemValidator:
             self.error = f"Asset for did {self.did} not found."
             return False
 
-        self.service = self.asset.get_service_by_index(self.data["serviceId"])
+        self.service = self.asset.get_service_by_index(int(self.data["serviceId"]))
 
         consumable, message = check_asset_consumable(
             self.asset, self.consumer_address, logger, self.service.service_endpoint
