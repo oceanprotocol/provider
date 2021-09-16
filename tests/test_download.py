@@ -108,6 +108,7 @@ def test_initialize_on_asset_with_custom_credentials(
     ddo = get_dataset_ddo_with_denied_consumer(
         client, publisher_wallet, consumer_wallet.address
     )
+
     assert ddo.requires_address_credential
     assert consumer_wallet.address not in ddo.allowed_addresses
     dt_contract = DataToken(web3, ddo.data_token_address)

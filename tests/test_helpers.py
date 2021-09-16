@@ -102,7 +102,7 @@ def get_registered_ddo(
         ddo.disable()
 
     if custom_credentials:
-        ddo._credentials = custom_credentials
+        ddo.credentials = custom_credentials
 
     files_list_str = json.dumps(metadata["main"]["files"])
     pk = os.environ.get("PROVIDER_PRIVATE_KEY")
