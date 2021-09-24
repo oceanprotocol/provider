@@ -25,6 +25,9 @@ This doesn't actually affect the pip release of the following steps. And if you'
   - To bump the minor version: `./bumpversion.sh minor`
   - To bump the major version (for API-breaking changes): `./bumpversion.sh major`
 
+### Version numbering
+⚠️ Provider is still in v3. We now use a marketing version numbering convention, where non-breaking changes should be patches, and breaking changes warrant minor releases. Once we integrate the v4 contracts in the OCEAN ecosystem, the Provider will be fully SEMVER compatible.
+
 - Commit the changes to the feature branch.
 
   `git commit -m "Bump version <old_version> -> <new_version>"`
