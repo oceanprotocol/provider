@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Optional
 
 import requests
-from ocean_lib.common.aquarius.aquarius import Aquarius
+from ocean_lib.assets.asset import Asset
 from ocean_lib.models.data_token import DataToken
 from ocean_lib.ocean.util import get_web3_connection_provider
 from ocean_lib.web3_internal.wallet import Wallet
@@ -109,5 +109,7 @@ def get_asset_from_metadatastore(metadata_url, document_id):
     """
     :return: `Ddo` instance
     """
-    aqua = Aquarius(metadata_url)
-    return aqua.get_asset_ddo(document_id)
+    url = f"{metadata_url}/api/v1/aquarius/assets/ddo/{document_id}"
+    response = requests.get(url)
+
+    return Asset(dictionary=response.json()) if response.status_code == 200 else None

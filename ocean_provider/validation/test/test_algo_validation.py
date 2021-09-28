@@ -231,9 +231,7 @@ def test_fails(
 
     # Service is not compute, nor access
     other_service = [
-        s
-        for s in dataset.services
-        if s.type not in ["compute", "access"]
+        s for s in dataset.services if s.type not in ["compute", "access"]
     ][0]
     data = {
         "documentId": did,

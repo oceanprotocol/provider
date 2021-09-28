@@ -78,9 +78,7 @@ def build_and_send_ddo_with_compute_service(
     dt_contract = DataToken(web3, data_token)
     mint_tokens_and_wait(dt_contract, consumer_wallet, publisher_wallet)
 
-    sa = ServiceAgreement.from_ddo(
-        "compute", dataset_ddo_w_compute_service
-    )
+    sa = ServiceAgreement.from_ddo("compute", dataset_ddo_w_compute_service)
 
     tx_id = send_order(client, ddo, dt_contract, sa, consumer_wallet)
     alg_service = ServiceAgreement.from_ddo("access", alg_ddo)

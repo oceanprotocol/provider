@@ -18,7 +18,6 @@ from ocean_lib.common.agreements.service_factory import (
     ServiceDescriptor,
     ServiceFactory,
 )
-from ocean_lib.common.aquarius.aquarius import Aquarius
 from ocean_lib.common.utils.utilities import checksum
 from ocean_lib.models.data_token import DataToken
 from ocean_lib.models.dtfactory import DTFactory
@@ -29,6 +28,7 @@ from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.basics import (
     get_datatoken_minter,
     get_web3,
+    get_asset_from_metadatastore,
 )
 from ocean_provider.utils.encryption import do_encrypt
 from tests.helpers.service_descriptors import get_access_service_descriptor
@@ -43,8 +43,8 @@ def get_registered_ddo(
     custom_credentials=None,
 ):
     web3 = get_web3()
-    aqua = Aquarius("http://localhost:5000")
-    ddo_service_endpoint = aqua.get_service_endpoint()
+    aqua_root = "http://localhost:5000"
+    ddo_service_endpoint = f"{aqua_root}/api/v1/aquarius/assets/ddo/" + "{did}"
 
     metadata_store_url = json.dumps({"t": 1, "url": ddo_service_endpoint})
     # Create new data token contract
@@ -135,7 +135,7 @@ def get_registered_ddo(
     )
     assert log, "no ddo created event."
 
-    ddo = wait_for_ddo(aqua, ddo.did)
+    ddo = wait_for_ddo(aqua_root, ddo.did)
     assert ddo, f"resolve did {ddo.did} failed."
 
     return ddo
@@ -312,14 +312,11 @@ def get_ipfs_url_ddo():
     return json.loads(metadata)
 
 
-def wait_for_ddo(ddo_store, did, timeout=30):
+def wait_for_ddo(metadata_cache_url, did, timeout=30):
     start = time.time()
     ddo = None
     while not ddo:
-        try:
-            ddo = ddo_store.get_asset_ddo(did)
-        except ValueError:
-            pass
+        ddo = get_asset_from_metadatastore(metadata_cache_url, did)
 
         if not ddo:
             time.sleep(0.2)
@@ -327,7 +324,7 @@ def wait_for_ddo(ddo_store, did, timeout=30):
         if time.time() - start > timeout:
             break
 
-    return Asset(dictionary=ddo.as_dictionary())
+    return ddo
 
 
 def send_order(client, ddo, datatoken, service, cons_wallet, expect_failure=False):
