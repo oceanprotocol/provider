@@ -4,13 +4,14 @@
 #
 import os
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
+from web3 import WebsocketProvider
 
 import requests
 from ocean_lib.assets.asset import Asset
 from ocean_lib.models.data_token import DataToken
-from ocean_lib.ocean.util import get_web3_connection_provider
 from ocean_lib.web3_internal.wallet import Wallet
+from ocean_provider.http_provider import CustomHTTPProvider
 from requests_testadapter import Resp
 
 import artifacts
@@ -85,6 +86,21 @@ def get_web3(network_url: Optional[str] = None) -> Web3:
         web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
     return web3
+
+
+def get_web3_connection_provider(
+    network_url: str,
+) -> Union[CustomHTTPProvider, WebsocketProvider]:
+    if network_url.startswith("http"):
+        return CustomHTTPProvider(network_url)
+    elif network_url.startswith("ws"):
+        return WebsocketProvider(network_url)
+    else:
+        msg = (
+            f"The given network_url *{network_url}* does not start with either"
+            f"`http` or `wss`. A correct network url is required."
+        )
+        raise AssertionError(msg)
 
 
 class LocalFileAdapter(requests.adapters.HTTPAdapter):

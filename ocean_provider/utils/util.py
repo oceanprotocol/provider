@@ -11,7 +11,6 @@ from cgi import parse_header
 
 import requests
 from flask import Response, request
-from ocean_lib.common.agreements.consumable import ConsumableCodes
 from ocean_lib.models.data_token import DataToken
 from ocean_lib.web3_internal.currency import to_wei
 from osmosis_driver_interface.osmosis import Osmosis
@@ -42,6 +41,15 @@ def get_request_data(request):
 
 def msg_hash(message: str):
     return hashlib.sha256(message.encode("utf-8")).hexdigest()
+
+
+def checksum(seed) -> str:
+    """Calculate the hash3_256."""
+    return hashlib.sha3_256(
+        (json.dumps(dict(sorted(seed.items(), reverse=False))).replace(" ", "")).encode(
+            "utf-8"
+        )
+    ).hexdigest()
 
 
 def build_download_response(
@@ -361,7 +369,7 @@ def check_asset_consumable(asset, consumer_address, logger, custom_url=None):
         with_connectivity_check=False,
     )
 
-    if code == ConsumableCodes.OK:
+    if code == 0:  # is consumable
         return True, ""
 
     message = f"Error: Access to asset {asset.did} was denied with code: {code}."

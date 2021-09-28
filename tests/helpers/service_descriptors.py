@@ -19,7 +19,8 @@ def get_access_service_descriptor(address, metadata, diff_provider=False):
     url_structure = f"http://{base_provider_url}{BaseURLs.ASSETS_URL}/download"
 
     return (
-        "access", {"attributes": access_service_attributes, "serviceEndpoint": url_structure}
+        "access",
+        {"attributes": access_service_attributes, "serviceEndpoint": url_structure},
     )
 
 
@@ -41,10 +42,11 @@ def get_compute_service_descriptor(address, price, metadata):
     }
 
     return (
-        "compute", {
+        "compute",
+        {
             "attributes": compute_service_attributes,
             "serviceEndpoint": f"http://localhost:8030{BaseURLs.ASSETS_URL}/compute",
-        }
+        },
     )
 
 
@@ -66,10 +68,11 @@ def get_compute_service_descriptor_no_rawalgo(address, price, metadata):
     }
 
     return (
-        "compute", {
+        "compute",
+        {
             "attributes": compute_service_attributes,
             "serviceEndpoint": f"http://localhost:8030{BaseURLs.ASSETS_URL}/compute",
-        }
+        },
     )
 
 
@@ -115,10 +118,11 @@ def get_compute_service_descriptor_specific_algo_dids(address, price, metadata, 
         )
 
     return (
-        "compute", {
+        "compute",
+        {
             "attributes": compute_service_attributes,
             "serviceEndpoint": f"http://localhost:8030{BaseURLs.ASSETS_URL}/compute",
-        }
+        },
     )
 
 
@@ -143,10 +147,11 @@ def get_compute_service_descriptor_specific_algo_publishers(
     }
 
     return (
-        "compute", {
+        "compute",
+        {
             "attributes": compute_service_attributes,
             "serviceEndpoint": f"http://localhost:8030{BaseURLs.ASSETS_URL}/compute",
-        }
+        },
     )
 
 
@@ -168,8 +173,9 @@ def get_compute_service_descriptor_allow_all_published(address, price, metadata)
     }
 
     return (
-        "compute", {
+        "compute",
+        {
             "attributes": compute_service_attributes,
             "serviceEndpoint": f"http://localhost:8030{BaseURLs.ASSETS_URL}/compute",
-        }
+        },
     )

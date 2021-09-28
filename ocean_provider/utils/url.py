@@ -11,7 +11,6 @@ from urllib.parse import urlparse
 import dns.resolver
 import requests
 from requests.models import PreparedRequest
-from ocean_lib.data_provider.data_service_provider import DataServiceProvider
 
 from ocean_provider.utils.basics import get_config, get_provider_wallet
 
@@ -44,9 +43,11 @@ def is_ip(address):
 
 def is_this_same_provider(url):
     result = urlparse(url)
-    address = DataServiceProvider.get_provider_address(
-        f"{result.scheme}://{result.netloc}/"
-    )
+    try:
+        provider_info = requests.get(f"{result.scheme}://{result.netloc}/").json()
+        address = provider_info["providerAddress"]
+    except (requests.exceptions.RequestException, KeyError):
+        address = None
 
     return address and address.lower() == get_provider_wallet().address.lower()
 

@@ -6,7 +6,6 @@ import json
 import logging
 
 from eth_utils import add_0x_prefix
-from ocean_lib.assets.utils import create_checksum
 from ocean_lib.common.did import did_to_id
 from ocean_lib.models.data_token import DataToken
 from web3.logs import DISCARD
@@ -23,6 +22,7 @@ from ocean_provider.utils.util import (
     filter_dictionary_starts_with,
     get_asset_download_urls,
     get_metadata_url,
+    msg_hash,
     record_consume_request,
     validate_order,
     validate_transfer_not_used_for_other_service,
@@ -375,7 +375,7 @@ class InputItemValidator:
         )
         service = algo_ddo.get_service("metadata")
 
-        files_checksum = create_checksum(
+        files_checksum = msg_hash(
             service.attributes["encryptedFiles"]
             + json.dumps(service.main["files"], separators=(",", ":"))
         )
@@ -385,7 +385,7 @@ class InputItemValidator:
             )
             return False
 
-        container_section_checksum = create_checksum(
+        container_section_checksum = msg_hash(
             json.dumps(service.main["algorithm"]["container"], separators=(",", ":"))
         )
         if (
