@@ -7,7 +7,6 @@ import logging
 
 from eth_utils import add_0x_prefix
 from ocean_lib.assets.utils import create_checksum
-from ocean_lib.common.agreements.service_types import ServiceTypes
 from ocean_lib.common.did import did_to_id
 from ocean_lib.models.data_token import DataToken
 from web3.logs import DISCARD
@@ -157,7 +156,7 @@ class WorkflowValidator:
                 algo_service_id = order_log.args.serviceId
                 self.algo_service = algo.get_service_by_index(algo_service_id)
 
-                if self.algo_service.type == ServiceTypes.CLOUD_COMPUTE:
+                if self.algo_service.type == "compute":
                     asset_urls = get_asset_download_urls(
                         algo,
                         self.provider_wallet,
@@ -294,14 +293,11 @@ class InputItemValidator:
             self.error = f"Service index {self.data['serviceId']} not found."
             return False
 
-        if self.service.type not in [
-            ServiceTypes.ASSET_ACCESS,
-            ServiceTypes.CLOUD_COMPUTE,
-        ]:
+        if self.service.type not in ["access", "compute"]:
             self.error = "Services in input can only be access or compute."
             return False
 
-        if self.service.type != ServiceTypes.CLOUD_COMPUTE and self.index == 0:
+        if self.service.type != "compute" and self.index == 0:
             self.error = "Service for main asset must be compute."
             return False
 
@@ -311,11 +307,11 @@ class InputItemValidator:
             config_file=app.config["PROVIDER_CONFIG_FILE"],
         )
 
-        if self.service.type == ServiceTypes.CLOUD_COMPUTE and not asset_urls:
+        if self.service.type == "compute" and not asset_urls:
             self.error = "Services in input with compute type must be in the same provider you are calling."
             return False
 
-        if self.service.type == ServiceTypes.CLOUD_COMPUTE:
+        if self.service.type == "compute":
             if not self.validate_algo():
                 return False
 
@@ -377,7 +373,7 @@ class InputItemValidator:
         algo_ddo = get_asset_from_metadatastore(
             get_metadata_url(), trusted_algo_dict["did"]
         )
-        service = algo_ddo.get_service(ServiceTypes.METADATA)
+        service = algo_ddo.get_service("metadata")
 
         files_checksum = create_checksum(
             service.attributes["encryptedFiles"]

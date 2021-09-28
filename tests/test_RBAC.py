@@ -5,7 +5,6 @@
 import json
 
 import pytest
-from ocean_lib.common.agreements.service_types import ServiceTypes
 from ocean_lib.models.data_token import DataToken
 
 from ocean_provider.constants import BaseURLs
@@ -61,7 +60,7 @@ def test_initialize_request_payload(
 ):
     ddo = get_dataset_ddo_with_access_service(client, publisher_wallet)
     dt_contract = DataToken(web3, ddo.data_token_address)
-    sa = ddo.get_service(ServiceTypes.ASSET_ACCESS)
+    sa = ddo.get_service("access")
     mint_tokens_and_wait(dt_contract, consumer_wallet, publisher_wallet)
 
     req = {
@@ -93,7 +92,7 @@ def test_access_request_payload(
 
     mint_tokens_and_wait(dt_token, consumer_wallet, publisher_wallet)
 
-    sa = ddo.get_service(ServiceTypes.ASSET_ACCESS)
+    sa = ddo.get_service("access")
     tx_id = send_order(client, ddo, dt_token, sa, consumer_wallet)
 
     req = {
@@ -127,7 +126,7 @@ def test_compute_payload_without_additional_inputs(
         client, publisher_wallet, consumer_wallet
     )
     did = dataset.did
-    sa = dataset.get_service(ServiceTypes.CLOUD_COMPUTE)
+    sa = dataset.get_service("compute")
     alg_data_token = alg_ddo.data_token_address
 
     req = {
@@ -168,13 +167,13 @@ def test_compute_request_payload(
         client, publisher_wallet, consumer_wallet
     )
     did = dataset.did
-    sa = dataset.get_service(ServiceTypes.CLOUD_COMPUTE)
+    sa = dataset.get_service("compute")
     alg_data_token = alg_ddo.data_token_address
 
     ddo2, tx_id2, _, _ = build_and_send_ddo_with_compute_service(
         client, publisher_wallet, consumer_wallet
     )
-    sa2 = ddo2.get_service(ServiceTypes.CLOUD_COMPUTE)
+    sa2 = ddo2.get_service("compute")
 
     req = {
         "signature": generate_auth_token(consumer_wallet),
@@ -225,7 +224,7 @@ def test_fails(
         client, publisher_wallet, consumer_wallet
     )
     did = dataset.did
-    sa = dataset.get_service(ServiceTypes.CLOUD_COMPUTE)
+    sa = dataset.get_service("compute")
     alg_data_token = alg_ddo.data_token_address
 
     # output key is invalid

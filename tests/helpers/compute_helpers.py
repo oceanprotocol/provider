@@ -3,7 +3,6 @@ import json
 import uuid
 
 from ocean_lib.common.agreements.service_agreement import ServiceAgreement
-from ocean_lib.common.agreements.service_types import ServiceTypes
 from ocean_lib.models.data_token import DataToken
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
@@ -80,11 +79,11 @@ def build_and_send_ddo_with_compute_service(
     mint_tokens_and_wait(dt_contract, consumer_wallet, publisher_wallet)
 
     sa = ServiceAgreement.from_ddo(
-        ServiceTypes.CLOUD_COMPUTE, dataset_ddo_w_compute_service
+        "compute", dataset_ddo_w_compute_service
     )
 
     tx_id = send_order(client, ddo, dt_contract, sa, consumer_wallet)
-    alg_service = ServiceAgreement.from_ddo(ServiceTypes.ASSET_ACCESS, alg_ddo)
+    alg_service = ServiceAgreement.from_ddo("access", alg_ddo)
     alg_tx_id = send_order(
         client, alg_ddo, alg_dt_contract, alg_service, consumer_wallet
     )

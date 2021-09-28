@@ -4,7 +4,6 @@
 #
 import pytest
 
-from ocean_lib.common.agreements.service_types import ServiceTypes
 from ocean_lib.models.data_token import DataToken
 
 from ocean_provider.constants import BaseURLs
@@ -29,7 +28,7 @@ def test_download_service(client, publisher_wallet, consumer_wallet, web3, userd
 
     mint_tokens_and_wait(dt_token, consumer_wallet, publisher_wallet)
 
-    sa = ddo.get_service(ServiceTypes.ASSET_ACCESS)
+    sa = ddo.get_service("access")
     tx_id = send_order(client, ddo, dt_token, sa, consumer_wallet)
 
     # Consume using url index and auth token
@@ -79,7 +78,7 @@ def test_empty_payload(client):
 def test_initialize_on_bad_url(client, publisher_wallet, consumer_wallet, web3):
     ddo = get_dataset_with_invalid_url_ddo(client, publisher_wallet)
     dt_contract = DataToken(web3, ddo.data_token_address)
-    sa = ddo.get_service(ServiceTypes.ASSET_ACCESS)
+    sa = ddo.get_service("access")
 
     send_order(client, ddo, dt_contract, sa, consumer_wallet, expect_failure=True)
 
@@ -87,7 +86,7 @@ def test_initialize_on_bad_url(client, publisher_wallet, consumer_wallet, web3):
 def test_initialize_on_ipfs_url(client, publisher_wallet, consumer_wallet, web3):
     ddo = get_dataset_with_ipfs_url_ddo(client, publisher_wallet)
     dt_contract = DataToken(web3, ddo.data_token_address)
-    sa = ddo.get_service(ServiceTypes.ASSET_ACCESS)
+    sa = ddo.get_service("access")
 
     send_order(client, ddo, dt_contract, sa, consumer_wallet)
 
@@ -96,7 +95,7 @@ def test_initialize_on_disabled_asset(client, publisher_wallet, consumer_wallet,
     ddo = get_dataset_ddo_disabled(client, publisher_wallet)
     assert ddo.is_disabled
     dt_contract = DataToken(web3, ddo.data_token_address)
-    sa = ddo.get_service(ServiceTypes.ASSET_ACCESS)
+    sa = ddo.get_service("access")
     mint_tokens_and_wait(dt_contract, consumer_wallet, publisher_wallet)
 
     send_order(client, ddo, dt_contract, sa, consumer_wallet, expect_failure=True)
@@ -112,7 +111,7 @@ def test_initialize_on_asset_with_custom_credentials(
     assert ddo.requires_address_credential
     assert consumer_wallet.address not in ddo.allowed_addresses
     dt_contract = DataToken(web3, ddo.data_token_address)
-    sa = ddo.get_service(ServiceTypes.ASSET_ACCESS)
+    sa = ddo.get_service("access")
     mint_tokens_and_wait(dt_contract, consumer_wallet, publisher_wallet)
 
     send_order(client, ddo, dt_contract, sa, consumer_wallet, expect_failure=True)
@@ -124,7 +123,7 @@ def test_download_multiple_files(client, publisher_wallet, consumer_wallet, web3
 
     mint_tokens_and_wait(dt_token, consumer_wallet, publisher_wallet)
 
-    sa = ddo.get_service(ServiceTypes.ASSET_ACCESS)
+    sa = ddo.get_service("access")
     tx_id = send_order(client, ddo, dt_token, sa, consumer_wallet)
 
     # Consume using url index and auth token

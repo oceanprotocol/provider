@@ -8,7 +8,6 @@ import logging
 from eth_utils import add_0x_prefix
 from flask import Response, jsonify, request
 from flask_sieve import validate
-from ocean_lib.common.agreements.service_types import ServiceTypes
 from ocean_lib.common.did import did_to_id
 from ocean_lib.common.http_requests.requests_session import get_requests_session
 from ocean_provider.log import setup_logging
@@ -349,7 +348,7 @@ def download():
             did, service_id, tx_id, consumer_address, token_address, service.get_cost()
         )
 
-        assert service.type == ServiceTypes.ASSET_ACCESS
+        assert service.type == "access"
 
         file_index = int(data.get("fileIndex"))
         file_attributes = asset.metadata["main"]["files"][file_index]

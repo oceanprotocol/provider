@@ -2,7 +2,6 @@ import hashlib
 import json
 
 from ocean_lib.common.agreements.service_factory import ServiceDescriptor
-from ocean_lib.common.agreements.service_types import ServiceTypes
 
 from ocean_provider.constants import BaseURLs
 
@@ -90,7 +89,7 @@ def get_compute_service_descriptor_specific_algo_dids(address, price, metadata, 
     }
 
     for algo in algos:
-        service = algo.get_service(ServiceTypes.METADATA)
+        service = algo.get_service("metadata")
         compute_service_attributes["main"]["privacy"][
             "publisherTrustedAlgorithms"
         ].append(
