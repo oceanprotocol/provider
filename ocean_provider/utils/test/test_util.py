@@ -10,7 +10,7 @@ from unittest.mock import MagicMock, Mock
 
 import pytest
 from ocean_lib.assets.asset import Asset
-from ocean_lib.common.http_requests.requests_session import get_requests_session
+from ocean_provider.requests_session import get_requests_session
 from werkzeug.utils import get_content_type
 
 from ocean_provider.utils.encryption import do_encrypt

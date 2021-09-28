@@ -1,8 +1,6 @@
 import hashlib
 import json
 
-from ocean_lib.common.agreements.service_factory import ServiceDescriptor
-
 from ocean_provider.constants import BaseURLs
 
 
@@ -20,8 +18,8 @@ def get_access_service_descriptor(address, metadata, diff_provider=False):
     base_provider_url = "some_different_provider" if diff_provider else "localhost:8030"
     url_structure = f"http://{base_provider_url}{BaseURLs.ASSETS_URL}/download"
 
-    return ServiceDescriptor.access_service_descriptor(
-        access_service_attributes, url_structure
+    return (
+        "access", {"attributes": access_service_attributes, "serviceEndpoint": url_structure}
     )
 
 
@@ -42,9 +40,11 @@ def get_compute_service_descriptor(address, price, metadata):
         }
     }
 
-    return ServiceDescriptor.compute_service_descriptor(
-        compute_service_attributes,
-        f"http://localhost:8030{BaseURLs.ASSETS_URL}/compute",
+    return (
+        "compute", {
+            "attributes": compute_service_attributes,
+            "serviceEndpoint": f"http://localhost:8030{BaseURLs.ASSETS_URL}/compute",
+        }
     )
 
 
@@ -65,9 +65,11 @@ def get_compute_service_descriptor_no_rawalgo(address, price, metadata):
         }
     }
 
-    return ServiceDescriptor.compute_service_descriptor(
-        compute_service_attributes,
-        f"http://localhost:8030{BaseURLs.ASSETS_URL}/compute",
+    return (
+        "compute", {
+            "attributes": compute_service_attributes,
+            "serviceEndpoint": f"http://localhost:8030{BaseURLs.ASSETS_URL}/compute",
+        }
     )
 
 
@@ -112,9 +114,11 @@ def get_compute_service_descriptor_specific_algo_dids(address, price, metadata, 
             }
         )
 
-    return ServiceDescriptor.compute_service_descriptor(
-        compute_service_attributes,
-        f"http://localhost:8030{BaseURLs.ASSETS_URL}/compute",
+    return (
+        "compute", {
+            "attributes": compute_service_attributes,
+            "serviceEndpoint": f"http://localhost:8030{BaseURLs.ASSETS_URL}/compute",
+        }
     )
 
 
@@ -138,9 +142,11 @@ def get_compute_service_descriptor_specific_algo_publishers(
         }
     }
 
-    return ServiceDescriptor.compute_service_descriptor(
-        compute_service_attributes,
-        f"http://localhost:8030{BaseURLs.ASSETS_URL}/compute",
+    return (
+        "compute", {
+            "attributes": compute_service_attributes,
+            "serviceEndpoint": f"http://localhost:8030{BaseURLs.ASSETS_URL}/compute",
+        }
     )
 
 
@@ -161,7 +167,9 @@ def get_compute_service_descriptor_allow_all_published(address, price, metadata)
         }
     }
 
-    return ServiceDescriptor.compute_service_descriptor(
-        compute_service_attributes,
-        f"http://localhost:8030{BaseURLs.ASSETS_URL}/compute",
+    return (
+        "compute", {
+            "attributes": compute_service_attributes,
+            "serviceEndpoint": f"http://localhost:8030{BaseURLs.ASSETS_URL}/compute",
+        }
     )
