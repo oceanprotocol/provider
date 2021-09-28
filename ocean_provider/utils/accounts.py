@@ -2,15 +2,17 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
-from datetime import datetime
 import logging
+from datetime import datetime
+
 import eth_keys
 from eth_account.account import Account
 from eth_account.messages import encode_defunct
+from web3 import Web3
+
 from ocean_provider.exceptions import InvalidSignatureError
 from ocean_provider.log import setup_logging
 from ocean_provider.utils.basics import get_config, get_web3
-from web3 import Web3
 
 setup_logging()
 logger = logging.getLogger(__name__)

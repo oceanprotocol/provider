@@ -5,18 +5,18 @@
 import os
 from pathlib import Path
 from typing import Optional, Union
-from web3 import WebsocketProvider
 
+import artifacts
 import requests
 from ocean_lib.assets.asset import Asset
 from ocean_lib.models.data_token import DataToken
 from ocean_lib.web3_internal.wallet import Wallet
-from ocean_provider.http_provider import CustomHTTPProvider
 from requests_testadapter import Resp
-
-import artifacts
-from ocean_provider.config import Config
+from web3 import WebsocketProvider
 from web3.main import Web3
+
+from ocean_provider.config import Config
+from ocean_provider.http_provider import CustomHTTPProvider
 
 
 def get_config(config_file: Optional[str] = None) -> Config:

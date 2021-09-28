@@ -21,16 +21,16 @@ from ocean_lib.common.agreements.service_factory import (
 from ocean_lib.models.data_token import DataToken
 from ocean_lib.models.dtfactory import DTFactory
 from ocean_lib.models.metadata import MetadataContract
-from ocean_lib.web3_internal.currency import to_wei
 from ocean_lib.web3_internal.wallet import Wallet
+
 from ocean_provider.constants import BaseURLs
-from ocean_provider.utils.util import checksum
 from ocean_provider.utils.basics import (
+    get_asset_from_metadatastore,
     get_datatoken_minter,
     get_web3,
-    get_asset_from_metadatastore,
 )
 from ocean_provider.utils.encryption import do_encrypt
+from ocean_provider.utils.util import checksum, to_wei
 from tests.helpers.service_descriptors import get_access_service_descriptor
 
 

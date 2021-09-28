@@ -4,6 +4,7 @@ import uuid
 
 from ocean_lib.common.agreements.service_agreement import ServiceAgreement
 from ocean_lib.models.data_token import DataToken
+
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
 from tests.helpers.service_descriptors import (

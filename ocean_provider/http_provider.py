@@ -3,13 +3,13 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 from typing import Any, Dict
+
 import lru
 import requests
 from requests.adapters import HTTPAdapter
 from requests.sessions import Session
-from web3._utils.caching import generate_cache_key
-
 from web3 import HTTPProvider
+from web3._utils.caching import generate_cache_key
 
 
 def _remove_session(key: str, session: Session) -> None:
