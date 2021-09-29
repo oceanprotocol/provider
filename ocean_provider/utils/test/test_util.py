@@ -139,7 +139,7 @@ def test_build_download_response():
 
 def test_download_ipfs_file(client):
     cid = "QmQfpdcMWnLTXKKW9GPV7NgtEugghgD6HgzSF6gSrp2mL9"
-    url = f"ipfs://{cid}"
+    url = f"http://ipfs.io/ipfs/{cid}"
     download_url = get_download_url(url, None)
     requests_session = get_requests_session()
 
@@ -149,7 +149,7 @@ def test_download_ipfs_file(client):
     print(f"got ipfs download url: {download_url}")
     assert download_url and download_url.endswith(f"ipfs/{cid}")
     response = build_download_response(
-        request, requests_session, download_url, download_url, None
+        request, requests_session, url, download_url, None
     )
     assert response.data, f"got no data {response.data}"
 
