@@ -15,10 +15,10 @@ import artifacts
 from eth_utils import remove_0x_prefix
 from jsonsempai import magic  # noqa: F401
 from artifacts import DataTokenTemplate, Metadata
-from ocean_lib.common.agreements.service_factory import ServiceFactory
 from ocean_lib.web3_internal.wallet import Wallet
 
 from ocean_provider.constants import BaseURLs
+from ocean_provider.utils.services import build_services
 from ocean_provider.utils.basics import (
     get_asset_from_metadatastore,
     get_datatoken_minter,
@@ -147,7 +147,7 @@ def get_registered_ddo(
 
     service_descriptors = [metadata_service_desc, service_descriptor]
 
-    services = ServiceFactory.build_services(service_descriptors)
+    services = build_services(service_descriptors)
     checksums = dict()
     for service in services:
         checksums[str(service.index)] = checksum(service.main)
@@ -429,7 +429,7 @@ def send_order(client, ddo, datatoken, service, cons_wallet, expect_failure=Fals
     receiver = tx_params["to"]
     assert tx_params["from"] == cons_wallet.address
     assert receiver == get_datatoken_minter(datatoken.address)
-    assert tx_params["dataToken"] == ddo.as_dictionary()["dataToken"]
+    assert tx_params["dataToken"] == ddo.data_token_address
     assert nonce is not None, f"expecting a `nonce` value in the response, got {nonce}"
     # Transfer tokens to provider account
     amount = to_wei(str(num_tokens))

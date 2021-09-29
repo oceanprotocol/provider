@@ -9,7 +9,7 @@ from copy import deepcopy
 from unittest.mock import MagicMock, Mock
 
 import pytest
-from ocean_lib.assets.asset import Asset
+from ocean_provider.utils.asset import Asset
 from werkzeug.utils import get_content_type
 
 from ocean_provider.requests_session import get_requests_session

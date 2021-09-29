@@ -2,7 +2,6 @@ import itertools
 import json
 import uuid
 
-from ocean_lib.common.agreements.service_agreement import ServiceAgreement
 from ocean_lib.models.data_token import DataToken
 
 from ocean_provider.constants import BaseURLs
@@ -36,7 +35,7 @@ def build_and_send_ddo_with_compute_service(
         if alg_diff
         else get_algorithm_ddo(client, consumer_wallet)
     )
-    alg_data_token = alg_ddo.as_dictionary()["dataToken"]
+    alg_data_token = alg_ddo.data_token_address
     alg_dt_contract = DataToken(web3, alg_data_token)
 
     mint_tokens_and_wait(alg_dt_contract, consumer_wallet, consumer_wallet)
@@ -51,7 +50,7 @@ def build_and_send_ddo_with_compute_service(
 
         for _ in itertools.repeat(None, 2):
             alg_ddo = get_algorithm_ddo(client, consumer_wallet)
-            alg_data_token = alg_ddo.as_dictionary()["dataToken"]
+            alg_data_token = alg_ddo.data_token_address
             alg_dt_contract = DataToken(web3, alg_data_token)
             mint_tokens_and_wait(alg_dt_contract, consumer_wallet, consumer_wallet)
             algos.append(alg_ddo)
@@ -61,7 +60,7 @@ def build_and_send_ddo_with_compute_service(
         )
     elif asset_type == "specific_algo_publishers":
         alg_ddo = get_algorithm_ddo(client, consumer_wallet)
-        alg_data_token = alg_ddo.as_dictionary()["dataToken"]
+        alg_data_token = alg_ddo.data_token_address
         alg_dt_contract = DataToken(web3, alg_data_token)
         mint_tokens_and_wait(alg_dt_contract, consumer_wallet, consumer_wallet)
 
@@ -79,10 +78,10 @@ def build_and_send_ddo_with_compute_service(
     dt_contract = DataToken(web3, data_token)
     mint_tokens_and_wait(dt_contract, consumer_wallet, publisher_wallet)
 
-    sa = ServiceAgreement.from_ddo("compute", dataset_ddo_w_compute_service)
+    sa = dataset_ddo_w_compute_service.get_service("compute")
 
     tx_id = send_order(client, ddo, dt_contract, sa, consumer_wallet)
-    alg_service = ServiceAgreement.from_ddo("access", alg_ddo)
+    alg_service = alg_ddo.get_service("access")
     alg_tx_id = send_order(
         client, alg_ddo, alg_dt_contract, alg_service, consumer_wallet
     )

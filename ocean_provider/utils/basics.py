@@ -8,7 +8,7 @@ from typing import Optional, Union
 
 import artifacts
 import requests
-from ocean_lib.assets.asset import Asset
+from ocean_provider.utils.asset import Asset
 from ocean_lib.models.data_token import DataToken
 from ocean_lib.web3_internal.wallet import Wallet
 from requests_testadapter import Resp
@@ -128,4 +128,4 @@ def get_asset_from_metadatastore(metadata_url, document_id):
     url = f"{metadata_url}/api/v1/aquarius/assets/ddo/{document_id}"
     response = requests.get(url)
 
-    return Asset(dictionary=response.json()) if response.status_code == 200 else None
+    return Asset(response.json()) if response.status_code == 200 else None
