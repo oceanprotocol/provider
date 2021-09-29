@@ -6,11 +6,11 @@ def build_services(service_descriptors) -> list:
 
     for i, service_descriptor in enumerate(service_descriptors):
         service_type, kwargs = service_descriptor
-        if service_type == 'metadata':
+        if service_type == "metadata":
             index = 0
-        elif service_type == 'access':
+        elif service_type == "access":
             index = 3
-        elif service_type == 'compute':
+        elif service_type == "compute":
             index = 4
 
         service = Service(

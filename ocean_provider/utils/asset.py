@@ -5,13 +5,15 @@
 import copy
 import json
 from typing import Optional
-from eth_utils import add_0x_prefix
-from ocean_provider.utils.did import did_to_id
-from ocean_provider.utils.services import service_from_json
 
-#TODO: remove
+from eth_utils import add_0x_prefix
+
+# TODO: remove
 from ocean_lib.common.ddo.credentials import AddressCredential
 from ocean_lib.data_provider.data_service_provider import DataServiceProvider
+
+from ocean_provider.utils.did import did_to_id
+from ocean_provider.utils.services import service_from_json
 
 
 class Asset:

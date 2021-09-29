@@ -2,32 +2,31 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-from datetime import datetime
 import json
 import lzma
 import os
 import pathlib
 import time
 import uuid
+from datetime import datetime
 from pathlib import Path
 
 import artifacts
-from eth_utils import remove_0x_prefix
-from jsonsempai import magic  # noqa: F401
 from artifacts import DataTokenTemplate, Metadata
+from eth_utils import add_0x_prefix, remove_0x_prefix
+from jsonsempai import magic  # noqa: F401
 from ocean_lib.web3_internal.wallet import Wallet
 
 from ocean_provider.constants import BaseURLs
-from ocean_provider.utils.services import build_services
 from ocean_provider.utils.basics import (
     get_asset_from_metadatastore,
     get_datatoken_minter,
     get_web3,
 )
 from ocean_provider.utils.encryption import do_encrypt
+from ocean_provider.utils.services import build_services
 from ocean_provider.utils.util import checksum, to_wei
 from tests.helpers.service_descriptors import get_access_service_descriptor
-from eth_utils import add_0x_prefix
 
 
 def sign_tx(web3, tx, private_key):
@@ -109,15 +108,16 @@ def get_registered_ddo(
     ddo["dataToken"] = dt_address
     ddo["created"] = f"{datetime.utcnow().replace(microsecond=0).isoformat()}Z"
     ddo["@context"] = "https://w3id.org/did/v1"
-    ddo["publicKey"] = [{
-        "id": did,
-        "type": "EthereumECDSAKey",
-        "owner": wallet.address,
-    }]
-    ddo["authentication"] = [{
-        "type": "RsaSignatureAuthentication2018",
-        "publicKey": did
-    }]
+    ddo["publicKey"] = [
+        {
+            "id": did,
+            "type": "EthereumECDSAKey",
+            "owner": wallet.address,
+        }
+    ]
+    ddo["authentication"] = [
+        {"type": "RsaSignatureAuthentication2018", "publicKey": did}
+    ]
 
     files_list_str = json.dumps(metadata["main"]["files"])
     pk = os.environ.get("PROVIDER_PRIVATE_KEY")
@@ -141,8 +141,8 @@ def get_registered_ddo(
         "metadata",
         {
             "attributes": metadata,
-            "serviceEndpoint": f"{aqua_root}/api/v1/aquarius/assets/ddo/{did}"
-        }
+            "serviceEndpoint": f"{aqua_root}/api/v1/aquarius/assets/ddo/{did}",
+        },
     )
 
     service_descriptors = [metadata_service_desc, service_descriptor]
