@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
+from datetime import datetime
 import json
 import lzma
 import os
@@ -13,14 +14,8 @@ from pathlib import Path
 import artifacts
 from eth_utils import remove_0x_prefix
 from jsonsempai import magic  # noqa: F401
-from ocean_lib.assets.asset import Asset
-from ocean_lib.common.agreements.service_factory import (
-    ServiceDescriptor,
-    ServiceFactory,
-)
-from ocean_lib.models.data_token import DataToken
-from ocean_lib.models.dtfactory import DTFactory
-from ocean_lib.models.metadata import MetadataContract
+from artifacts import DataTokenTemplate, Metadata
+from ocean_lib.common.agreements.service_factory import ServiceFactory
 from ocean_lib.web3_internal.wallet import Wallet
 
 from ocean_provider.constants import BaseURLs
@@ -32,6 +27,69 @@ from ocean_provider.utils.basics import (
 from ocean_provider.utils.encryption import do_encrypt
 from ocean_provider.utils.util import checksum, to_wei
 from tests.helpers.service_descriptors import get_access_service_descriptor
+from eth_utils import add_0x_prefix
+
+
+def sign_tx(web3, tx, private_key):
+    """
+    :param web3: Web3 object instance
+    :param tx: transaction
+    :param private_key: Private key of the account
+    :return: rawTransaction (str)
+    """
+    account = web3.eth.account.from_key(private_key)
+    nonce = web3.eth.get_transaction_count(account.address)
+    gas_price = int(web3.eth.gas_price / 100)
+    tx["gasPrice"] = gas_price
+    tx["nonce"] = nonce
+    signed_tx = web3.eth.account.sign_transaction(tx, private_key)
+    return signed_tx.rawTransaction
+
+
+def deploy_contract(w3, _json, private_key, *args):
+    """
+    :param w3: Web3 object instance
+    :param private_key: Private key of the account
+    :param _json: Json content of artifact file
+    :param *args: arguments to be passed to be constructor of the contract
+    :return: address of deployed contract
+    """
+    account = w3.eth.account.from_key(private_key)
+    _contract = w3.eth.contract(abi=_json["abi"], bytecode=_json["bytecode"])
+    built_tx = _contract.constructor(*args).buildTransaction({"from": account.address})
+    if "gas" not in built_tx:
+        built_tx["gas"] = w3.eth.estimate_gas(built_tx)
+    raw_tx = sign_tx(w3, built_tx, private_key)
+    tx_hash = w3.eth.send_raw_transaction(raw_tx)
+    time.sleep(3)
+    try:
+        address = w3.eth.get_transaction_receipt(tx_hash)["contractAddress"]
+        return address
+    except Exception:
+        print(f"tx not found: {tx_hash.hex()}")
+        raise
+
+
+def deploy_datatoken(web3, private_key, name, symbol, minter_address):
+    """
+    :param web3: Web3 object instance
+    :param private_key: Private key of the account
+    :param name: Name of the datatoken to be deployed
+    :param symbol: Symbol of the datatoken to be deployed
+    :param minter_address: Account address
+    :return: Address of the deployed contract
+    """
+    return deploy_contract(
+        web3,
+        {"abi": DataTokenTemplate.abi, "bytecode": DataTokenTemplate.bytecode},
+        private_key,
+        name,
+        symbol,
+        minter_address,
+        to_wei(1000),
+        "no blob",
+        minter_address,
+    )
 
 
 def get_registered_ddo(
@@ -44,65 +102,22 @@ def get_registered_ddo(
 ):
     web3 = get_web3()
     aqua_root = "http://localhost:5000"
-    ddo_service_endpoint = f"{aqua_root}/api/v1/aquarius/assets/ddo/" + "{did}"
+    dt_address = deploy_datatoken(web3, wallet.key, "DT1", "DT1", wallet.address)
 
-    metadata_store_url = json.dumps({"t": 1, "url": ddo_service_endpoint})
-    # Create new data token contract
-    address_file = Path(os.getenv("ADDRESS_FILE")).expanduser().resolve()
-    with open(address_file) as f:
-        address_json = json.load(f)
-
-    network = "development"
-    dt_address = address_json[network]["DTFactory"]
-    metadata_address = address_json[network]["Metadata"]
-
-    factory_contract = DTFactory(web3, dt_address)
-    metadata_contract = MetadataContract(web3, metadata_address)
-
-    tx_id = factory_contract.createToken(
-        metadata_store_url, "DataToken1", "DT1", to_wei(1000000), wallet
-    )
-    dt_contract = DataToken(web3, factory_contract.get_token_address(tx_id))
-    if not dt_contract:
-        raise AssertionError("Creation of data token contract failed.")
-
-    ddo = Asset()
-    ddo.data_token_address = dt_contract.address
-
-    metadata_service_desc = ServiceDescriptor.metadata_service_descriptor(
-        metadata, ddo_service_endpoint
-    )
-    service_descriptors = list(
-        [ServiceDescriptor.authorization_service_descriptor("http://localhost:12001")]
-    )
-    service_descriptors.append(service_descriptor)
-    service_type = service_descriptor[0]
-
-    service_descriptors = [metadata_service_desc] + service_descriptors
-
-    services = ServiceFactory.build_services(service_descriptors)
-    checksums = dict()
-    for service in services:
-        checksums[str(service.index)] = checksum(service.main)
-
-    # Adding proof to the ddo.
-    ddo.add_proof(checksums, wallet)
-
-    ddo.did = did = f"did:op:{remove_0x_prefix(ddo.data_token_address)}"
-    ddo_service_endpoint.replace("{did}", did)
-    services[0].service_endpoint = ddo_service_endpoint
-
-    stype_to_service = {s.type: s for s in services}
-    _ = stype_to_service[service_type]
-
-    for service in services:
-        ddo.add_service(service)
-
-    if disabled:
-        ddo.disable()
-
-    if custom_credentials:
-        ddo.credentials = custom_credentials
+    ddo = {}
+    ddo["id"] = did = f"did:op:{remove_0x_prefix(dt_address)}"
+    ddo["dataToken"] = dt_address
+    ddo["created"] = f"{datetime.utcnow().replace(microsecond=0).isoformat()}Z"
+    ddo["@context"] = "https://w3id.org/did/v1"
+    ddo["publicKey"] = [{
+        "id": did,
+        "type": "EthereumECDSAKey",
+        "owner": wallet.address,
+    }]
+    ddo["authentication"] = [{
+        "type": "RsaSignatureAuthentication2018",
+        "publicKey": did
+    }]
 
     files_list_str = json.dumps(metadata["main"]["files"])
     pk = os.environ.get("PROVIDER_PRIVATE_KEY")
@@ -118,27 +133,83 @@ def get_registered_ddo(
             del file["url"]
         metadata["encryptedFiles"] = encrypted_files
 
-    block = web3.eth.block_number
+    if disabled:
+        metadata["status"] = {}
+        metadata["status"]["isOrderDisabled"] = True
+
+    metadata_service_desc = (
+        "metadata",
+        {
+            "attributes": metadata,
+            "serviceEndpoint": f"{aqua_root}/api/v1/aquarius/assets/ddo/{did}"
+        }
+    )
+
+    service_descriptors = [metadata_service_desc, service_descriptor]
+
+    services = ServiceFactory.build_services(service_descriptors)
+    checksums = dict()
+    for service in services:
+        checksums[str(service.index)] = checksum(service.main)
+
+    # Adding proof to the ddo.
+    ddo["proof"] = {
+        "type": "DDOIntegritySignature",
+        "created": f"{datetime.utcnow().replace(microsecond=0).isoformat()}Z",
+        "creator": wallet.address,
+        "signatureValue": "",
+        "checksum": checksums,
+    }
+
+    ddo["service"] = []
+
+    for service in services:
+        ddo["service"].append(service.as_dictionary())
+
+    if custom_credentials:
+        ddo["credentials"] = custom_credentials
+
     try:
-        data = lzma.compress(web3.toBytes(text=ddo.as_text()))
-        tx_id = metadata_contract.create(ddo.asset_id, bytes([1]), data, wallet)
-        if not metadata_contract.verify_tx(tx_id):
-            raise AssertionError(
-                f"create DDO on-chain failed, transaction status is 0. Transaction hash is {tx_id}"
-            )
+        data = lzma.compress(web3.toBytes(text=json.dumps(ddo)))
+        send_create_tx(web3, did, bytes([1]), data, wallet)
     except Exception as e:
-        print(f"error publishing ddo {ddo.did} in Aquarius: {e}")
+        print(f"error publishing ddo {did} in Aquarius: {e}")
         raise
 
-    log = metadata_contract.get_event_log(
-        metadata_contract.EVENT_METADATA_CREATED, block, ddo.asset_id, 30
-    )
-    assert log, "no ddo created event."
-
-    ddo = wait_for_ddo(aqua_root, ddo.did)
-    assert ddo, f"resolve did {ddo.did} failed."
+    ddo = wait_for_ddo(aqua_root, did)
+    assert ddo, f"resolve did {did} failed."
 
     return ddo
+
+
+def prepare_did(text):
+    prefix = "did:op:"
+    if text.startswith(prefix):
+        text = text[len(prefix) :]
+    return add_0x_prefix(text)
+
+
+def get_metadata_contract(web3):
+    abi = Metadata.abi
+
+    address_file = Path(os.getenv("ADDRESS_FILE")).expanduser().resolve()
+    with open(address_file) as f:
+        address_json = json.load(f)
+
+    network = "development"
+    metadata_address = address_json[network]["Metadata"]
+
+    return web3.eth.contract(address=metadata_address, abi=abi)
+
+
+def send_create_tx(web3, did, flags, data, account):
+    did = prepare_did(did)
+    web3.eth.default_account = account.address
+    txn_hash = get_metadata_contract(web3).functions.create(did, flags, data).transact()
+    receipt = web3.eth.wait_for_transaction_receipt(txn_hash)
+    metadata_contract = get_metadata_contract(web3)
+    metadata_contract.events.MetadataCreated().processReceipt(receipt)
+    return receipt
 
 
 def get_dataset_ddo_with_access_service(client, wallet):

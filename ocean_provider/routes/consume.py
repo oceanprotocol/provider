@@ -8,7 +8,6 @@ import logging
 from eth_utils import add_0x_prefix
 from flask import Response, jsonify, request
 from flask_sieve import validate
-from ocean_lib.common.did import did_to_id
 
 from ocean_provider.log import setup_logging
 from ocean_provider.myapp import app
@@ -21,6 +20,7 @@ from ocean_provider.utils.basics import (
     get_provider_wallet,
     get_web3,
 )
+from ocean_provider.utils.did import did_to_id
 from ocean_provider.utils.encryption import do_encrypt
 from ocean_provider.utils.url import append_userdata, check_url_details
 from ocean_provider.utils.util import (

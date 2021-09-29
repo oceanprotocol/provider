@@ -13,7 +13,6 @@ from decimal import ROUND_DOWN, Context, Decimal
 import requests
 from flask import Response, request
 from ocean_lib.models.data_token import DataToken
-from ocean_lib.web3_internal.constants import MAX_UINT256
 from osmosis_driver_interface.osmosis import Osmosis
 from web3.main import Web3
 from websockets import ConnectionClosed
@@ -33,6 +32,7 @@ logger = logging.getLogger(__name__)
 
 DECIMALS_18 = 18
 ETHEREUM_DECIMAL_CONTEXT = Context(prec=78, rounding=ROUND_DOWN)
+MAX_UINT256 = 2 ** 256 - 1
 MAX_WEI = MAX_UINT256
 MAX_ETHER = Decimal(MAX_WEI).scaleb(-18, context=ETHEREUM_DECIMAL_CONTEXT)
 

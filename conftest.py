@@ -7,7 +7,6 @@ import os
 
 import pytest
 from ocean_lib.web3_internal.transactions import send_ether
-from ocean_lib.web3_internal.utils import get_ether_balance
 from ocean_lib.web3_internal.wallet import Wallet
 
 from ocean_provider.run import app
@@ -82,10 +81,17 @@ def setup_all(provider_address, consumer_address):
             private_key="0xfd5c1ccea015b6d663618850824154a3b3fb2882c46cefb05b9a93fea8c3d215",
         )
 
-        if web3.fromWei(get_ether_balance(web3, provider_address), "ether") < 10:
+        if web3.fromWei(
+            web3.eth.get_balance(provider_address, block_identifier="latest"),
+            "ether"
+        ) < 10:
             send_ether(wallet, provider_address, 25)
 
-        if web3.fromWei(get_ether_balance(web3, consumer_address), "ether") < 10:
+
+        if web3.fromWei(
+            web3.eth.get_balance(provider_address, block_identifier="latest"),
+            "ether"
+        ) < 10:
             send_ether(wallet, consumer_address, 25)
 
 

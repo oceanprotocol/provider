@@ -6,7 +6,6 @@ import json
 import logging
 
 from eth_utils import add_0x_prefix
-from ocean_lib.common.did import did_to_id
 from ocean_lib.models.data_token import DataToken
 from web3.logs import DISCARD
 
@@ -14,6 +13,7 @@ from ocean_provider.constants import BaseURLs
 from ocean_provider.myapp import app
 from ocean_provider.serializers import StageAlgoSerializer
 from ocean_provider.utils.basics import get_asset_from_metadatastore, get_config
+from ocean_provider.utils.did import did_to_id
 from ocean_provider.utils.url import append_userdata
 from ocean_provider.utils.util import (
     check_asset_consumable,
