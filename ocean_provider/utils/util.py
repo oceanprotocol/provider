@@ -8,13 +8,10 @@ import logging
 import mimetypes
 import os
 from cgi import parse_header
-from decimal import ROUND_DOWN, Context, Decimal
 
 import requests
 from flask import Response, request
-from ocean_lib.models.data_token import DataToken
 from osmosis_driver_interface.osmosis import Osmosis
-from web3.main import Web3
 from websockets import ConnectionClosed
 
 from ocean_provider.log import setup_logging
@@ -24,17 +21,13 @@ from ocean_provider.utils.basics import (
     get_config,
     get_provider_wallet,
 )
+from ocean_provider.utils.currency import to_wei
+from ocean_provider.utils.datatoken import get_dt_contract, verify_order_tx
 from ocean_provider.utils.encryption import do_decrypt
 from ocean_provider.utils.url import is_safe_url
 
 setup_logging()
 logger = logging.getLogger(__name__)
-
-DECIMALS_18 = 18
-ETHEREUM_DECIMAL_CONTEXT = Context(prec=78, rounding=ROUND_DOWN)
-MAX_UINT256 = 2 ** 256 - 1
-MAX_WEI = MAX_UINT256
-MAX_ETHER = Decimal(MAX_WEI).scaleb(-18, context=ETHEREUM_DECIMAL_CONTEXT)
 
 
 def get_metadata_url():
@@ -56,25 +49,6 @@ def checksum(seed) -> str:
             "utf-8"
         )
     ).hexdigest()
-
-
-def to_wei(amount_in_ether, decimals: int = DECIMALS_18) -> int:
-    amount_in_ether = normalize_and_validate_ether(amount_in_ether)
-    decimal_places = Decimal(10) ** -abs(decimals)
-    return Web3.toWei(
-        amount_in_ether.quantize(decimal_places, context=ETHEREUM_DECIMAL_CONTEXT),
-        "ether",
-    )
-
-
-def normalize_and_validate_ether(amount_in_ether) -> Decimal:
-    if isinstance(amount_in_ether, str) or isinstance(amount_in_ether, int):
-        amount_in_ether = Decimal(amount_in_ether)
-
-    if abs(amount_in_ether) > MAX_ETHER:
-        raise ValueError("Token abs(amount_in_ether) exceeds MAX_ETHER.")
-
-    return amount_in_ether
 
 
 def build_download_response(
@@ -251,7 +225,7 @@ def validate_order(web3, sender, token_address, num_tokens, tx_id, did, service_
         f"sender={sender}, num_tokens={num_tokens}, token_address={token_address}"
     )
 
-    dt_contract = DataToken(web3, token_address)
+    dt_contract = get_dt_contract(web3, token_address)
 
     amount = to_wei(str(num_tokens))
     num_tries = 3
@@ -260,8 +234,8 @@ def validate_order(web3, sender, token_address, num_tokens, tx_id, did, service_
         logger.debug(f"validate_order is on trial {i + 1} in {num_tries}.")
         i += 1
         try:
-            tx, order_event, transfer_event = dt_contract.verify_order_tx(
-                tx_id, did, int(service_id), amount, sender
+            tx, order_event, transfer_event = verify_order_tx(
+                web3, dt_contract, tx_id, did, int(service_id), amount, sender
             )
             logger.debug(
                 f"validate_order succeeded for: did={did}, service_id={service_id}, tx_id={tx_id}, "

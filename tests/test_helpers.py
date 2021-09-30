@@ -11,10 +11,10 @@ import uuid
 from datetime import datetime
 from pathlib import Path
 
-import artifacts
-from artifacts import DataTokenTemplate, Metadata
 from eth_utils import add_0x_prefix, remove_0x_prefix
 from jsonsempai import magic  # noqa: F401
+import artifacts
+from artifacts import DataTokenTemplate, Metadata
 from ocean_lib.web3_internal.wallet import Wallet
 
 from ocean_provider.constants import BaseURLs
@@ -23,9 +23,11 @@ from ocean_provider.utils.basics import (
     get_datatoken_minter,
     get_web3,
 )
+from ocean_provider.utils.currency import to_wei
+from ocean_provider.utils.datatoken import get_tx_receipt, mint, verify_order_tx
 from ocean_provider.utils.encryption import do_encrypt
 from ocean_provider.utils.services import build_services
-from ocean_provider.utils.util import checksum, to_wei
+from ocean_provider.utils.util import checksum
 from tests.helpers.service_descriptors import get_access_service_descriptor
 
 
@@ -322,16 +324,16 @@ def get_nonce(client, address):
 def mint_tokens_and_wait(data_token_contract, receiver_wallet, minter_wallet):
     web3 = get_web3()
     dtc = data_token_contract
-    tx_id = dtc.mint(receiver_wallet.address, to_wei(50), minter_wallet)
-    dtc.get_tx_receipt(web3, tx_id)
+    tx_id = mint(web3, dtc, receiver_wallet.address, to_wei(50), minter_wallet)
+    get_tx_receipt(web3, tx_id)
     time.sleep(2)
 
     def verify_supply(mint_amount=to_wei(50)):
-        supply = dtc.totalSupply()
+        supply = dtc.caller.totalSupply()
         if supply <= 0:
-            _tx_id = dtc.mint(receiver_wallet.address, mint_amount, minter_wallet)
-            dtc.get_tx_receipt(web3, _tx_id)
-            supply = dtc.totalSupply()
+            _tx_id = mint(web3, dtc, receiver_wallet.address, mint_amount, minter_wallet)
+            get_tx_receipt(web3, _tx_id)
+            supply = dtc.caller.totalSupply()
         return supply
 
     while True:
@@ -433,14 +435,23 @@ def send_order(client, ddo, datatoken, service, cons_wallet, expect_failure=Fals
     assert nonce is not None, f"expecting a `nonce` value in the response, got {nonce}"
     # Transfer tokens to provider account
     amount = to_wei(str(num_tokens))
-    tx_id = datatoken.startOrder(
+
+    contract_fn = datatoken.functions.startOrder(
         cons_wallet.address,
         amount,
         int(service.index),
-        "0xF9f2DB837b3db03Be72252fAeD2f6E0b73E428b9",
-        cons_wallet,
+        "0xF9f2DB837b3db03Be72252fAeD2f6E0b73E428b9"
     )
-    datatoken.verify_order_tx(
-        tx_id, ddo.asset_id, service.index, amount, cons_wallet.address
+
+    web3 = get_web3()
+    _transact = {
+        "from": cons_wallet.address,
+        "account_key": cons_wallet.key,
+        "chainId": web3.eth.chain_id,
+    }
+    tx_id = contract_fn.transact(_transact).hex()
+
+    verify_order_tx(
+        web3, datatoken, tx_id, ddo.asset_id, service.index, amount, cons_wallet.address
     )
     return tx_id

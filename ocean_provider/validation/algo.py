@@ -6,13 +6,13 @@ import json
 import logging
 
 from eth_utils import add_0x_prefix
-from ocean_lib.models.data_token import DataToken
 from web3.logs import DISCARD
 
 from ocean_provider.constants import BaseURLs
 from ocean_provider.myapp import app
 from ocean_provider.serializers import StageAlgoSerializer
 from ocean_provider.utils.basics import get_asset_from_metadatastore, get_config
+from ocean_provider.utils.datatoken import get_dt_contract, get_tx_receipt
 from ocean_provider.utils.did import did_to_id
 from ocean_provider.utils.url import append_userdata
 from ocean_provider.utils.util import (
@@ -147,11 +147,12 @@ class WorkflowValidator:
                 return False
 
             try:
-                dt = DataToken(self.web3, self.consumer_address)
-                tx_receipt = dt.get_tx_receipt(self.web3, algorithm_tx_id)
+                dt = get_dt_contract(self.web3, self.consumer_address)
+                tx_receipt = get_tx_receipt(self.web3, algorithm_tx_id)
                 event_logs = dt.events.OrderStarted().processReceipt(
                     tx_receipt, errors=DISCARD
                 )
+
                 order_log = event_logs[0] if event_logs else None
                 algo_service_id = order_log.args.serviceId
                 self.algo_service = algo.get_service_by_index(algo_service_id)

@@ -8,7 +8,6 @@ from typing import Optional, Union
 
 import artifacts
 import requests
-from ocean_lib.models.data_token import DataToken
 from ocean_lib.web3_internal.wallet import Wallet
 from requests_testadapter import Resp
 from web3 import WebsocketProvider
@@ -17,6 +16,7 @@ from web3.main import Web3
 from ocean_provider.config import Config
 from ocean_provider.http_provider import CustomHTTPProvider
 from ocean_provider.utils.asset import Asset
+from ocean_provider.utils.datatoken import get_dt_contract
 
 
 def get_config(config_file: Optional[str] = None) -> Config:
@@ -59,8 +59,8 @@ def get_datatoken_minter(datatoken_address):
     """
     :return: Eth account address of the Datatoken minter
     """
-    dt = DataToken(get_web3(), datatoken_address)
-    publisher = dt.minter()
+    dt = get_dt_contract(get_web3(), datatoken_address)
+    publisher = dt.caller.minter()
     return publisher
 
 

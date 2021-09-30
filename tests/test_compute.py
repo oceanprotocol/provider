@@ -4,10 +4,9 @@
 #
 import time
 
-from ocean_lib.models.data_token import DataToken
-
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
+from ocean_provider.utils.datatoken import get_dt_contract
 from ocean_provider.validation.algo import build_stage_output_dict
 from tests.helpers.compute_helpers import (
     build_and_send_ddo_with_compute_service,
@@ -26,7 +25,7 @@ def test_compute_norawalgo_allowed(
 ):
     # publish a dataset asset
     dataset = comp_ds(client, publisher_wallet, "no_rawalgo")
-    dt_contract = DataToken(web3, dataset.data_token_address)
+    dt_contract = get_dt_contract(web3, dataset.data_token_address)
     mint_tokens_and_wait(dt_contract, consumer_wallet, publisher_wallet)
 
     algorithm_meta = {

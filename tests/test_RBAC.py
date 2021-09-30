@@ -5,11 +5,11 @@
 import json
 
 import pytest
-from ocean_lib.models.data_token import DataToken
 
 from ocean_provider.constants import BaseURLs
 from ocean_provider.exceptions import RequestNotFound
 from ocean_provider.utils.accounts import generate_auth_token
+from ocean_provider.utils.datatoken import get_dt_contract
 from ocean_provider.validation.algo import build_stage_output_dict
 from ocean_provider.validation.provider_requests import RBACValidator
 from tests.helpers.compute_helpers import build_and_send_ddo_with_compute_service
@@ -59,7 +59,7 @@ def test_initialize_request_payload(
     client, publisher_wallet, consumer_wallet, provider_address, web3
 ):
     ddo = get_dataset_ddo_with_access_service(client, publisher_wallet)
-    dt_contract = DataToken(web3, ddo.data_token_address)
+    dt_contract = get_dt_contract(web3, ddo.data_token_address)
     sa = ddo.get_service("access")
     mint_tokens_and_wait(dt_contract, consumer_wallet, publisher_wallet)
 
@@ -88,7 +88,7 @@ def test_access_request_payload(
     client, publisher_wallet, consumer_wallet, provider_address, web3
 ):
     ddo = get_dataset_ddo_with_access_service(client, publisher_wallet)
-    dt_token = DataToken(web3, ddo.data_token_address)
+    dt_token = get_dt_contract(web3, ddo.data_token_address)
 
     mint_tokens_and_wait(dt_token, consumer_wallet, publisher_wallet)
 
