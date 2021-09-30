@@ -8,8 +8,8 @@ from typing import Optional, Union
 
 import artifacts
 import requests
-from ocean_lib.web3_internal.wallet import Wallet
 from requests_testadapter import Resp
+from eth_account import Account
 from web3 import WebsocketProvider
 from web3.main import Web3
 
@@ -30,7 +30,7 @@ def get_config(config_file: Optional[str] = None) -> Config:
     )
 
 
-def get_provider_wallet(web3: Optional[Web3] = None) -> Wallet:
+def get_provider_wallet(web3: Optional[Web3] = None):
     """
     :return: Wallet instance
     """
@@ -38,7 +38,7 @@ def get_provider_wallet(web3: Optional[Web3] = None) -> Wallet:
         web3 = get_web3()
 
     pk = os.environ.get("PROVIDER_PRIVATE_KEY")
-    wallet = Wallet(web3, private_key=pk)
+    wallet = Account.from_key(private_key=pk)
 
     if wallet is None:
         raise AssertionError(
@@ -47,7 +47,7 @@ def get_provider_wallet(web3: Optional[Web3] = None) -> Wallet:
             f"variables. \nENV WAS: {sorted(os.environ.items())}"
         )
 
-    if not wallet.private_key:
+    if not wallet.key:
         raise AssertionError(
             "Ocean Provider cannot run without a valid ethereum private key."
         )

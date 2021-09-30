@@ -11,11 +11,11 @@ import uuid
 from datetime import datetime
 from pathlib import Path
 
+from eth_account import Account
 from eth_utils import add_0x_prefix, remove_0x_prefix
 from jsonsempai import magic  # noqa: F401
 import artifacts
 from artifacts import DataTokenTemplate, Metadata
-from ocean_lib.web3_internal.wallet import Wallet
 
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.basics import (
@@ -123,7 +123,7 @@ def get_registered_ddo(
 
     files_list_str = json.dumps(metadata["main"]["files"])
     pk = os.environ.get("PROVIDER_PRIVATE_KEY")
-    provider_wallet = Wallet(web3, private_key=pk)
+    provider_wallet = Account.from_key(private_key=pk)
     encrypted_files = do_encrypt(files_list_str, provider_wallet)
 
     # only assign if the encryption worked
@@ -446,7 +446,7 @@ def send_order(client, ddo, datatoken, service, cons_wallet, expect_failure=Fals
     web3 = get_web3()
     _transact = {
         "from": cons_wallet.address,
-        "account_key": cons_wallet.key,
+        "account_key": str(cons_wallet.key),
         "chainId": web3.eth.chain_id,
     }
     tx_id = contract_fn.transact(_transact).hex()

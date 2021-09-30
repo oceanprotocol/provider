@@ -25,7 +25,7 @@ def mint(web3, contract, receiver_address, amount, minter_wallet):
     contract_fn = contract.functions.mint(receiver_address, amount)
     _transact = {
         "from": minter_wallet.address,
-        "account_key": minter_wallet.key,
+        "account_key": str(minter_wallet.key),
         "chainId": web3.eth.chain_id,
     }
 

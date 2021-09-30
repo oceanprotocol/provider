@@ -45,7 +45,7 @@ def verify_signature(signer_address, signature, original_msg, nonce: int = None)
 
 def get_private_key(wallet):
     """Returns private key of the given wallet"""
-    pk = wallet.private_key
+    pk = wallet.key
     if not isinstance(pk, bytes):
         pk = Web3.toBytes(hexstr=pk)
     return eth_keys.KeyAPI.PrivateKey(pk)
@@ -105,7 +105,7 @@ def sign_message(message, wallet):
     """
     w3 = get_web3()
     signed = w3.eth.account.sign_message(
-        encode_defunct(text=message), private_key=wallet.private_key
+        encode_defunct(text=message), private_key=wallet.key
     )
 
     return signed.signature.hex()
