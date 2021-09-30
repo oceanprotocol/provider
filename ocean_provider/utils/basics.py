@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import os
+from hexbytes import HexBytes
 from pathlib import Path
 from typing import Optional, Union
 
@@ -129,3 +130,21 @@ def get_asset_from_metadatastore(metadata_url, document_id):
     response = requests.get(url)
 
     return Asset(response.json()) if response.status_code == 200 else None
+
+
+def send_ether(web3, from_wallet, to_address: str, amount: int):
+    if not Web3.isChecksumAddress(to_address):
+        to_address = Web3.toChecksumAddress(to_address)
+
+    chain_id = web3.eth.chain_id
+    tx = {
+        "from": from_wallet.address,
+        "to": to_address,
+        "value": amount,
+        "chainId": chain_id,
+    }
+    tx["gas"] = web3.eth.estimate_gas(tx)
+    raw_tx = from_wallet.sign_tx(tx)
+    tx_hash = web3.eth.send_raw_transaction(raw_tx)
+
+    return web3.eth.wait_for_transaction_receipt(HexBytes(tx_hash), timeout=120)

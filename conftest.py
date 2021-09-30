@@ -7,11 +7,9 @@ import os
 from eth_account import Account
 
 import pytest
-from ocean_lib.web3_internal.transactions import send_ether
-from ocean_lib.web3_internal.wallet import Wallet
 
 from ocean_provider.run import app
-from ocean_provider.utils.basics import get_web3
+from ocean_provider.utils.basics import get_web3, send_ether
 
 app = app
 
@@ -76,9 +74,8 @@ def setup_all(provider_address, consumer_address):
         and web3.eth.accounts[0].lower()
         == "0xe2DD09d719Da89e5a3D0F2549c7E24566e947260".lower()
     ):
-        wallet = Wallet(
-            web3,
-            private_key="0xfd5c1ccea015b6d663618850824154a3b3fb2882c46cefb05b9a93fea8c3d215",
+        wallet = Account.from_key(
+            "0xfd5c1ccea015b6d663618850824154a3b3fb2882c46cefb05b9a93fea8c3d215"
         )
 
         if (
@@ -88,7 +85,7 @@ def setup_all(provider_address, consumer_address):
             )
             < 10
         ):
-            send_ether(wallet, provider_address, 25)
+            send_ether(web3, wallet, provider_address, 25)
 
         if (
             web3.fromWei(
@@ -97,7 +94,7 @@ def setup_all(provider_address, consumer_address):
             )
             < 10
         ):
-            send_ether(wallet, consumer_address, 25)
+            send_ether(web3, wallet, consumer_address, 25)
 
 
 @pytest.fixture
