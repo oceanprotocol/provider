@@ -106,7 +106,7 @@ def get_registered_ddo(
 
     files_list_str = json.dumps(metadata["main"]["files"])
     pk = os.environ.get("PROVIDER_PRIVATE_KEY")
-    provider_wallet = Wallet(web3, private_key=pk, block_confirmations=1)
+    provider_wallet = Wallet(web3, private_key=pk, block_confirmations=0)
     encrypted_files = do_encrypt(files_list_str, provider_wallet)
 
     # only assign if the encryption worked

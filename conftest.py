@@ -24,7 +24,7 @@ def client():
 
 @pytest.fixture
 def publisher_wallet():
-    return Wallet(get_web3(), private_key=os.getenv("TEST_PRIVATE_KEY1"))
+    return Wallet(get_web3(), private_key=os.getenv("TEST_PRIVATE_KEY1"), block_confirmations=0)
 
 
 @pytest.fixture
@@ -34,7 +34,7 @@ def publisher_address(publisher_wallet):
 
 @pytest.fixture
 def consumer_wallet():
-    return Wallet(get_web3(), private_key=os.getenv("TEST_PRIVATE_KEY2"))
+    return Wallet(get_web3(), private_key=os.getenv("TEST_PRIVATE_KEY2"), block_confirmations=0)
 
 
 @pytest.fixture
@@ -53,6 +53,7 @@ def ganache_wallet():
         return Wallet(
             web3,
             private_key="0xfd5c1ccea015b6d663618850824154a3b3fb2882c46cefb05b9a93fea8c3d215",
+            block_confirmations=0
         )
 
     return None
@@ -61,7 +62,7 @@ def ganache_wallet():
 @pytest.fixture
 def provider_wallet():
     pk = os.environ.get("PROVIDER_PRIVATE_KEY")
-    return Wallet(get_web3(), private_key=pk)
+    return Wallet(get_web3(), private_key=pk, block_confirmations=0)
 
 
 @pytest.fixture
@@ -80,6 +81,7 @@ def setup_all(provider_address, consumer_address):
         wallet = Wallet(
             web3,
             private_key="0xfd5c1ccea015b6d663618850824154a3b3fb2882c46cefb05b9a93fea8c3d215",
+            block_confirmations=0
         )
 
         if web3.fromWei(get_ether_balance(web3, provider_address), "ether") < 10:
