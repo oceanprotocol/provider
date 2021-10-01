@@ -7,7 +7,6 @@ import logging
 import mimetypes
 from copy import deepcopy
 from unittest.mock import MagicMock, Mock
-import ipfshttpclient
 
 import pytest
 from ocean_lib.assets.asset import Asset
@@ -23,7 +22,6 @@ from ocean_provider.utils.util import (
     get_download_url,
     msg_hash,
     service_unavailable,
-    get_request_data,
 )
 
 test_logger = logging.getLogger(__name__)
