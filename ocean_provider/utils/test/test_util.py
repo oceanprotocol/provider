@@ -7,6 +7,7 @@ import logging
 import mimetypes
 from copy import deepcopy
 from unittest.mock import MagicMock, Mock
+import ipfshttpclient
 
 import pytest
 from ocean_lib.assets.asset import Asset
@@ -22,6 +23,7 @@ from ocean_provider.utils.util import (
     get_download_url,
     msg_hash,
     service_unavailable,
+    get_request_data,
 )
 
 test_logger = logging.getLogger(__name__)
@@ -139,7 +141,7 @@ def test_build_download_response():
 
 def test_download_ipfs_file(client):
     cid = "QmQfpdcMWnLTXKKW9GPV7NgtEugghgD6HgzSF6gSrp2mL9"
-    url = f"http://ipfs.io/ipfs/{cid}"
+    url = f"ipfs://{cid}"
     download_url = get_download_url(url, None)
     requests_session = get_requests_session()
 
@@ -148,10 +150,11 @@ def test_download_ipfs_file(client):
 
     print(f"got ipfs download url: {download_url}")
     assert download_url and download_url.endswith(f"ipfs/{cid}")
-    response = build_download_response(
-        request, requests_session, url, download_url, None
-    )
-    assert response.data, f"got no data {response.data}"
+
+    response = requests_session.get(download_url, stream=True)
+    assert (
+        response.status_code == 200
+    ), f"got a different status code {response.status_code}"
 
 
 def test_get_assets_files_list(provider_wallet):
