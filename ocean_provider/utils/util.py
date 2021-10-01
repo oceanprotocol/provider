@@ -362,9 +362,7 @@ def service_unavailable(error, context, custom_logger=None):
 
 
 def check_asset_consumable(asset, consumer_address, logger, custom_url=None):
-    code = asset.is_consumable(
-        {"type": "address", "value": consumer_address}
-    )
+    code = asset.is_consumable({"type": "address", "value": consumer_address})
 
     if code == 0:  # is consumable
         return True, ""

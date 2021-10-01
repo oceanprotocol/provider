@@ -93,9 +93,7 @@ def verify_order_tx(
     # verify sender of the tx using the Tx record
     tx = web3.eth.get_transaction(tx_id)
     if sender not in [order_log.args.consumer, order_log.args.payer]:
-        raise AssertionError(
-            "sender of order transaction is not the consumer/payer."
-        )
+        raise AssertionError("sender of order transaction is not the consumer/payer.")
     transfer_logs = contract.events.Transfer().processReceipt(
         tx_receipt, errors=DISCARD
     )

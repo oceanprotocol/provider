@@ -331,7 +331,9 @@ def mint_tokens_and_wait(data_token_contract, receiver_wallet, minter_wallet):
     def verify_supply(mint_amount=to_wei(50)):
         supply = dtc.caller.totalSupply()
         if supply <= 0:
-            _tx_id = mint(web3, dtc, receiver_wallet.address, mint_amount, minter_wallet)
+            _tx_id = mint(
+                web3, dtc, receiver_wallet.address, mint_amount, minter_wallet
+            )
             get_tx_receipt(web3, _tx_id)
             supply = dtc.caller.totalSupply()
         return supply
@@ -440,7 +442,7 @@ def send_order(client, ddo, datatoken, service, cons_wallet, expect_failure=Fals
         cons_wallet.address,
         amount,
         int(service.index),
-        "0xF9f2DB837b3db03Be72252fAeD2f6E0b73E428b9"
+        "0xF9f2DB837b3db03Be72252fAeD2f6E0b73E428b9",
     )
 
     web3 = get_web3()

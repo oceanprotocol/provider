@@ -26,5 +26,3 @@ def normalize_and_validate_ether(amount_in_ether) -> Decimal:
         raise ValueError("Token abs(amount_in_ether) exceeds MAX_ETHER.")
 
     return amount_in_ether
-
-
