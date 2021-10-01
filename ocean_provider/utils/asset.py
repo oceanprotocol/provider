@@ -8,10 +8,7 @@ from typing import Optional
 
 from eth_utils import add_0x_prefix
 
-# TODO: remove
-from ocean_lib.common.ddo.credentials import AddressCredential
-from ocean_lib.data_provider.data_service_provider import DataServiceProvider
-
+from ocean_provider.utils.credentials import AddressCredential
 from ocean_provider.utils.did import did_to_id
 from ocean_provider.utils.services import service_from_json
 
@@ -127,15 +124,6 @@ class Asset:
         """Checks whether an asset is consumable and returns a ConsumableCode."""
         if self.is_disabled or self.is_retired:
             return 1
-
-        if (
-            with_connectivity_check
-            and provider_uri
-            and not DataServiceProvider.check_asset_file_info(
-                self.did, DataServiceProvider.get_root_uri(provider_uri)
-            )
-        ):
-            return 2
 
         # to be parameterized in the future, can implement other credential classes
         manager = AddressCredential(self)
