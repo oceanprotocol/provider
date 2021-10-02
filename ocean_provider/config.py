@@ -160,4 +160,4 @@ class Config(configparser.ConfigParser):
 
     @property
     def block_confirmations(self):
-        return int(self.get("eth-network", NAME_BLOCK_CONFIRMATIONS, fallback=1))
+        return int(self.get("eth-network", NAME_BLOCK_CONFIRMATIONS, fallback=0))
