@@ -22,6 +22,7 @@ NAME_PROVIDER_ADDRESS = "provider.address"
 NAME_OPERATOR_SERVICE_URL = "operator_service.url"
 NAME_ALLOW_NON_PUBLIC_IP = "allow_non_public_ip"
 NAME_STORAGE_PATH = "storage.path"
+NAME_BLOCK_CONFIRMATIONS = "block_confirmations"
 
 environ_names = {
     NAME_NETWORK_URL: [
@@ -56,6 +57,11 @@ environ_names = {
         "resources",
     ],
     NAME_STORAGE_PATH: ["STORAGE_PATH", "Path to the local database file", "resources"],
+    NAME_BLOCK_CONFIRMATIONS: [
+        "BLOCK_CONFIRMATIONS",
+        "Block confirmations",
+        "eth-network",
+    ],
 }
 
 
@@ -151,3 +157,7 @@ class Config(configparser.ConfigParser):
         result = self.get("resources", NAME_STORAGE_PATH, fallback=fallback)
 
         return result if result else fallback
+
+    @property
+    def block_confirmations(self):
+        return int(self.get("eth-network", NAME_BLOCK_CONFIRMATIONS, fallback=0))

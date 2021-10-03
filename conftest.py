@@ -11,7 +11,7 @@ from ocean_lib.web3_internal.utils import get_ether_balance
 from ocean_lib.web3_internal.wallet import Wallet
 
 from ocean_provider.run import app
-from ocean_provider.utils.basics import get_web3
+from ocean_provider.utils.basics import get_web3, get_config
 
 app = app
 
@@ -24,7 +24,11 @@ def client():
 
 @pytest.fixture
 def publisher_wallet():
-    return Wallet(get_web3(), private_key=os.getenv("TEST_PRIVATE_KEY1"))
+    return Wallet(
+        get_web3(),
+        private_key=os.getenv("TEST_PRIVATE_KEY1"),
+        block_confirmations=get_config().block_confirmations,
+    )
 
 
 @pytest.fixture
@@ -34,7 +38,11 @@ def publisher_address(publisher_wallet):
 
 @pytest.fixture
 def consumer_wallet():
-    return Wallet(get_web3(), private_key=os.getenv("TEST_PRIVATE_KEY2"))
+    return Wallet(
+        get_web3(),
+        private_key=os.getenv("TEST_PRIVATE_KEY2"),
+        block_confirmations=get_config().block_confirmations,
+    )
 
 
 @pytest.fixture
@@ -61,7 +69,9 @@ def ganache_wallet():
 @pytest.fixture
 def provider_wallet():
     pk = os.environ.get("PROVIDER_PRIVATE_KEY")
-    return Wallet(get_web3(), private_key=pk)
+    return Wallet(
+        get_web3(), private_key=pk, block_confirmations=get_config().block_confirmations
+    )
 
 
 @pytest.fixture
@@ -80,6 +90,7 @@ def setup_all(provider_address, consumer_address):
         wallet = Wallet(
             web3,
             private_key="0xfd5c1ccea015b6d663618850824154a3b3fb2882c46cefb05b9a93fea8c3d215",
+            block_confirmations=get_config().block_confirmations,
         )
 
         if web3.fromWei(get_ether_balance(web3, provider_address), "ether") < 10:

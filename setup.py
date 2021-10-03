@@ -32,7 +32,7 @@ install_requirements = [
     "osmosis-on-premise-driver==0.1.0",
     "osmosis-ipfs-driver==0.1.0",
     "Werkzeug>=0.15.3",
-    "ocean-lib>=0.6.1",
+    "ocean-lib==0.8.4",
     "requests_testadapter",
     "eciespy",
     "coincurve>=13,<15",
@@ -103,7 +103,7 @@ setup(
     url="https://github.com/oceanprotocol/provider-py",
     # fmt: off
     # bumpversion needs single quotes
-    version='0.4.16',
+    version='0.4.17',
     # fmt: on
     zip_safe=False,
 )

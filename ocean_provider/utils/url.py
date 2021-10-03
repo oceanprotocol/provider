@@ -6,6 +6,7 @@ import hashlib
 import ipaddress
 import json
 import logging
+import requests
 from urllib.parse import urlparse
 
 import dns.resolver
@@ -44,9 +45,13 @@ def is_ip(address):
 
 def is_this_same_provider(url):
     result = urlparse(url)
-    address = DataServiceProvider.get_provider_address(
-        f"{result.scheme}://{result.netloc}/"
-    )
+    try:
+        provider_info = DataServiceProvider._http_method(
+            "get", f"{result.scheme}://{result.netloc}/"
+        ).json()
+        address = provider_info["providerAddress"]
+    except (requests.exceptions.RequestException, KeyError):
+        address = None
 
     return address and address.lower() == get_provider_wallet().address.lower()
 
