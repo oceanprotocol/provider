@@ -6,6 +6,7 @@ import hashlib
 import ipaddress
 import json
 import logging
+import requests
 from urllib.parse import urlparse
 
 import dns.resolver
