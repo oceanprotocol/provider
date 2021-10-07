@@ -274,9 +274,9 @@ class InputItemValidator:
             return False
 
         self.did = self.data.get("documentId")
-        try:
-            self.asset = get_asset_from_metadatastore(get_metadata_url(), self.did)
-        except ValueError:
+        self.asset = get_asset_from_metadatastore(get_metadata_url(), self.did)
+
+        if not self.asset:
             self.error = f"Asset for did {self.did} not found."
             return False
 

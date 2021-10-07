@@ -148,11 +148,10 @@ def test_download_ipfs_file(client):
 
     print(f"got ipfs download url: {download_url}")
     assert download_url and download_url.endswith(f"ipfs/{cid}")
-
-    response = requests_session.get(download_url, stream=True)
-    assert (
-        response.status_code == 200
-    ), f"got a different status code {response.status_code}"
+    response = build_download_response(
+        request, requests_session, download_url, download_url, None
+    )
+    assert response.data, f"got no data {response.data}"
 
 
 def test_get_assets_files_list(provider_wallet):

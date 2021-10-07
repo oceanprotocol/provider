@@ -37,7 +37,7 @@ def get_provider_wallet(web3: Optional[Web3] = None) -> Wallet:
         web3 = get_web3()
 
     pk = os.environ.get("PROVIDER_PRIVATE_KEY")
-    wallet = Wallet(web3, private_key=pk)
+    wallet = Wallet(web3, pk, get_config().block_confirmations)
 
     if wallet is None:
         raise AssertionError(
