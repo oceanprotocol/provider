@@ -25,8 +25,11 @@ jobs:
           path: 'barge'
       - name: Run Barge
         working-directory: ${{ github.workspace }}/barge
+        env:
+          IPFS_GATEWAY: http://172.15.0.16:5001
+          PROVIDER_IPFS_GATEWAY: http://172.15.0.16:5001
         run: |
-          bash -x start_ocean.sh --no-dashboard 2>&1 --with-rbac > start_ocean.log &
+          bash -x start_ocean.sh --no-dashboard 2>&1 --with-rbac --with-thegraph > start_ocean.log &
           for i in $(seq 1 50); do
             sleep 5
             [ -f "$HOME/.ocean/ocean-contracts/artifacts/ready" ] && break

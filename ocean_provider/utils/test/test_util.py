@@ -138,7 +138,7 @@ def test_build_download_response():
 
 
 def test_download_ipfs_file(client):
-    cid = "QmQfpdcMWnLTXKKW9GPV7NgtEugghgD6HgzSF6gSrp2mL9"
+    cid = "QmXtkGkWCG47tVpiBr8f5FdHuCMPq8h2jhck4jgjSXKiWZ"
     url = f"ipfs://{cid}"
     download_url = get_download_url(url, None)
     requests_session = get_requests_session()
