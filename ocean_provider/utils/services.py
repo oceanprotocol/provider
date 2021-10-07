@@ -45,7 +45,7 @@ class Service:
         return values
 
     @staticmethod
-    def from_json(cls, service_dict):
+    def from_json(service_dict):
         """Create a service object from a JSON string."""
         sd = copy.deepcopy(service_dict)
         _service_endpoint = sd.pop("serviceEndpoint", None)
@@ -53,6 +53,4 @@ class Service:
         _index = sd.pop("index", None)
         _attributes = sd.pop("attributes", None)
 
-        return cls(_service_endpoint, _type, _index, _attributes)
-
-
+        return Service(_service_endpoint, _type, _index, _attributes)

@@ -158,9 +158,7 @@ def get_compute_result(client, endpoint, params, raw_response=False):
     return response.data
 
 
-def comp_ds(
-    client, wallet, compute_service=None, algos=None, publishers=None
-):
+def comp_ds(client, wallet, compute_service=None, algos=None, publishers=None):
     metadata = get_sample_ddo_with_compute_service()["service"][0]["attributes"]
     metadata["main"]["files"][0]["checksum"] = str(uuid.uuid4())
 

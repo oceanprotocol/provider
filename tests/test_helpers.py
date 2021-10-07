@@ -143,7 +143,7 @@ def get_registered_ddo(
         service_type="metadata",
         service_endpoint=f"{aqua_root}/api/v1/aquarius/assets/ddo/{did}",
         index=0,
-        attributes=metadata
+        attributes=metadata,
     )
 
     services = [metadata_service, service]
@@ -235,9 +235,7 @@ def get_dataset_ddo_disabled(client, wallet):
     service = get_access_service(wallet.address, metadata)
     metadata["main"].pop("cost")
 
-    return get_registered_ddo(
-        client, wallet, metadata, service, disabled=True
-    )
+    return get_registered_ddo(client, wallet, metadata, service, disabled=True)
 
 
 def get_dataset_ddo_with_denied_consumer(client, wallet, consumer_addr):
@@ -299,9 +297,7 @@ def get_algorithm_ddo(client, wallet):
 def get_algorithm_ddo_different_provider(client, wallet):
     metadata = get_sample_algorithm_ddo()["service"][0]["attributes"]
     metadata["main"]["files"][0]["checksum"] = str(uuid.uuid4())
-    service = get_access_service(
-        wallet.address, metadata, diff_provider=True
-    )
+    service = get_access_service(wallet.address, metadata, diff_provider=True)
     metadata["main"].pop("cost")
     return get_registered_ddo(client, wallet, metadata, service)
 

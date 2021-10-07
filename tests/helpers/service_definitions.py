@@ -23,7 +23,7 @@ def get_access_service(address, metadata, diff_provider=False):
         service_endpoint=url_structure,
         service_type="access",
         index=3,
-        attributes=access_service_attributes
+        attributes=access_service_attributes,
     )
 
 
@@ -48,7 +48,7 @@ def get_compute_service(address, price, metadata):
         service_endpoint=f"http://localhost:8030{BaseURLs.ASSETS_URL}/compute",
         service_type="compute",
         index=4,
-        attributes=compute_service_attributes
+        attributes=compute_service_attributes,
     )
 
 
@@ -73,7 +73,7 @@ def get_compute_service_no_rawalgo(address, price, metadata):
         service_endpoint=f"http://localhost:8030{BaseURLs.ASSETS_URL}/compute",
         service_type="compute",
         index=4,
-        attributes=compute_service_attributes
+        attributes=compute_service_attributes,
     )
 
 
@@ -122,13 +122,11 @@ def get_compute_service_specific_algo_dids(address, price, metadata, algos):
         service_endpoint=f"http://localhost:8030{BaseURLs.ASSETS_URL}/compute",
         service_type="compute",
         index=4,
-        attributes=compute_service_attributes
+        attributes=compute_service_attributes,
     )
 
 
-def get_compute_service_specific_algo_publishers(
-    address, price, metadata, publishers
-):
+def get_compute_service_specific_algo_publishers(address, price, metadata, publishers):
     compute_service_attributes = {
         "main": {
             "name": "dataAssetComputeServiceAgreement",
@@ -150,7 +148,7 @@ def get_compute_service_specific_algo_publishers(
         service_endpoint=f"http://localhost:8030{BaseURLs.ASSETS_URL}/compute",
         service_type="compute",
         index=4,
-        attributes=compute_service_attributes
+        attributes=compute_service_attributes,
     )
 
 
@@ -175,5 +173,5 @@ def get_compute_service_allow_all_published(address, price, metadata):
         service_endpoint=f"http://localhost:8030{BaseURLs.ASSETS_URL}/compute",
         service_type="compute",
         index=4,
-        attributes=compute_service_attributes
+        attributes=compute_service_attributes,
     )

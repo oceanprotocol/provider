@@ -9,7 +9,7 @@ from eth_account import Account
 import pytest
 
 from ocean_provider.run import app
-from ocean_provider.utils.basics import get_web3, send_ether
+from ocean_provider.utils.basics import get_web3, get_config, send_ether
 
 app = app
 
