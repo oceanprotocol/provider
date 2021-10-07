@@ -1,42 +1,6 @@
 import copy
 
 
-def build_services(service_descriptors) -> list:
-    services = []
-
-    for i, service_descriptor in enumerate(service_descriptors):
-        service_type, kwargs = service_descriptor
-        if service_type == "metadata":
-            index = 0
-        elif service_type == "access":
-            index = 3
-        elif service_type == "compute":
-            index = 4
-
-        service = Service(
-            kwargs["serviceEndpoint"],
-            service_type,
-            index=index,
-            attributes=kwargs["attributes"],
-        )
-
-        # set index for each service
-        services.append(service)
-
-    return services
-
-
-def service_from_json(service_dict):
-    """Create a service object from a JSON string."""
-    sd = copy.deepcopy(service_dict)
-    _service_endpoint = sd.pop("serviceEndpoint", None)
-    _type = sd.pop("type", None)
-    _index = sd.pop("index", None)
-    _attributes = sd.pop("attributes", None)
-
-    return Service(_service_endpoint, _type, _index, _attributes)
-
-
 class Service:
     def __init__(
         self,
@@ -79,3 +43,16 @@ class Service:
             values["index"] = self.index
 
         return values
+
+    @staticmethod
+    def from_json(cls, service_dict):
+        """Create a service object from a JSON string."""
+        sd = copy.deepcopy(service_dict)
+        _service_endpoint = sd.pop("serviceEndpoint", None)
+        _type = sd.pop("type", None)
+        _index = sd.pop("index", None)
+        _attributes = sd.pop("attributes", None)
+
+        return cls(_service_endpoint, _type, _index, _attributes)
+
+

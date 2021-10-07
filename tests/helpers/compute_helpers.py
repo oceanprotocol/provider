@@ -5,12 +5,12 @@ import uuid
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.datatoken import get_dt_contract
-from tests.helpers.service_descriptors import (
-    get_compute_service_descriptor,
-    get_compute_service_descriptor_allow_all_published,
-    get_compute_service_descriptor_no_rawalgo,
-    get_compute_service_descriptor_specific_algo_dids,
-    get_compute_service_descriptor_specific_algo_publishers,
+from tests.helpers.service_definitions import (
+    get_compute_service,
+    get_compute_service_allow_all_published,
+    get_compute_service_no_rawalgo,
+    get_compute_service_specific_algo_dids,
+    get_compute_service_specific_algo_publishers,
 )
 from tests.test_helpers import (
     get_algorithm_ddo,
@@ -159,31 +159,31 @@ def get_compute_result(client, endpoint, params, raw_response=False):
 
 
 def comp_ds(
-    client, wallet, compute_service_descriptor=None, algos=None, publishers=None
+    client, wallet, compute_service=None, algos=None, publishers=None
 ):
     metadata = get_sample_ddo_with_compute_service()["service"][0]["attributes"]
     metadata["main"]["files"][0]["checksum"] = str(uuid.uuid4())
 
-    if compute_service_descriptor == "no_rawalgo":
-        service_descriptor = get_compute_service_descriptor_no_rawalgo(
+    if compute_service == "no_rawalgo":
+        service = get_compute_service_no_rawalgo(
             wallet.address, metadata["main"]["cost"], metadata
         )
-    elif compute_service_descriptor == "specific_algo_dids":
-        service_descriptor = get_compute_service_descriptor_specific_algo_dids(
+    elif compute_service == "specific_algo_dids":
+        service = get_compute_service_specific_algo_dids(
             wallet.address, metadata["main"]["cost"], metadata, algos
         )
-    elif compute_service_descriptor == "specific_algo_publishers":
-        service_descriptor = get_compute_service_descriptor_specific_algo_publishers(
+    elif compute_service == "specific_algo_publishers":
+        service = get_compute_service_specific_algo_publishers(
             wallet.address, metadata["main"]["cost"], metadata, publishers
         )
-    elif compute_service_descriptor == "allow_all_published":
-        service_descriptor = get_compute_service_descriptor_allow_all_published(
+    elif compute_service == "allow_all_published":
+        service = get_compute_service_allow_all_published(
             wallet.address, metadata["main"]["cost"], metadata
         )
     else:
-        service_descriptor = get_compute_service_descriptor(
+        service = get_compute_service(
             wallet.address, metadata["main"]["cost"], metadata
         )
 
     metadata["main"].pop("cost")
-    return get_registered_ddo(client, wallet, metadata, service_descriptor)
+    return get_registered_ddo(client, wallet, metadata, service)

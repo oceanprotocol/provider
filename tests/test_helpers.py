@@ -26,9 +26,9 @@ from ocean_provider.utils.basics import (
 from ocean_provider.utils.currency import to_wei
 from ocean_provider.utils.datatoken import get_tx_receipt, mint, verify_order_tx
 from ocean_provider.utils.encryption import do_encrypt
-from ocean_provider.utils.services import build_services
+from ocean_provider.utils.services import Service
 from ocean_provider.utils.util import checksum
-from tests.helpers.service_descriptors import get_access_service_descriptor
+from tests.helpers.service_definitions import get_access_service
 
 
 def sign_tx(web3, tx, private_key):
@@ -97,7 +97,7 @@ def get_registered_ddo(
     client,
     wallet,
     metadata,
-    service_descriptor,
+    service,
     disabled=False,
     custom_credentials=None,
 ):
@@ -139,17 +139,15 @@ def get_registered_ddo(
         metadata["status"] = {}
         metadata["status"]["isOrderDisabled"] = True
 
-    metadata_service_desc = (
-        "metadata",
-        {
-            "attributes": metadata,
-            "serviceEndpoint": f"{aqua_root}/api/v1/aquarius/assets/ddo/{did}",
-        },
+    metadata_service = Service(
+        service_type="metadata",
+        service_endpoint=f"{aqua_root}/api/v1/aquarius/assets/ddo/{did}",
+        index=0,
+        attributes=metadata
     )
 
-    service_descriptors = [metadata_service_desc, service_descriptor]
+    services = [metadata_service, service]
 
-    services = build_services(service_descriptors)
     checksums = dict()
     for service in services:
         checksums[str(service.index)] = checksum(service.main)
@@ -217,42 +215,42 @@ def send_create_tx(web3, did, flags, data, account):
 def get_dataset_ddo_with_access_service(client, wallet):
     metadata = get_sample_ddo()["service"][0]["attributes"]
     metadata["main"]["files"][0]["checksum"] = str(uuid.uuid4())
-    service_descriptor = get_access_service_descriptor(wallet.address, metadata)
+    service = get_access_service(wallet.address, metadata)
     metadata["main"].pop("cost")
-    return get_registered_ddo(client, wallet, metadata, service_descriptor)
+    return get_registered_ddo(client, wallet, metadata, service)
 
 
 def get_dataset_ddo_with_multiple_files(client, wallet):
     metadata = get_sample_ddo_with_multiple_files()["service"][0]["attributes"]
     for i in range(3):
         metadata["main"]["files"][i]["checksum"] = str(uuid.uuid4())
-    service_descriptor = get_access_service_descriptor(wallet.address, metadata)
+    service = get_access_service(wallet.address, metadata)
     metadata["main"].pop("cost")
-    return get_registered_ddo(client, wallet, metadata, service_descriptor)
+    return get_registered_ddo(client, wallet, metadata, service)
 
 
 def get_dataset_ddo_disabled(client, wallet):
     metadata = get_sample_ddo()["service"][0]["attributes"]
     metadata["main"]["files"][0]["checksum"] = str(uuid.uuid4())
-    service_descriptor = get_access_service_descriptor(wallet.address, metadata)
+    service = get_access_service(wallet.address, metadata)
     metadata["main"].pop("cost")
 
     return get_registered_ddo(
-        client, wallet, metadata, service_descriptor, disabled=True
+        client, wallet, metadata, service, disabled=True
     )
 
 
 def get_dataset_ddo_with_denied_consumer(client, wallet, consumer_addr):
     metadata = get_sample_ddo()["service"][0]["attributes"]
     metadata["main"]["files"][0]["checksum"] = str(uuid.uuid4())
-    service_descriptor = get_access_service_descriptor(wallet.address, metadata)
+    service = get_access_service(wallet.address, metadata)
     metadata["main"].pop("cost")
 
     return get_registered_ddo(
         client,
         wallet,
         metadata,
-        service_descriptor,
+        service,
         custom_credentials={"deny": [{"type": "address", "values": [consumer_addr]}]},
     )
 
@@ -277,35 +275,35 @@ def get_sample_ddo_with_compute_service():
 def get_dataset_with_invalid_url_ddo(client, wallet):
     metadata = get_invalid_url_ddo()["service"][0]["attributes"]
     metadata["main"]["files"][0]["checksum"] = str(uuid.uuid4())
-    service_descriptor = get_access_service_descriptor(wallet.address, metadata)
+    service = get_access_service(wallet.address, metadata)
     metadata["main"].pop("cost")
-    return get_registered_ddo(client, wallet, metadata, service_descriptor)
+    return get_registered_ddo(client, wallet, metadata, service)
 
 
 def get_dataset_with_ipfs_url_ddo(client, wallet):
     metadata = get_ipfs_url_ddo()["service"][0]["attributes"]
     metadata["main"]["files"][0]["checksum"] = str(uuid.uuid4())
-    service_descriptor = get_access_service_descriptor(wallet.address, metadata)
+    service = get_access_service(wallet.address, metadata)
     metadata["main"].pop("cost")
-    return get_registered_ddo(client, wallet, metadata, service_descriptor)
+    return get_registered_ddo(client, wallet, metadata, service)
 
 
 def get_algorithm_ddo(client, wallet):
     metadata = get_sample_algorithm_ddo()["service"][0]["attributes"]
     metadata["main"]["files"][0]["checksum"] = str(uuid.uuid4())
-    service_descriptor = get_access_service_descriptor(wallet.address, metadata)
+    service = get_access_service(wallet.address, metadata)
     metadata["main"].pop("cost")
-    return get_registered_ddo(client, wallet, metadata, service_descriptor)
+    return get_registered_ddo(client, wallet, metadata, service)
 
 
 def get_algorithm_ddo_different_provider(client, wallet):
     metadata = get_sample_algorithm_ddo()["service"][0]["attributes"]
     metadata["main"]["files"][0]["checksum"] = str(uuid.uuid4())
-    service_descriptor = get_access_service_descriptor(
+    service = get_access_service(
         wallet.address, metadata, diff_provider=True
     )
     metadata["main"].pop("cost")
-    return get_registered_ddo(client, wallet, metadata, service_descriptor)
+    return get_registered_ddo(client, wallet, metadata, service)
 
 
 def get_nonce(client, address):

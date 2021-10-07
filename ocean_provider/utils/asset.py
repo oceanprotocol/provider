@@ -10,7 +10,7 @@ from eth_utils import add_0x_prefix
 
 from ocean_provider.utils.credentials import AddressCredential
 from ocean_provider.utils.did import did_to_id
-from ocean_provider.utils.services import service_from_json
+from ocean_provider.utils.services import Service
 
 
 class Asset:
@@ -72,7 +72,7 @@ class Asset:
                 if isinstance(value, str):
                     value = json.loads(value)
 
-                service = service_from_json(value)
+                service = Service.from_json(value)
                 self.services.append(service)
         if "proof" in values:
             self.proof = values.pop("proof")
