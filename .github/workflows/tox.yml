@@ -37,6 +37,9 @@ jobs:
           ls -la "$HOME/.ocean/ocean-contracts/artifacts/"
       - name: Install dependencies
         working-directory: ${{ github.workspace }}
+        env:
+          IPFS_GATEWAY: http://172.15.0.16:5001
+          PROVIDER_IPFS_GATEWAY: http://172.15.0.16:5001
         run: |
           python -m pip install --upgrade pip
           pip install tox tox-gh-actions
