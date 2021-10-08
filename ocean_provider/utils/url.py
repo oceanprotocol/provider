@@ -171,7 +171,9 @@ def check_url_details(url, with_checksum=False):
 def _get_result_from_url(url, with_checksum=False):
     for method in ["head", "options"]:
         func = getattr(requests, method)
-        result = func(url, timeout=REQUEST_TIMEOUT)
+        result = func(
+            url, timeout=REQUEST_TIMEOUT, headers={"Accept-Encoding": "identity"}
+        )
 
         if (
             not with_checksum
