@@ -23,6 +23,8 @@ NAME_OPERATOR_SERVICE_URL = "operator_service.url"
 NAME_ALLOW_NON_PUBLIC_IP = "allow_non_public_ip"
 NAME_STORAGE_PATH = "storage.path"
 NAME_BLOCK_CONFIRMATIONS = "block_confirmations"
+NAME_REQUESTS_TIMEOUT = "requests_timeout"
+NAME_REQUESTS_CHUNK_SIZE = "requests_chunk_size"
 
 environ_names = {
     NAME_NETWORK_URL: [
@@ -60,6 +62,12 @@ environ_names = {
     NAME_BLOCK_CONFIRMATIONS: [
         "BLOCK_CONFIRMATIONS",
         "Block confirmations",
+        "eth-network",
+    ],
+    NAME_REQUESTS_TIMEOUT: ["REQUESTS_TIMEOUT", "Requests timeout", "eth-network"],
+    NAME_REQUESTS_CHUNK_SIZE: [
+        "REQUESTS_CHUNK_SIZE",
+        "Requests chunk size",
         "eth-network",
     ],
 }
@@ -161,3 +169,11 @@ class Config(configparser.ConfigParser):
     @property
     def block_confirmations(self):
         return int(self.get("eth-network", NAME_BLOCK_CONFIRMATIONS, fallback=0))
+
+    @property
+    def requests_timeout(self):
+        return int(self.get("eth-network", NAME_REQUESTS_TIMEOUT, fallback=3))
+
+    @property
+    def requests_chunk_size(self):
+        return int(self.get("eth-network", NAME_REQUESTS_CHUNK_SIZE, fallback=8192))
