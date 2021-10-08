@@ -26,8 +26,8 @@ jobs:
       - name: Run Barge
         working-directory: ${{ github.workspace }}/barge
         env:
-          IPFS_GATEWAY: http://172.15.0.16:5001
-          PROVIDER_IPFS_GATEWAY: http://172.15.0.16:5001
+          IPFS_GATEWAY: http://172.15.0.16:8080
+          PROVIDER_IPFS_GATEWAY: http://172.15.0.16:8080
         run: |
           bash -x start_ocean.sh --no-dashboard 2>&1 --with-rbac --with-thegraph > start_ocean.log &
           for i in $(seq 1 50); do
@@ -38,8 +38,8 @@ jobs:
       - name: Install dependencies
         working-directory: ${{ github.workspace }}
         env:
-          IPFS_GATEWAY: http://172.15.0.16:5001
-          PROVIDER_IPFS_GATEWAY: http://172.15.0.16:5001
+          IPFS_GATEWAY: http://172.15.0.16:8080
+          PROVIDER_IPFS_GATEWAY: http://172.15.0.16:8080
         run: |
           python -m pip install --upgrade pip
           pip install tox tox-gh-actions
