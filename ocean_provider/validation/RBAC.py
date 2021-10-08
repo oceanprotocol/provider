@@ -29,7 +29,7 @@ class RBACValidator:
         address = self.request.get(
             "consumerAddress", self.request.get("publisherAddress")
         )
-        self.credentials = {"type": "address", "address": address}
+        self.credentials = {"type": "address", "value": address}
         self.component = "provider"
 
     @staticmethod
@@ -97,19 +97,13 @@ class RBACValidator:
         dids = self.get_dids(ServiceTypesIndices.DEFAULT_ACCESS_INDEX)
         message = "initialize" + json.dumps(self.credentials)
         signature = sign_message(message, get_provider_wallet())
-        return {
-            "signature": signature,
-            "dids": dids,
-        }
+        return {"signature": signature, "dids": dids, "did": self.request["documentId"]}
 
     def build_access_payload(self):
         dids = self.get_dids(ServiceTypesIndices.DEFAULT_ACCESS_INDEX)
         message = "access" + json.dumps(self.credentials)
         signature = sign_message(message, get_provider_wallet())
-        return {
-            "signature": signature,
-            "dids": dids,
-        }
+        return {"signature": signature, "dids": dids, "did": self.request["documentId"]}
 
     def build_compute_payload(self):
         dids = self.get_dids(ServiceTypesIndices.DEFAULT_COMPUTING_INDEX)
