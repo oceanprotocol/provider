@@ -11,6 +11,7 @@ import uuid
 from pathlib import Path
 
 import artifacts
+import ipfshttpclient
 from eth_utils import remove_0x_prefix
 from jsonsempai import magic  # noqa: F401
 from ocean_lib.assets.asset import Asset
@@ -308,7 +309,12 @@ def get_ipfs_url_ddo():
     assert path.exists(), f"{path} does not exist!"
     with open(path, "r") as file_handle:
         metadata = file_handle.read()
-    return json.loads(metadata)
+    client = ipfshttpclient.connect("/dns/172.15.0.16/tcp/5001/http")
+    cid = client.add("./tests/resources/ddo_sample_file.txt")["Hash"]
+    url = f"ipfs://{cid}"
+    metadata_json = json.loads(metadata)
+    metadata_json["service"][0]["attributes"]["main"]["files"][0]["url"] = url
+    return metadata_json
 
 
 def wait_for_ddo(ddo_store, did, timeout=30):
