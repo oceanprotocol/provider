@@ -25,8 +25,11 @@ jobs:
           path: 'barge'
       - name: Run Barge
         working-directory: ${{ github.workspace }}/barge
+        env:
+          IPFS_GATEWAY: http://172.15.0.16:8080
+          PROVIDER_IPFS_GATEWAY: http://172.15.0.16:8080
         run: |
-          bash -x start_ocean.sh --no-dashboard 2>&1 --with-rbac > start_ocean.log &
+          bash -x start_ocean.sh --no-dashboard 2>&1 --with-rbac --with-thegraph > start_ocean.log &
           for i in $(seq 1 50); do
             sleep 5
             [ -f "$HOME/.ocean/ocean-contracts/artifacts/ready" ] && break
@@ -40,6 +43,8 @@ jobs:
       - name: Test with tox and publish code coverage
         uses: paambaati/codeclimate-action@v2.7.5
         env:
+          IPFS_GATEWAY: http://172.15.0.16:8080
+          PROVIDER_IPFS_GATEWAY: http://172.15.0.16:8080
           CC_TEST_REPORTER_ID: b0d75c25d5176c59e8ea665bf74396d9ee1bdf2c97f11ccc6869f9e91d80a6c7
         with:
           coverageCommand: tox

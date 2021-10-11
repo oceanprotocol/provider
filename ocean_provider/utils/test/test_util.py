@@ -8,6 +8,7 @@ import mimetypes
 from copy import deepcopy
 from unittest.mock import MagicMock, Mock
 
+import ipfshttpclient
 import pytest
 from ocean_lib.assets.asset import Asset
 from ocean_lib.common.http_requests.requests_session import get_requests_session
@@ -137,8 +138,9 @@ def test_build_download_response():
     )
 
 
-def test_download_ipfs_file(client):
-    cid = "QmQfpdcMWnLTXKKW9GPV7NgtEugghgD6HgzSF6gSrp2mL9"
+def test_download_ipfs_file():
+    client = ipfshttpclient.connect("/dns/172.15.0.16/tcp/5001/http")
+    cid = client.add("./tests/resources/ddo_sample_file.txt")["Hash"]
     url = f"ipfs://{cid}"
     download_url = get_download_url(url, None)
     requests_session = get_requests_session()
