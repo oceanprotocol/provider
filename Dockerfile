@@ -18,6 +18,7 @@ RUN apt-get update && \
 COPY . /ocean-provider
 WORKDIR /ocean-provider
 
+RUN python3.8 -m pip install --upgrade pip
 RUN python3.8 -m pip install setuptools
 RUN python3.8 -m pip install wheel
 RUN python3.8 -m pip install .
