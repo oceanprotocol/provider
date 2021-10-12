@@ -11,12 +11,11 @@ import uuid
 from datetime import datetime
 from pathlib import Path
 
+import ipfshttpclient
+from artifacts import DataTokenTemplate, Metadata
 from eth_account import Account
 from eth_utils import add_0x_prefix, remove_0x_prefix
 from jsonsempai import magic  # noqa: F401
-import artifacts
-from artifacts import DataTokenTemplate, Metadata
-
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.basics import (
     get_asset_from_metadatastore,
@@ -94,12 +93,7 @@ def deploy_datatoken(web3, private_key, name, symbol, minter_address):
 
 
 def get_registered_ddo(
-    client,
-    wallet,
-    metadata,
-    service,
-    disabled=False,
-    custom_credentials=None,
+    client, wallet, metadata, service, disabled=False, custom_credentials=None
 ):
     web3 = get_web3()
     aqua_root = "http://localhost:5000"
@@ -111,11 +105,7 @@ def get_registered_ddo(
     ddo["created"] = f"{datetime.utcnow().replace(microsecond=0).isoformat()}Z"
     ddo["@context"] = "https://w3id.org/did/v1"
     ddo["publicKey"] = [
-        {
-            "id": did,
-            "type": "EthereumECDSAKey",
-            "owner": wallet.address,
-        }
+        {"id": did, "type": "EthereumECDSAKey", "owner": wallet.address}
     ]
     ddo["authentication"] = [
         {"type": "RsaSignatureAuthentication2018", "publicKey": did}
@@ -378,7 +368,12 @@ def get_ipfs_url_ddo():
     assert path.exists(), f"{path} does not exist!"
     with open(path, "r") as file_handle:
         metadata = file_handle.read()
-    return json.loads(metadata)
+    client = ipfshttpclient.connect("/dns/172.15.0.16/tcp/5001/http")
+    cid = client.add("./tests/resources/ddo_sample_file.txt")["Hash"]
+    url = f"ipfs://{cid}"
+    metadata_json = json.loads(metadata)
+    metadata_json["service"][0]["attributes"]["main"]["files"][0]["url"] = url
+    return metadata_json
 
 
 def wait_for_ddo(metadata_cache_url, did, timeout=30):
