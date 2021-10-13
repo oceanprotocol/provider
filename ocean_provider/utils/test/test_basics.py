@@ -3,7 +3,11 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import pytest
-from ocean_provider.utils.basics import get_web3_connection_provider, send_ether
+from ocean_provider.utils.basics import (
+    get_web3,
+    get_web3_connection_provider,
+    send_ether,
+)
 from ocean_provider.utils.currency import to_wei
 
 
@@ -27,5 +31,5 @@ def test_get_web3_connection_provider(monkeypatch):
 
 def test_send_ether(publisher_wallet, consumer_address):
     assert send_ether(
-        publisher_wallet, consumer_address, to_wei(1)
+        get_web3(), publisher_wallet, consumer_address, to_wei(1)
     ), "Send ether was unsuccessful."
