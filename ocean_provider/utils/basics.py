@@ -3,21 +3,20 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import os
-from hexbytes import HexBytes
 from pathlib import Path
 from typing import Optional, Union
 
 import artifacts
 import requests
-from requests_testadapter import Resp
 from eth_account import Account
-from web3 import WebsocketProvider
-from web3.main import Web3
-
+from hexbytes import HexBytes
 from ocean_provider.config import Config
 from ocean_provider.http_provider import CustomHTTPProvider
 from ocean_provider.utils.asset import Asset
 from ocean_provider.utils.datatoken import get_dt_contract
+from requests_testadapter import Resp
+from web3 import WebsocketProvider
+from web3.main import Web3
 
 
 def get_config(config_file: Optional[str] = None) -> Config:
@@ -132,7 +131,7 @@ def get_asset_from_metadatastore(metadata_url, document_id):
     return Asset(response.json()) if response.status_code == 200 else None
 
 
-def send_ether(web3, from_wallet, to_address: str, amount: int):
+def send_ether(web3, from_wallet: Account, to_address: str, amount: int):
     if not Web3.isChecksumAddress(to_address):
         to_address = Web3.toChecksumAddress(to_address)
 
@@ -144,7 +143,7 @@ def send_ether(web3, from_wallet, to_address: str, amount: int):
         "chainId": chain_id,
     }
     tx["gas"] = web3.eth.estimate_gas(tx)
-    raw_tx = from_wallet.sign_tx(tx)
+    raw_tx = from_wallet.sign_transaction(tx, from_wallet.key)
     tx_hash = web3.eth.send_raw_transaction(raw_tx)
 
     return web3.eth.wait_for_transaction_receipt(HexBytes(tx_hash), timeout=120)
