@@ -136,11 +136,15 @@ def send_ether(web3, from_wallet: Account, to_address: str, amount: int):
         to_address = Web3.toChecksumAddress(to_address)
 
     chain_id = web3.eth.chain_id
+    nonce = web3.eth.get_transaction_count(from_wallet.address)
+    gas_price = int(web3.eth.gas_price * 1.1)
     tx = {
         "from": from_wallet.address,
         "to": to_address,
         "value": amount,
         "chainId": chain_id,
+        "nonce": nonce,
+        "gasPrice": gas_price,
     }
     tx["gas"] = web3.eth.estimate_gas(tx)
     raw_tx = Account.sign_transaction(tx, from_wallet.key).rawTransaction

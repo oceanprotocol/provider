@@ -39,7 +39,7 @@ def sign_tx(web3, tx, private_key):
     """
     account = web3.eth.account.from_key(private_key)
     nonce = web3.eth.get_transaction_count(account.address)
-    gas_price = int(web3.eth.gas_price / 100)
+    gas_price = int(web3.eth.gas_price * 1.1)
     tx["gasPrice"] = gas_price
     tx["nonce"] = nonce
     signed_tx = web3.eth.account.sign_transaction(tx, private_key)
