@@ -143,7 +143,7 @@ def send_ether(web3, from_wallet: Account, to_address: str, amount: int):
         "chainId": chain_id,
     }
     tx["gas"] = web3.eth.estimate_gas(tx)
-    raw_tx = from_wallet.sign_transaction(tx, from_wallet.key)
+    raw_tx = Account.sign_transaction(tx, from_wallet.key).rawTransaction
     tx_hash = web3.eth.send_raw_transaction(raw_tx)
 
     return web3.eth.wait_for_transaction_receipt(HexBytes(tx_hash), timeout=120)
