@@ -3,8 +3,8 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import pytest
-from eth_utils.currency import to_wei
 from ocean_provider.utils.basics import get_web3_connection_provider, send_ether
+from ocean_provider.utils.currency import to_wei
 
 
 def test_get_web3_connection_provider(monkeypatch):
