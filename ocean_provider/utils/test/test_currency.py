@@ -5,7 +5,7 @@
 from decimal import Decimal, localcontext
 
 import pytest
-from currency import (
+from ocean_provider.utils.currency import (
     ETHEREUM_DECIMAL_CONTEXT,
     MAX_ETHER,
     MAX_WEI,
