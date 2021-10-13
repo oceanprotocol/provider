@@ -1,12 +1,14 @@
 from decimal import ROUND_DOWN, Context, Decimal
-from web3.main import Web3
 
+from web3.main import Web3
 
 DECIMALS_18 = 18
 ETHEREUM_DECIMAL_CONTEXT = Context(prec=78, rounding=ROUND_DOWN)
 MAX_UINT256 = 2 ** 256 - 1
 MAX_WEI = MAX_UINT256
+MIN_WEI = 1
 MAX_ETHER = Decimal(MAX_WEI).scaleb(-18, context=ETHEREUM_DECIMAL_CONTEXT)
+MIN_ETHER = Decimal("0.000000000000000001")
 
 
 def to_wei(amount_in_ether, decimals: int = DECIMALS_18) -> int:
