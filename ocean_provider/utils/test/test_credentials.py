@@ -14,7 +14,10 @@ def test_asset_credentials_addresses_both():
     sample_asset_path = get_resource_path("ddo", "ddo_sa_sample_with_credentials.json")
     assert sample_asset_path.exists(), "{} does not exist!".format(sample_asset_path)
 
-    asset = Asset(json_filename=sample_asset_path)
+    with open(sample_asset_path, "r") as file_handle:
+        asset_dict = file_handle.read()
+
+    asset = Asset(asset_dict)
     address_credential = AddressCredential(asset)
     assert address_credential.get_addresses_of_class("allow") == ["0x123", "0x456a"]
     assert address_credential.get_addresses_of_class("deny") == ["0x2222", "0x333"]
@@ -33,8 +36,13 @@ def test_asset_credentials_addresses_only_deny():
     """Tests asset credentials when only the deny list exists on the asset."""
     sample_asset_path = get_resource_path("ddo", "ddo_sa_sample_with_credentials.json")
     assert sample_asset_path.exists(), "{} does not exist!".format(sample_asset_path)
+
+    with open(sample_asset_path, "r") as file_handle:
+        asset_dict = file_handle.read()
+
+    asset = Asset(asset_dict)
+
     # remove allow to test the behaviour of deny
-    asset = Asset(json_filename=sample_asset_path)
     asset.credentials.pop("allow")
 
     address_credential = AddressCredential(asset)
@@ -59,9 +67,13 @@ def test_asset_credentials_addresses_no_access_list():
     sample_asset_path = get_resource_path("ddo", "ddo_sa_sample_with_credentials.json")
     assert sample_asset_path.exists(), "{} does not exist!".format(sample_asset_path)
 
+    with open(sample_asset_path, "r") as file_handle:
+        asset_dict = file_handle.read()
+
+    asset = Asset(asset_dict)
+
     # if "allow" OR "deny" exist, we need a credential,
     # so remove both to test the behaviour of no credential supplied
-    asset = Asset(json_filename=sample_asset_path)
     address_credential = AddressCredential(asset)
     asset.credentials.pop("allow")
     asset.credentials.pop("deny")
