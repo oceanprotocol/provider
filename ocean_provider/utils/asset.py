@@ -7,7 +7,7 @@ import json
 from typing import Optional
 
 from eth_utils import add_0x_prefix
-
+from ocean_provider.utils.consumable import ConsumableCodes
 from ocean_provider.utils.credentials import AddressCredential
 from ocean_provider.utils.did import did_to_id
 from ocean_provider.utils.services import Service
@@ -18,10 +18,7 @@ class Asset:
     def data_token_address(self) -> Optional[str]:
         return self.other_values["dataToken"]
 
-    def __init__(
-        self,
-        dictionary: Optional[dict] = None,
-    ) -> None:
+    def __init__(self, dictionary: Optional[dict] = None) -> None:
         """Clear the DDO data values."""
         self._read_dict(dictionary)
 
@@ -120,10 +117,10 @@ class Asset:
         credential: Optional[dict] = None,
         with_connectivity_check: bool = True,
         provider_uri: Optional[str] = None,
-    ) -> bool:
+    ) -> ConsumableCodes:
         """Checks whether an asset is consumable and returns a ConsumableCode."""
         if self.is_disabled or self.is_retired:
-            return 1
+            return ConsumableCodes.ASSET_DISABLED
 
         # to be parameterized in the future, can implement other credential classes
         manager = AddressCredential(self)
@@ -131,7 +128,7 @@ class Asset:
         if manager.requires_credential():
             return manager.validate_access(credential)
 
-        return 0
+        return ConsumableCodes.OK
 
     def is_flag_enabled(self, flag_name: str) -> bool:
         """

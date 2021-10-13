@@ -4,6 +4,8 @@
 #
 from typing import Optional
 
+from ocean_provider.utils.consumable import ConsumableCodes, MalformedCredential
+
 
 class AddressCredential:
     def __init__(self, asset) -> None:
@@ -35,15 +37,15 @@ class AddressCredential:
         denied_addresses = self.get_addresses_of_class("deny")
 
         if not address and not self.requires_credential():
-            return 0
+            return ConsumableCodes.OK
 
         if allowed_addresses and address.lower() not in allowed_addresses:
-            return 3
+            return ConsumableCodes.CREDENTIAL_NOT_IN_ALLOW_LIST
 
         if not allowed_addresses and address.lower() in denied_addresses:
-            return 4
+            return ConsumableCodes.CREDENTIAL_IN_DENY_LIST
 
-        return 0
+        return ConsumableCodes.OK
 
     def add_address_to_access_class(
         self, address: str, access_class: str = "allow"
@@ -110,7 +112,3 @@ def simplify_credential_to_address(credential: Optional[dict]) -> Optional[str]:
         raise MalformedCredential("Received empty address.")
 
     return credential["value"]
-
-
-class MalformedCredential(Exception):
-    pass
