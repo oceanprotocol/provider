@@ -4,14 +4,12 @@
 #
 
 import os
+from eth_account import Account
 
 import pytest
-from ocean_lib.web3_internal.transactions import send_ether
-from ocean_lib.web3_internal.utils import get_ether_balance
-from ocean_lib.web3_internal.wallet import Wallet
 
 from ocean_provider.run import app
-from ocean_provider.utils.basics import get_web3, get_config
+from ocean_provider.utils.basics import get_web3, get_config, send_ether
 
 app = app
 
@@ -24,11 +22,7 @@ def client():
 
 @pytest.fixture
 def publisher_wallet():
-    return Wallet(
-        get_web3(),
-        private_key=os.getenv("TEST_PRIVATE_KEY1"),
-        block_confirmations=get_config().block_confirmations,
-    )
+    return Account.from_key(os.getenv("TEST_PRIVATE_KEY1"))
 
 
 @pytest.fixture
@@ -38,11 +32,7 @@ def publisher_address(publisher_wallet):
 
 @pytest.fixture
 def consumer_wallet():
-    return Wallet(
-        get_web3(),
-        private_key=os.getenv("TEST_PRIVATE_KEY2"),
-        block_confirmations=get_config().block_confirmations,
-    )
+    return Account.from_key(os.getenv("TEST_PRIVATE_KEY2"))
 
 
 @pytest.fixture
@@ -58,9 +48,8 @@ def ganache_wallet():
         and web3.eth.accounts[0].lower()
         == "0xe2DD09d719Da89e5a3D0F2549c7E24566e947260".lower()
     ):
-        return Wallet(
-            web3,
-            private_key="0xfd5c1ccea015b6d663618850824154a3b3fb2882c46cefb05b9a93fea8c3d215",
+        return Account.from_key(
+            "0xfd5c1ccea015b6d663618850824154a3b3fb2882c46cefb05b9a93fea8c3d215"
         )
 
     return None
@@ -69,9 +58,7 @@ def ganache_wallet():
 @pytest.fixture
 def provider_wallet():
     pk = os.environ.get("PROVIDER_PRIVATE_KEY")
-    return Wallet(
-        get_web3(), private_key=pk, block_confirmations=get_config().block_confirmations
-    )
+    return Account.from_key(pk)
 
 
 @pytest.fixture
@@ -87,17 +74,27 @@ def setup_all(provider_address, consumer_address):
         and web3.eth.accounts[0].lower()
         == "0xe2DD09d719Da89e5a3D0F2549c7E24566e947260".lower()
     ):
-        wallet = Wallet(
-            web3,
-            private_key="0xfd5c1ccea015b6d663618850824154a3b3fb2882c46cefb05b9a93fea8c3d215",
-            block_confirmations=get_config().block_confirmations,
+        wallet = Account.from_key(
+            "0xfd5c1ccea015b6d663618850824154a3b3fb2882c46cefb05b9a93fea8c3d215"
         )
 
-        if web3.fromWei(get_ether_balance(web3, provider_address), "ether") < 10:
-            send_ether(wallet, provider_address, 25)
+        if (
+            web3.fromWei(
+                web3.eth.get_balance(provider_address, block_identifier="latest"),
+                "ether",
+            )
+            < 10
+        ):
+            send_ether(web3, wallet, provider_address, 25)
 
-        if web3.fromWei(get_ether_balance(web3, consumer_address), "ether") < 10:
-            send_ether(wallet, consumer_address, 25)
+        if (
+            web3.fromWei(
+                web3.eth.get_balance(provider_address, block_identifier="latest"),
+                "ether",
+            )
+            < 10
+        ):
+            send_ether(web3, wallet, consumer_address, 25)
 
 
 @pytest.fixture

@@ -5,8 +5,8 @@
 import json
 
 from ocean_provider.utils.basics import get_asset_from_metadatastore
-from ocean_provider.utils.util import get_asset_url_at_index, get_metadata_url
 from ocean_provider.utils.url import append_userdata
+from ocean_provider.utils.util import get_asset_url_at_index, get_metadata_url
 
 
 class StageAlgoSerializer:

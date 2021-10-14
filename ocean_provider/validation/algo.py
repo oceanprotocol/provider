@@ -6,16 +6,14 @@ import json
 import logging
 
 from eth_utils import add_0x_prefix
-from ocean_lib.assets.utils import create_checksum
-from ocean_lib.common.agreements.service_types import ServiceTypes
-from ocean_lib.common.did import did_to_id
-from ocean_lib.models.data_token import DataToken
 from web3.logs import DISCARD
 
 from ocean_provider.constants import BaseURLs
 from ocean_provider.myapp import app
 from ocean_provider.serializers import StageAlgoSerializer
 from ocean_provider.utils.basics import get_asset_from_metadatastore, get_config
+from ocean_provider.utils.datatoken import get_dt_contract, get_tx_receipt
+from ocean_provider.utils.did import did_to_id
 from ocean_provider.utils.url import append_userdata
 from ocean_provider.utils.util import (
     check_asset_consumable,
@@ -24,6 +22,7 @@ from ocean_provider.utils.util import (
     filter_dictionary_starts_with,
     get_asset_download_urls,
     get_metadata_url,
+    msg_hash,
     record_consume_request,
     validate_order,
     validate_transfer_not_used_for_other_service,
@@ -148,16 +147,17 @@ class WorkflowValidator:
                 return False
 
             try:
-                dt = DataToken(self.web3, self.consumer_address)
-                tx_receipt = dt.get_tx_receipt(self.web3, algorithm_tx_id)
+                dt = get_dt_contract(self.web3, self.consumer_address)
+                tx_receipt = get_tx_receipt(self.web3, algorithm_tx_id)
                 event_logs = dt.events.OrderStarted().processReceipt(
                     tx_receipt, errors=DISCARD
                 )
+
                 order_log = event_logs[0] if event_logs else None
                 algo_service_id = order_log.args.serviceId
                 self.algo_service = algo.get_service_by_index(algo_service_id)
 
-                if self.algo_service.type == ServiceTypes.CLOUD_COMPUTE:
+                if self.algo_service.type == "compute":
                     asset_urls = get_asset_download_urls(
                         algo,
                         self.provider_wallet,
@@ -294,14 +294,11 @@ class InputItemValidator:
             self.error = f"Service index {self.data['serviceId']} not found."
             return False
 
-        if self.service.type not in [
-            ServiceTypes.ASSET_ACCESS,
-            ServiceTypes.CLOUD_COMPUTE,
-        ]:
+        if self.service.type not in ["access", "compute"]:
             self.error = "Services in input can only be access or compute."
             return False
 
-        if self.service.type != ServiceTypes.CLOUD_COMPUTE and self.index == 0:
+        if self.service.type != "compute" and self.index == 0:
             self.error = "Service for main asset must be compute."
             return False
 
@@ -311,11 +308,11 @@ class InputItemValidator:
             config_file=app.config["PROVIDER_CONFIG_FILE"],
         )
 
-        if self.service.type == ServiceTypes.CLOUD_COMPUTE and not asset_urls:
+        if self.service.type == "compute" and not asset_urls:
             self.error = "Services in input with compute type must be in the same provider you are calling."
             return False
 
-        if self.service.type == ServiceTypes.CLOUD_COMPUTE:
+        if self.service.type == "compute":
             if not self.validate_algo():
                 return False
 
@@ -377,9 +374,9 @@ class InputItemValidator:
         algo_ddo = get_asset_from_metadatastore(
             get_metadata_url(), trusted_algo_dict["did"]
         )
-        service = algo_ddo.get_service(ServiceTypes.METADATA)
+        service = algo_ddo.get_service("metadata")
 
-        files_checksum = create_checksum(
+        files_checksum = msg_hash(
             service.attributes["encryptedFiles"]
             + json.dumps(service.main["files"], separators=(",", ":"))
         )
@@ -389,7 +386,7 @@ class InputItemValidator:
             )
             return False
 
-        container_section_checksum = create_checksum(
+        container_section_checksum = msg_hash(
             json.dumps(service.main["algorithm"]["container"], separators=(",", ":"))
         )
         if (
