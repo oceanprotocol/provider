@@ -45,11 +45,3 @@ class Metadata:
         "it is exposed under `http://localhost:8030`."
     )
     HOST = "myfancyprovider.com"
-
-
-class ServiceTypesIndices:
-    DEFAULT_METADATA_INDEX = 0
-    DEFAULT_PROVENANCE_INDEX = 1
-    DEFAULT_AUTHORIZATION_INDEX = 2
-    DEFAULT_ACCESS_INDEX = 3
-    DEFAULT_COMPUTING_INDEX = 4

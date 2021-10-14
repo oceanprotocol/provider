@@ -8,10 +8,9 @@ import logging
 from flask import Response, jsonify, request
 from flask_sieve import validate
 from requests.models import PreparedRequest
-
+from ocean_lib.common.http_requests.requests_session import get_requests_session
 from ocean_provider.exceptions import InvalidSignatureError
 from ocean_provider.log import setup_logging
-from ocean_provider.requests_session import get_requests_session
 from ocean_provider.user_nonce import get_nonce, increment_nonce
 from ocean_provider.utils.accounts import sign_message, verify_signature
 from ocean_provider.utils.basics import LocalFileAdapter, get_provider_wallet, get_web3
@@ -23,12 +22,13 @@ from ocean_provider.utils.util import (
     process_compute_request,
     service_unavailable,
 )
+
 from ocean_provider.validation.algo import WorkflowValidator
 from ocean_provider.validation.provider_requests import (
-    ComputeGetResult,
     ComputeRequest,
     ComputeStartRequest,
     UnsignedComputeRequest,
+    ComputeGetResult,
 )
 
 from . import services

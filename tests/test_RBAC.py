@@ -5,11 +5,12 @@
 import json
 
 import pytest
+from ocean_lib.common.agreements.service_types import ServiceTypes
+from ocean_lib.models.data_token import DataToken
 
 from ocean_provider.constants import BaseURLs
 from ocean_provider.exceptions import RequestNotFound
 from ocean_provider.utils.accounts import generate_auth_token
-from ocean_provider.utils.datatoken import get_dt_contract
 from ocean_provider.validation.algo import build_stage_output_dict
 from ocean_provider.validation.provider_requests import RBACValidator
 from tests.helpers.compute_helpers import build_and_send_ddo_with_compute_service
@@ -59,8 +60,8 @@ def test_initialize_request_payload(
     client, publisher_wallet, consumer_wallet, provider_address, web3
 ):
     ddo = get_dataset_ddo_with_access_service(client, publisher_wallet)
-    dt_contract = get_dt_contract(web3, ddo.data_token_address)
-    sa = ddo.get_service("access")
+    dt_contract = DataToken(web3, ddo.data_token_address)
+    sa = ddo.get_service(ServiceTypes.ASSET_ACCESS)
     mint_tokens_and_wait(dt_contract, consumer_wallet, publisher_wallet)
 
     req = {
@@ -88,11 +89,11 @@ def test_access_request_payload(
     client, publisher_wallet, consumer_wallet, provider_address, web3
 ):
     ddo = get_dataset_ddo_with_access_service(client, publisher_wallet)
-    dt_token = get_dt_contract(web3, ddo.data_token_address)
+    dt_token = DataToken(web3, ddo.data_token_address)
 
     mint_tokens_and_wait(dt_token, consumer_wallet, publisher_wallet)
 
-    sa = ddo.get_service("access")
+    sa = ddo.get_service(ServiceTypes.ASSET_ACCESS)
     tx_id = send_order(client, ddo, dt_token, sa, consumer_wallet)
 
     req = {
@@ -126,7 +127,7 @@ def test_compute_payload_without_additional_inputs(
         client, publisher_wallet, consumer_wallet
     )
     did = dataset.did
-    sa = dataset.get_service("compute")
+    sa = dataset.get_service(ServiceTypes.CLOUD_COMPUTE)
     alg_data_token = alg_ddo.data_token_address
 
     req = {
@@ -167,13 +168,13 @@ def test_compute_request_payload(
         client, publisher_wallet, consumer_wallet
     )
     did = dataset.did
-    sa = dataset.get_service("compute")
+    sa = dataset.get_service(ServiceTypes.CLOUD_COMPUTE)
     alg_data_token = alg_ddo.data_token_address
 
     ddo2, tx_id2, _, _ = build_and_send_ddo_with_compute_service(
         client, publisher_wallet, consumer_wallet
     )
-    sa2 = ddo2.get_service("compute")
+    sa2 = ddo2.get_service(ServiceTypes.CLOUD_COMPUTE)
 
     req = {
         "signature": generate_auth_token(consumer_wallet),
@@ -224,7 +225,7 @@ def test_fails(
         client, publisher_wallet, consumer_wallet
     )
     did = dataset.did
-    sa = dataset.get_service("compute")
+    sa = dataset.get_service(ServiceTypes.CLOUD_COMPUTE)
     alg_data_token = alg_ddo.data_token_address
 
     # output key is invalid

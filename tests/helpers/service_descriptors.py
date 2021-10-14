@@ -1,11 +1,13 @@
 import hashlib
 import json
 
+from ocean_lib.common.agreements.service_factory import ServiceDescriptor
+from ocean_lib.common.agreements.service_types import ServiceTypes
+
 from ocean_provider.constants import BaseURLs
-from ocean_provider.utils.services import Service
 
 
-def get_access_service(address, metadata, diff_provider=False):
+def get_access_service_descriptor(address, metadata, diff_provider=False):
     access_service_attributes = {
         "main": {
             "name": "dataAssetAccessServiceAgreement",
@@ -19,15 +21,12 @@ def get_access_service(address, metadata, diff_provider=False):
     base_provider_url = "some_different_provider" if diff_provider else "localhost:8030"
     url_structure = f"http://{base_provider_url}{BaseURLs.ASSETS_URL}/download"
 
-    return Service(
-        service_endpoint=url_structure,
-        service_type="access",
-        index=3,
-        attributes=access_service_attributes,
+    return ServiceDescriptor.access_service_descriptor(
+        access_service_attributes, url_structure
     )
 
 
-def get_compute_service(address, price, metadata):
+def get_compute_service_descriptor(address, price, metadata):
     compute_service_attributes = {
         "main": {
             "name": "dataAssetComputeServiceAgreement",
@@ -44,15 +43,13 @@ def get_compute_service(address, price, metadata):
         }
     }
 
-    return Service(
-        service_endpoint=f"http://localhost:8030{BaseURLs.ASSETS_URL}/compute",
-        service_type="compute",
-        index=4,
-        attributes=compute_service_attributes,
+    return ServiceDescriptor.compute_service_descriptor(
+        compute_service_attributes,
+        f"http://localhost:8030{BaseURLs.ASSETS_URL}/compute",
     )
 
 
-def get_compute_service_no_rawalgo(address, price, metadata):
+def get_compute_service_descriptor_no_rawalgo(address, price, metadata):
     compute_service_attributes = {
         "main": {
             "name": "dataAssetComputeServiceAgreement",
@@ -69,15 +66,13 @@ def get_compute_service_no_rawalgo(address, price, metadata):
         }
     }
 
-    return Service(
-        service_endpoint=f"http://localhost:8030{BaseURLs.ASSETS_URL}/compute",
-        service_type="compute",
-        index=4,
-        attributes=compute_service_attributes,
+    return ServiceDescriptor.compute_service_descriptor(
+        compute_service_attributes,
+        f"http://localhost:8030{BaseURLs.ASSETS_URL}/compute",
     )
 
 
-def get_compute_service_specific_algo_dids(address, price, metadata, algos):
+def get_compute_service_descriptor_specific_algo_dids(address, price, metadata, algos):
     compute_service_attributes = {
         "main": {
             "name": "dataAssetComputeServiceAgreement",
@@ -95,7 +90,7 @@ def get_compute_service_specific_algo_dids(address, price, metadata, algos):
     }
 
     for algo in algos:
-        service = algo.get_service("metadata")
+        service = algo.get_service(ServiceTypes.METADATA)
         compute_service_attributes["main"]["privacy"][
             "publisherTrustedAlgorithms"
         ].append(
@@ -118,15 +113,15 @@ def get_compute_service_specific_algo_dids(address, price, metadata, algos):
             }
         )
 
-    return Service(
-        service_endpoint=f"http://localhost:8030{BaseURLs.ASSETS_URL}/compute",
-        service_type="compute",
-        index=4,
-        attributes=compute_service_attributes,
+    return ServiceDescriptor.compute_service_descriptor(
+        compute_service_attributes,
+        f"http://localhost:8030{BaseURLs.ASSETS_URL}/compute",
     )
 
 
-def get_compute_service_specific_algo_publishers(address, price, metadata, publishers):
+def get_compute_service_descriptor_specific_algo_publishers(
+    address, price, metadata, publishers
+):
     compute_service_attributes = {
         "main": {
             "name": "dataAssetComputeServiceAgreement",
@@ -144,15 +139,13 @@ def get_compute_service_specific_algo_publishers(address, price, metadata, publi
         }
     }
 
-    return Service(
-        service_endpoint=f"http://localhost:8030{BaseURLs.ASSETS_URL}/compute",
-        service_type="compute",
-        index=4,
-        attributes=compute_service_attributes,
+    return ServiceDescriptor.compute_service_descriptor(
+        compute_service_attributes,
+        f"http://localhost:8030{BaseURLs.ASSETS_URL}/compute",
     )
 
 
-def get_compute_service_allow_all_published(address, price, metadata):
+def get_compute_service_descriptor_allow_all_published(address, price, metadata):
     compute_service_attributes = {
         "main": {
             "name": "dataAssetComputeServiceAgreement",
@@ -169,9 +162,7 @@ def get_compute_service_allow_all_published(address, price, metadata):
         }
     }
 
-    return Service(
-        service_endpoint=f"http://localhost:8030{BaseURLs.ASSETS_URL}/compute",
-        service_type="compute",
-        index=4,
-        attributes=compute_service_attributes,
+    return ServiceDescriptor.compute_service_descriptor(
+        compute_service_attributes,
+        f"http://localhost:8030{BaseURLs.ASSETS_URL}/compute",
     )

@@ -3,12 +3,13 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import ecies
+from ocean_lib.web3_internal.wallet import Wallet
 from web3 import Web3
 
 from ocean_provider.utils.accounts import get_private_key
 
 
-def do_encrypt(document, wallet=None, public_key=None):
+def do_encrypt(document, wallet: Wallet = None, public_key=None):
     """
     :param document: Json document/string to be encrypted
     :param wallet: Wallet instance
