@@ -10,8 +10,10 @@ from unittest.mock import MagicMock, Mock
 
 import ipfshttpclient
 import pytest
-from ocean_provider.requests_session import get_requests_session
-from ocean_provider.utils.asset import Asset
+from ocean_lib.assets.asset import Asset
+from ocean_lib.common.http_requests.requests_session import get_requests_session
+from werkzeug.utils import get_content_type
+
 from ocean_provider.utils.encryption import do_encrypt
 from ocean_provider.utils.util import (
     build_download_response,
@@ -22,7 +24,6 @@ from ocean_provider.utils.util import (
     msg_hash,
     service_unavailable,
 )
-from werkzeug.utils import get_content_type
 
 test_logger = logging.getLogger(__name__)
 

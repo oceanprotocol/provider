@@ -4,6 +4,8 @@
 #
 import json
 
+from ocean_lib.common.agreements.service_types import ServiceTypes
+
 from ocean_provider.validation.algo import WorkflowValidator, build_stage_output_dict
 from tests.helpers.compute_helpers import build_and_send_ddo_with_compute_service
 
@@ -15,7 +17,7 @@ def test_passes(
     ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
         client, publisher_wallet, consumer_wallet
     )
-    sa = ddo.get_service("compute")
+    sa = ddo.get_service(ServiceTypes.CLOUD_COMPUTE)
 
     data = {
         "documentId": ddo.did,
@@ -60,7 +62,7 @@ def test_fails(
         client, publisher_wallet, consumer_wallet
     )
     did = dataset.did
-    sa = dataset.get_service("compute")
+    sa = dataset.get_service(ServiceTypes.CLOUD_COMPUTE)
     alg_data_token = alg_ddo.data_token_address
 
     # output key is invalid
@@ -231,7 +233,9 @@ def test_fails(
 
     # Service is not compute, nor access
     other_service = [
-        s for s in dataset.services if s.type not in ["compute", "access"]
+        s
+        for s in dataset.services
+        if s.type not in [ServiceTypes.CLOUD_COMPUTE, ServiceTypes.ASSET_ACCESS]
     ][0]
     data = {
         "documentId": did,
@@ -257,7 +261,7 @@ def test_fails(
     trust_ddo, trust_tx_id, _, _ = build_and_send_ddo_with_compute_service(
         client, publisher_wallet, consumer_wallet, asset_type="specific_algo_dids"
     )
-    trust_sa = trust_ddo.get_service("compute")
+    trust_sa = trust_ddo.get_service(ServiceTypes.CLOUD_COMPUTE)
 
     data = {
         "documentId": did,
@@ -287,7 +291,7 @@ def test_fails(
     trust_ddo, trust_tx_id, _, _ = build_and_send_ddo_with_compute_service(
         client, publisher_wallet, consumer_wallet, asset_type="specific_algo_publishers"
     )
-    trust_sa = trust_ddo.get_service("compute")
+    trust_sa = trust_ddo.get_service(ServiceTypes.CLOUD_COMPUTE)
 
     data = {
         "documentId": did,

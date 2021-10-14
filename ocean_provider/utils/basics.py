@@ -4,18 +4,17 @@
 #
 import os
 from pathlib import Path
-from typing import Optional, Union
+from typing import Optional
+
+import requests
+from ocean_lib.common.aquarius.aquarius import Aquarius
+from ocean_lib.models.data_token import DataToken
+from ocean_lib.ocean.util import get_web3_connection_provider
+from ocean_lib.web3_internal.wallet import Wallet
+from requests_testadapter import Resp
 
 import artifacts
-import requests
-from eth_account import Account
-from hexbytes import HexBytes
 from ocean_provider.config import Config
-from ocean_provider.http_provider import CustomHTTPProvider
-from ocean_provider.utils.asset import Asset
-from ocean_provider.utils.datatoken import get_dt_contract
-from requests_testadapter import Resp
-from web3 import WebsocketProvider
 from web3.main import Web3
 
 
@@ -30,7 +29,7 @@ def get_config(config_file: Optional[str] = None) -> Config:
     )
 
 
-def get_provider_wallet(web3: Optional[Web3] = None):
+def get_provider_wallet(web3: Optional[Web3] = None) -> Wallet:
     """
     :return: Wallet instance
     """
@@ -38,7 +37,7 @@ def get_provider_wallet(web3: Optional[Web3] = None):
         web3 = get_web3()
 
     pk = os.environ.get("PROVIDER_PRIVATE_KEY")
-    wallet = Account.from_key(private_key=pk)
+    wallet = Wallet(web3, pk, get_config().block_confirmations)
 
     if wallet is None:
         raise AssertionError(
@@ -47,7 +46,7 @@ def get_provider_wallet(web3: Optional[Web3] = None):
             f"variables. \nENV WAS: {sorted(os.environ.items())}"
         )
 
-    if not wallet.key:
+    if not wallet.private_key:
         raise AssertionError(
             "Ocean Provider cannot run without a valid ethereum private key."
         )
@@ -59,8 +58,8 @@ def get_datatoken_minter(datatoken_address):
     """
     :return: Eth account address of the Datatoken minter
     """
-    dt = get_dt_contract(get_web3(), datatoken_address)
-    publisher = dt.caller.minter()
+    dt = DataToken(get_web3(), datatoken_address)
+    publisher = dt.minter()
     return publisher
 
 
@@ -88,21 +87,6 @@ def get_web3(network_url: Optional[str] = None) -> Web3:
     return web3
 
 
-def get_web3_connection_provider(
-    network_url: str,
-) -> Union[CustomHTTPProvider, WebsocketProvider]:
-    if network_url.startswith("http"):
-        return CustomHTTPProvider(network_url)
-    elif network_url.startswith("ws"):
-        return WebsocketProvider(network_url)
-    else:
-        msg = (
-            f"The given network_url *{network_url}* does not start with either"
-            f"`http` or `wss`. A correct network url is required."
-        )
-        raise AssertionError(msg)
-
-
 class LocalFileAdapter(requests.adapters.HTTPAdapter):
     def build_response_from_file(self, request):
         file_path = request.url[7:]
@@ -125,29 +109,5 @@ def get_asset_from_metadatastore(metadata_url, document_id):
     """
     :return: `Ddo` instance
     """
-    url = f"{metadata_url}/api/v1/aquarius/assets/ddo/{document_id}"
-    response = requests.get(url)
-
-    return Asset(response.json()) if response.status_code == 200 else None
-
-
-def send_ether(web3, from_wallet: Account, to_address: str, amount: int):
-    if not Web3.isChecksumAddress(to_address):
-        to_address = Web3.toChecksumAddress(to_address)
-
-    chain_id = web3.eth.chain_id
-    nonce = web3.eth.get_transaction_count(from_wallet.address)
-    gas_price = int(web3.eth.gas_price * 1.1)
-    tx = {
-        "from": from_wallet.address,
-        "to": to_address,
-        "value": amount,
-        "chainId": chain_id,
-        "nonce": nonce,
-        "gasPrice": gas_price,
-    }
-    tx["gas"] = web3.eth.estimate_gas(tx)
-    raw_tx = Account.sign_transaction(tx, from_wallet.key).rawTransaction
-    tx_hash = web3.eth.send_raw_transaction(raw_tx)
-
-    return web3.eth.wait_for_transaction_receipt(HexBytes(tx_hash), timeout=120)
+    aqua = Aquarius(metadata_url)
+    return aqua.get_asset_ddo(document_id)

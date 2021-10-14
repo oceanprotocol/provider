@@ -7,8 +7,8 @@ import json
 import os
 
 import requests
+from ocean_lib.common.agreements.service_types import ServiceTypesIndices
 
-from ocean_provider.constants import ServiceTypesIndices
 from ocean_provider.exceptions import RequestNotFound
 from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.basics import get_provider_wallet

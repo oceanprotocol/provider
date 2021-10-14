@@ -4,9 +4,10 @@
 #
 import time
 
+from ocean_lib.common.agreements.service_types import ServiceTypes
+from ocean_lib.models.data_token import DataToken
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
-from ocean_provider.utils.datatoken import get_dt_contract
 from ocean_provider.validation.algo import build_stage_output_dict
 from tests.helpers.compute_helpers import (
     build_and_send_ddo_with_compute_service,
@@ -25,7 +26,7 @@ def test_compute_norawalgo_allowed(
 ):
     # publish a dataset asset
     dataset = comp_ds(client, publisher_wallet, "no_rawalgo")
-    dt_contract = get_dt_contract(web3, dataset.data_token_address)
+    dt_contract = DataToken(web3, dataset.data_token_address)
     mint_tokens_and_wait(dt_contract, consumer_wallet, publisher_wallet)
 
     algorithm_meta = {
@@ -35,7 +36,7 @@ def test_compute_norawalgo_allowed(
         "container": {"entrypoint": "node $ALGO", "image": "node", "tag": "10"},
     }
 
-    sa = dataset.get_service("compute")
+    sa = dataset.get_service(ServiceTypes.CLOUD_COMPUTE)
     tx_id = send_order(client, dataset, dt_contract, sa, consumer_wallet)
     signature = get_compute_signature(client, consumer_wallet, dataset.did)
 
@@ -70,7 +71,7 @@ def test_compute_specific_algo_dids(
     ddo, tx_id, alg_ddo, _ = build_and_send_ddo_with_compute_service(
         client, publisher_wallet, consumer_wallet, asset_type="specific_algo_dids"
     )
-    sa = ddo.get_service("compute")
+    sa = ddo.get_service(ServiceTypes.CLOUD_COMPUTE)
     signature = get_compute_signature(client, consumer_wallet, ddo.did)
 
     # Start the compute job
@@ -102,7 +103,7 @@ def test_compute(client, publisher_wallet, consumer_wallet):
     ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
         client, publisher_wallet, consumer_wallet
     )
-    sa = ddo.get_service("compute")
+    sa = ddo.get_service(ServiceTypes.CLOUD_COMPUTE)
     signature = get_compute_signature(client, consumer_wallet, ddo.did)
 
     # Start the compute job
@@ -223,7 +224,7 @@ def test_compute_diff_provider(client, publisher_wallet, consumer_wallet):
     ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
         client, publisher_wallet, consumer_wallet, alg_diff=True
     )
-    sa = ddo.get_service("compute")
+    sa = ddo.get_service(ServiceTypes.CLOUD_COMPUTE)
     signature = get_compute_signature(client, consumer_wallet, ddo.did)
 
     # Start the compute job
@@ -253,7 +254,7 @@ def test_compute_allow_all_published(client, publisher_wallet, consumer_wallet):
     ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
         client, publisher_wallet, consumer_wallet, asset_type="allow_all_published"
     )
-    sa = ddo.get_service("compute")
+    sa = ddo.get_service(ServiceTypes.CLOUD_COMPUTE)
     signature = get_compute_signature(client, consumer_wallet, ddo.did)
 
     # Start the compute job
@@ -283,7 +284,7 @@ def test_compute_not_an_algo(client, publisher_wallet, consumer_wallet):
     ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
         client, publisher_wallet, consumer_wallet, asset_type="allow_all_published"
     )
-    sa = ddo.get_service("compute")
+    sa = ddo.get_service(ServiceTypes.CLOUD_COMPUTE)
     signature = get_compute_signature(client, consumer_wallet, ddo.did)
 
     # Start the compute job
@@ -315,11 +316,11 @@ def test_compute_additional_input(client, publisher_wallet, consumer_wallet):
     ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
         client, publisher_wallet, consumer_wallet
     )
-    sa = ddo.get_service("compute")
+    sa = ddo.get_service(ServiceTypes.CLOUD_COMPUTE)
     ddo2, tx_id2, _, _ = build_and_send_ddo_with_compute_service(
         client, publisher_wallet, consumer_wallet
     )
-    sa2 = ddo2.get_service("compute")
+    sa2 = ddo2.get_service(ServiceTypes.CLOUD_COMPUTE)
 
     signature = get_compute_signature(client, consumer_wallet, ddo.did)
 
@@ -362,7 +363,7 @@ def test_compute_delete_job(
     ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
         client, publisher_wallet, consumer_wallet
     )
-    sa = ddo.get_service("compute")
+    sa = ddo.get_service(ServiceTypes.CLOUD_COMPUTE)
     signature = get_compute_signature(client, consumer_wallet, ddo.did)
 
     # Start the compute job

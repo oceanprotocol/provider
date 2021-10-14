@@ -10,21 +10,23 @@ import os
 from cgi import parse_header
 
 import requests
-from flask import Response
-from ocean_provider.log import setup_logging
+from flask import Response, request
+from ocean_lib.common.agreements.consumable import ConsumableCodes
+from ocean_lib.models.data_token import DataToken
+from ocean_lib.web3_internal.currency import to_wei
+from osmosis_driver_interface.osmosis import Osmosis
+from websockets import ConnectionClosed
+
 from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.basics import (
     get_asset_from_metadatastore,
     get_config,
     get_provider_wallet,
+    get_web3,
 )
-from ocean_provider.utils.consumable import ConsumableCodes
-from ocean_provider.utils.currency import to_wei
-from ocean_provider.utils.datatoken import get_dt_contract, verify_order_tx
 from ocean_provider.utils.encryption import do_decrypt
+from ocean_provider.log import setup_logging
 from ocean_provider.utils.url import is_safe_url
-from osmosis_driver_interface.osmosis import Osmosis
-from websockets import ConnectionClosed
 
 setup_logging()
 logger = logging.getLogger(__name__)
@@ -40,15 +42,6 @@ def get_request_data(request):
 
 def msg_hash(message: str):
     return hashlib.sha256(message.encode("utf-8")).hexdigest()
-
-
-def checksum(seed) -> str:
-    """Calculate the hash3_256."""
-    return hashlib.sha3_256(
-        (json.dumps(dict(sorted(seed.items(), reverse=False))).replace(" ", "")).encode(
-            "utf-8"
-        )
-    ).hexdigest()
 
 
 def build_download_response(
@@ -225,7 +218,7 @@ def validate_order(web3, sender, token_address, num_tokens, tx_id, did, service_
         f"sender={sender}, num_tokens={num_tokens}, token_address={token_address}"
     )
 
-    dt_contract = get_dt_contract(web3, token_address)
+    dt_contract = DataToken(web3, token_address)
 
     amount = to_wei(str(num_tokens))
     num_tries = 3
@@ -234,8 +227,8 @@ def validate_order(web3, sender, token_address, num_tokens, tx_id, did, service_
         logger.debug(f"validate_order is on trial {i + 1} in {num_tries}.")
         i += 1
         try:
-            tx, order_event, transfer_event = verify_order_tx(
-                web3, dt_contract, tx_id, did, int(service_id), amount, sender
+            tx, order_event, transfer_event = dt_contract.verify_order_tx(
+                tx_id, did, int(service_id), amount, sender
             )
             logger.debug(
                 f"validate_order succeeded for: did={did}, service_id={service_id}, tx_id={tx_id}, "
@@ -362,9 +355,13 @@ def service_unavailable(error, context, custom_logger=None):
 
 
 def check_asset_consumable(asset, consumer_address, logger, custom_url=None):
-    code = asset.is_consumable({"type": "address", "value": consumer_address})
+    code = asset.is_consumable(
+        {"type": "address", "value": consumer_address},
+        provider_uri=request.base_url if not custom_url else custom_url,
+        with_connectivity_check=False,
+    )
 
-    if code == ConsumableCodes.OK:  # is consumable
+    if code == ConsumableCodes.OK:
         return True, ""
 
     message = f"Error: Access to asset {asset.did} was denied with code: {code}."
