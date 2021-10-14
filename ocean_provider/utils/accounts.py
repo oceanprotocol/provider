@@ -2,15 +2,17 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
-from datetime import datetime
 import logging
+from datetime import datetime
+
 import eth_keys
 from eth_account.account import Account
 from eth_account.messages import encode_defunct
+from web3 import Web3
+
 from ocean_provider.exceptions import InvalidSignatureError
 from ocean_provider.log import setup_logging
 from ocean_provider.utils.basics import get_config, get_web3
-from web3 import Web3
 
 setup_logging()
 logger = logging.getLogger(__name__)
@@ -43,7 +45,7 @@ def verify_signature(signer_address, signature, original_msg, nonce: int = None)
 
 def get_private_key(wallet):
     """Returns private key of the given wallet"""
-    pk = wallet.private_key
+    pk = wallet.key
     if not isinstance(pk, bytes):
         pk = Web3.toBytes(hexstr=pk)
     return eth_keys.KeyAPI.PrivateKey(pk)
@@ -103,7 +105,7 @@ def sign_message(message, wallet):
     """
     w3 = get_web3()
     signed = w3.eth.account.sign_message(
-        encode_defunct(text=message), private_key=wallet.private_key
+        encode_defunct(text=message), private_key=wallet.key
     )
 
     return signed.signature.hex()
