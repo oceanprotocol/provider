@@ -5,10 +5,10 @@
 import json
 import logging
 
+from eth_typing.encoding import HexStr
 from eth_utils import add_0x_prefix
 from flask import Response, jsonify, request
 from flask_sieve import validate
-
 from ocean_provider.log import setup_logging
 from ocean_provider.myapp import app
 from ocean_provider.requests_session import get_requests_session
@@ -115,7 +115,7 @@ def encrypt():
       503:
         description: Service Unavailable
 
-    return: the encrypted document (hex str)
+    return: json string containing the encrypted document (hex str)
     """
     data = get_request_data(request)
     logger.info(f"encrypt endpoint called. {data}")
@@ -123,14 +123,8 @@ def encrypt():
     document = json.dumps(json.loads(data.get("document")), separators=(",", ":"))
     publisher_address = data.get("publisherAddress")
 
+    encrypted_document = encrypt_and_increment_nonce(did, document, publisher_address)
     try:
-        encrypted_document = do_encrypt(document, provider_wallet)
-        logger.info(
-            f"encrypted urls {encrypted_document}, "
-            f"publisher {publisher_address}, "
-            f"documentId {did}"
-        )
-        increment_nonce(publisher_address)
         return Response(
             json.dumps({"encryptedDocument": encrypted_document}),
             201,
@@ -146,6 +140,21 @@ def encrypt():
                 "publisherAddress": publisher_address,
             },
         )
+
+
+def encrypt_and_increment_nonce(
+    did: str, document: str, publisher_address: str
+) -> HexStr:
+    """Helper function to prevent code duplication between `services/encrypt`
+    and `ddo/encrypt` endpoints."""
+    encrypted_document = do_encrypt(document, provider_wallet)
+    logger.info(
+        f"encrypted urls {encrypted_document}, "
+        f"publisher {publisher_address}, "
+        f"documentId {did}"
+    )
+    increment_nonce(publisher_address)
+    return encrypted_document
 
 
 @services.route("/fileinfo", methods=["POST"])
