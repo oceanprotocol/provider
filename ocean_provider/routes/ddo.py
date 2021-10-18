@@ -4,15 +4,27 @@
 #
 import json
 import logging
+from enum import Enum
+from hashlib import sha256
 
 from flask import Response, request
 from flask_sieve import validate
 from ocean_provider.log import setup_logging
 from ocean_provider.requests_session import get_requests_session
 from ocean_provider.routes.consume import encrypt_and_increment_nonce
-from ocean_provider.utils.basics import LocalFileAdapter, get_provider_wallet
+from ocean_provider.utils.basics import (
+    LocalFileAdapter,
+    get_config,
+    get_provider_wallet,
+    get_web3,
+)
+from ocean_provider.utils.data_nft import (
+    get_encrypted_document_and_hash_from_tx_id,
+    get_metadata,
+)
+from ocean_provider.utils.encryption import do_decrypt
 from ocean_provider.utils.util import get_request_data, service_unavailable
-from ocean_provider.validation.provider_requests import EncryptRequest
+from ocean_provider.validation.provider_requests import DecryptRequest, EncryptRequest
 
 from . import ddo
 
@@ -23,7 +35,12 @@ requests_session.mount("file://", LocalFileAdapter())
 
 logger = logging.getLogger(__name__)
 
-standard_headers = {"Content-type": "application/json", "Connection": "close"}
+
+class MetadataState(Enum):
+    ACTIVE = 0
+    END_OF_LIFE = 1
+    DEPRECATED = 2
+    REVOKED = 3
 
 
 @ddo.route("/encrypt", method=["POST"])
@@ -83,11 +100,58 @@ def encrypt():
     try:
         return Response(encrypted_document, 201, headers={"content-type": "text/plain"})
     except Exception as e:
-        return service_unavailable(
-            e,
-            {
-                "providerAddress": provider_wallet.address if provider_wallet else "",
-                "documentId": did,
-                "publisherAddress": publisher_address,
-            },
-        )
+        return service_unavailable(e, data, logger)
+
+
+@ddo.route("/decrypt", methods=["POST"])
+@validate(DecryptRequest)
+def decrypt():
+    data = get_request_data(request)
+    logger.info(f"decrypt endpoint called. {data}")
+    decrypter_address = data.get("decrypterAddress")
+    chain_id = data.get("chainId")
+    data_nft_address = data.get("dataNftAddress")
+    transaction_id = data.get("transactionId")
+    encrypted_document = data.get("encryptedDocument")
+    document_hash = data.get("documentHash")
+    web3 = get_web3()
+    try:
+        if web3.eth.chain_id != chain_id:
+            pass  # return Response(Error: Unsupported chain ID)
+
+        authorized_decrypters = (
+            get_config().authorized_decrypters
+        )  # TODO: add authorized_decrypters to Config
+
+        if authorized_decrypters and decrypter_address not in authorized_decrypters:
+            pass  # return Response(Error: decrypter not authorized)
+
+        (_, _, metadata_state, _) = get_metadata(web3, data_nft_address)
+
+        if metadata_state == MetadataState.ACTIVE:
+            pass
+        elif metadata_state == MetadataState.END_OF_LIFE:
+            pass  # return Response(Error: Asset End of Life)
+        elif metadata_state == MetadataState.DEPRECATED:
+            pass  # return Response(Error: Asset Deprecated)
+        elif metadata_state == MetadataState.REVOKED:
+            pass  # return Response(Error: Asset Revoked)
+        else:
+            pass  # return Response(Error: Invalid MetadataState)
+
+        if transaction_id:
+            (
+                encrypted_document,
+                document_hash,
+            ) = get_encrypted_document_and_hash_from_tx_id(
+                web3, data_nft_address, transaction_id
+            )
+
+        document = do_decrypt(encrypted_document, get_provider_wallet())
+
+        if sha256(document) != document_hash:
+            pass  # return Response(Error: Checksum doesn't match)
+
+        return Response(document, 201, headers={"content-type": "text/plain"})
+    except Exception as e:
+        return service_unavailable(e, data, logger)

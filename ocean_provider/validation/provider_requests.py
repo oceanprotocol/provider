@@ -9,7 +9,6 @@ from flask import request as flask_request
 from flask_sieve import JsonRequest, ValidationException
 from flask_sieve.rules_processor import RulesProcessor
 from flask_sieve.validator import Validator
-
 from ocean_provider.exceptions import InvalidSignatureError
 from ocean_provider.user_nonce import get_nonce
 from ocean_provider.utils.accounts import verify_signature
@@ -39,6 +38,7 @@ class CustomJsonRequest(JsonRequest):
                 messages={
                     "signature.signature": "Invalid signature provided.",
                     "signature.download_signature": "Invalid signature provided.",
+                    "signature.decrypt_signature": "Invalid signature provided.",
                 },
                 request=request,
             )
@@ -128,6 +128,31 @@ class CustomRulesProcessor(RulesProcessor):
 
         return False
 
+    def validate_decrypt_signature(self, value, params, **kwargs):
+        """
+        Validates a signature using the documentId.
+
+        parameters:
+          - name: value
+            type: string
+            description: Value of the field being validated
+          - name: params
+            type: list
+            description: The list of parameters defined for the rule,
+                         i.e. names of other fields inside the request.
+        """
+        self._assert_params_size(size=2, params=params, rule="signature")
+        decrypter = self._attribute_value(params[0])
+        did = self._attribute_value(params[1])
+        original_msg = f"{did}"
+        try:
+            verify_signature(decrypter, value, original_msg, get_nonce(decrypter))
+            return True
+        except InvalidSignatureError:
+            pass
+
+        return False
+
 
 class NonceRequest(CustomJsonRequest):
     def rules(self):
@@ -140,6 +165,28 @@ class EncryptRequest(CustomJsonRequest):
             "documentId": ["required"],
             "document": ["required"],
             "publisherAddress": ["required"],
+        }
+
+
+class DecryptRequest(CustomJsonRequest):
+    def rules(self):
+        return {
+            "documentId": ["required"],
+            "decrypterAddress": ["required"],
+            "chainId": ["required"],
+            "dataNftAddress": ["required"],
+            "transactionId": [
+                "required_without:data_nft_address,encryptedDocument,documentHash"
+            ],
+            "encryptedDocument": [
+                "required_without:transactionId",
+                "required_with:documentHash",
+            ],
+            "documentHash": [
+                "required_without:transactionId",
+                "required_with:encryptedDocument",
+            ],
+            "signature": ["required", "decrypt_signature:decrypterAddress,documentId"],
         }
 
 

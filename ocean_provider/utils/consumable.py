@@ -4,7 +4,10 @@
 #
 
 
-class ConsumableCodes:
+from enum import Enum
+
+
+class ConsumableCodes(Enum):
     """
     Contains constant values for:
      - OK
