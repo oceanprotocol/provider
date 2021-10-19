@@ -35,6 +35,8 @@ requests_session.mount("file://", LocalFileAdapter())
 
 logger = logging.getLogger(__name__)
 
+standard_headers = {"Content-type": "text/plain", "Connection": "close"}
+
 
 class MetadataState(Enum):
     ACTIVE = 0
@@ -117,27 +119,27 @@ def decrypt():
     web3 = get_web3()
     try:
         if web3.eth.chain_id != chain_id:
-            pass  # return Response(Error: Unsupported chain ID)
+            return Response("Unsupported chain ID", 400, standard_headers)
 
         authorized_decrypters = (
             get_config().authorized_decrypters
         )  # TODO: add authorized_decrypters to Config
 
         if authorized_decrypters and decrypter_address not in authorized_decrypters:
-            pass  # return Response(Error: decrypter not authorized)
+            return Response("Decrypter not authorized", 403, standard_headers)
 
         (_, _, metadata_state, _) = get_metadata(web3, data_nft_address)
 
         if metadata_state == MetadataState.ACTIVE:
             pass
         elif metadata_state == MetadataState.END_OF_LIFE:
-            pass  # return Response(Error: Asset End of Life)
+            return Response("Asset end of life", 403, standard_headers)
         elif metadata_state == MetadataState.DEPRECATED:
-            pass  # return Response(Error: Asset Deprecated)
+            return Response("Asset deprecated", 403, standard_headers)
         elif metadata_state == MetadataState.REVOKED:
-            pass  # return Response(Error: Asset Revoked)
+            return Response("Asset revoked", 403, standard_headers)
         else:
-            pass  # return Response(Error: Invalid MetadataState)
+            return Response("Invalid MetadataState", 400, standard_headers)
 
         if transaction_id:
             (
@@ -150,8 +152,8 @@ def decrypt():
         document = do_decrypt(encrypted_document, get_provider_wallet())
 
         if sha256(document) != document_hash:
-            pass  # return Response(Error: Checksum doesn't match)
+            return Response("Checksum doesn't match", 400, standard_headers)
 
-        return Response(document, 201, headers={"content-type": "text/plain"})
+        return Response(document, 201, standard_headers)
     except Exception as e:
         return service_unavailable(e, data, logger)
