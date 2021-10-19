@@ -18,7 +18,8 @@ def get_data_nft_contract(web3: Web3, address: str) -> Contract:
 
 
 def get_metadata(web3: Web3, address: str) -> Tuple[str, str, MetadataState, bool]:
-    """Returns metaDataDecryptorUrl, metaDataDecryptorAddress, metaDataState, and hasMetaData"""
+    """Queries the ERC721 Template smart contract getMetaData call.
+    Returns metaDataDecryptorUrl, metaDataDecryptorAddress, metaDataState, and hasMetaData"""
     data_nft_contract = get_data_nft_contract(web3, address)
     return data_nft_contract.caller.getMetaData()
 
