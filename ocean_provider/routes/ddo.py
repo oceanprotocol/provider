@@ -121,9 +121,7 @@ def decrypt():
         if web3.eth.chain_id != chain_id:
             return Response("Unsupported chain ID", 400, standard_headers)
 
-        authorized_decrypters = (
-            get_config().authorized_decrypters
-        )  # TODO: add authorized_decrypters to Config
+        authorized_decrypters = get_config().authorized_decrypters
 
         if authorized_decrypters and decrypter_address not in authorized_decrypters:
             return Response("Decrypter not authorized", 403, standard_headers)

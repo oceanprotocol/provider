@@ -23,6 +23,7 @@ NAME_OPERATOR_SERVICE_URL = "operator_service.url"
 NAME_ALLOW_NON_PUBLIC_IP = "allow_non_public_ip"
 NAME_STORAGE_PATH = "storage.path"
 NAME_BLOCK_CONFIRMATIONS = "block_confirmations"
+NAME_AUTHORIZED_DECRYPTERS = "authorized_decrypters"
 
 environ_names = {
     NAME_NETWORK_URL: [
@@ -61,6 +62,11 @@ environ_names = {
         "BLOCK_CONFIRMATIONS",
         "Block confirmations",
         "eth-network",
+    ],
+    NAME_AUTHORIZED_DECRYPTERS: [
+        "AUTHORIZED_DECRYPTERS",
+        "List of authorized decrypters",
+        "resources",
     ],
 }
 
@@ -157,6 +163,10 @@ class Config(configparser.ConfigParser):
         result = self.get("resources", NAME_STORAGE_PATH, fallback=fallback)
 
         return result if result else fallback
+
+    @property
+    def authorized_decrypters(self):
+        return int(self.get("resources", NAME_AUTHORIZED_DECRYPTERS, fallback=[]))
 
     @property
     def block_confirmations(self):
