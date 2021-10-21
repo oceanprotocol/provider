@@ -24,7 +24,7 @@ def get_metadata(web3: Web3, address: str) -> Tuple[str, str, MetadataState, boo
     return data_nft_contract.caller.getMetaData()
 
 
-def get_encrypted_document_and_hash_from_tx_id(
+def get_encrypted_document_and_flags_and_hash_from_tx_id(
     web3: Web3, data_nft_address: str, transaction_id: str
 ) -> Tuple[str, str]:
     data_nft_contract = get_data_nft_contract(web3, data_nft_address)
@@ -41,4 +41,4 @@ def get_encrypted_document_and_hash_from_tx_id(
             f"MetadataCreated/MetadataUpdated event not found in tx id: {transaction_id}"
         )
     log_args = processed_logs[0].args
-    return (log_args["data"], log_args["metaDataHash"])
+    return (log_args["data"], log_args["flags"], log_args["metaDataHash"])

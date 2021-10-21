@@ -4,6 +4,7 @@
 #
 import json
 import logging
+import lzma
 from enum import Enum
 from hashlib import sha256
 
@@ -115,6 +116,7 @@ def decrypt():
     data_nft_address = data.get("dataNftAddress")
     transaction_id = data.get("transactionId")
     encrypted_document = data.get("encryptedDocument")
+    flags = data.get("flags")
     document_hash = data.get("documentHash")
     web3 = get_web3()
     try:
@@ -142,12 +144,27 @@ def decrypt():
         if transaction_id:
             (
                 encrypted_document,
+                flags,
                 document_hash,
             ) = get_encrypted_document_and_hash_from_tx_id(
                 web3, data_nft_address, transaction_id
             )
 
-        document = do_decrypt(encrypted_document, get_provider_wallet())
+        try:
+            document = do_decrypt(encrypted_document, get_provider_wallet())
+        except Exception as e:
+            logger.error(f"Failed to decrypt: {str(e)}")
+
+        if not flags:
+            logger.debug("Set flags to 0!")
+            flags = 0
+
+        # bit 1:  check if ddo is lzma compressed
+        if flags & 1:
+            try:
+                document = lzma.decompress(document)
+            except Exception as e:
+                logger.error(f"Failed to decompress: {str(e)}")
 
         if sha256(document) != document_hash:
             return Response("Checksum doesn't match", 400, standard_headers)
