@@ -5,7 +5,6 @@
 import json
 import logging
 import lzma
-from enum import Enum
 from hashlib import sha256
 
 from flask import Response, request
@@ -20,6 +19,7 @@ from ocean_provider.utils.basics import (
     get_web3,
 )
 from ocean_provider.utils.data_nft import (
+    MetadataState,
     get_encrypted_document_and_hash_from_tx_id,
     get_metadata,
 )
@@ -37,13 +37,6 @@ requests_session.mount("file://", LocalFileAdapter())
 logger = logging.getLogger(__name__)
 
 standard_headers = {"Content-type": "text/plain", "Connection": "close"}
-
-
-class MetadataState(Enum):
-    ACTIVE = 0
-    END_OF_LIFE = 1
-    DEPRECATED = 2
-    REVOKED = 3
 
 
 @ddo.route("/encrypt", method=["POST"])

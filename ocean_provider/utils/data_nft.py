@@ -2,14 +2,21 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
+from enum import Enum
 from typing import Tuple
 
 from artifacts.contracts.templates.ERC721Template_sol import ERC721Template
 from jsonsempai import magic  # noqa: F401
-from ocean_provider.routes.ddo import MetadataState
 from web3.contract import Contract
 from web3.logs import DISCARD
 from web3.main import Web3
+
+
+class MetadataState(Enum):
+    ACTIVE = 0
+    END_OF_LIFE = 1
+    DEPRECATED = 2
+    REVOKED = 3
 
 
 def get_data_nft_contract(web3: Web3, address: str) -> Contract:
