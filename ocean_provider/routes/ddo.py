@@ -20,7 +20,7 @@ from ocean_provider.utils.basics import (
 )
 from ocean_provider.utils.data_nft import (
     MetadataState,
-    get_encrypted_document_and_hash_from_tx_id,
+    get_encrypted_document_and_flags_and_hash_from_tx_id,
     get_metadata,
 )
 from ocean_provider.utils.encryption import do_decrypt
@@ -139,7 +139,7 @@ def decrypt():
                 encrypted_document,
                 flags,
                 document_hash,
-            ) = get_encrypted_document_and_hash_from_tx_id(
+            ) = get_encrypted_document_and_flags_and_hash_from_tx_id(
                 web3, data_nft_address, transaction_id
             )
 
