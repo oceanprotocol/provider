@@ -47,4 +47,4 @@ def get_encrypted_document_and_flags_and_hash_from_tx_id(
             f"MetadataCreated/MetadataUpdated event not found in tx id: {transaction_id}"
         )
     log_args = processed_logs[0].args
-    return (log_args["data"], log_args["flags"], log_args["metaDataHash"])
+    return (log_args["data"].decode("utf-8"), log_args["flags"], log_args["metaDataHash"])

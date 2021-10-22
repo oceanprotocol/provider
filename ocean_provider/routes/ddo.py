@@ -159,7 +159,7 @@ def decryptDDO():
             except Exception as e:
                 logger.error(f"Failed to decompress: {str(e)}")
 
-        if sha256(document) != document_hash:
+        if sha256(document.encode("utf-8")) != document_hash.hex():
             return Response("Checksum doesn't match", 400, standard_headers)
 
         return Response(document, 201, standard_headers)
