@@ -1,7 +1,6 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
-
 import json
 import lzma
 import os
@@ -12,11 +11,11 @@ from datetime import datetime
 from pathlib import Path
 
 import ipfshttpclient
+from jsonsempai import magic  # noqa: F401
 from artifacts.contracts.templates.ERC20Template_sol import ERC20Template
 from artifacts.contracts.templates.ERC721Template_sol import ERC721Template
 from eth_account import Account
 from eth_utils import add_0x_prefix, remove_0x_prefix
-from jsonsempai import magic  # noqa: F401
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.basics import (
     get_asset_from_metadatastore,
