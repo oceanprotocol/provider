@@ -141,10 +141,10 @@ class CustomRulesProcessor(RulesProcessor):
             description: The list of parameters defined for the rule,
                          i.e. names of other fields inside the request.
         """
-        self._assert_params_size(size=2, params=params, rule="signature")
+        self._assert_params_size(size=1, params=params, rule="signature")
         decrypter = self._attribute_value(params[0])
         try:
-            verify_signature(decrypter, value, "", get_nonce(decrypter))
+            verify_signature(decrypter, value, f"{decrypter}", get_nonce(decrypter))
             return True
         except InvalidSignatureError:
             pass

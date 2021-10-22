@@ -166,7 +166,7 @@ class Config(configparser.ConfigParser):
 
     @property
     def authorized_decrypters(self):
-        return int(self.get("resources", NAME_AUTHORIZED_DECRYPTERS, fallback=[]))
+        return self.get("resources", NAME_AUTHORIZED_DECRYPTERS, fallback=[])
 
     @property
     def block_confirmations(self):
