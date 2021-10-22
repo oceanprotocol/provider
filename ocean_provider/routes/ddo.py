@@ -63,7 +63,7 @@ def encryptDDO():
           type: object
           required:
             - documentId
-            - ddo
+            - document
             - publisherAddress:
           properties:
             documentId:
@@ -89,7 +89,7 @@ def encryptDDO():
     data = get_request_data(request)
     logger.info(f"encrypt endpoint called. {data}")
     did = data.get("documentId")
-    ddo = json.dumps(json.loads(data.get("ddo")), separators=(",", ":"))
+    ddo = json.dumps(json.loads(data.get("document")), separators=(",", ":"))
     publisher_address = data.get("publisherAddress")
 
     encrypted_document = encrypt_and_increment_nonce(did, ddo, publisher_address)
@@ -150,10 +150,10 @@ def decryptDDO():
 
         if not flags:
             logger.debug("Set flags to 0!")
-            flags = 0
+            flags = b"\x00"
 
         # bit 1:  check if ddo is lzma compressed
-        if flags & 1:
+        if flags[0] & 1:
             try:
                 document = lzma.decompress(document)
             except Exception as e:
