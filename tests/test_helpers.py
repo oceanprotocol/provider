@@ -12,7 +12,8 @@ from datetime import datetime
 from pathlib import Path
 
 import ipfshttpclient
-from artifacts import DataTokenTemplate, Metadata
+from artifacts.contracts.templates.ERC20Template_sol import ERC20Template
+from artifacts.contracts.templates.ERC721Template_sol import ERC721Template
 from eth_account import Account
 from eth_utils import add_0x_prefix, remove_0x_prefix
 from jsonsempai import magic  # noqa: F401
@@ -81,7 +82,7 @@ def deploy_datatoken(web3, private_key, name, symbol, minter_address):
     """
     return deploy_contract(
         web3,
-        {"abi": DataTokenTemplate.abi, "bytecode": DataTokenTemplate.bytecode},
+        {"abi": ERC20Template.abi, "bytecode": ERC20Template.bytecode},
         private_key,
         name,
         symbol,
@@ -180,7 +181,7 @@ def prepare_did(text):
 
 
 def get_metadata_contract(web3):
-    abi = Metadata.abi
+    abi = ERC721Template.abi
 
     address_file = Path(os.getenv("ADDRESS_FILE")).expanduser().resolve()
     with open(address_file) as f:

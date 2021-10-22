@@ -1,18 +1,17 @@
+from artifacts.contracts.templates.ERC20Template_sol import ERC20Template
 from eth_utils import remove_0x_prefix
 from hexbytes import HexBytes
+from jsonsempai import magic  # noqa: F401
+from ocean_provider.utils.currency import to_wei
 from web3.logs import DISCARD
 from websockets import ConnectionClosed
-from ocean_provider.utils.currency import to_wei
-
-from jsonsempai import magic  # noqa: F401
-from artifacts import DataTokenTemplate
 
 OPF_FEE_PER_TOKEN = to_wei("0.001")  # 0.1%
 MAX_MARKET_FEE_PER_TOKEN = to_wei("0.001")
 
 
 def get_dt_contract(web3, address):
-    abi = DataTokenTemplate.abi
+    abi = ERC20Template.abi
 
     return web3.eth.contract(address=address, abi=abi)
 
@@ -33,13 +32,7 @@ def mint(web3, contract, receiver_address, amount, minter_wallet):
 
 
 def verify_order_tx(
-    web3,
-    contract,
-    tx_id: str,
-    did: str,
-    service_id,
-    amount,
-    sender: str,
+    web3, contract, tx_id: str, did: str, service_id, amount, sender: str
 ):
     try:
         tx_receipt = get_tx_receipt(web3, tx_id)

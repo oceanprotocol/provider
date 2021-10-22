@@ -4,7 +4,7 @@
 #
 from typing import Tuple
 
-from contracts.templates.ERC721Template.sol import ERC721Template
+from artifacts.contracts.templates.ERC721Template_sol import ERC721Template
 from jsonsempai import magic  # noqa: F401
 from ocean_provider.routes.ddo import MetadataState
 from web3.contract import Contract
