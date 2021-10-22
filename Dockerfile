@@ -23,6 +23,9 @@ RUN python3.8 -m pip install setuptools
 RUN python3.8 -m pip install wheel
 RUN python3.8 -m pip install .
 
+ADD contracts/ contracts/
+RUN python3.8 -m pip install ./contracts
+
 # config.ini configuration file variables
 ENV NETWORK_URL='http://127.0.0.1:8545'
 
