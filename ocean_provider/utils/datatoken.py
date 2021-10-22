@@ -1,5 +1,5 @@
 from jsonsempai import magic  # noqa: F401
-from artifacts.contracts.templates.ERC20Template_sol import ERC20Template
+from artifacts import ERC20Template
 from eth_utils import remove_0x_prefix
 from hexbytes import HexBytes
 from ocean_provider.utils.currency import to_wei

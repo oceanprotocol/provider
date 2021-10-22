@@ -27,7 +27,7 @@ from ocean_provider.utils.encryption import do_decrypt
 from ocean_provider.utils.util import get_request_data, service_unavailable
 from ocean_provider.validation.provider_requests import DecryptRequest, EncryptRequest
 
-from . import ddo
+from . import services
 
 setup_logging()
 provider_wallet = get_provider_wallet()
@@ -39,9 +39,9 @@ logger = logging.getLogger(__name__)
 standard_headers = {"Content-type": "text/plain", "Connection": "close"}
 
 
-@ddo.route("/encrypt", method=["POST"])
+@services.route("/encryptDDO", methods=["POST"])
 @validate(EncryptRequest)
-def encrypt():
+def encryptDDO():
     """Encrypt DDO using the Provider's own symmetric key (symmetric encryption).
     This can be used by the publisher of an asset to encrypt the DDO of the
     asset data files before publishing the asset DDO. The publisher to use this
@@ -99,9 +99,9 @@ def encrypt():
         return service_unavailable(e, data, logger)
 
 
-@ddo.route("/decrypt", methods=["POST"])
+@services.route("/decryptDDO", methods=["POST"])
 @validate(DecryptRequest)
-def decrypt():
+def decryptDDO():
     data = get_request_data(request)
     logger.info(f"decrypt endpoint called. {data}")
     decrypter_address = data.get("decrypterAddress")

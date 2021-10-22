@@ -6,7 +6,7 @@ from enum import Enum
 from typing import Tuple
 
 from jsonsempai import magic  # noqa: F401
-from artifacts.contracts.templates.ERC721Template_sol import ERC721Template
+from artifacts import ERC721Template
 from web3.contract import Contract
 from web3.logs import DISCARD
 from web3.main import Web3

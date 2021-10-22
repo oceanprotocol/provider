@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 
 from jsonsempai import magic  # noqa: F401
-from artifacts.contracts.ERC721Factory_sol import ERC721Factory
+from artifacts import ERC721Factory
 from ocean_provider.utils.basics import get_config
 from web3.contract import Contract
 from web3.logs import DISCARD

@@ -7,7 +7,6 @@
 from flask import Blueprint
 
 services = Blueprint("services", __name__)
-ddo = Blueprint("ddo", __name__)
 
 from .compute import *  # isort:skip
 from .consume import *  # isort:skip

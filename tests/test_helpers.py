@@ -12,8 +12,7 @@ from pathlib import Path
 
 import ipfshttpclient
 from jsonsempai import magic  # noqa: F401
-from artifacts.contracts.templates.ERC20Template_sol import ERC20Template
-from artifacts.contracts.templates.ERC721Template_sol import ERC721Template
+from artifacts import ERC20Template, ERC721Template
 from eth_account import Account
 from eth_utils import add_0x_prefix, remove_0x_prefix
 from ocean_provider.constants import BaseURLs

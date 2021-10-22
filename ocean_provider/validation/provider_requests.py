@@ -130,7 +130,7 @@ class CustomRulesProcessor(RulesProcessor):
 
     def validate_decrypt_signature(self, value, params, **kwargs):
         """
-        Validates a signature using the documentId.
+        Validates a signature using the decrypterAddress.
 
         parameters:
           - name: value
@@ -143,10 +143,8 @@ class CustomRulesProcessor(RulesProcessor):
         """
         self._assert_params_size(size=2, params=params, rule="signature")
         decrypter = self._attribute_value(params[0])
-        did = self._attribute_value(params[1])
-        original_msg = f"{did}"
         try:
-            verify_signature(decrypter, value, original_msg, get_nonce(decrypter))
+            verify_signature(decrypter, value, "", get_nonce(decrypter))
             return True
         except InvalidSignatureError:
             pass
@@ -171,7 +169,7 @@ class EncryptRequest(CustomJsonRequest):
 class DecryptRequest(CustomJsonRequest):
     def rules(self):
         return {
-            "documentId": ["required"],
+            "documentId": ["required_without:transactionId"],
             "decrypterAddress": ["required"],
             "chainId": ["required"],
             "dataNftAddress": ["required"],
@@ -188,7 +186,7 @@ class DecryptRequest(CustomJsonRequest):
                 "required_without:transactionId",
                 "required_with:encryptedDocument,flags",
             ],
-            "signature": ["required", "decrypt_signature:decrypterAddress,documentId"],
+            "signature": ["bail", "required", "decrypt_signature:decrypterAddress"],
         }
 
 
