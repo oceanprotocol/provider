@@ -2,7 +2,6 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
-from enum import Enum
 from typing import Tuple
 
 from jsonsempai import magic  # noqa: F401
@@ -12,7 +11,7 @@ from web3.logs import DISCARD
 from web3.main import Web3
 
 
-class MetadataState(Enum):
+class MetadataState:
     ACTIVE = 0
     END_OF_LIFE = 1
     DEPRECATED = 2
