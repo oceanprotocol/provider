@@ -114,14 +114,20 @@ def decryptDDO():
     web3 = get_web3()
     try:
         if web3.eth.chain_id != chain_id:
+            logger.error(f"Unsupported chain ID: {chain_id}")
             return Response("Unsupported chain ID", 400, standard_headers)
 
         authorized_decrypters = get_config().authorized_decrypters
+        logger.info(f"authorized_decrypters = {authorized_decrypters}")
 
         if authorized_decrypters and decrypter_address not in authorized_decrypters:
+            logger.error(
+                f"Decrypter not authorized. decrypter_address = {decrypter_address}"
+            )
             return Response("Decrypter not authorized", 403, standard_headers)
 
         (_, _, metadata_state, _) = get_metadata(web3, data_nft_address)
+        logger.info(f"metadata_state = {metadata_state}")
 
         if metadata_state == MetadataState.ACTIVE:
             pass
@@ -135,18 +141,29 @@ def decryptDDO():
             return Response("Invalid MetadataState", 400, standard_headers)
 
         if transaction_id:
-            (
-                encrypted_document,
-                flags,
-                document_hash,
-            ) = get_encrypted_document_and_flags_and_hash_from_tx_id(
-                web3, data_nft_address, transaction_id
-            )
+            try:
+                (
+                    encrypted_document,
+                    flags,
+                    document_hash,
+                ) = get_encrypted_document_and_flags_and_hash_from_tx_id(
+                    web3, data_nft_address, transaction_id
+                )
+                logger.info(
+                    f"encrypted_document = {encrypted_document}, "
+                    f"flags = {flags}, "
+                    f"document_hash = {document_hash}"
+                )
+            except Exception:
+                logger.error(f"Transaction ID not found")
+                return Response("Transaction ID not found.", 400, standard_headers)
 
         try:
             document = do_decrypt(encrypted_document, get_provider_wallet())
         except Exception as e:
             logger.error(f"Failed to decrypt: {str(e)}")
+            return Response("Failed to decrypt", 400, standard_headers)
+        logger.info(f"document = {document}")
 
         if not flags:
             logger.debug("Set flags to 0!")
@@ -158,6 +175,7 @@ def decryptDDO():
                 document = lzma.decompress(document)
             except Exception as e:
                 logger.error(f"Failed to decompress: {str(e)}")
+                return Response("Failed to decompress", 400, standard_headers)
 
         if sha256(document.encode("utf-8")) != document_hash.hex():
             return Response("Checksum doesn't match", 400, standard_headers)
