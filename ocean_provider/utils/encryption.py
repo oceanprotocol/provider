@@ -3,11 +3,13 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import ecies
+from eth_account.account import Account
+from eth_typing.encoding import HexStr
 from ocean_provider.utils.accounts import get_private_key
 from web3 import Web3
 
 
-def do_encrypt(document, wallet=None, public_key=None):
+def do_encrypt(document: str, wallet: Account = None, public_key: str = None) -> HexStr:
     """
     :param document: Json document/string to be encrypted
     :param wallet: Wallet instance
@@ -20,7 +22,7 @@ def do_encrypt(document, wallet=None, public_key=None):
     return Web3.toHex(encrypted_document)
 
 
-def do_decrypt(encrypted_document, provider_wallet):
+def do_decrypt(encrypted_document: HexStr, provider_wallet: Account):
     """
     :param encrypted_document: Encrypted data
     :param provider_wallet: Wallet instance

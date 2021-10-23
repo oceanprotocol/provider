@@ -5,8 +5,10 @@
 import json
 import logging
 import lzma
+import traceback
 from hashlib import sha256
 
+from eth_typing.encoding import HexStr
 from flask import Response, request
 from flask_sieve import validate
 from ocean_provider.log import setup_logging
@@ -18,11 +20,7 @@ from ocean_provider.utils.basics import (
     get_provider_wallet,
     get_web3,
 )
-from ocean_provider.utils.data_nft import (
-    MetadataState,
-    get_encrypted_document_and_flags_and_hash_from_tx_id,
-    get_metadata,
-)
+from ocean_provider.utils.data_nft import MetadataState, get_metadata, get_metadata_logs
 from ocean_provider.utils.encryption import do_decrypt
 from ocean_provider.utils.util import get_request_data, service_unavailable
 from ocean_provider.validation.provider_requests import DecryptRequest, EncryptRequest
@@ -104,82 +102,102 @@ def encryptDDO():
 def decryptDDO():
     data = get_request_data(request)
     logger.info(f"decrypt endpoint called. {data}")
-    decrypter_address = data.get("decrypterAddress")
-    chain_id = data.get("chainId")
-    data_nft_address = data.get("dataNftAddress")
-    transaction_id = data.get("transactionId")
-    encrypted_document = data.get("encryptedDocument")
-    flags = data.get("flags")
-    document_hash = data.get("documentHash")
-    web3 = get_web3()
+
     try:
-        if web3.eth.chain_id != chain_id:
-            logger.error(f"Unsupported chain ID: {chain_id}")
-            return Response("Unsupported chain ID", 400, standard_headers)
-
-        authorized_decrypters = get_config().authorized_decrypters
-        logger.info(f"authorized_decrypters = {authorized_decrypters}")
-
-        if authorized_decrypters and decrypter_address not in authorized_decrypters:
-            logger.error(
-                f"Decrypter not authorized. decrypter_address = {decrypter_address}"
-            )
-            return Response("Decrypter not authorized", 403, standard_headers)
-
-        (_, _, metadata_state, _) = get_metadata(web3, data_nft_address)
-        logger.info(f"metadata_state = {metadata_state}")
-
-        if metadata_state == MetadataState.ACTIVE:
-            pass
-        elif metadata_state == MetadataState.END_OF_LIFE:
-            return Response("Asset end of life", 403, standard_headers)
-        elif metadata_state == MetadataState.DEPRECATED:
-            return Response("Asset deprecated", 403, standard_headers)
-        elif metadata_state == MetadataState.REVOKED:
-            return Response("Asset revoked", 403, standard_headers)
-        else:
-            return Response("Invalid MetadataState", 400, standard_headers)
-
-        if transaction_id:
-            try:
-                (
-                    encrypted_document,
-                    flags,
-                    document_hash,
-                ) = get_encrypted_document_and_flags_and_hash_from_tx_id(
-                    web3, data_nft_address, transaction_id
-                )
-                logger.info(
-                    f"encrypted_document = {encrypted_document}, "
-                    f"flags = {flags}, "
-                    f"document_hash = {document_hash}"
-                )
-            except Exception:
-                logger.error(f"Transaction ID not found")
-                return Response("Transaction ID not found.", 400, standard_headers)
-
-        try:
-            document = do_decrypt(encrypted_document, get_provider_wallet())
-        except Exception as e:
-            logger.error(f"Failed to decrypt: {str(e)}")
-            return Response("Failed to decrypt", 400, standard_headers)
-        logger.info(f"document = {document}")
-
-        if not flags:
-            logger.debug("Set flags to 0!")
-            flags = b"\x00"
-
-        # bit 1:  check if ddo is lzma compressed
-        if flags[0] & 1:
-            try:
-                document = lzma.decompress(document)
-            except Exception as e:
-                logger.error(f"Failed to decompress: {str(e)}")
-                return Response("Failed to decompress", 400, standard_headers)
-
-        if sha256(document.encode("utf-8")).hexdigest() != document_hash.hex():
-            return Response("Checksum doesn't match", 400, standard_headers)
-
-        return Response(document, 201, standard_headers)
+        return _decryptDDO(
+            decrypter_address=data.get("decrypterAddress"),
+            chain_id=data.get("chainId"),
+            data_nft_address=data.get("dataNftAddress"),
+            transaction_id=data.get("transactionId"),
+            encrypted_document=data.get("encryptedDocument"),
+            flags=data.get("flags"),
+            document_hash=data.get("documentHash"),
+        )
     except Exception as e:
         return service_unavailable(e, data, logger)
+
+
+def _decryptDDO(
+    decrypter_address: HexStr,
+    chain_id: int,
+    data_nft_address: HexStr,
+    transaction_id: HexStr,
+    encrypted_document: bytes,
+    flags: bytes,
+    document_hash: bytes,
+):
+    web3 = get_web3()
+    if web3.eth.chain_id != chain_id:
+        return error_response(f"Unsupported chain ID", 400)
+
+    authorized_decrypters = get_config().authorized_decrypters
+    logger.info(f"authorized_decrypters = {authorized_decrypters}")
+
+    if authorized_decrypters and decrypter_address not in authorized_decrypters:
+        return error_response(f"Decrypter not authorized", 403)
+
+    (_, _, metadata_state, _) = get_metadata(web3, data_nft_address)
+    logger.info(f"metadata_state = {metadata_state}")
+
+    if metadata_state == MetadataState.ACTIVE:
+        pass
+    elif metadata_state == MetadataState.END_OF_LIFE:
+        return error_response(f"Asset end of life", 403)
+    elif metadata_state == MetadataState.DEPRECATED:
+        return error_response(f"Asset deprecated", 403)
+    elif metadata_state == MetadataState.REVOKED:
+        return error_response(f"Asset revoked", 403)
+    else:
+        return error_response(f"Invalid MetadataState", 400)
+
+    if transaction_id:
+        try:
+            logs = get_metadata_logs(web3, data_nft_address, transaction_id)
+            logger.info(f"transaction_id = {transaction_id}, logs = {logs}")
+            log_args = logs[0].args
+            encrypted_document = log_args["data"]
+            flags = log_args["flags"]
+            document_hash = log_args["metaDataHash"]
+            logger.info(
+                f"encrypted_document = {encrypted_document}, "
+                f"flags = {flags}, "
+                f"document_hash = {document_hash}"
+            )
+        except Exception:
+            response = error_response(f"Failed to get metadata logs.", 400)
+            logger.error(f"{traceback.format_exc()}")
+            return response
+
+    try:
+        document = do_decrypt(encrypted_document.decode("utf-8"), get_provider_wallet())
+        logger.info("Successfully decrypted document.")
+    except Exception:
+        response = error_response(f"Failed to decrypt.", 400)
+        logger.error(f"{traceback.format_exc()}")
+        return response
+
+    if not flags:
+        logger.debug("Set flags to 0!")
+        flags = b"\x00"
+
+    # bit 1:  check if ddo is lzma compressed
+    if flags[0] & 1:
+        try:
+            document = lzma.decompress(document)
+            logger.info("Successfully decompressed document.")
+        except Exception:
+            response = error_response(f"Failed to decompress", 400)
+            logger.error(f"{traceback.format_exc()}")
+            return response
+
+    logger.info(f"document = {document}")
+
+    if sha256(document.encode("utf-8")).hexdigest() != document_hash.hex():
+        return error_response("Checksum doesn't match.", 400)
+
+    return Response(document, 201, standard_headers)
+
+
+def error_response(err_str: str, status: int) -> Response:
+    logger.error(err_str)
+    return Response(err_str, status, standard_headers)
