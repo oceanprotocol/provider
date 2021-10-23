@@ -6,6 +6,7 @@ from typing import Tuple
 
 from jsonsempai import magic  # noqa: F401
 from artifacts import ERC721Template
+from eth_typing.encoding import HexStr
 from web3.contract import Contract
 from web3.logs import DISCARD
 from web3.main import Web3
@@ -32,7 +33,7 @@ def get_metadata(web3: Web3, address: str) -> Tuple[str, str, MetadataState, boo
 
 def get_encrypted_document_and_flags_and_hash_from_tx_id(
     web3: Web3, data_nft_address: str, transaction_id: str
-) -> Tuple[str, str]:
+) -> Tuple[HexStr, bytes, str]:
     data_nft_contract = get_data_nft_contract(web3, data_nft_address)
     tx_receipt = web3.eth.get_transaction_receipt(transaction_id)
     processed_logs = data_nft_contract.events.MetadataCreated().processReceipt(
@@ -47,4 +48,8 @@ def get_encrypted_document_and_flags_and_hash_from_tx_id(
             f"MetadataCreated/MetadataUpdated event not found in tx id: {transaction_id}"
         )
     log_args = processed_logs[0].args
-    return (log_args["data"].decode("utf-8"), log_args["flags"], log_args["metaDataHash"])
+    return (
+        log_args["data"].decode("utf-8"),
+        log_args["flags"],
+        log_args["metaDataHash"],
+    )
