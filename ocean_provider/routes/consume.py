@@ -146,14 +146,15 @@ def encrypt_and_increment_nonce(
     did: str, document: str, publisher_address: str
 ) -> HexStr:
     """Helper function to prevent code duplication between `services/encrypt`
-    and `ddo/encrypt` endpoints."""
+    and `services/encryptDDO` endpoints."""
     encrypted_document = do_encrypt(document, provider_wallet)
-    logger.info(
-        f"encrypted urls {encrypted_document}, "
-        f"publisher {publisher_address}, "
-        f"documentId {did}"
-    )
     increment_nonce(publisher_address)
+    logger.info(
+        f"encrypted document = {encrypted_document}, "
+        f"publisher = {publisher_address}, "
+        f"documentId = {did}, "
+        f"nonce = {get_nonce(publisher_address)}"
+    )
     return encrypted_document
 
 

@@ -2,7 +2,6 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
-import json
 import logging
 import lzma
 import traceback
@@ -85,23 +84,30 @@ def encryptDDO():
     return: the encrypted DDO (hex str)
     """
     data = get_request_data(request)
-    logger.info(f"encrypt endpoint called. {data}")
-    did = data.get("documentId")
-    ddo = json.dumps(json.loads(data.get("document")), separators=(",", ":"))
-    publisher_address = data.get("publisherAddress")
+    logger.info(f"encryptDDO endpoint called. {data}")
 
-    encrypted_document = encrypt_and_increment_nonce(did, ddo, publisher_address)
     try:
-        return Response(encrypted_document, 201, headers={"content-type": "text/plain"})
+        return _encryptDDO(
+            document_id=data.get("documentId"),
+            document=data.get("document"),
+            publisher_address=data.get("publisherAddress"),
+        )
     except Exception as e:
         return service_unavailable(e, data, logger)
+
+
+def _encryptDDO(document_id: str, document: str, publisher_address: HexStr) -> Response:
+    encrypted_document = encrypt_and_increment_nonce(
+        document_id, document, publisher_address
+    )
+    return Response(encrypted_document, 201, headers=standard_headers)
 
 
 @services.route("/decryptDDO", methods=["POST"])
 @validate(DecryptRequest)
 def decryptDDO():
     data = get_request_data(request)
-    logger.info(f"decrypt endpoint called. {data}")
+    logger.info(f"decryptDDO endpoint called. {data}")
 
     try:
         return _decryptDDO(
@@ -125,7 +131,7 @@ def _decryptDDO(
     encrypted_document: bytes,
     flags: bytes,
     document_hash: bytes,
-):
+) -> Response:
     web3 = get_web3()
     if web3.eth.chain_id != chain_id:
         return error_response(f"Unsupported chain ID", 400)
