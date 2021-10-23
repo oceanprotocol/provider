@@ -8,6 +8,7 @@
 #  SPDX-License-Identifier: Apache-2.0
 
 import configparser
+import json
 import logging
 import os
 from pathlib import Path
@@ -166,7 +167,9 @@ class Config(configparser.ConfigParser):
 
     @property
     def authorized_decrypters(self):
-        return self.get("resources", NAME_AUTHORIZED_DECRYPTERS, fallback=[])
+        return json.loads(
+            self.get("resources", NAME_AUTHORIZED_DECRYPTERS, fallback="[]")
+        )
 
     @property
     def block_confirmations(self):
