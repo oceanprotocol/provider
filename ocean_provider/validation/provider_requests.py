@@ -169,7 +169,6 @@ class EncryptRequest(CustomJsonRequest):
 class DecryptRequest(CustomJsonRequest):
     def rules(self):
         return {
-            "documentId": ["required_without:transactionId"],
             "decrypterAddress": ["required"],
             "chainId": ["required"],
             "dataNftAddress": ["required"],

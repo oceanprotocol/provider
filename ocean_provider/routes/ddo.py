@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import logging
-import lzma
 import traceback
 from hashlib import sha256
 
@@ -174,32 +173,32 @@ def _decryptDDO(
             logger.error(f"{traceback.format_exc()}")
             return response
 
-    try:
-        document = do_decrypt(encrypted_document.decode("utf-8"), get_provider_wallet())
-        logger.info("Successfully decrypted document.")
-    except Exception:
-        response = error_response(f"Failed to decrypt.", 400)
-        logger.error(f"{traceback.format_exc()}")
-        return response
-
-    if not flags:
-        logger.debug("Set flags to 0!")
-        flags = b"\x00"
-
-    # bit 1:  check if ddo is lzma compressed
-    if flags[0] & 1:
+    # bit 2:  check if ddo is ecies encrypted
+    if flags[0] & 2:
         try:
-            document = lzma.decompress(document)
-            logger.info("Successfully decompressed document.")
+            document = do_decrypt(
+                encrypted_document.decode("utf-8"), get_provider_wallet()
+            )
+            logger.info("Successfully decrypted document.")
         except Exception:
-            response = error_response(f"Failed to decompress", 400)
+            response = error_response(f"Failed to decrypt.", 400)
             logger.error(f"{traceback.format_exc()}")
             return response
+    else:
+        try:
+            logger.warning(
+                "Document is not encrypted (flags bit 2 not set). Skipping decryption."
+            )
+            document = encrypted_document.decode("utf-8")
+        except Exception:
+            return error_response(f"Failed to decode.", 400)
 
     logger.info(f"document = {document}")
 
     if sha256(document.encode("utf-8")).hexdigest() != document_hash.hex():
         return error_response("Checksum doesn't match.", 400)
+
+    logger.info(f"Checksum matches.")
 
     return Response(document, 201, standard_headers)
 
