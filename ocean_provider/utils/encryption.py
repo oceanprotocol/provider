@@ -3,9 +3,8 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import ecies
-from web3 import Web3
-
 from ocean_provider.utils.accounts import get_private_key
+from web3 import Web3
 
 
 def do_encrypt(document, wallet=None, public_key=None):
@@ -28,9 +27,6 @@ def do_decrypt(encrypted_document, provider_wallet):
     :return: Decrypted string if successful else `None`
     """
     key = get_private_key(provider_wallet)
-    try:
-        return ecies.decrypt(
-            key.to_hex(), Web3.toBytes(hexstr=encrypted_document)
-        ).decode(encoding="utf-8")
-    except Exception:
-        return None
+    return ecies.decrypt(key.to_hex(), Web3.toBytes(hexstr=encrypted_document)).decode(
+        encoding="utf-8"
+    )
