@@ -141,10 +141,20 @@ class CustomRulesProcessor(RulesProcessor):
             description: The list of parameters defined for the rule,
                          i.e. names of other fields inside the request.
         """
-        self._assert_params_size(size=1, params=params, rule="signature")
-        decrypter = self._attribute_value(params[0])
+        self._assert_params_size(size=4, params=params, rule="signature")
+        transaction_id = self._attribute_value(params[0])
+        data_nft_address = self._attribute_value(params[1])
+        decrypter_address = self._attribute_value(params[2])
+        chain_id = self._attribute_value(params[3])
+        nonce = self._attribute_value(params[4])
+
+        if transaction_id:
+            original_msg = f"{transaction_id}{decrypter_address}{chain_id}"
+        else:
+            original_msg = f"{data_nft_address}{decrypter_address}{chain_id}"
+
         try:
-            verify_signature(decrypter, value, f"{decrypter}", get_nonce(decrypter))
+            verify_signature(decrypter_address, value, original_msg, nonce)
             return True
         except InvalidSignatureError:
             pass
@@ -190,7 +200,12 @@ class DecryptRequest(CustomJsonRequest):
                 "required_without:transactionId",
                 "required_with:dataNftAddress,encryptedDocument,flags",
             ],
-            "signature": ["bail", "required", "decrypt_signature:decrypterAddress"],
+            "nonce": ["required"],
+            "signature": [
+                "bail",
+                "required",
+                "decrypt_signature:transactionId,dataNftAddress,decrypterAddress,chainId,nonce",
+            ],
         }
 
 
