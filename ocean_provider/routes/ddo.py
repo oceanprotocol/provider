@@ -2,6 +2,7 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
+import json
 import logging
 import lzma
 import traceback
@@ -99,8 +100,9 @@ def encryptDDO():
 
 
 def _encryptDDO(document_id: str, document: str, publisher_address: HexStr) -> Response:
+    compact_document = json.dumps(json.loads(document), separators=(",", ":"))
     encrypted_document = encrypt_and_increment_nonce(
-        document_id, document, publisher_address
+        document_id, compact_document, publisher_address
     )
     return Response(encrypted_document, 201, headers=standard_headers)
 
@@ -212,9 +214,15 @@ def _decryptDDO(
             return response
 
     try:
-        document = working_document.decode("utf-8")
+        compact_document = working_document.decode("utf-8")
     except Exception:
         return error_response(f"Failed to decode.", 400)
+
+    # Inject spaces back into DDO
+    try:
+        document = json.dumps(json.loads(compact_document))
+    except Exception:
+        return error_response(f"Failed to de-compact.", 400)
 
     logger.info(f"document = {document}")
 
