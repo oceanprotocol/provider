@@ -14,6 +14,7 @@ from flask_sieve import validate
 from ocean_provider.log import setup_logging
 from ocean_provider.requests_session import get_requests_session
 from ocean_provider.routes.consume import encrypt_and_increment_nonce
+from ocean_provider.user_nonce import increment_nonce
 from ocean_provider.utils.basics import (
     LocalFileAdapter,
     get_config,
@@ -133,6 +134,8 @@ def _decryptDDO(
     flags: Optional[bytes],
     document_hash: Optional[bytes],
 ) -> Response:
+    increment_nonce(decrypter_address)
+
     web3 = get_web3()
     if web3.eth.chain_id != chain_id:
         return error_response(f"Unsupported chain ID", 400)
