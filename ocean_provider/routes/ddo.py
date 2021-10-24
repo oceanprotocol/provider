@@ -3,8 +3,10 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import logging
+import lzma
 import traceback
 from hashlib import sha256
+from typing import Optional
 
 from eth_typing.encoding import HexStr
 from flask import Response, request
@@ -112,8 +114,8 @@ def decryptDDO():
         return _decryptDDO(
             decrypter_address=data.get("decrypterAddress"),
             chain_id=data.get("chainId"),
-            data_nft_address=data.get("dataNftAddress"),
             transaction_id=data.get("transactionId"),
+            data_nft_address=data.get("dataNftAddress"),
             encrypted_document=data.get("encryptedDocument"),
             flags=data.get("flags"),
             document_hash=data.get("documentHash"),
@@ -125,11 +127,11 @@ def decryptDDO():
 def _decryptDDO(
     decrypter_address: HexStr,
     chain_id: int,
-    data_nft_address: HexStr,
-    transaction_id: HexStr,
-    encrypted_document: bytes,
-    flags: bytes,
-    document_hash: bytes,
+    transaction_id: Optional[HexStr],
+    data_nft_address: Optional[HexStr],
+    encrypted_document: Optional[bytes],
+    flags: Optional[bytes],
+    document_hash: Optional[bytes],
 ) -> Response:
     web3 = get_web3()
     if web3.eth.chain_id != chain_id:
@@ -157,8 +159,13 @@ def _decryptDDO(
 
     if transaction_id:
         try:
-            logs = get_metadata_logs(web3, data_nft_address, transaction_id)
+            tx_receipt = web3.eth.get_transaction_receipt(transaction_id)
+            data_nft_address = tx_receipt.contractAddress
+            logger.info(f"data_nft_address = {data_nft_address}")
+
+            logs = get_metadata_logs(web3, data_nft_address, tx_receipt)
             logger.info(f"transaction_id = {transaction_id}, logs = {logs}")
+
             log_args = logs[0].args
             encrypted_document = log_args["data"]
             flags = log_args["flags"]
@@ -173,11 +180,13 @@ def _decryptDDO(
             logger.error(f"{traceback.format_exc()}")
             return response
 
+    working_document = encrypted_document
+
     # bit 2:  check if ddo is ecies encrypted
     if flags[0] & 2:
         try:
-            document = do_decrypt(
-                encrypted_document.decode("utf-8"), get_provider_wallet()
+            working_document = do_decrypt(
+                working_document.decode("utf-8"), get_provider_wallet()
             )
             logger.info("Successfully decrypted document.")
         except Exception:
@@ -185,13 +194,24 @@ def _decryptDDO(
             logger.error(f"{traceback.format_exc()}")
             return response
     else:
+        logger.warning(
+            "Document not encrypted (flags bit 2 not set). Skipping decryption."
+        )
+
+    # bit 1:  check if ddo is lzma compressed
+    if flags[0] & 1:
         try:
-            logger.warning(
-                "Document is not encrypted (flags bit 2 not set). Skipping decryption."
-            )
-            document = encrypted_document.decode("utf-8")
+            working_document = lzma.decompress(working_document)
+            logger.info("Successfully decompressed document.")
         except Exception:
-            return error_response(f"Failed to decode.", 400)
+            response = error_response(f"Failed to decompress", 400)
+            logger.error(f"{traceback.format_exc()}")
+            return response
+
+    try:
+        document = working_document.decode("utf-8")
+    except Exception:
+        return error_response(f"Failed to decode.", 400)
 
     logger.info(f"document = {document}")
 

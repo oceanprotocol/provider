@@ -9,7 +9,7 @@ from artifacts import ERC721Template
 from web3.contract import Contract
 from web3.logs import DISCARD
 from web3.main import Web3
-from web3.types import EventData
+from web3.types import EventData, TxReceipt
 
 
 class MetadataState:
@@ -32,10 +32,9 @@ def get_metadata(web3: Web3, address: str) -> Tuple[str, str, MetadataState, boo
 
 
 def get_metadata_logs(
-    web3: Web3, data_nft_address: str, transaction_id: str
+    web3: Web3, data_nft_address: str, tx_receipt: TxReceipt
 ) -> Iterable[EventData]:
     data_nft_contract = get_data_nft_contract(web3, data_nft_address)
-    tx_receipt = web3.eth.get_transaction_receipt(transaction_id)
     processed_logs = data_nft_contract.events.MetadataCreated().processReceipt(
         tx_receipt, errors=DISCARD
     )
@@ -45,6 +44,6 @@ def get_metadata_logs(
         )
     if not processed_logs:
         raise ValueError(
-            f"MetadataCreated/MetadataUpdated event not found in tx id: {transaction_id}"
+            f"MetadataCreated/MetadataUpdated event not found in tx id: {tx_receipt.transactionHash}"
         )
     return processed_logs
