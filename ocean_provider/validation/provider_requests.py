@@ -190,15 +190,15 @@ class DecryptRequest(CustomJsonRequest):
             ],
             "encryptedDocument": [
                 "required_without:transactionId",
-                "required_with:dataNftAddress,flags,documentHash",
+                "required_with:flags,documentHash",
             ],
             "flags": [
                 "required_without:transactionId",
-                "required_with:dataNftAddress,encryptedDocument,documentHash",
+                "required_with:encryptedDocument,documentHash",
             ],
             "documentHash": [
                 "required_without:transactionId",
-                "required_with:dataNftAddress,encryptedDocument,flags",
+                "required_with:encryptedDocument,flags",
             ],
             "nonce": ["required"],
             "signature": [

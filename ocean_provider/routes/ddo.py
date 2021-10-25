@@ -131,7 +131,7 @@ def _decryptDDO(
     decrypter_address: HexStr,
     chain_id: int,
     transaction_id: Optional[HexStr],
-    data_nft_address: Optional[HexStr],
+    data_nft_address: HexStr,
     encrypted_document: Optional[bytes],
     flags: Optional[bytes],
     document_hash: Optional[bytes],
@@ -165,7 +165,6 @@ def _decryptDDO(
     if transaction_id:
         try:
             tx_receipt = web3.eth.get_transaction_receipt(transaction_id)
-            data_nft_address = tx_receipt.contractAddress
             logger.info(f"data_nft_address = {data_nft_address}")
 
             logs = get_metadata_logs(web3, data_nft_address, tx_receipt)
@@ -213,14 +212,9 @@ def _decryptDDO(
             logger.error(f"{traceback.format_exc()}")
             return response
 
-    try:
-        compact_document = working_document.decode("utf-8")
-    except Exception:
-        return error_response(f"Failed to decode.", 400)
-
     # Inject spaces back into DDO
     try:
-        document = json.dumps(json.loads(compact_document))
+        document = json.dumps(json.loads(working_document))
     except Exception:
         return error_response(f"Failed to de-compact.", 400)
 
