@@ -2,6 +2,7 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
+from enum import IntEnum, IntFlag
 from typing import Iterable, Tuple
 
 from jsonsempai import magic  # noqa: F401
@@ -12,11 +13,19 @@ from web3.main import Web3
 from web3.types import EventData, TxReceipt
 
 
-class MetadataState:
+class MetadataState(IntEnum):
     ACTIVE = 0
     END_OF_LIFE = 1
     DEPRECATED = 2
     REVOKED = 3
+
+
+class Flags(IntFlag):
+    COMPRESSED = 1
+    ENCRYPTED = 2
+
+    def to_byte(self):
+        return self.to_bytes(1, "big")
 
 
 def get_data_nft_contract(web3: Web3, address: str) -> Contract:
