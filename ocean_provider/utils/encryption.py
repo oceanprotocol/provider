@@ -2,6 +2,8 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
+from typing import Union
+
 import ecies
 from eth_account.account import Account
 from eth_typing.encoding import HexStr
@@ -9,7 +11,9 @@ from ocean_provider.utils.accounts import get_private_key
 from web3 import Web3
 
 
-def do_encrypt(document: str, wallet: Account = None, public_key: str = None) -> HexStr:
+def do_encrypt(
+    document: Union[str, bytes], wallet: Account = None, public_key: str = None
+) -> HexStr:
     """
     :param document: Json document/string to be encrypted
     :param wallet: Wallet instance
@@ -17,8 +21,9 @@ def do_encrypt(document: str, wallet: Account = None, public_key: str = None) ->
     :return: Encrypted String
     """
     key = get_private_key(wallet).public_key.to_hex() if wallet else public_key
-    encrypted_document = ecies.encrypt(key, document.encode(encoding="utf-8"))
-
+    if isinstance(document, str):
+        document = document.encode("utf-8")
+    encrypted_document = ecies.encrypt(key, document)
     return Web3.toHex(encrypted_document)
 
 

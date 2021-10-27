@@ -2,8 +2,9 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
+import logging
 from enum import IntEnum, IntFlag
-from typing import Iterable, Tuple
+from typing import Iterable, Optional, Tuple
 
 from jsonsempai import magic  # noqa: F401
 from artifacts import ERC721Template
@@ -11,6 +12,8 @@ from web3.contract import Contract
 from web3.logs import DISCARD
 from web3.main import Web3
 from web3.types import EventData, TxReceipt
+
+logger = logging.getLogger(__name__)
 
 
 class MetadataState(IntEnum):
@@ -28,7 +31,7 @@ class Flags(IntFlag):
         return self.to_bytes(1, "big")
 
 
-def get_data_nft_contract(web3: Web3, address: str) -> Contract:
+def get_data_nft_contract(web3: Web3, address: Optional[str] = None) -> Contract:
     abi = ERC721Template.abi
     return web3.eth.contract(address=address, abi=abi)
 
@@ -40,19 +43,25 @@ def get_metadata(web3: Web3, address: str) -> Tuple[str, str, MetadataState, boo
     return data_nft_contract.caller.getMetaData()
 
 
-def get_metadata_logs(
-    web3: Web3, data_nft_address: str, tx_receipt: TxReceipt
+def get_metadata_logs_from_tx_receipt(
+    web3: Web3, tx_receipt: TxReceipt
 ) -> Iterable[EventData]:
-    data_nft_contract = get_data_nft_contract(web3, data_nft_address)
-    processed_logs = data_nft_contract.events.MetadataCreated().processReceipt(
+    data_nft_contract = web3.eth.contract(abi=ERC721Template.abi)
+    logs = data_nft_contract.events.MetadataCreated().processReceipt(
         tx_receipt, errors=DISCARD
     )
-    if not processed_logs:
-        processed_logs = data_nft_contract.events.MetadataUpdated().processReceipt(
+    if not logs:
+        logs = data_nft_contract.events.MetadataUpdated().processReceipt(
             tx_receipt, errors=DISCARD
         )
-    if not processed_logs:
+    if not logs:
         raise ValueError(
-            f"MetadataCreated/MetadataUpdated event not found in tx id: {tx_receipt.transactionHash}"
+            f"MetadataCreated/MetadataUpdated event not found "
+            f"in tx id: {tx_receipt.transactionHash}"
         )
-    return processed_logs
+    if len(logs) > 1:
+        logger.warning(
+            f"More than 1 MetadataCreated/MetadataUpdated event found"
+            f"in tx id: {tx_receipt.transactionHash}"
+        )
+    return logs

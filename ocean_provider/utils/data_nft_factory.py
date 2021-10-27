@@ -16,6 +16,8 @@ CHAIN_ID_TO_NETWORK_NAME = {1337: "development"}
 
 
 def get_data_nft_factory_address(web3: Web3) -> str:
+    # TODO Get ERC721Factory address better
+    return "0x06F712732acfC7Be52997C94D12A4313C83d6bB7"
     address_file = Path(get_config().address_file).expanduser().resolve()
     with open(address_file) as f:
         address_json = json.load(f)

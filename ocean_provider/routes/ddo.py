@@ -2,7 +2,6 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
-import json
 import logging
 import lzma
 import traceback
@@ -14,7 +13,6 @@ from flask import Response, request
 from flask_sieve import validate
 from ocean_provider.log import setup_logging
 from ocean_provider.requests_session import get_requests_session
-from ocean_provider.routes.consume import encrypt_and_increment_nonce
 from ocean_provider.user_nonce import increment_nonce
 from ocean_provider.utils.basics import (
     LocalFileAdapter,
@@ -22,10 +20,15 @@ from ocean_provider.utils.basics import (
     get_provider_wallet,
     get_web3,
 )
-from ocean_provider.utils.data_nft import MetadataState, get_metadata, get_metadata_logs
-from ocean_provider.utils.encryption import do_decrypt
+from ocean_provider.utils.data_nft import (
+    MetadataState,
+    get_metadata,
+    get_metadata_logs_from_tx_receipt,
+)
+from ocean_provider.utils.encryption import do_decrypt, do_encrypt
 from ocean_provider.utils.util import get_request_data, service_unavailable
-from ocean_provider.validation.provider_requests import DecryptRequest, EncryptRequest
+from ocean_provider.validation.provider_requests import DecryptRequest
+from web3.main import Web3
 
 from . import services
 
@@ -37,10 +40,10 @@ requests_session.mount("file://", LocalFileAdapter())
 logger = logging.getLogger(__name__)
 
 standard_headers = {"Content-type": "text/plain", "Connection": "close"}
+# {'charset': 'utf-8'}
 
 
 @services.route("/encryptDDO", methods=["POST"])
-@validate(EncryptRequest)
 def encryptDDO():
     """Encrypt DDO using the Provider's own symmetric key (symmetric encryption).
     This can be used by the publisher of an asset to encrypt the DDO of the
@@ -86,25 +89,27 @@ def encryptDDO():
 
     return: the encrypted DDO (hex str)
     """
-    data = get_request_data(request)
+    if request.content_type != "application/octet-stream":
+        return error_response(
+            "Invalid request content type: should be application/octet-stream", 400
+        )
+
+    data = request.get_data()
     logger.info(f"encryptDDO endpoint called. {data}")
 
     try:
-        return _encryptDDO(
-            document_id=data.get("documentId"),
-            document=data.get("document"),
-            publisher_address=data.get("publisherAddress"),
-        )
+        return _encryptDDO(data)
     except Exception as e:
         return service_unavailable(e, data, logger)
 
 
-def _encryptDDO(document_id: str, document: str, publisher_address: HexStr) -> Response:
-    compact_document = json.dumps(json.loads(document), separators=(",", ":"))
-    encrypted_document = encrypt_and_increment_nonce(
-        document_id, compact_document, publisher_address
-    )
-    return Response(encrypted_document, 201, headers=standard_headers)
+def _encryptDDO(data: bytes) -> Response:
+
+    try:
+        encrypted_data = do_encrypt(data, provider_wallet)
+    except Exception:
+        return error_response(f"Failed to encrypt.", 400)
+    return Response(encrypted_data, 201, headers=standard_headers)
 
 
 @services.route("/decryptDDO", methods=["POST"])
@@ -131,26 +136,62 @@ def _decryptDDO(
     decrypter_address: HexStr,
     chain_id: int,
     transaction_id: Optional[HexStr],
-    data_nft_address: HexStr,
-    encrypted_document: Optional[bytes],
-    flags: Optional[bytes],
-    document_hash: Optional[bytes],
+    data_nft_address: Optional[HexStr],
+    encrypted_document: Optional[HexStr],
+    flags: Optional[int],
+    document_hash: Optional[HexStr],
 ) -> Response:
     increment_nonce(decrypter_address)
 
+    # Check if given chain_id matches Provider's chain_id
     web3 = get_web3()
     if web3.eth.chain_id != chain_id:
         return error_response(f"Unsupported chain ID", 400)
 
+    # Check if decrypter is authorized
     authorized_decrypters = get_config().authorized_decrypters
     logger.info(f"authorized_decrypters = {authorized_decrypters}")
-
     if authorized_decrypters and decrypter_address not in authorized_decrypters:
         return error_response(f"Decrypter not authorized", 403)
 
+    # Get arguments from transaction_id
+    if transaction_id:
+        try:
+            tx_receipt = web3.eth.get_transaction_receipt(transaction_id)
+            logs = get_metadata_logs_from_tx_receipt(web3, tx_receipt)
+            logger.info(f"transaction_id = {transaction_id}, logs = {logs}")
+            if len(logs) > 1:
+                logger.warning(
+                    "More than 1 MetadataCreated/MetadataUpdated event detected. "
+                    "Using the event at index 0."
+                )
+
+            log = logs[0]
+            data_nft_address = log.address
+            encrypted_document: bytes = log.args["data"]
+            flags: bytes = log.args["flags"]
+            document_hash: bytes = log.args["metaDataHash"]
+            logger.info(
+                f"data_nft_address = {data_nft_address}, "
+                f"encrypted_document = {encrypted_document}, "
+                f"flags = {flags}, "
+                f"document_hash = {document_hash}"
+            )
+        except Exception:
+            response = error_response(f"Failed to get metadata logs.", 400)
+            logger.error(f"{traceback.format_exc()}")
+            return response
+    else:
+        try:
+            encrypted_document = Web3.toBytes(hexstr=encrypted_document)
+            flags = flags.to_bytes(1, "big")
+            document_hash = Web3.toBytes(hexstr=document_hash)
+        except Exception:
+            return error_response(f"Failed converting input args to bytes.", 400)
+
+    # Check if DDO metadata state is ACTIVE
     (_, _, metadata_state, _) = get_metadata(web3, data_nft_address)
     logger.info(f"metadata_state = {metadata_state}")
-
     if metadata_state == MetadataState.ACTIVE:
         pass
     elif metadata_state == MetadataState.END_OF_LIFE:
@@ -162,31 +203,9 @@ def _decryptDDO(
     else:
         return error_response(f"Invalid MetadataState", 400)
 
-    if transaction_id:
-        try:
-            tx_receipt = web3.eth.get_transaction_receipt(transaction_id)
-            logger.info(f"data_nft_address = {data_nft_address}")
-
-            logs = get_metadata_logs(web3, data_nft_address, tx_receipt)
-            logger.info(f"transaction_id = {transaction_id}, logs = {logs}")
-
-            log_args = logs[0].args
-            encrypted_document = log_args["data"]
-            flags = log_args["flags"]
-            document_hash = log_args["metaDataHash"]
-            logger.info(
-                f"encrypted_document = {encrypted_document}, "
-                f"flags = {flags}, "
-                f"document_hash = {document_hash}"
-            )
-        except Exception:
-            response = error_response(f"Failed to get metadata logs.", 400)
-            logger.error(f"{traceback.format_exc()}")
-            return response
-
     working_document = encrypted_document
 
-    # bit 2:  check if ddo is ecies encrypted
+    # bit 2:  check if DDO is ecies encrypted
     if flags[0] & 2:
         try:
             working_document = do_decrypt(
@@ -202,7 +221,7 @@ def _decryptDDO(
             "Document not encrypted (flags bit 2 not set). Skipping decryption."
         )
 
-    # bit 1:  check if ddo is lzma compressed
+    # bit 1:  check if DDO is lzma compressed
     if flags[0] & 1:
         try:
             working_document = lzma.decompress(working_document)
@@ -212,17 +231,12 @@ def _decryptDDO(
             logger.error(f"{traceback.format_exc()}")
             return response
 
-    # Inject spaces back into DDO
-    try:
-        document = json.dumps(json.loads(working_document))
-    except Exception:
-        return error_response(f"Failed to de-compact.", 400)
-
+    document = working_document
     logger.info(f"document = {document}")
 
+    # Verify checksum matches
     if sha256(document.encode("utf-8")).hexdigest() != document_hash.hex():
         return error_response("Checksum doesn't match.", 400)
-
     logger.info(f"Checksum matches.")
 
     return Response(document, 201, standard_headers)
