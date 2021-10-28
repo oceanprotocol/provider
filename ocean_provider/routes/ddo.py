@@ -227,6 +227,10 @@ def _decryptDDO(
             "Document not encrypted (flags bit 2 not set). Skipping decryption."
         )
 
+    assert isinstance(encrypted_document, bytes)
+    assert isinstance(flags, bytes)
+    assert isinstance(document_hash, bytes)
+
     # bit 1:  check if DDO is lzma compressed
     if flags[0] & 1:
         try:

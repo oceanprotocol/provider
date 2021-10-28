@@ -233,7 +233,7 @@ def test_encrypt_and_decrypt_with_compression_and_encryption(
         data=ddo_compressed,
         content_type="application/octet-stream",
     )
-    encrypted_ddo = encryptDDO_response.data
+    encrypted_ddo = encryptDDO_response.data.decode("utf-8")
     assert encryptDDO_response.status_code == 201
     assert encryptDDO_response.content_type == "text/plain"
     assert encrypted_ddo
