@@ -107,6 +107,7 @@ def _encryptDDO(data: bytes) -> Response:
 
     try:
         encrypted_data = do_encrypt(data, provider_wallet)
+        logger.info(f"encrypted_data = {encrypted_data}")
     except Exception:
         return error_response(f"Failed to encrypt.", 400)
     return Response(encrypted_data, 201, headers=standard_headers)
@@ -168,9 +169,12 @@ def _decryptDDO(
 
             log = logs[0]
             data_nft_address = log.address
-            encrypted_document: bytes = log.args["data"]
-            flags: bytes = log.args["flags"]
-            document_hash: bytes = log.args["metaDataHash"]
+            # Interpret "data" as utf-8 encoded bytes
+            encrypted_document = log.args["data"]
+            # Interpret "flags" as array of bytes length 1
+            flags = log.args["flags"]
+            # Interpret metaDataHash" as utf-8 encoded bytes
+            document_hash = log.args["metaDataHash"]
             logger.info(
                 f"data_nft_address = {data_nft_address}, "
                 f"encrypted_document = {encrypted_document}, "
@@ -188,6 +192,10 @@ def _decryptDDO(
             document_hash = Web3.toBytes(hexstr=document_hash)
         except Exception:
             return error_response(f"Failed converting input args to bytes.", 400)
+
+    assert isinstance(encrypted_document, bytes)
+    assert isinstance(flags, bytes)
+    assert isinstance(document_hash, bytes)
 
     # Check if DDO metadata state is ACTIVE
     (_, _, metadata_state, _) = get_metadata(web3, data_nft_address)
@@ -208,9 +216,8 @@ def _decryptDDO(
     # bit 2:  check if DDO is ecies encrypted
     if flags[0] & 2:
         try:
-            working_document = do_decrypt(
-                working_document.decode("utf-8"), get_provider_wallet()
-            )
+
+            working_document = do_decrypt(working_document, get_provider_wallet())
             logger.info("Successfully decrypted document.")
         except Exception:
             response = error_response(f"Failed to decrypt.", 400)
