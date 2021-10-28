@@ -216,7 +216,6 @@ def _decryptDDO(
     # bit 2:  check if DDO is ecies encrypted
     if flags[0] & 2:
         try:
-
             working_document = do_decrypt(working_document, get_provider_wallet())
             logger.info("Successfully decrypted document.")
         except Exception:
@@ -242,7 +241,7 @@ def _decryptDDO(
     logger.info(f"document = {document}")
 
     # Verify checksum matches
-    if sha256(document.encode("utf-8")).hexdigest() != document_hash.hex():
+    if sha256(document).hexdigest() != document_hash.hex():
         return error_response("Checksum doesn't match.", 400)
     logger.info(f"Checksum matches.")
 
