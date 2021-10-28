@@ -38,5 +38,5 @@ def do_decrypt(
     key = get_private_key(provider_wallet).to_hex()
     if isinstance(encrypted_document, str):
         encrypted_document = Web3.toBytes(hexstr=encrypted_document)
-    document = ecies.decrypt(key, encrypted_document)
-    return Web3.toHex(document)
+
+    return ecies.decrypt(key, encrypted_document)
