@@ -192,10 +192,11 @@ class DecryptRequest(CustomJsonRequest):
                 "required_without:transactionId",
                 "required_with:flags,documentHash",
             ],
-            "flags": [
-                "required_without:transactionId",
-                "required_with:encryptedDocument,documentHash",
-            ],
+            # TODO Adapt flags validation to accept "\x00"
+            # "flags": [
+            #     "required_without:transactionId",
+            #     "required_with:encryptedDocument,documentHash",
+            # ],
             "documentHash": [
                 "required_without:transactionId",
                 "required_with:encryptedDocument,flags",

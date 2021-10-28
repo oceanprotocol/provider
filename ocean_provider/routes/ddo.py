@@ -240,6 +240,10 @@ def _decryptDDO(
     document = working_document
     logger.info(f"document = {document}")
 
+    assert isinstance(encrypted_document, bytes)
+    assert isinstance(flags, bytes)
+    assert isinstance(document_hash, bytes)
+
     # Verify checksum matches
     if sha256(document).hexdigest() != document_hash.hex():
         return error_response("Checksum doesn't match.", 400)

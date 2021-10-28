@@ -24,6 +24,7 @@ class MetadataState(IntEnum):
 
 
 class Flags(IntFlag):
+    PLAIN = 0
     COMPRESSED = 1
     ENCRYPTED = 2
 

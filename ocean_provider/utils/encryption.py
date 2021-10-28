@@ -29,7 +29,7 @@ def do_encrypt(
 
 def do_decrypt(
     encrypted_document: Union[HexStr, bytes], provider_wallet: LocalAccount
-) -> HexStr:
+) -> bytes:
     """
     :param encrypted_document: Encrypted document as HexStr or bytes
     :param provider_wallet: LocalAccount instance
