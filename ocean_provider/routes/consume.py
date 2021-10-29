@@ -22,6 +22,7 @@ from ocean_provider.utils.basics import (
 )
 from ocean_provider.utils.did import did_to_id
 from ocean_provider.utils.encryption import do_encrypt
+from ocean_provider.utils.error_responses import service_unavailable
 from ocean_provider.utils.url import append_userdata, check_url_details
 from ocean_provider.utils.util import (
     build_download_response,
@@ -34,7 +35,6 @@ from ocean_provider.utils.util import (
     get_request_data,
     process_consume_request,
     record_consume_request,
-    service_unavailable,
     validate_order,
     validate_transfer_not_used_for_other_service,
 )

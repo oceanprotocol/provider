@@ -10,4 +10,5 @@ services = Blueprint("services", __name__)
 
 from .compute import *  # isort:skip
 from .consume import *  # isort:skip
-from .ddo import *  # isort:skip
+from .encrypt import *  # isort:skip
+from .decrypt import *  # isort:skip
