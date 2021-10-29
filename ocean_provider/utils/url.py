@@ -10,16 +10,12 @@ import requests
 from urllib.parse import urlparse
 
 import dns.resolver
-import requests
 from requests.models import PreparedRequest
 from ocean_lib.data_provider.data_service_provider import DataServiceProvider
 
 from ocean_provider.utils.basics import get_config, get_provider_wallet
 
 logger = logging.getLogger(__name__)
-
-REQUEST_TIMEOUT = 3
-CHUNK_SIZE = 8192
 
 
 def is_safe_url(url):
@@ -172,9 +168,12 @@ def check_url_details(url, with_checksum=False):
 
 
 def _get_result_from_url(url, with_checksum=False):
+    timeout = get_config().requests_timeout
+    chunk_size = get_config().requests_chunk_size
+
     for method in ["head", "options"]:
         func = getattr(requests, method)
-        result = func(url, timeout=REQUEST_TIMEOUT)
+        result = func(url, timeout=timeout, headers={"Accept-Encoding": "identity"})
 
         if (
             not with_checksum
@@ -189,13 +188,13 @@ def _get_result_from_url(url, with_checksum=False):
 
     if not with_checksum:
         # fallback on GET request
-        return requests.get(url, stream=True, timeout=REQUEST_TIMEOUT), {}
+        return requests.get(url, stream=True, timeout=timeout), {}
 
     sha = hashlib.sha256()
 
     with requests.get(url, stream=True) as r:
         r.raise_for_status()
-        for chunk in r.iter_content(chunk_size=CHUNK_SIZE):
+        for chunk in r.iter_content(chunk_size=chunk_size):
             sha.update(chunk)
 
     return r, {"checksum": sha.hexdigest(), "checksumType": "sha256"}
