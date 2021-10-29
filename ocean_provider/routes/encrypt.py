@@ -21,8 +21,8 @@ requests_session.mount("file://", LocalFileAdapter())
 logger = logging.getLogger(__name__)
 
 
-@services.route("/encryptDDO", methods=["POST"])
-def encryptDDO():
+@services.route("/encrypt", methods=["POST"])
+def encrypt():
     """Encrypt DDO using the Provider's own symmetric key (symmetric encryption).
     This can be used by the publisher of an asset to encrypt the DDO of the
     asset data files before publishing the asset DDO. The publisher to use this
@@ -73,15 +73,15 @@ def encryptDDO():
         )
 
     data = request.get_data()
-    logger.info(f"encryptDDO endpoint called. {data}")
+    logger.info(f"encrypt endpoint called. {data}")
 
     try:
-        return _encryptDDO(data)
+        return _encrypt(data)
     except Exception as e:
         return service_unavailable(e, data, logger)
 
 
-def _encryptDDO(data: bytes) -> Response:
+def _encrypt(data: bytes) -> Response:
     try:
         encrypted_data = do_encrypt(data, provider_wallet)
         logger.info(f"encrypted_data = {encrypted_data}")

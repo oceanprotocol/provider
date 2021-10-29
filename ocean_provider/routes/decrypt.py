@@ -41,14 +41,14 @@ requests_session.mount("file://", LocalFileAdapter())
 logger = logging.getLogger(__name__)
 
 
-@services.route("/decryptDDO", methods=["POST"])
+@services.route("/decrypt", methods=["POST"])
 @validate(DecryptRequest)
-def decryptDDO():
+def decrypt():
     data = get_request_data(request)
-    logger.info(f"decryptDDO endpoint called. {data}")
+    logger.info(f"decrypt endpoint called. {data}")
 
     try:
-        return _decryptDDO(
+        return _decrypt(
             decrypter_address=data.get("decrypterAddress"),
             chain_id=data.get("chainId"),
             transaction_id=data.get("transactionId"),
@@ -61,7 +61,7 @@ def decryptDDO():
         return service_unavailable(e, data, logger)
 
 
-def _decryptDDO(
+def _decrypt(
     decrypter_address: HexStr,
     chain_id: int,
     transaction_id: Optional[HexStr],

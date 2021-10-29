@@ -59,8 +59,8 @@ def test_encrypt_and_decrypt_unencrypted(
     nonce = previous_nonce + 1
     message_to_be_signed = f"{set_metadata_tx_id}{decrypter_address}{chain_id}{nonce}"
     signature = sign_message(message_to_be_signed, consumer_wallet)
-    decryptDDO_response = client.post(
-        "/api/v1/services/decryptDDO",
+    decrypt_response = client.post(
+        "/api/v1/services/decrypt",
         json={
             "decrypterAddress": consumer_wallet.address,
             "chainId": chain_id,
@@ -69,19 +69,19 @@ def test_encrypt_and_decrypt_unencrypted(
             "signature": signature,
         },
     )
-    decrypted_ddo = decryptDDO_response.data.decode("utf-8")
-    assert decryptDDO_response.status_code == 201
-    assert decryptDDO_response.content_type == "text/plain"
+    decrypted_ddo = decrypt_response.data.decode("utf-8")
+    assert decrypt_response.status_code == 201
+    assert decrypt_response.content_type == "text/plain"
     assert decrypted_ddo == ddo_string
-    assert decryptDDO_response.get_json() is None
+    assert decrypt_response.get_json() is None
 
     # Decrypt DDO using dataNftAddress, encryptedDocument, flags, and documentHash
     previous_nonce = int(get_nonce(client, consumer_wallet.address))
     nonce = previous_nonce + 1
     message_to_be_signed = f"{data_nft_address}{decrypter_address}{chain_id}{nonce}"
     signature = sign_message(message_to_be_signed, consumer_wallet)
-    decryptDDO_response = client.post(
-        "/api/v1/services/decryptDDO",
+    decrypt_response = client.post(
+        "/api/v1/services/decrypt",
         json={
             "decrypterAddress": consumer_wallet.address,
             "chainId": chain_id,
@@ -93,11 +93,11 @@ def test_encrypt_and_decrypt_unencrypted(
             "signature": signature,
         },
     )
-    decrypted_ddo = decryptDDO_response.data.decode("utf-8")
-    assert decryptDDO_response.status_code == 201
-    assert decryptDDO_response.content_type == "text/plain"
+    decrypted_ddo = decrypt_response.data.decode("utf-8")
+    assert decrypt_response.status_code == 201
+    assert decrypt_response.content_type == "text/plain"
     assert decrypted_ddo == ddo_string
-    assert decryptDDO_response.get_json() is None
+    assert decrypt_response.get_json() is None
 
 
 def test_encrypt_and_decrypt_with_only_encryption(
@@ -124,18 +124,18 @@ def test_encrypt_and_decrypt_with_only_encryption(
     ddo_hash_hexstr = Web3.toHex(hashlib.sha256(ddo_bytes).digest())
 
     # Encrypt DDO
-    encryptDDO_response = client.post(
-        "/api/v1/services/encryptDDO",
+    encrypt_response = client.post(
+        "/api/v1/services/encrypt",
         data=ddo_string,
         content_type="application/octet-stream",
     )
     # Interpret response.data as utf-8 encoded HexStr
-    encrypted_ddo_hexstr = encryptDDO_response.data.decode("utf-8")
+    encrypted_ddo_hexstr = encrypt_response.data.decode("utf-8")
     assert encrypted_ddo_hexstr.startswith("0x")
-    assert encryptDDO_response.status_code == 201
-    assert encryptDDO_response.content_type == "text/plain"
-    assert encryptDDO_response.data
-    assert encryptDDO_response.get_json() is None
+    assert encrypt_response.status_code == 201
+    assert encrypt_response.content_type == "text/plain"
+    assert encrypt_response.data
+    assert encrypt_response.get_json() is None
 
     # Set metadata
     data_nft_contract = get_data_nft_contract(web3, data_nft_address)
@@ -160,8 +160,8 @@ def test_encrypt_and_decrypt_with_only_encryption(
     nonce = previous_nonce + 1
     message_to_be_signed = f"{set_metadata_tx_id}{decrypter_address}{chain_id}{nonce}"
     signature = sign_message(message_to_be_signed, consumer_wallet)
-    decryptDDO_response = client.post(
-        "/api/v1/services/decryptDDO",
+    decrypt_response = client.post(
+        "/api/v1/services/decrypt",
         json={
             "decrypterAddress": consumer_wallet.address,
             "chainId": chain_id,
@@ -170,19 +170,19 @@ def test_encrypt_and_decrypt_with_only_encryption(
             "signature": signature,
         },
     )
-    decrypted_ddo = decryptDDO_response.data.decode("utf-8")
-    assert decryptDDO_response.status_code == 201
-    assert decryptDDO_response.content_type == "text/plain"
+    decrypted_ddo = decrypt_response.data.decode("utf-8")
+    assert decrypt_response.status_code == 201
+    assert decrypt_response.content_type == "text/plain"
     assert decrypted_ddo == ddo_string
-    assert decryptDDO_response.get_json() is None
+    assert decrypt_response.get_json() is None
 
     # Decrypt DDO using dataNftAddress, encryptedDocument, flags, and documentHash
     previous_nonce = int(get_nonce(client, consumer_wallet.address))
     nonce = previous_nonce + 1
     message_to_be_signed = f"{data_nft_address}{decrypter_address}{chain_id}{nonce}"
     signature = sign_message(message_to_be_signed, consumer_wallet)
-    decryptDDO_response = client.post(
-        "/api/v1/services/decryptDDO",
+    decrypt_response = client.post(
+        "/api/v1/services/decrypt",
         json={
             "decrypterAddress": consumer_wallet.address,
             "chainId": chain_id,
@@ -194,11 +194,11 @@ def test_encrypt_and_decrypt_with_only_encryption(
             "signature": signature,
         },
     )
-    decrypted_ddo = decryptDDO_response.data.decode("utf-8")
-    assert decryptDDO_response.status_code == 201
-    assert decryptDDO_response.content_type == "text/plain"
+    decrypted_ddo = decrypt_response.data.decode("utf-8")
+    assert decrypt_response.status_code == 201
+    assert decrypt_response.content_type == "text/plain"
     assert decrypted_ddo == ddo_string
-    assert decryptDDO_response.get_json() is None
+    assert decrypt_response.get_json() is None
 
 
 def test_encrypt_and_decrypt_with_compression_and_encryption(
@@ -228,16 +228,16 @@ def test_encrypt_and_decrypt_with_compression_and_encryption(
     ddo_compressed = lzma.compress(ddo_bytes)
 
     # Encrypt DDO
-    encryptDDO_response = client.post(
-        "/api/v1/services/encryptDDO",
+    encrypt_response = client.post(
+        "/api/v1/services/encrypt",
         data=ddo_compressed,
         content_type="application/octet-stream",
     )
-    encrypted_ddo = encryptDDO_response.data.decode("utf-8")
-    assert encryptDDO_response.status_code == 201
-    assert encryptDDO_response.content_type == "text/plain"
+    encrypted_ddo = encrypt_response.data.decode("utf-8")
+    assert encrypt_response.status_code == 201
+    assert encrypt_response.content_type == "text/plain"
     assert encrypted_ddo
-    assert encryptDDO_response.get_json() is None
+    assert encrypt_response.get_json() is None
 
     # Set metadata
     data_nft_contract = get_data_nft_contract(web3, data_nft_address)
@@ -262,8 +262,8 @@ def test_encrypt_and_decrypt_with_compression_and_encryption(
     nonce = previous_nonce + 1
     message_to_be_signed = f"{set_metadata_tx_id}{decrypter_address}{chain_id}{nonce}"
     signature = sign_message(message_to_be_signed, consumer_wallet)
-    decryptDDO_response = client.post(
-        "/api/v1/services/decryptDDO",
+    decrypt_response = client.post(
+        "/api/v1/services/decrypt",
         json={
             "decrypterAddress": consumer_wallet.address,
             "chainId": chain_id,
@@ -272,19 +272,19 @@ def test_encrypt_and_decrypt_with_compression_and_encryption(
             "signature": signature,
         },
     )
-    decrypted_ddo = decryptDDO_response.data.decode("utf-8")
-    assert decryptDDO_response.status_code == 201
-    assert decryptDDO_response.content_type == "text/plain"
+    decrypted_ddo = decrypt_response.data.decode("utf-8")
+    assert decrypt_response.status_code == 201
+    assert decrypt_response.content_type == "text/plain"
     assert decrypted_ddo == ddo_string
-    assert decryptDDO_response.get_json() is None
+    assert decrypt_response.get_json() is None
 
     # Decrypt DDO using dataNftAddress, encryptedDocument, flags, and documentHash
     previous_nonce = int(get_nonce(client, consumer_wallet.address))
     nonce = previous_nonce + 1
     message_to_be_signed = f"{data_nft_address}{decrypter_address}{chain_id}{nonce}"
     signature = sign_message(message_to_be_signed, consumer_wallet)
-    decryptDDO_response = client.post(
-        "/api/v1/services/decryptDDO",
+    decrypt_response = client.post(
+        "/api/v1/services/decrypt",
         json={
             "decrypterAddress": consumer_wallet.address,
             "chainId": chain_id,
@@ -296,11 +296,11 @@ def test_encrypt_and_decrypt_with_compression_and_encryption(
             "signature": signature,
         },
     )
-    decrypted_ddo = decryptDDO_response.data.decode("utf-8")
-    assert decryptDDO_response.status_code == 201
-    assert decryptDDO_response.content_type == "text/plain"
+    decrypted_ddo = decrypt_response.data.decode("utf-8")
+    assert decrypt_response.status_code == 201
+    assert decrypt_response.content_type == "text/plain"
     assert decrypted_ddo == ddo_string
-    assert decryptDDO_response.get_json() is None
+    assert decrypt_response.get_json() is None
 
 
 def test_encrypt_and_decrypt_with_only_compression(
@@ -352,8 +352,8 @@ def test_encrypt_and_decrypt_with_only_compression(
     nonce = previous_nonce + 1
     message_to_be_signed = f"{set_metadata_tx_id}{decrypter_address}{chain_id}{nonce}"
     signature = sign_message(message_to_be_signed, consumer_wallet)
-    decryptDDO_response = client.post(
-        "/api/v1/services/decryptDDO",
+    decrypt_response = client.post(
+        "/api/v1/services/decrypt",
         json={
             "decrypterAddress": consumer_wallet.address,
             "chainId": chain_id,
@@ -362,19 +362,19 @@ def test_encrypt_and_decrypt_with_only_compression(
             "signature": signature,
         },
     )
-    decrypted_ddo = decryptDDO_response.data.decode("utf-8")
-    assert decryptDDO_response.status_code == 201
-    assert decryptDDO_response.content_type == "text/plain"
+    decrypted_ddo = decrypt_response.data.decode("utf-8")
+    assert decrypt_response.status_code == 201
+    assert decrypt_response.content_type == "text/plain"
     assert decrypted_ddo == ddo_string
-    assert decryptDDO_response.get_json() is None
+    assert decrypt_response.get_json() is None
 
     # Decrypt DDO using dataNftAddress, encryptedDocument, flags, and documentHash
     previous_nonce = int(get_nonce(client, consumer_wallet.address))
     nonce = previous_nonce + 1
     message_to_be_signed = f"{data_nft_address}{decrypter_address}{chain_id}{nonce}"
     signature = sign_message(message_to_be_signed, consumer_wallet)
-    decryptDDO_response = client.post(
-        "/api/v1/services/decryptDDO",
+    decrypt_response = client.post(
+        "/api/v1/services/decrypt",
         json={
             "decrypterAddress": consumer_wallet.address,
             "chainId": chain_id,
@@ -386,11 +386,11 @@ def test_encrypt_and_decrypt_with_only_compression(
             "signature": signature,
         },
     )
-    decrypted_ddo = decryptDDO_response.data.decode("utf-8")
-    assert decryptDDO_response.status_code == 201
-    assert decryptDDO_response.content_type == "text/plain"
+    decrypted_ddo = decrypt_response.data.decode("utf-8")
+    assert decrypt_response.status_code == 201
+    assert decrypt_response.content_type == "text/plain"
     assert decrypted_ddo == ddo_string
-    assert decryptDDO_response.get_json() is None
+    assert decrypt_response.get_json() is None
 
 
 def deploy_data_nft(

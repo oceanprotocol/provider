@@ -5,7 +5,6 @@
 import json
 import logging
 
-from eth_typing.encoding import HexStr
 from eth_utils import add_0x_prefix
 from flask import Response, jsonify, request
 from flask_sieve import validate
@@ -21,7 +20,6 @@ from ocean_provider.utils.basics import (
     get_web3,
 )
 from ocean_provider.utils.did import did_to_id
-from ocean_provider.utils.encryption import do_encrypt
 from ocean_provider.utils.error_responses import service_unavailable
 from ocean_provider.utils.url import append_userdata, check_url_details
 from ocean_provider.utils.util import (
@@ -40,7 +38,6 @@ from ocean_provider.utils.util import (
 )
 from ocean_provider.validation.provider_requests import (
     DownloadRequest,
-    EncryptRequest,
     FileInfoRequest,
     InitializeRequest,
     NonceRequest,
@@ -68,94 +65,6 @@ def nonce():
     return Response(
         json.dumps({"nonce": nonce}), 200, headers={"content-type": "application/json"}
     )
-
-
-@services.route("/encrypt", methods=["POST"])
-@validate(EncryptRequest)
-def encrypt():
-    """Encrypt document using the Provider's own symmetric key (symmetric encryption).
-    This can be used by the publisher of an asset to encrypt the urls of the
-    asset data files before publishing the asset ddo. The publisher to use this
-    service is one that is using a front-end with a wallet app such as MetaMask.
-    The `urls` are encrypted by the provider so that the provider will be able
-    to decrypt at time of providing the service later on.
-
-    ---
-    tags:
-      - services
-    consumes:
-      - application/json
-    parameters:
-      - in: body
-        name: body
-        required: true
-        description: Asset urls encryption.
-        schema:
-          type: object
-          required:
-            - documentId
-            - document
-            - publisherAddress:
-          properties:
-            documentId:
-              description: Identifier of the asset to be registered in ocean.
-              type: string
-              example: 'did:op:08a429b8529856d59867503f8056903a680935a76950bb9649785cc97869a43d'
-            document:
-              description: document
-              type: string
-              example: '/some-url'
-            publisherAddress:
-              description: Publisher address.
-              type: string
-              example: '0x00a329c0648769A73afAc7F9381E08FB43dBEA72'
-    responses:
-      201:
-        description: document successfully encrypted.
-      503:
-        description: Service Unavailable
-
-    return: json string containing the encrypted document (hex str)
-    """
-    data = get_request_data(request)
-    logger.info(f"encrypt endpoint called. {data}")
-    did = data.get("documentId")
-    document = json.dumps(json.loads(data.get("document")), separators=(",", ":"))
-    publisher_address = data.get("publisherAddress")
-
-    encrypted_document = encrypt_and_increment_nonce(did, document, publisher_address)
-    try:
-        return Response(
-            json.dumps({"encryptedDocument": encrypted_document}),
-            201,
-            headers={"content-type": "application/json"},
-        )
-
-    except Exception as e:
-        return service_unavailable(
-            e,
-            {
-                "providerAddress": provider_wallet.address if provider_wallet else "",
-                "documentId": did,
-                "publisherAddress": publisher_address,
-            },
-        )
-
-
-def encrypt_and_increment_nonce(
-    did: str, document: str, publisher_address: str
-) -> HexStr:
-    """Helper function to prevent code duplication between `services/encrypt`
-    and `services/encryptDDO` endpoints."""
-    encrypted_document = do_encrypt(document, provider_wallet)
-    increment_nonce(publisher_address)
-    logger.info(
-        f"encrypted document = {encrypted_document}, "
-        f"publisher = {publisher_address}, "
-        f"documentId = {did}, "
-        f"nonce = {get_nonce(publisher_address)}"
-    )
-    return encrypted_document
 
 
 @services.route("/fileinfo", methods=["POST"])
