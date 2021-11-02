@@ -25,7 +25,7 @@ def get_data_nft_factory_address(web3: Web3) -> str:
     if not network_name:
         raise ValueError(f"Unsupported chain id: {chain_id}")
 
-    return address_json[network_name]["v4"]["ERC721Factory"]
+    return address_json[network_name]["ERC721Factory"]
 
 
 def get_data_nft_factory_contract(web3: Web3) -> Contract:
