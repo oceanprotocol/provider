@@ -20,7 +20,6 @@ from ocean_provider.utils.util import (
     get_asset_urls,
     get_download_url,
     msg_hash,
-    service_unavailable,
 )
 from werkzeug.utils import get_content_type
 
@@ -32,17 +31,6 @@ def test_msg_hash():
     hashed = msg_hash(msg)
     expected = "7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069"
     assert hashed == expected
-
-
-def test_service_unavailable(caplog):
-    e = Exception("test message")
-    context = {"item1": "test1", "item2": "test2"}
-    response = service_unavailable(e, context, test_logger)
-    assert response.status_code == 503
-    response = response.json
-    assert response["error"] == "test message"
-    assert response["context"] == context
-    assert caplog.records[0].msg == "Payload was: item1=test1,item2=test2"
 
 
 def test_build_download_response():
