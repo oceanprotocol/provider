@@ -14,6 +14,8 @@ import ipfshttpclient
 from jsonsempai import magic  # noqa: F401
 from artifacts import ERC20Template, ERC721Template
 from eth_account import Account
+from eth_account.signers.local import LocalAccount
+from eth_typing.evm import HexAddress
 from eth_utils import add_0x_prefix, remove_0x_prefix
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.basics import (
@@ -22,11 +24,13 @@ from ocean_provider.utils.basics import (
     get_web3,
 )
 from ocean_provider.utils.currency import to_wei
+from ocean_provider.utils.data_nft_factory import get_data_nft_factory_contract
 from ocean_provider.utils.datatoken import get_tx_receipt, mint, verify_order_tx
 from ocean_provider.utils.encryption import do_encrypt
 from ocean_provider.utils.services import Service
 from ocean_provider.utils.util import checksum
 from tests.helpers.service_definitions import get_access_service
+from web3.main import Web3
 
 
 def sign_tx(web3, tx, private_key):
@@ -67,6 +71,32 @@ def deploy_contract(w3, _json, private_key, *args):
     except Exception:
         print(f"tx not found: {tx_hash.hex()}")
         raise
+
+
+def deploy_data_nft(
+    web3: Web3,
+    name: str,
+    symbol: str,
+    template_index: int,
+    additionalERC20Deployer: HexAddress,
+    base_uri: str,
+    from_wallet: LocalAccount,
+) -> HexAddress:
+    data_nft_factory = get_data_nft_factory_contract(web3)
+    deploy_data_nft_tx = data_nft_factory.functions.deployERC721Contract(
+        name, symbol, template_index, additionalERC20Deployer, base_uri
+    ).buildTransaction({"from": from_wallet.address})
+    deploy_data_nft_tx_signed = sign_tx(web3, deploy_data_nft_tx, from_wallet.key)
+    deploy_data_nft_tx_hash = web3.eth.send_raw_transaction(deploy_data_nft_tx_signed)
+    deploy_data_nft_receipt = web3.eth.wait_for_transaction_receipt(
+        deploy_data_nft_tx_hash
+    )
+    data_nft_address = (
+        data_nft_factory.events.NFTCreated()
+        .processReceipt(deploy_data_nft_receipt)[0]
+        .args.newTokenAddress
+    )
+    return data_nft_address
 
 
 def deploy_datatoken(web3, private_key, name, symbol, minter_address):

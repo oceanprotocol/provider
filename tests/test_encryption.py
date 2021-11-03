@@ -3,13 +3,11 @@ import json
 import lzma
 
 from eth_account.signers.local import LocalAccount
-from eth_typing.evm import HexAddress
 from flask.testing import FlaskClient
 from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.data_nft import Flags, MetadataState, get_data_nft_contract
-from ocean_provider.utils.data_nft_factory import get_data_nft_factory_contract
 from tests.ddo.ddo_sample1_v4 import json_dict as ddo_sample1_v4
-from tests.test_helpers import get_nonce, sign_tx
+from tests.test_helpers import deploy_data_nft, get_nonce, sign_tx
 from web3.main import Web3
 
 
@@ -406,29 +404,3 @@ def test_encrypt_and_decrypt_with_compression_and_encryption(
     assert decrypt_response.content_type == "text/plain"
     assert decrypted_ddo == ddo_string
     assert decrypt_response.get_json() is None
-
-
-def deploy_data_nft(
-    web3: Web3,
-    name: str,
-    symbol: str,
-    template_index: int,
-    additionalERC20Deployer: HexAddress,
-    base_uri: str,
-    from_wallet: LocalAccount,
-) -> HexAddress:
-    data_nft_factory = get_data_nft_factory_contract(web3)
-    deploy_data_nft_tx = data_nft_factory.functions.deployERC721Contract(
-        name, symbol, template_index, additionalERC20Deployer, base_uri
-    ).buildTransaction({"from": from_wallet.address})
-    deploy_data_nft_tx_signed = sign_tx(web3, deploy_data_nft_tx, from_wallet.key)
-    deploy_data_nft_tx_hash = web3.eth.send_raw_transaction(deploy_data_nft_tx_signed)
-    deploy_data_nft_receipt = web3.eth.wait_for_transaction_receipt(
-        deploy_data_nft_tx_hash
-    )
-    data_nft_address = (
-        data_nft_factory.events.NFTCreated()
-        .processReceipt(deploy_data_nft_receipt)[0]
-        .args.newTokenAddress
-    )
-    return data_nft_address
