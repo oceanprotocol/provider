@@ -103,6 +103,100 @@ def test_decrypt_with_plain_input(
     assert decrypt_response.get_json() is None
 
 
+def test_decrypt_with_compressed_input(
+    client: FlaskClient,
+    web3: Web3,
+    publisher_wallet: LocalAccount,
+    provider_wallet: LocalAccount,
+    consumer_wallet: LocalAccount,
+):
+    """
+    Test the decrypt endpoint with input data that is compressed but not
+    encrypted.
+    """
+    data_nft_address = deploy_data_nft(
+        web3,
+        "Data NFT Name",
+        "DATANFTSYMBOL",
+        1,
+        "0x0000000000000000000000000000000000000000",
+        "",
+        publisher_wallet,
+    )
+
+    # Calculate DDO Hash
+    ddo = ddo_sample1_v4
+    ddo_string = json.dumps(ddo)
+    ddo_bytes = ddo_string.encode("utf-8")
+    ddo_hash_hexstr = Web3.toHex(hashlib.sha256(ddo_bytes).digest())
+
+    # Compress DDO
+    ddo_compressed = lzma.compress(ddo_bytes)
+
+    # Set metadata
+    data_nft_contract = get_data_nft_contract(web3, data_nft_address)
+    set_metadata_tx = data_nft_contract.functions.setMetaData(
+        MetadataState.ACTIVE,
+        "http://localhost:8030",
+        provider_wallet.address,
+        Flags.COMPRESSED.to_byte(),
+        ddo_compressed,
+        ddo_hash_hexstr,
+    ).buildTransaction({"from": publisher_wallet.address})
+    set_metadata_tx_signed = sign_tx(web3, set_metadata_tx, publisher_wallet.key)
+    set_metadata_tx_hash = web3.eth.send_raw_transaction(set_metadata_tx_signed)
+
+    # Set common decrypt arguments
+    decrypter_address = consumer_wallet.address
+    chain_id = 1337
+
+    # Decrypt DDO using transactionId
+    set_metadata_tx_id = Web3.toHex(set_metadata_tx_hash)
+    previous_nonce = int(get_nonce(client, consumer_wallet.address))
+    nonce = previous_nonce + 1
+    message_to_be_signed = f"{set_metadata_tx_id}{decrypter_address}{chain_id}{nonce}"
+    signature = sign_message(message_to_be_signed, consumer_wallet)
+    decrypt_response = client.post(
+        "/api/v1/services/decrypt",
+        json={
+            "decrypterAddress": consumer_wallet.address,
+            "chainId": chain_id,
+            "transactionId": set_metadata_tx_id,
+            "nonce": nonce,
+            "signature": signature,
+        },
+    )
+    decrypted_ddo = decrypt_response.data.decode("utf-8")
+    assert decrypt_response.status_code == 201
+    assert decrypt_response.content_type == "text/plain"
+    assert decrypted_ddo == ddo_string
+    assert decrypt_response.get_json() is None
+
+    # Decrypt DDO using dataNftAddress, encryptedDocument, flags, and documentHash
+    previous_nonce = int(get_nonce(client, consumer_wallet.address))
+    nonce = previous_nonce + 1
+    message_to_be_signed = f"{data_nft_address}{decrypter_address}{chain_id}{nonce}"
+    signature = sign_message(message_to_be_signed, consumer_wallet)
+    decrypt_response = client.post(
+        "/api/v1/services/decrypt",
+        json={
+            "decrypterAddress": consumer_wallet.address,
+            "chainId": chain_id,
+            "dataNftAddress": data_nft_address,
+            "encryptedDocument": Web3.toHex(ddo_compressed),
+            "flags": Flags.COMPRESSED,
+            "documentHash": ddo_hash_hexstr,
+            "nonce": nonce,
+            "signature": signature,
+        },
+    )
+    decrypted_ddo = decrypt_response.data.decode("utf-8")
+    assert decrypt_response.status_code == 201
+    assert decrypt_response.content_type == "text/plain"
+    assert decrypted_ddo == ddo_string
+    assert decrypt_response.get_json() is None
+
+
 def test_encrypt_and_decrypt_with_only_encryption(
     client: FlaskClient,
     web3: Web3,
@@ -302,100 +396,6 @@ def test_encrypt_and_decrypt_with_compression_and_encryption(
             "dataNftAddress": data_nft_address,
             "encryptedDocument": encrypted_ddo,
             "flags": Flags.ENCRYPTED | Flags.COMPRESSED,
-            "documentHash": ddo_hash_hexstr,
-            "nonce": nonce,
-            "signature": signature,
-        },
-    )
-    decrypted_ddo = decrypt_response.data.decode("utf-8")
-    assert decrypt_response.status_code == 201
-    assert decrypt_response.content_type == "text/plain"
-    assert decrypted_ddo == ddo_string
-    assert decrypt_response.get_json() is None
-
-
-def test_decrypt_with_compressed_input(
-    client: FlaskClient,
-    web3: Web3,
-    publisher_wallet: LocalAccount,
-    provider_wallet: LocalAccount,
-    consumer_wallet: LocalAccount,
-):
-    """
-    Test the decrypt endpoint with input data that is compressed but not
-    encrypted.
-    """
-    data_nft_address = deploy_data_nft(
-        web3,
-        "Data NFT Name",
-        "DATANFTSYMBOL",
-        1,
-        "0x0000000000000000000000000000000000000000",
-        "",
-        publisher_wallet,
-    )
-
-    # Calculate DDO Hash
-    ddo = ddo_sample1_v4
-    ddo_string = json.dumps(ddo)
-    ddo_bytes = ddo_string.encode("utf-8")
-    ddo_hash_hexstr = Web3.toHex(hashlib.sha256(ddo_bytes).digest())
-
-    # Compress DDO
-    ddo_compressed = lzma.compress(ddo_bytes)
-
-    # Set metadata
-    data_nft_contract = get_data_nft_contract(web3, data_nft_address)
-    set_metadata_tx = data_nft_contract.functions.setMetaData(
-        MetadataState.ACTIVE,
-        "http://localhost:8030",
-        provider_wallet.address,
-        Flags.COMPRESSED.to_byte(),
-        ddo_compressed,
-        ddo_hash_hexstr,
-    ).buildTransaction({"from": publisher_wallet.address})
-    set_metadata_tx_signed = sign_tx(web3, set_metadata_tx, publisher_wallet.key)
-    set_metadata_tx_hash = web3.eth.send_raw_transaction(set_metadata_tx_signed)
-
-    # Set common decrypt arguments
-    decrypter_address = consumer_wallet.address
-    chain_id = 1337
-
-    # Decrypt DDO using transactionId
-    set_metadata_tx_id = Web3.toHex(set_metadata_tx_hash)
-    previous_nonce = int(get_nonce(client, consumer_wallet.address))
-    nonce = previous_nonce + 1
-    message_to_be_signed = f"{set_metadata_tx_id}{decrypter_address}{chain_id}{nonce}"
-    signature = sign_message(message_to_be_signed, consumer_wallet)
-    decrypt_response = client.post(
-        "/api/v1/services/decrypt",
-        json={
-            "decrypterAddress": consumer_wallet.address,
-            "chainId": chain_id,
-            "transactionId": set_metadata_tx_id,
-            "nonce": nonce,
-            "signature": signature,
-        },
-    )
-    decrypted_ddo = decrypt_response.data.decode("utf-8")
-    assert decrypt_response.status_code == 201
-    assert decrypt_response.content_type == "text/plain"
-    assert decrypted_ddo == ddo_string
-    assert decrypt_response.get_json() is None
-
-    # Decrypt DDO using dataNftAddress, encryptedDocument, flags, and documentHash
-    previous_nonce = int(get_nonce(client, consumer_wallet.address))
-    nonce = previous_nonce + 1
-    message_to_be_signed = f"{data_nft_address}{decrypter_address}{chain_id}{nonce}"
-    signature = sign_message(message_to_be_signed, consumer_wallet)
-    decrypt_response = client.post(
-        "/api/v1/services/decrypt",
-        json={
-            "decrypterAddress": consumer_wallet.address,
-            "chainId": chain_id,
-            "dataNftAddress": data_nft_address,
-            "encryptedDocument": Web3.toHex(ddo_compressed),
-            "flags": Flags.COMPRESSED,
             "documentHash": ddo_hash_hexstr,
             "nonce": nonce,
             "signature": signature,
