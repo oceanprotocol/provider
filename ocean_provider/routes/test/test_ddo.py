@@ -13,13 +13,16 @@ from tests.test_helpers import get_nonce, sign_tx
 from web3.main import Web3
 
 
-def test_encrypt_and_decrypt_unencrypted(
+def test_decrypt_with_plain_input(
     client: FlaskClient,
     web3: Web3,
     publisher_wallet: LocalAccount,
     provider_wallet: LocalAccount,
     consumer_wallet: LocalAccount,
 ):
+    """
+    Test the decrypt endpoint using plain (unencrypted, uncompressed) input data
+    """
     data_nft_address = deploy_data_nft(
         web3,
         "Data NFT Name",
@@ -107,6 +110,10 @@ def test_encrypt_and_decrypt_with_only_encryption(
     provider_wallet: LocalAccount,
     consumer_wallet: LocalAccount,
 ):
+    """
+    Test the encrypt and decrypt endpoints. Send the decrypt endpoint data that
+    is only encrypted, not compressed.
+    """
     data_nft_address = deploy_data_nft(
         web3,
         "Data NFT Name",
@@ -208,6 +215,10 @@ def test_encrypt_and_decrypt_with_compression_and_encryption(
     provider_wallet: LocalAccount,
     consumer_wallet: LocalAccount,
 ):
+    """
+    Test the encrypt and decrypt endpoints. Send the decrypt endpoint data that
+    is compressed and encrypted.
+    """
     data_nft_address = deploy_data_nft(
         web3,
         "Data NFT Name",
@@ -303,13 +314,17 @@ def test_encrypt_and_decrypt_with_compression_and_encryption(
     assert decrypt_response.get_json() is None
 
 
-def test_encrypt_and_decrypt_with_only_compression(
+def test_decrypt_with_compressed_input(
     client: FlaskClient,
     web3: Web3,
     publisher_wallet: LocalAccount,
     provider_wallet: LocalAccount,
     consumer_wallet: LocalAccount,
 ):
+    """
+    Test the decrypt endpoint with input data that is compressed but not
+    encrypted.
+    """
     data_nft_address = deploy_data_nft(
         web3,
         "Data NFT Name",
