@@ -19,7 +19,7 @@ with open("README.md") as readme_file:
 # or pip install -e .
 install_requirements = [
     # Install ocean-utils first
-    # "ocean-contracts==1.0.0a1",
+    "ocean-contracts==1.0.0a1",
     "web3==5.19.0",
     "Flask==1.1.2",
     "Flask-Cors==3.0.9",
