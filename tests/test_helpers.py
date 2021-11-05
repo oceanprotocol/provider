@@ -1,8 +1,8 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
+import hashlib
 import json
-import lzma
 import os
 import pathlib
 import time
@@ -22,6 +22,7 @@ from ocean_provider.utils.basics import (
     get_asset_from_metadatastore,
     get_datatoken_minter,
     get_web3,
+    get_provider_wallet,
 )
 from ocean_provider.utils.currency import to_wei
 from ocean_provider.utils.data_nft_factory import get_data_nft_factory_contract
@@ -189,8 +190,7 @@ def get_registered_ddo(
         ddo["credentials"] = custom_credentials
 
     try:
-        data = lzma.compress(web3.toBytes(text=json.dumps(ddo)))
-        send_create_tx(web3, did, bytes([1]), data, wallet)
+        send_create_tx(web3, ddo, bytes([0]), wallet)
     except Exception as e:
         print(f"error publishing ddo {did} in Aquarius: {e}")
         raise
@@ -221,14 +221,30 @@ def get_metadata_contract(web3):
     return web3.eth.contract(address=metadata_address, abi=abi)
 
 
-def send_create_tx(web3, did, flags, data, account):
+def send_create_tx(web3, ddo, flags, account):
+    provider_url = "http://localhost:8030"
+    provider_address = "0xe2DD09d719Da89e5a3D0F2549c7E24566e947260"
+    did = ddo["id"]
+    datatoken_address = ddo["dataToken"]
+    document = json.dumps(ddo)
+
+    # test asset - we are not compressing nor encrypting
+    encrypted_data = document.encode("utf-8")
+    dataHash = hashlib.sha256(document.encode("UTF-8")).hexdigest()
+
     did = prepare_did(did)
     web3.eth.default_account = account.address
-    txn_hash = get_metadata_contract(web3).functions.create(did, flags, data).transact()
-    receipt = web3.eth.wait_for_transaction_receipt(txn_hash)
-    metadata_contract = get_metadata_contract(web3)
-    metadata_contract.events.MetadataCreated().processReceipt(receipt)
-    return receipt
+
+    dt_contract = get_web3().eth.contract(
+        abi=ERC721Template.abi, address=datatoken_address
+    )
+
+    txn_hash = dt_contract.functions.setMetaData(
+        0, provider_url, provider_address, flags, encrypted_data, dataHash
+    ).transact({"from": account.address})
+    txn_receipt = get_web3().eth.wait_for_transaction_receipt(txn_hash)
+
+    return txn_receipt
 
 
 def get_dataset_ddo_with_access_service(client, wallet):
