@@ -8,21 +8,19 @@ import pathlib
 import time
 import uuid
 from datetime import datetime
-from pathlib import Path
 
 import ipfshttpclient
-from jsonsempai import magic  # noqa: F401
 from artifacts import ERC20Template, ERC721Template
 from eth_account import Account
 from eth_account.signers.local import LocalAccount
 from eth_typing.evm import HexAddress
 from eth_utils import add_0x_prefix, remove_0x_prefix
+from jsonsempai import magic  # noqa: F401
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.basics import (
     get_asset_from_metadatastore,
     get_datatoken_minter,
     get_web3,
-    get_provider_wallet,
 )
 from ocean_provider.utils.currency import to_wei
 from ocean_provider.utils.data_nft_factory import get_data_nft_factory_contract
@@ -127,11 +125,20 @@ def get_registered_ddo(
 ):
     web3 = get_web3()
     aqua_root = "http://localhost:5000"
-    dt_address = deploy_datatoken(web3, wallet.key, "DT1", "DT1", wallet.address)
+    data_nft_address = deploy_data_nft(
+        web3,
+        "Data NFT 1",
+        "DNFT1",
+        1,
+        "0x0000000000000000000000000000000000000000",
+        "",
+        wallet,
+    )
 
     ddo = {}
-    ddo["id"] = did = f"did:op:{remove_0x_prefix(dt_address)}"
-    ddo["dataToken"] = dt_address
+    # TODO v4 DID = "did:op:" + sha256(ERC721 contract address + chainId)
+    ddo["id"] = did = f"did:op:{remove_0x_prefix(data_nft_address)}"
+    ddo["dataToken"] = data_nft_address
     ddo["created"] = f"{datetime.utcnow().replace(microsecond=0).isoformat()}Z"
     ddo["@context"] = "https://w3id.org/did/v1"
     ddo["publicKey"] = [
@@ -190,7 +197,7 @@ def get_registered_ddo(
         ddo["credentials"] = custom_credentials
 
     try:
-        send_create_tx(web3, ddo, bytes([0]), wallet)
+        send_create_tx(web3, data_nft_address, ddo, bytes([0]), wallet)
     except Exception as e:
         print(f"error publishing ddo {did} in Aquarius: {e}")
         raise
@@ -208,35 +215,17 @@ def prepare_did(text):
     return add_0x_prefix(text)
 
 
-def get_metadata_contract(web3):
-    abi = ERC721Template.abi
-
-    address_file = Path(os.getenv("ADDRESS_FILE")).expanduser().resolve()
-    with open(address_file) as f:
-        address_json = json.load(f)
-
-    network = "development"
-    metadata_address = address_json[network]["Metadata"]
-
-    return web3.eth.contract(address=metadata_address, abi=abi)
-
-
-def send_create_tx(web3, ddo, flags, account):
+def send_create_tx(web3, data_nft_address, ddo, flags, account):
     provider_url = "http://localhost:8030"
     provider_address = "0xe2DD09d719Da89e5a3D0F2549c7E24566e947260"
-    did = ddo["id"]
-    datatoken_address = ddo["dataToken"]
     document = json.dumps(ddo)
 
     # test asset - we are not compressing nor encrypting
     encrypted_data = document.encode("utf-8")
     dataHash = hashlib.sha256(document.encode("UTF-8")).hexdigest()
 
-    did = prepare_did(did)
-    web3.eth.default_account = account.address
-
     dt_contract = get_web3().eth.contract(
-        abi=ERC721Template.abi, address=datatoken_address
+        abi=ERC721Template.abi, address=data_nft_address
     )
 
     txn_hash = dt_contract.functions.setMetaData(
