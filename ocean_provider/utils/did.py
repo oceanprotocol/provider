@@ -1,5 +1,18 @@
 import re
+from hashlib import sha256
 from typing import Dict
+
+from eth_typing.encoding import HexStr
+from eth_typing.evm import HexAddress
+from web3.main import Web3
+
+
+def compute_did_from_data_nft_address_and_chain_id(
+    data_nft_address: HexAddress, chain_id: int
+) -> HexStr:
+    return Web3.toHex(
+        sha256((data_nft_address + str(chain_id)).encode("utf-8")).digest()
+    )
 
 
 def did_to_id(did: str) -> str:

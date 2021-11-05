@@ -7,15 +7,13 @@ import os
 import pathlib
 import time
 import uuid
-from datetime import datetime
 
 import ipfshttpclient
+from jsonsempai import magic  # noqa: F401
 from artifacts import ERC20Template, ERC721Template
-from eth_account import Account
 from eth_account.signers.local import LocalAccount
 from eth_typing.evm import HexAddress
-from eth_utils import add_0x_prefix, remove_0x_prefix
-from jsonsempai import magic  # noqa: F401
+from eth_utils.hexadecimal import add_0x_prefix
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.basics import (
     get_asset_from_metadatastore,
@@ -25,10 +23,16 @@ from ocean_provider.utils.basics import (
 from ocean_provider.utils.currency import to_wei
 from ocean_provider.utils.data_nft_factory import get_data_nft_factory_contract
 from ocean_provider.utils.datatoken import get_tx_receipt, mint, verify_order_tx
-from ocean_provider.utils.encryption import do_encrypt
-from ocean_provider.utils.services import Service
-from ocean_provider.utils.util import checksum
-from tests.helpers.service_definitions import get_access_service
+from ocean_provider.utils.did import compute_did_from_data_nft_address_and_chain_id
+from tests.ddo.ddo_sample1_v4 import json_dict as ddo_sample1_v4
+from tests.helpers.ddo_dict_builders import (
+    build_credentials_dict,
+    build_ddo_dict,
+    build_files_dict,
+    build_metadata_dict_type_dataset,
+    build_service_dict_type_access,
+    get_access_service,
+)
 from web3.main import Web3
 
 
@@ -120,9 +124,11 @@ def deploy_datatoken(web3, private_key, name, symbol, minter_address):
     )
 
 
-def get_registered_ddo(
-    client, wallet, metadata, service, disabled=False, custom_credentials=None
-):
+def deploy_datatoken_1():
+    pass
+
+
+def get_registered_ddo(wallet):
     web3 = get_web3()
     aqua_root = "http://localhost:5000"
     data_nft_address = deploy_data_nft(
@@ -135,66 +141,25 @@ def get_registered_ddo(
         wallet,
     )
 
-    ddo = {}
-    # TODO v4 DID = "did:op:" + sha256(ERC721 contract address + chainId)
-    ddo["id"] = did = f"did:op:{remove_0x_prefix(data_nft_address)}"
-    ddo["dataToken"] = data_nft_address
-    ddo["created"] = f"{datetime.utcnow().replace(microsecond=0).isoformat()}Z"
-    ddo["@context"] = "https://w3id.org/did/v1"
-    ddo["publicKey"] = [
-        {"id": did, "type": "EthereumECDSAKey", "owner": wallet.address}
-    ]
-    ddo["authentication"] = [
-        {"type": "RsaSignatureAuthentication2018", "publicKey": did}
-    ]
-
-    files_list_str = json.dumps(metadata["main"]["files"])
-    pk = os.environ.get("PROVIDER_PRIVATE_KEY")
-    provider_wallet = Account.from_key(private_key=pk)
-    encrypted_files = do_encrypt(files_list_str, provider_wallet)
-
-    # only assign if the encryption worked
-    if encrypted_files:
-        index = 0
-        for file in metadata["main"]["files"]:
-            file["index"] = index
-            index = index + 1
-            del file["url"]
-        metadata["encryptedFiles"] = encrypted_files
-
-    if disabled:
-        metadata["status"] = {}
-        metadata["status"]["isOrderDisabled"] = True
-
-    metadata_service = Service(
-        service_type="metadata",
-        service_endpoint=f"{aqua_root}/api/v1/aquarius/assets/ddo/{did}",
-        index=0,
-        attributes=metadata,
+    datatoken_address = deploy_datatoken_1(
+        # TODO
     )
 
-    services = [metadata_service, service]
-
-    checksums = dict()
-    for service in services:
-        checksums[str(service.index)] = checksum(service.main)
-
-    # Adding proof to the ddo.
-    ddo["proof"] = {
-        "type": "DDOIntegritySignature",
-        "created": f"{datetime.utcnow().replace(microsecond=0).isoformat()}Z",
-        "creator": wallet.address,
-        "signatureValue": "",
-        "checksum": checksums,
-    }
-
-    ddo["service"] = []
-
-    for service in services:
-        ddo["service"].append(service.as_dictionary())
-
-    if custom_credentials:
-        ddo["credentials"] = custom_credentials
+    chain_id = web3.eth.chain_id
+    did = compute_did_from_data_nft_address_and_chain_id(data_nft_address, chain_id)
+    ddo = build_ddo_dict(
+        did=did,
+        chain_id=chain_id,
+        metadata=build_metadata_dict_type_dataset(),
+        services=[
+            build_service_dict_type_access(
+                datatoken_address=datatoken_address,
+                provider_url="http://localhost:8030",
+            )
+        ],
+        files=build_files_dict("0x1234"),  # TODO: add real encrypted files string
+        credentials=build_credentials_dict(),
+    )
 
     try:
         send_create_tx(web3, data_nft_address, ddo, bytes([0]), wallet)
@@ -237,11 +202,7 @@ def send_create_tx(web3, data_nft_address, ddo, flags, account):
 
 
 def get_dataset_ddo_with_access_service(client, wallet):
-    metadata = get_sample_ddo()["service"][0]["attributes"]
-    metadata["main"]["files"][0]["checksum"] = str(uuid.uuid4())
-    service = get_access_service(wallet.address, metadata)
-    metadata["main"].pop("cost")
-    return get_registered_ddo(client, wallet, metadata, service)
+    return get_registered_ddo(wallet)
 
 
 def get_dataset_ddo_with_multiple_files(client, wallet):
@@ -286,7 +247,6 @@ def get_sample_algorithm_ddo():
 
 
 def get_sample_ddo_with_compute_service():
-    # 'ddo_sa_sample.json')
     path = get_resource_path("ddo", "ddo_with_compute_service.json")
     assert path.exists(), f"{path} does not exist!"
     with open(path, "r") as file_handle:
@@ -374,11 +334,7 @@ def get_resource_path(dir_name, file_name):
 
 
 def get_sample_ddo():
-    path = get_resource_path("ddo", "ddo_sa_sample.json")
-    assert path.exists(), f"{path} does not exist!"
-    with open(path, "r") as file_handle:
-        metadata = file_handle.read()
-    return json.loads(metadata)
+    return ddo_sample1_v4
 
 
 def get_sample_ddo_with_multiple_files():
