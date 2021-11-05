@@ -201,7 +201,8 @@ class DecryptRequest(CustomJsonRequest):
                 "required_without:transactionId",
                 "required_with:encryptedDocument,flags",
             ],
-            "nonce": ["required"],
+            # TODO: put this back. This also fails when sending 0
+            #"nonce": ["required"],
             "signature": [
                 "bail",
                 "required",
