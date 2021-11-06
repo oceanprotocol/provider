@@ -10,7 +10,8 @@ import uuid
 
 import ipfshttpclient
 from jsonsempai import magic  # noqa: F401
-from artifacts import ERC20Template, ERC721Template
+from artifacts import ERC721Template
+from build.lib.ocean_provider.utils.data_nft import get_data_nft_contract
 from eth_account.signers.local import LocalAccount
 from eth_typing.evm import HexAddress
 from eth_utils.hexadecimal import add_0x_prefix
@@ -76,6 +77,11 @@ def deploy_contract(w3, _json, private_key, *args):
         raise
 
 
+def get_ocean_token_address() -> HexAddress:
+    # TODO: Return actual ocean address
+    return "0x0000000000000000000000000000000000000000"
+
+
 def deploy_data_nft(
     web3: Web3,
     name: str,
@@ -102,30 +108,40 @@ def deploy_data_nft(
     return data_nft_address
 
 
-def deploy_datatoken(web3, private_key, name, symbol, minter_address):
-    """
-    :param web3: Web3 object instance
-    :param private_key: Private key of the account
-    :param name: Name of the datatoken to be deployed
-    :param symbol: Symbol of the datatoken to be deployed
-    :param minter_address: Account address
-    :return: Address of the deployed contract
-    """
-    return deploy_contract(
-        web3,
-        {"abi": ERC20Template.abi, "bytecode": ERC20Template.bytecode},
-        private_key,
-        name,
-        symbol,
-        minter_address,
-        to_wei(1000),
-        "no blob",
-        minter_address,
+def deploy_datatoken(
+    web3: Web3,
+    data_nft_address: HexAddress,
+    template_index: int,
+    name: str,
+    symbol: str,
+    minter: HexAddress,
+    fee_manager: HexAddress,
+    publishing_market: HexAddress,
+    publishing_market_fee_token: HexAddress,
+    cap: int,
+    publishing_market_fee_amount: int,
+    from_wallet: LocalAccount,
+    unused_bytes: bytes = "\x00",
+) -> HexAddress:
+    data_nft_contract = get_data_nft_contract(web3, data_nft_address)
+    deploy_datatoken_tx = data_nft_contract.functions.createERC20(
+        template_index,
+        [name, symbol],
+        [minter, fee_manager, publishing_market, publishing_market_fee_token],
+        [cap, publishing_market_fee_amount],
+        unused_bytes,
+    ).buildTransaction({"from": from_wallet.address})
+    deploy_datatoken_tx_signed = sign_tx(web3, deploy_datatoken_tx, from_wallet.key)
+    deploy_datatoken_tx_hash = web3.eth.send_raw_transaction(deploy_datatoken_tx_signed)
+    deploy_datatoken_receipt = web3.eth.wait_for_transaction_receipt(
+        deploy_datatoken_tx_hash
     )
-
-
-def deploy_datatoken_1():
-    pass
+    datatoken_address = (
+        data_nft_contract.events.TokenCreated()
+        .processReceipt(deploy_datatoken_receipt)[0]
+        .args.newTokenAddress
+    )
+    return datatoken_address
 
 
 def get_registered_ddo(wallet):
@@ -141,8 +157,19 @@ def get_registered_ddo(wallet):
         wallet,
     )
 
-    datatoken_address = deploy_datatoken_1(
-        # TODO
+    datatoken_address = deploy_datatoken(
+        web3=web3,
+        data_nft_address=data_nft_address,
+        template_index=1,
+        name="Datatoken 1",
+        symbol="DT1",
+        minter=wallet.address,
+        fee_manager=wallet.address,
+        publishing_market="0x0000000000000000000000000000000000000000",
+        publishing_market_fee_token=get_ocean_token_address(),
+        cap=1000,
+        publishing_market_fee_amount=0,
+        from_wallet=wallet,
     )
 
     chain_id = web3.eth.chain_id

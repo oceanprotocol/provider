@@ -33,6 +33,13 @@ class Flags(IntFlag):
 
 
 def get_data_nft_contract(web3: Web3, address: Optional[str] = None) -> Contract:
+    """
+    Build a web3 Contract instance using the standard ERC721Template ABI.
+
+    This function assumes that the standard `ERC721Template` stored at index 1
+    of the `ERC721Factory` provides all the functionality needed by Provider,
+    especially the `getMetaData` contract method.
+    """
     abi = ERC721Template.abi
     return web3.eth.contract(address=address, abi=abi)
 
@@ -41,6 +48,7 @@ def get_metadata(web3: Web3, address: str) -> Tuple[str, str, MetadataState, boo
     """Queries the ERC721 Template smart contract getMetaData call.
     Returns metaDataDecryptorUrl, metaDataDecryptorAddress, metaDataState, and hasMetaData"""
     data_nft_contract = get_data_nft_contract(web3, address)
+
     return data_nft_contract.caller.getMetaData()
 
 

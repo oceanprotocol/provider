@@ -4,14 +4,12 @@
 #
 import hashlib
 import json
+from datetime import datetime
 from typing import Any, Dict, List
 
 from eth_typing.evm import HexAddress
-
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.services import Service
-from datetime import datetime
-
 
 """Test helpers for building service dicts to be used in DDOs"""
 
@@ -103,6 +101,7 @@ def build_publisher_trusted_algo_dict(
 
 
 def _build_untyped_metadata_dict() -> dict:
+    """Build an untyped metadata dict, used for testing"""
     return {
         "description": "Asset description",
         "copyrightHolder": "Asset copyright holder",
@@ -118,12 +117,14 @@ def _build_untyped_metadata_dict() -> dict:
 
 
 def build_metadata_dict_type_dataset() -> dict:
+    """Build metadata dict of type "dataset", used for testing."""
     dataset_metadata = _build_untyped_metadata_dict()
     dataset_metadata["type"] = "dataset"
     return dataset_metadata
 
 
 def build_metadata_dict_type_algorithm() -> dict:
+    """Build metadata dict of type "algorithm", used for testing."""
     algorithm_metadata = _build_untyped_metadata_dict()
     algorithm_metadata["type"] = "algorithm"
     algorithm_metadata["algorithm"] = build_algorithm_dict()
@@ -131,6 +132,7 @@ def build_metadata_dict_type_algorithm() -> dict:
 
 
 def build_algorithm_dict() -> dict:
+    """Build an algorithm dict, used for testing."""
     return {
         "language": "python",
         "version": "0.1.0",
@@ -139,6 +141,7 @@ def build_algorithm_dict() -> dict:
 
 
 def build_container_dict() -> dict:
+    """Build a container dict, used for testing"""
     return {
         "entrypoint": "run.sh",
         "image": "my-docker-image",
@@ -148,10 +151,12 @@ def build_container_dict() -> dict:
 
 
 def build_files_dict(encrypted_files: str) -> dict:
+    """Build a files dict, used for testing."""
     return {"files": encrypted_files}
 
 
 def build_credentials_dict() -> dict:
+    """Build a credentials dict, used for testing."""
     return {"allow": [], "deny": []}
 
 
