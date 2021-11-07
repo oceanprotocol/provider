@@ -55,7 +55,7 @@ source venv/bin/activate
 
 Install all the requirements:
 
-```
+```bash
 pip install -r requirements_dev.txt
 ```
 
@@ -81,7 +81,7 @@ Add the corresponding environment variables in your `.env` file. Here is an exam
 FLASK_APP=ocean_provider/run.py
 PROVIDER_CONFIG_FILE=config.ini
 PROVIDER_ADDRESS=your ethereum address goes here
-PROVIDER_KEY=the private key
+PROVIDER_PRIVATE_KEY=the private key
 ```
 
 You might also want to set `FLASK_ENV=development`. Then run ```flask run --port=8030```
