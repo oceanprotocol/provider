@@ -22,17 +22,22 @@ def build_ddo_dict(
     files: Dict[str, Any],
     credentials: Dict[str, Any],
 ) -> dict:
+    """Build a ddo dict, used for testing. See for details:
+    https://github.com/oceanprotocol/docs/blob/v4main/content/concepts/did-ddo.md#ddo
+    """
     return {
-        "@context": "https://w3id.org/did/v1",
+        "@context": ["https://w3id.org/did/v1"],
         "id": did,
         "version": "4.0.0",
         "chainId": chain_id,
-        "created": f"{datetime.utcnow().replace(microsecond=0).isoformat()}Z",
-        "updated": f"{datetime.utcnow().replace(microsecond=0).isoformat()}Z",
+        "created": f"{datetime.utcnow().replace(microsecond=0).isoformat()}",
+        "updated": f"{datetime.utcnow().replace(microsecond=0).isoformat()}",
         "metadata": metadata,
         "services": services,
         "files": files,
         "credentials": credentials,
+        # TODO: Remove proof after aquarius validation updated to latest ddo spec
+        "proof": {},
     }
 
 

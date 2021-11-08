@@ -11,10 +11,8 @@ import uuid
 import ipfshttpclient
 from jsonsempai import magic  # noqa: F401
 from artifacts import ERC721Template
-from build.lib.ocean_provider.utils.data_nft import get_data_nft_contract
 from eth_account.signers.local import LocalAccount
 from eth_typing.evm import HexAddress
-from eth_utils.hexadecimal import add_0x_prefix
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.basics import (
     get_asset_from_metadatastore,
@@ -22,6 +20,7 @@ from ocean_provider.utils.basics import (
     get_web3,
 )
 from ocean_provider.utils.currency import to_wei
+from ocean_provider.utils.data_nft import get_data_nft_contract
 from ocean_provider.utils.data_nft_factory import get_data_nft_factory_contract
 from ocean_provider.utils.datatoken import get_tx_receipt, mint, verify_order_tx
 from ocean_provider.utils.did import compute_did_from_data_nft_address_and_chain_id
@@ -146,7 +145,6 @@ def deploy_datatoken(
 
 def get_registered_ddo(wallet):
     web3 = get_web3()
-    aqua_root = "http://localhost:5000"
     data_nft_address = deploy_data_nft(
         web3,
         "Data NFT 1",
@@ -157,20 +155,20 @@ def get_registered_ddo(wallet):
         wallet,
     )
 
-    datatoken_address = deploy_datatoken(
-        web3=web3,
-        data_nft_address=data_nft_address,
-        template_index=1,
-        name="Datatoken 1",
-        symbol="DT1",
-        minter=wallet.address,
-        fee_manager=wallet.address,
-        publishing_market="0x0000000000000000000000000000000000000000",
-        publishing_market_fee_token=get_ocean_token_address(),
-        cap=1000,
-        publishing_market_fee_amount=0,
-        from_wallet=wallet,
-    )
+    # datatoken_address = deploy_datatoken(
+    #     web3=web3,
+    #     data_nft_address=data_nft_address,
+    #     template_index=1,
+    #     name="Datatoken 1",
+    #     symbol="DT1",
+    #     minter=wallet.address,
+    #     fee_manager=wallet.address,
+    #     publishing_market="0x0000000000000000000000000000000000000000",
+    #     publishing_market_fee_token=get_ocean_token_address(),
+    #     cap=1000,
+    #     publishing_market_fee_amount=0,
+    #     from_wallet=wallet,
+    # )
 
     chain_id = web3.eth.chain_id
     did = compute_did_from_data_nft_address_and_chain_id(data_nft_address, chain_id)
@@ -180,7 +178,8 @@ def get_registered_ddo(wallet):
         metadata=build_metadata_dict_type_dataset(),
         services=[
             build_service_dict_type_access(
-                datatoken_address=datatoken_address,
+                # TODO: use actual datatoken address
+                datatoken_address="0x0000000000000000000000000000000000000000",
                 provider_url="http://localhost:8030",
             )
         ],
@@ -194,17 +193,11 @@ def get_registered_ddo(wallet):
         print(f"error publishing ddo {did} in Aquarius: {e}")
         raise
 
+    aqua_root = "http://localhost:5000"
     ddo = wait_for_ddo(aqua_root, did)
     assert ddo, f"resolve did {did} failed."
 
     return ddo
-
-
-def prepare_did(text):
-    prefix = "did:op:"
-    if text.startswith(prefix):
-        text = text[len(prefix) :]
-    return add_0x_prefix(text)
 
 
 def send_create_tx(web3, data_nft_address, ddo, flags, account):
