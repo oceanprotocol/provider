@@ -87,6 +87,7 @@ def _encrypt(data: bytes) -> Response:
         logger.info(f"encrypted_data = {encrypted_data}")
     except Exception:
         return error_response(f"Failed to encrypt.", 400)
+
     return Response(
         encrypted_data,
         201,
