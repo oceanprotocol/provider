@@ -149,9 +149,11 @@ class CustomRulesProcessor(RulesProcessor):
         nonce = self._attribute_value(params[4])
 
         if transaction_id:
-            original_msg = f"{transaction_id}{decrypter_address}{chain_id}"
+            first_arg = transaction_id
         else:
-            original_msg = f"{data_nft_address}{decrypter_address}{chain_id}"
+            first_arg = data_nft_address
+
+        original_msg = f"{first_arg}{decrypter_address}{chain_id}"
 
         try:
             verify_signature(decrypter_address, value, original_msg, nonce)
@@ -202,7 +204,7 @@ class DecryptRequest(CustomJsonRequest):
                 "required_with:encryptedDocument,flags",
             ],
             # TODO: put this back. This also fails when sending 0
-            #"nonce": ["required"],
+            # "nonce": ["required"],
             "signature": [
                 "bail",
                 "required",
