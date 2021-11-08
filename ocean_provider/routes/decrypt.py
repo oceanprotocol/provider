@@ -102,6 +102,12 @@ def _decrypt(
         except Exception:
             logger.error(f"{traceback.format_exc()}")
             return error_response(f"Failed to process transaction id.", 400)
+    logger.info(
+        f"data_nft_address = {data_nft_address}, "
+        f"encrypted_document as bytes = {encrypted_document}, "
+        f"flags as bytes = {flags}, "
+        f"document_hash as bytes = {document_hash}"
+    )
 
     # Check if DDO metadata state is ACTIVE
     (_, _, metadata_state, _) = get_metadata(web3, data_nft_address)
