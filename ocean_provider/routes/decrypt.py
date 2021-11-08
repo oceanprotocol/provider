@@ -108,9 +108,8 @@ def _decrypt(
                 f"document_hash = {document_hash}"
             )
         except Exception:
-            response = error_response(f"Failed to get metadata logs.", 400)
             logger.error(f"{traceback.format_exc()}")
-            return response
+            return error_response(f"Failed to get metadata logs.", 400)
     else:
         try:
             encrypted_document = Web3.toBytes(hexstr=encrypted_document)
@@ -141,9 +140,8 @@ def _decrypt(
             working_document = do_decrypt(working_document, get_provider_wallet())
             logger.info("Successfully decrypted document.")
         except Exception:
-            response = error_response(f"Failed to decrypt.", 400)
             logger.error(f"{traceback.format_exc()}")
-            return response
+            return error_response(f"Failed to decrypt.", 400)
     else:
         logger.warning(
             "Document not encrypted (flags bit 2 not set). Skipping decryption."
@@ -155,9 +153,8 @@ def _decrypt(
             working_document = lzma.decompress(working_document)
             logger.info("Successfully decompressed document.")
         except Exception:
-            response = error_response(f"Failed to decompress", 400)
             logger.error(f"{traceback.format_exc()}")
-            return response
+            return error_response(f"Failed to decompress", 400)
 
     document = working_document
     logger.info(f"document = {document}")
