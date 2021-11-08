@@ -6,9 +6,10 @@ import logging
 import lzma
 import traceback
 from hashlib import sha256
-from typing import Optional
+from typing import Optional, Tuple
 
 from eth_typing.encoding import HexStr
+from eth_typing.evm import HexAddress
 from flask import Response, request
 from flask_sieve import validate
 from ocean_provider.log import setup_logging
@@ -83,40 +84,24 @@ def _decrypt(
     if authorized_decrypters and decrypter_address not in authorized_decrypters:
         return error_response(f"Decrypter not authorized", 403)
 
-    if transaction_id:
+    if not transaction_id:
         try:
-            tx_receipt = web3.eth.get_transaction_receipt(transaction_id)
-            logs = get_metadata_logs_from_tx_receipt(web3, tx_receipt)
-            logger.info(f"transaction_id = {transaction_id}, logs = {logs}")
-            if len(logs) > 1:
-                logger.warning(
-                    "More than 1 MetadataCreated/MetadataUpdated event detected. "
-                    "Using the event at index 0."
-                )
-            log = logs[0]
-            data_nft_address = log.address
-            # Interpret "data" as utf-8 encoded bytes
-            encrypted_document = log.args["data"]
-            # Interpret "flags" as array of bytes length 1
-            flags = log.args["flags"]
-            # Interpret metaDataHash" as utf-8 encoded bytes
-            document_hash = log.args["metaDataHash"]
-            logger.info(
-                f"data_nft_address = {data_nft_address}, "
-                f"encrypted_document = {encrypted_document}, "
-                f"flags = {flags}, "
-                f"document_hash = {document_hash}"
+            (encrypted_document, flags, document_hash) = _convert_args_to_bytes(
+                encrypted_document, flags, document_hash
             )
         except Exception:
-            logger.error(f"{traceback.format_exc()}")
-            return error_response(f"Failed to get metadata logs.", 400)
+            return error_response(f"Failed to convert input args to bytes.", 400)
     else:
         try:
-            encrypted_document = Web3.toBytes(hexstr=encrypted_document)
-            flags = flags.to_bytes(1, "big")
-            document_hash = Web3.toBytes(hexstr=document_hash)
+            (
+                data_nft_address,
+                encrypted_document,
+                flags,
+                document_hash,
+            ) = _get_args_from_transaction_id(web3, transaction_id)
         except Exception:
-            return error_response(f"Failed converting input args to bytes.", 400)
+            logger.error(f"{traceback.format_exc()}")
+            return error_response(f"Failed to process transaction id.", 400)
 
     # Check if DDO metadata state is ACTIVE
     (_, _, metadata_state, _) = get_metadata(web3, data_nft_address)
@@ -167,3 +152,34 @@ def _decrypt(
     return Response(
         document, 201, {"Content-type": "text/plain", "Connection": "close"}
     )
+
+
+def _convert_args_to_bytes(
+    encrypted_document: HexStr, flags: int, document_hash: HexStr
+) -> Tuple[bytes, bytes, bytes]:
+    """Return the encrypted_document, flags, and document_hash as bytes.
+    """
+    return (
+        Web3.toBytes(hexstr=encrypted_document),
+        flags.to_bytes(1, "big"),
+        Web3.toBytes(hexstr=document_hash),
+    )
+
+
+def _get_args_from_transaction_id(
+    web3: Web3, transaction_id: HexStr
+) -> Tuple[HexAddress, bytes, bytes, bytes]:
+    """Get the MetadataCreated and MetadataUpdated logs from the transaction id.
+    Parse logs and return the data_nft_address, encrypted_document, flags, and
+    document_hash.
+    """
+    tx_receipt = web3.eth.get_transaction_receipt(transaction_id)
+    logs = get_metadata_logs_from_tx_receipt(web3, tx_receipt)
+    logger.info(f"transaction_id = {transaction_id}, logs = {logs}")
+    if len(logs) > 1:
+        logger.warning(
+            "More than 1 MetadataCreated/MetadataUpdated event detected. "
+            "Using the event at index 0."
+        )
+    log = logs[0]
+    return (log.address, log.args["data"], log.args["flags"], log.args["metaDataHash"])
