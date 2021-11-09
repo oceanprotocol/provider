@@ -52,6 +52,8 @@ requests_session.mount("file://", LocalFileAdapter())
 
 logger = logging.getLogger(__name__)
 
+standard_headers = {"Content-type": "application/json", "Connection": "close"}
+
 
 @services.route("/nonce", methods=["GET"])
 @validate(NonceRequest)
@@ -62,9 +64,7 @@ def nonce():
     address = data.get("userAddress")
     nonce = get_nonce(address)
     logger.info(f"nonce for user {address} is {nonce}")
-    return Response(
-        json.dumps({"nonce": nonce}), 200, headers={"content-type": "application/json"}
-    )
+    return Response(json.dumps({"nonce": nonce}), 200, headers=standard_headers)
 
 
 @services.route("/fileinfo", methods=["POST"])
@@ -111,9 +111,7 @@ def fileinfo():
         info.update(details)
         files_info.append(info)
 
-    return Response(
-        json.dumps(files_info), 200, headers={"content-type": "application/json"}
-    )
+    return Response(json.dumps(files_info), 200, headers=standard_headers)
 
 
 @services.route("/initialize", methods=["GET"])
@@ -179,11 +177,7 @@ def initialize():
             "nonce": get_nonce(consumer_address),
             "computeAddress": compute_address,
         }
-        return Response(
-            json.dumps(approve_params),
-            200,
-            headers={"content-type": "application/json"},
-        )
+        return Response(json.dumps(approve_params), 200, headers=standard_headers)
 
     except Exception as e:
         return service_unavailable(e, data, logger)

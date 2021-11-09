@@ -10,12 +10,12 @@ from flask.wrappers import Response
 
 logger = logging.getLogger(__name__)
 
-standard_headers = {"Content-type": "text/plain", "Connection": "close"}
-
 
 def error_response(err_str: str, status: int) -> Response:
     logger.error(err_str)
-    return Response(err_str, status, standard_headers)
+    return Response(
+        err_str, status, headers={"Content-type": "text/plain", "Connection": "close"}
+    )
 
 
 def service_unavailable(error, context, custom_logger=None):
@@ -31,5 +31,5 @@ def service_unavailable(error, context, custom_logger=None):
     return Response(
         json.dumps({"error": str(error), "context": context}),
         503,
-        headers={"content-type": "application/json"},
+        headers={"content-type": "application/json", "Connection": "close"},
     )
