@@ -28,7 +28,7 @@ def build_ddo_dict(
     return {
         "@context": ["https://w3id.org/did/v1"],
         "id": did,
-        "version": "v4.0.0",
+        "version": "4.0.0",
         "chainId": chain_id,
         "created": f"{datetime.utcnow().replace(microsecond=0).isoformat()}",
         "updated": f"{datetime.utcnow().replace(microsecond=0).isoformat()}",
