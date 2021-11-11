@@ -4,7 +4,6 @@
 #
 import logging
 import lzma
-import traceback
 from hashlib import sha256
 from typing import Optional, Tuple
 
@@ -100,7 +99,6 @@ def _decrypt(
                 document_hash,
             ) = _get_args_from_transaction_id(web3, transaction_id)
         except Exception:
-            logger.error(f"{traceback.format_exc()}")
             return error_response(f"Failed to process transaction id.", 400)
     logger.info(
         f"data_nft_address = {data_nft_address}, "
@@ -131,7 +129,6 @@ def _decrypt(
             working_document = do_decrypt(working_document, get_provider_wallet())
             logger.info("Successfully decrypted document.")
         except Exception:
-            logger.error(f"{traceback.format_exc()}")
             return error_response(f"Failed to decrypt.", 400)
     else:
         logger.warning(
@@ -144,7 +141,6 @@ def _decrypt(
             working_document = lzma.decompress(working_document)
             logger.info("Successfully decompressed document.")
         except Exception:
-            logger.error(f"{traceback.format_exc()}")
             return error_response(f"Failed to decompress", 400)
 
     document = working_document

@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 def error_response(err_str: str, status: int) -> Response:
-    logger.error(err_str)
+    logger.error(err_str, exc_info=1)
     return Response(
         err_str, status, headers={"Content-type": "text/plain", "Connection": "close"}
     )
