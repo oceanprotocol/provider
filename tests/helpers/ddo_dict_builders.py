@@ -36,13 +36,11 @@ def build_ddo_dict(
         "services": services,
         "files": files,
         "credentials": credentials,
-        # TODO: Remove proof after aquarius validation updated to latest ddo spec
-        "proof": {},
     }
 
 
 def _build_service_dict_untyped(
-    datatoken_address: HexAddress, provider_url: str, timeout: int
+    datatoken_address: HexAddress, provider_endpoint: str, timeout: int
 ) -> dict:
     """Build a service dict with required attributes only. See for details:
     https://github.com/oceanprotocol/docs/blob/v4main/content/concepts/did-ddo.md#services
@@ -51,7 +49,7 @@ def _build_service_dict_untyped(
         "name": "name doesn't affect tests",
         "description": "decription doesn't affect tests",
         "datatokenAddress": datatoken_address,
-        "providerUrl": provider_url,
+        "providerEndpoint": provider_endpoint,
         "timeout": timeout,
     }
 
