@@ -103,7 +103,7 @@ def get_registered_ddo(
     ddo["id"] = did = f"did:op:{remove_0x_prefix(dt_address)}"
     ddo["dataToken"] = dt_address
     ddo["created"] = f"{datetime.utcnow().replace(microsecond=0).isoformat()}Z"
-    ddo["@context"] = "https://w3id.org/did/v1"
+    ddo["@context"] = "https://w3id.org/did"
     ddo["publicKey"] = [
         {"id": did, "type": "EthereumECDSAKey", "owner": wallet.address}
     ]
@@ -131,7 +131,7 @@ def get_registered_ddo(
 
     metadata_service = Service(
         service_type="metadata",
-        service_endpoint=f"{aqua_root}/api/v1/aquarius/assets/ddo/{did}",
+        service_endpoint=f"{aqua_root}/api/aquarius/assets/ddo/{did}",
         index=0,
         attributes=metadata,
     )
