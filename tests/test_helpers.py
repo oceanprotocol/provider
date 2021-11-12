@@ -28,7 +28,6 @@ from tests.ddo.ddo_sample1_v4 import json_dict as ddo_sample1_v4
 from tests.helpers.ddo_dict_builders import (
     build_credentials_dict,
     build_ddo_dict,
-    build_files_dict,
     build_metadata_dict_type_dataset,
     build_service_dict_type_access,
     get_access_service,
@@ -180,10 +179,10 @@ def get_registered_ddo(wallet):
             build_service_dict_type_access(
                 # TODO: use actual datatoken address
                 datatoken_address="0x0000000000000000000000000000000000000000",
-                provider_url="http://localhost:8030",
+                service_endpoint="http://localhost:8030",
+                encrypted_files="0x1234",
             )
         ],
-        files=build_files_dict("0x1234"),  # TODO: add real encrypted files string
         credentials=build_credentials_dict(),
     )
 
