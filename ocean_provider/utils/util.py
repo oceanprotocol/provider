@@ -198,11 +198,11 @@ def get_download_url(url, config_file):
 
 
 def get_compute_endpoint():
-    return get_config().operator_service_url + "/api/operator/compute"
+    return get_config().operator_service_url + "/api/v1/operator/compute"
 
 
 def get_compute_result_endpoint():
-    return get_config().operator_service_url + "/api/operator/getResult"
+    return get_config().operator_service_url + "/api/v1/operator/getResult"
 
 
 def get_compute_info():

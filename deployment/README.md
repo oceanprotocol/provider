@@ -1,5 +1,8 @@
+
+
 - [Kubernetes deployment](#kubernetes-deployment)
 - [Docker Compose deployment](#docker-compose-deployment)
+
 
 #### Kubernetes deployment
 
@@ -10,7 +13,7 @@
 
 which means these components must be available before the deployment.
 
-In this example we will run Provider as kubernetes deployment resource.
+In this example we will  run Provider as kubernetes deployment resource.
 
 Additional parameters could be [added](https://github.com/oceanprotocol/provider) and the template could be adjusted based on these considerations.
 One common case is the deployment for one of the following Ethereum networks:
@@ -21,10 +24,10 @@ One common case is the deployment for one of the following Ethereum networks:
 
 and the following template (annotated) could be edited and used for deployment.
 
-_provider-standard-networks-deployment-example_ deployment (annotated)
+*provider-standard-networks-deployment-example* deployment (annotated)
 
 ```yaml
-apiVersion: apps
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
@@ -48,36 +51,38 @@ spec:
         app: provider
     spec:
       containers:
-        - env:
-            - name: NETWORK_URL
-              value: < mainnet, rinkeby, ropsten or custom Openethereum service >
-            - name: PROVIDER_PRIVATE_KEY
-              value: < private key>
-            - name: LOG_LEVEL
-              value: INFO
-            - name: OCEAN_PROVIDER_URL
-              value: http://0.0.0.0:8030
-            - name: OCEAN_PROVIDER_WORKERS
-              value: "1"
-            - name: IPFS_GATEWAY
-              value: < IPFS gateway if defined/available >
-            - name: OCEAN_PROVIDER_TIMEOUT
-              value: "9000"
-            - name: AQUARIUS_URL
-              value: < http://aquarius_url >
-          image: oceanprotocol/provider-py:<check tag on hub.docker.com >
-          imagePullPolicy: IfNotPresent
-          name: provider
-          ports:
-            - containerPort: 8030
-              protocol: TCP
-          terminationMessagePath: /dev/termination-log
-          terminationMessagePolicy: File
+      - env:
+        - name: NETWORK_URL
+          value: < mainnet, rinkeby, ropsten or custom Openethereum service >
+        - name: PROVIDER_PRIVATE_KEY
+          value: < private key>
+        - name: LOG_LEVEL
+          value: INFO
+        - name: OCEAN_PROVIDER_URL
+          value: http://0.0.0.0:8030
+        - name: OCEAN_PROVIDER_WORKERS
+          value: "1"
+        - name: IPFS_GATEWAY
+          value: < IPFS gateway if defined/available >
+        - name: OCEAN_PROVIDER_TIMEOUT
+          value: "9000"
+        - name: AQUARIUS_URL
+          value: < http://aquarius_url >
+        image: oceanprotocol/provider-py:<check tag on hub.docker.com >
+        imagePullPolicy: IfNotPresent
+        name: provider
+        ports:
+        - containerPort: 8030
+          protocol: TCP
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
       dnsPolicy: ClusterFirst
       restartPolicy: Always
       schedulerName: default-scheduler
       terminationGracePeriodSeconds: 30
 ```
+
+
 
 Tip: before deployment you can [validate](https://github.com/instrumenta/kubeval) the yaml file.
 
@@ -91,15 +96,21 @@ NAME                        READY   STATUS    RESTARTS   AGE
 provider-764ffbdb59-bgmnl   1/1     Running   0          55s
 ```
 
-next step is to create a [service](https://kubernetes.io/docs/concepts/services-networking/service/) (eg. ClusterIP, NodePort, Loadbalancer, ExternalName) for this deployment depending on environment specs.
+
+
+next step is to create a [service](https://kubernetes.io/docs/concepts/services-networking/service/) (eg. ClusterIP,  NodePort,  Loadbalancer, ExternalName) for this deployment depending on environment specs.
+
+
 
 #### Docker Compose deployment
 
+
+
 The following steps could be used as example to run Provider as docker container configured as service with systemd.
 
-a) create _/etc/docker/compose/provider/docker-compose.yml_ file
+a) create */etc/docker/compose/provider/docker-compose.yml* file
 
-_/etc/docker/compose/provider/docker-compose.yml_ (annotated)
+*/etc/docker/compose/provider/docker-compose.yml* (annotated)
 
 ```yaml
 version: '3'
@@ -127,9 +138,11 @@ networks:
     driver: bridge
 ```
 
-b) create _/etc/systemd/system/docker-compose@provider.service_ file
 
-_/etc/systemd/system/docker-compose@provider.service_ (this example file could be customized)
+
+b) create */etc/systemd/system/docker-compose@provider.service* file
+
+ */etc/systemd/system/docker-compose@provider.service* (this example file could be customized)
 
 ```shell
 [Unit]
@@ -151,6 +164,8 @@ ExecStop=/usr/bin/env docker-compose -p $PROJECT stop
 WantedBy=multi-user.target
 ```
 
+
+
 c) run:
 
 ```shell
@@ -164,11 +179,15 @@ $ sudo systemctl enable docker-compose@provider.service
 
 ```
 
+
+
 d) start provider service:
 
 ```shell
 $ sudo systemctl start docker-compose@provider.service
 ```
+
+
 
 check status:
 
@@ -193,13 +212,17 @@ Apr 05 10:52:07 ip-172-31-32-61.eu-central-1.compute.internal systemd[1]: Starte
 Hint: Some lines were ellipsized, use -l to show in full.
 ```
 
+
+
 confirm provider service is accessible on localhost port 8030/tcp:
 
 ```shell
 $ curl localhost:8030
-{"computeAddress":null,"chainId":"3","providerAddress":"0xe08A1dAe983BC701D05E492DB80e0144f8f4b909","serviceEndpoints":{"computeDelete":["DELETE","/api/services/compute"],"computeStart":["POST","/api/services/compute"],"computeStatus":["GET","/api/services/compute"],"computeStop":["PUT","/api/services/compute"],"download":["GET","/api/services/download"],"encrypt":["POST","/api/services/encrypt"],"fileinfo":["POST","/api/services/fileinfo"],"initialize":["GET","/api/services/initialize"],"nonce":["GET","/api/services/nonce"]},"software":"Provider","version":"0.4.8"}
+{"computeAddress":null,"chainId":"3","providerAddress":"0xe08A1dAe983BC701D05E492DB80e0144f8f4b909","serviceEndpoints":{"computeDelete":["DELETE","/api/v1/services/compute"],"computeStart":["POST","/api/v1/services/compute"],"computeStatus":["GET","/api/v1/services/compute"],"computeStop":["PUT","/api/v1/services/compute"],"download":["GET","/api/v1/services/download"],"encrypt":["POST","/api/v1/services/encrypt"],"fileinfo":["POST","/api/v1/services/fileinfo"],"initialize":["GET","/api/v1/services/initialize"],"nonce":["GET","/api/v1/services/nonce"]},"software":"Provider","version":"0.4.8"}
 
 ```
+
+
 
 If needed, use docker cli to check provider service logs:
 
@@ -211,6 +234,8 @@ CONTAINER ID   IMAGE                              COMMAND                  CREAT
 e8aa7813ce76   oceanprotocol/provider-py:latest   "/ocean-provider/doc…"   19 seconds ago   Up 19 seconds   0.0.0.0:8030->8030/tcp             provider
 
 ```
+
+
 
 == check logs from provider docker container
 
@@ -236,3 +261,4 @@ $ docker logs --follow e8aa7813ce76
 2021-04-05 11:06:57 e8aa7813ce76 config[12] DEBUG Config: setting environ operator_service.url = https://nextv.operator.dev-ocean.com/
 2021-04-05 11:06:57 e8aa7813ce76 config[12] DEBUG Config: setting environ allow_non_public_ip = False
 ```
+
