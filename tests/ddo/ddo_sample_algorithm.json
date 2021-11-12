@@ -1,5 +1,5 @@
 {
-  "@context": "https://w3id.org/did/v1",
+  "@context": "https://w3id.org/did",
   "authentication": [
     {
       "type": "RsaSignatureAuthentication2018",
@@ -41,15 +41,11 @@
   "verifiableCredential": [
     {
       "@context": [
-        "https://www.w3.org/2018/credentials/v1",
-        "https://www.w3.org/2018/credentials/examples/v1"
+        "https://www.w3.org/2018/credentials",
+        "https://www.w3.org/2018/credentials/examples"
       ],
       "id": "1872",
-      "type": [
-        "read",
-        "update",
-        "deactivate"
-      ],
+      "type": ["read", "update", "deactivate"],
       "issuer": "0x610D9314EDF2ced7681BA1633C33fdb8cF365a12",
       "issuanceDate": "2019-01-01T19:73:24Z",
       "credentialSubject": {
@@ -66,7 +62,7 @@
   "service": [
     {
       "index": 0,
-      "serviceEndpoint": "http://localhost:5000/api/v1/aquarius/assets/ddo/{did}",
+      "serviceEndpoint": "http://localhost:5000/api/aquarius/assets/ddo/{did}",
       "type": "metadata",
       "attributes": {
         "main": {
@@ -101,13 +97,7 @@
         },
         "additionalInformation": {
           "description": "Workflow to aggregate weather information",
-          "tags": [
-            "weather",
-            "uk",
-            "2011",
-            "workflow",
-            "aggregation"
-          ],
+          "tags": ["weather", "uk", "2011", "workflow", "aggregation"],
           "copyrightHolder": "John Doe"
         }
       }

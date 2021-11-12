@@ -1,5 +1,5 @@
 {
-  "@context": "https://w3id.org/future-method/v1",
+  "@context": "https://w3id.org/future-method",
   "authentication": [],
   "created": "2019-04-09T19:02:11Z",
   "id": "did:op:8d1b4d73e7af4634958f071ab8dfe7ab0df14019755e444090fd392c8ec9c3f4",
@@ -20,7 +20,7 @@
     {
       "type": "metadata",
       "index": 0,
-      "serviceEndpoint": "http://myaquarius.org/api/v1/provider/assets/metadata/{did}",
+      "serviceEndpoint": "http://myaquarius.org/api/provider/assets/metadata/{did}",
       "attributes": {
         "main": {
           "author": "Met Office",
@@ -47,7 +47,7 @@
     {
       "type": "compute",
       "index": 2,
-      "serviceEndpoint": "http://ocean-provider.org/api/v1/services/compute",
+      "serviceEndpoint": "http://ocean-provider.org/api/services/compute",
       "templateId": "",
       "attributes": {
         "main": {
