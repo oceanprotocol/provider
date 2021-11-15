@@ -4,8 +4,8 @@ SPDX-License-Identifier: Apache-2.0
 -->
 [![banner](https://raw.githubusercontent.com/oceanprotocol/art/master/github/repo-banner%402x.png)](https://oceanprotocol.com)
 
-[![Maintainability](https://api.codeclimate.com/badges/6f5987cfdd2fd265047b/maintainability)](https://codeclimate.com/github/oceanprotocol/provider/maintainability)
-[![Test Coverage](https://api.codeclimate.com/badges/6f5987cfdd2fd265047b/test_coverage)](https://codeclimate.com/github/oceanprotocol/provider/test_coverage)
+[![Maintainability](https://api.codeclimate.com/v1/badges/6f5987cfdd2fd265047b/maintainability)](https://codeclimate.com/github/oceanprotocol/provider/maintainability)
+[![Test Coverage](https://api.codeclimate.com/v1/badges/6f5987cfdd2fd265047b/test_coverage)](https://codeclimate.com/github/oceanprotocol/provider/test_coverage)
 [![GitHub contributors](https://img.shields.io/github/contributors/oceanprotocol/provider.svg)](https://github.com/oceanprotocol/provider/graphs/contributors)
 
 # provider

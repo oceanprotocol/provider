@@ -103,7 +103,7 @@ def get_registered_ddo(
     ddo["id"] = did = f"did:op:{remove_0x_prefix(dt_address)}"
     ddo["dataToken"] = dt_address
     ddo["created"] = f"{datetime.utcnow().replace(microsecond=0).isoformat()}Z"
-    ddo["@context"] = "https://w3id.org/did"
+    ddo["@context"] = "https://w3id.org/did/v1"
     ddo["publicKey"] = [
         {"id": did, "type": "EthereumECDSAKey", "owner": wallet.address}
     ]
