@@ -195,7 +195,7 @@ def get_compute_service(address, price, metadata):
     }
 
     return Service(
-        service_endpoint=f"http://localhost:8030{BaseURLs.ASSETS_URL}/compute",
+        service_endpoint=f"http://localhost:8030{BaseURLs.SERVICES_URL}/compute",
         service_type="compute",
         index=4,
         attributes=compute_service_attributes,
@@ -220,7 +220,7 @@ def get_compute_service_no_rawalgo(address, price, metadata):
     }
 
     return Service(
-        service_endpoint=f"http://localhost:8030{BaseURLs.ASSETS_URL}/compute",
+        service_endpoint=f"http://localhost:8030{BaseURLs.SERVICES_URL}/compute",
         service_type="compute",
         index=4,
         attributes=compute_service_attributes,
@@ -269,7 +269,7 @@ def get_compute_service_specific_algo_dids(address, price, metadata, algos):
         )
 
     return Service(
-        service_endpoint=f"http://localhost:8030{BaseURLs.ASSETS_URL}/compute",
+        service_endpoint=f"http://localhost:8030{BaseURLs.SERVICES_URL}/compute",
         service_type="compute",
         index=4,
         attributes=compute_service_attributes,
@@ -295,7 +295,7 @@ def get_compute_service_specific_algo_publishers(address, price, metadata, publi
     }
 
     return Service(
-        service_endpoint=f"http://localhost:8030{BaseURLs.ASSETS_URL}/compute",
+        service_endpoint=f"http://localhost:8030{BaseURLs.SERVICES_URL}/compute",
         service_type="compute",
         index=4,
         attributes=compute_service_attributes,
@@ -320,7 +320,7 @@ def get_compute_service_allow_all_published(address, price, metadata):
     }
 
     return Service(
-        service_endpoint=f"http://localhost:8030{BaseURLs.ASSETS_URL}/compute",
+        service_endpoint=f"http://localhost:8030{BaseURLs.SERVICES_URL}/compute",
         service_type="compute",
         index=4,
         attributes=compute_service_attributes,

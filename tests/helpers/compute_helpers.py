@@ -4,7 +4,7 @@ import uuid
 
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
-from ocean_provider.utils.datatoken import get_dt_contract
+from ocean_provider.utils.datatoken import get_datatoken_contract
 from tests.helpers.ddo_dict_builders import (
     get_compute_service,
     get_compute_service_allow_all_published,
@@ -35,7 +35,7 @@ def build_and_send_ddo_with_compute_service(
         else get_algorithm_ddo(client, consumer_wallet)
     )
     alg_data_token = alg_ddo.data_token_address
-    alg_dt_contract = get_dt_contract(web3, alg_data_token)
+    alg_dt_contract = get_datatoken_contract(web3, alg_data_token)
 
     mint_tokens_and_wait(alg_dt_contract, consumer_wallet, consumer_wallet)
 
@@ -50,7 +50,7 @@ def build_and_send_ddo_with_compute_service(
         for _ in itertools.repeat(None, 2):
             alg_ddo = get_algorithm_ddo(client, consumer_wallet)
             alg_data_token = alg_ddo.data_token_address
-            alg_dt_contract = get_dt_contract(web3, alg_data_token)
+            alg_dt_contract = get_datatoken_contract(web3, alg_data_token)
             mint_tokens_and_wait(alg_dt_contract, consumer_wallet, consumer_wallet)
             algos.append(alg_ddo)
 
@@ -60,7 +60,7 @@ def build_and_send_ddo_with_compute_service(
     elif asset_type == "specific_algo_publishers":
         alg_ddo = get_algorithm_ddo(client, consumer_wallet)
         alg_data_token = alg_ddo.data_token_address
-        alg_dt_contract = get_dt_contract(web3, alg_data_token)
+        alg_dt_contract = get_datatoken_contract(web3, alg_data_token)
         mint_tokens_and_wait(alg_dt_contract, consumer_wallet, consumer_wallet)
 
         dataset_ddo_w_compute_service = comp_ds(
@@ -74,7 +74,7 @@ def build_and_send_ddo_with_compute_service(
 
     ddo = dataset_ddo_w_compute_service
     data_token = dataset_ddo_w_compute_service.data_token_address
-    dt_contract = get_dt_contract(web3, data_token)
+    dt_contract = get_datatoken_contract(web3, data_token)
     mint_tokens_and_wait(dt_contract, consumer_wallet, publisher_wallet)
 
     sa = dataset_ddo_w_compute_service.get_service("compute")
@@ -102,7 +102,7 @@ def get_compute_signature(client, consumer_wallet, did, job_id=None):
 
 
 def post_to_compute(client, payload):
-    compute_endpoint = BaseURLs.ASSETS_URL + "/compute"
+    compute_endpoint = BaseURLs.SERVICES_URL + "/compute"
     return client.post(
         compute_endpoint, data=json.dumps(payload), content_type="application/json"
     )

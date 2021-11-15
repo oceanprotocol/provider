@@ -1,26 +1,23 @@
 import copy
 
+from eth_typing.evm import HexAddress
+
 
 class Service:
     def __init__(
         self,
+        datatoken_address: HexAddress,
         service_endpoint,
         service_type,
         index,
         attributes=None,
     ) -> None:
         """Initialize Service instance."""
+        self.datatoken_address = (datatoken_address,)
         self.service_endpoint = service_endpoint
         self.type = service_type or ""
         self.index = index
         self.attributes = attributes or {}
-
-    @property
-    def main(self):
-        return self.attributes["main"]
-
-    def get_cost(self) -> float:
-        return float(self.main["cost"])
 
     def as_dictionary(self):
         """Return the service as a python dictionary."""
@@ -48,9 +45,12 @@ class Service:
     def from_json(service_dict):
         """Create a service object from a JSON string."""
         sd = copy.deepcopy(service_dict)
+        _datatoken_address = sd.pop("datatokenAddress")
         _service_endpoint = sd.pop("serviceEndpoint", None)
         _type = sd.pop("type", None)
         _index = sd.pop("index", None)
         _attributes = sd.pop("attributes", None)
 
-        return Service(_service_endpoint, _type, _index, _attributes)
+        return Service(
+            _datatoken_address, _service_endpoint, _type, _index, _attributes
+        )

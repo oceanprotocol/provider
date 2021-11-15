@@ -45,7 +45,7 @@ def test_spec(client):
     assert response.status == "200 OK"
 
 
-encrypt_endpoint = BaseURLs.ASSETS_URL + "/encrypt"
+encrypt_endpoint = BaseURLs.SERVICES_URL + "/encrypt"
 
 
 def test_empty_payload_encryption(client):

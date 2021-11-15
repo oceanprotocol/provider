@@ -1,16 +1,14 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
-import hashlib
 import json
 import os
 import pathlib
 import time
 import uuid
+from hashlib import sha256
 
 import ipfshttpclient
-from jsonsempai import magic  # noqa: F401
-from artifacts import ERC721Template
 from eth_account.signers.local import LocalAccount
 from eth_typing.evm import HexAddress
 from ocean_provider.constants import BaseURLs
@@ -20,9 +18,9 @@ from ocean_provider.utils.basics import (
     get_web3,
 )
 from ocean_provider.utils.currency import to_wei
-from ocean_provider.utils.data_nft import get_data_nft_contract
+from ocean_provider.utils.data_nft import Flags, MetadataState, get_data_nft_contract
 from ocean_provider.utils.data_nft_factory import get_data_nft_factory_contract
-from ocean_provider.utils.datatoken import get_tx_receipt, mint, verify_order_tx
+from ocean_provider.utils.datatoken import get_datatoken_contract, verify_order_tx
 from ocean_provider.utils.did import compute_did_from_data_nft_address_and_chain_id
 from tests.ddo.ddo_sample1_v4 import json_dict as ddo_sample1_v4
 from tests.helpers.ddo_dict_builders import (
@@ -33,6 +31,7 @@ from tests.helpers.ddo_dict_builders import (
     get_access_service,
 )
 from web3.main import Web3
+from web3.types import TxParams, TxReceipt
 
 
 def sign_tx(web3, tx, private_key):
@@ -80,23 +79,29 @@ def get_ocean_token_address() -> HexAddress:
     return "0x0000000000000000000000000000000000000000"
 
 
+def sign_send_and_wait_for_receipt(
+    web3: Web3, transaction: TxParams, from_account: LocalAccount
+) -> TxReceipt:
+    transaction_signed = sign_tx(web3, transaction, from_account.key)
+    transaction_hash = web3.eth.send_raw_transaction(transaction_signed)
+    return web3.eth.wait_for_transaction_receipt(transaction_hash)
+
+
 def deploy_data_nft(
     web3: Web3,
     name: str,
     symbol: str,
     template_index: int,
-    additionalERC20Deployer: HexAddress,
+    additional_erc20_deployer: HexAddress,
     base_uri: str,
     from_wallet: LocalAccount,
 ) -> HexAddress:
     data_nft_factory = get_data_nft_factory_contract(web3)
     deploy_data_nft_tx = data_nft_factory.functions.deployERC721Contract(
-        name, symbol, template_index, additionalERC20Deployer, base_uri
+        name, symbol, template_index, additional_erc20_deployer, base_uri
     ).buildTransaction({"from": from_wallet.address})
-    deploy_data_nft_tx_signed = sign_tx(web3, deploy_data_nft_tx, from_wallet.key)
-    deploy_data_nft_tx_hash = web3.eth.send_raw_transaction(deploy_data_nft_tx_signed)
-    deploy_data_nft_receipt = web3.eth.wait_for_transaction_receipt(
-        deploy_data_nft_tx_hash
+    deploy_data_nft_receipt = sign_send_and_wait_for_receipt(
+        web3, deploy_data_nft_tx, from_wallet
     )
     data_nft_address = (
         data_nft_factory.events.NFTCreated()
@@ -119,7 +124,7 @@ def deploy_datatoken(
     cap: int,
     publishing_market_fee_amount: int,
     from_wallet: LocalAccount,
-    unused_bytes: bytes = "\x00",
+    unused_bytes: bytes = b"\x00",
 ) -> HexAddress:
     data_nft_contract = get_data_nft_contract(web3, data_nft_address)
     deploy_datatoken_tx = data_nft_contract.functions.createERC20(
@@ -127,12 +132,10 @@ def deploy_datatoken(
         [name, symbol],
         [minter, fee_manager, publishing_market, publishing_market_fee_token],
         [cap, publishing_market_fee_amount],
-        unused_bytes,
+        [unused_bytes],
     ).buildTransaction({"from": from_wallet.address})
-    deploy_datatoken_tx_signed = sign_tx(web3, deploy_datatoken_tx, from_wallet.key)
-    deploy_datatoken_tx_hash = web3.eth.send_raw_transaction(deploy_datatoken_tx_signed)
-    deploy_datatoken_receipt = web3.eth.wait_for_transaction_receipt(
-        deploy_datatoken_tx_hash
+    deploy_datatoken_receipt = sign_send_and_wait_for_receipt(
+        web3, deploy_datatoken_tx, from_wallet
     )
     datatoken_address = (
         data_nft_contract.events.TokenCreated()
@@ -142,32 +145,49 @@ def deploy_datatoken(
     return datatoken_address
 
 
-def get_registered_ddo(wallet):
+def mint_100_datatokens(
+    web3: Web3,
+    datatoken_address: HexAddress,
+    receiver_address: HexAddress,
+    from_wallet: LocalAccount,
+) -> int:
+    """Mint 100 datatokens to the receiver address and return totalSupply"""
+    datatoken_contract = get_datatoken_contract(web3, datatoken_address)
+    mint_datatoken_tx = datatoken_contract.functions.mint(
+        receiver_address, 100
+    ).buildTransaction({"from": from_wallet.address})
+    sign_send_and_wait_for_receipt(web3, mint_datatoken_tx, from_wallet)
+    return datatoken_contract.caller.totalSupply()
+
+
+def get_registered_ddo(from_wallet):
     web3 = get_web3()
     data_nft_address = deploy_data_nft(
-        web3,
-        "Data NFT 1",
-        "DNFT1",
-        1,
-        "0x0000000000000000000000000000000000000000",
-        "",
-        wallet,
+        web3=web3,
+        name="Data NFT 1",
+        symbol="DNFT1",
+        template_index=1,
+        additional_erc20_deployer="0x0000000000000000000000000000000000000000",
+        base_uri="",
+        from_wallet=from_wallet,
     )
 
-    # datatoken_address = deploy_datatoken(
-    #     web3=web3,
-    #     data_nft_address=data_nft_address,
-    #     template_index=1,
-    #     name="Datatoken 1",
-    #     symbol="DT1",
-    #     minter=wallet.address,
-    #     fee_manager=wallet.address,
-    #     publishing_market="0x0000000000000000000000000000000000000000",
-    #     publishing_market_fee_token=get_ocean_token_address(),
-    #     cap=1000,
-    #     publishing_market_fee_amount=0,
-    #     from_wallet=wallet,
-    # )
+    datatoken_address = deploy_datatoken(
+        web3=web3,
+        data_nft_address=data_nft_address,
+        template_index=1,
+        name="Datatoken 1",
+        symbol="DT1",
+        minter=from_wallet.address,
+        fee_manager=from_wallet.address,
+        publishing_market="0x0000000000000000000000000000000000000000",
+        publishing_market_fee_token=get_ocean_token_address(),
+        cap=1000,
+        publishing_market_fee_amount=0,
+        from_wallet=from_wallet,
+    )
+
+    # TODO: Encrypt files
 
     chain_id = web3.eth.chain_id
     did = compute_did_from_data_nft_address_and_chain_id(data_nft_address, chain_id)
@@ -177,8 +197,7 @@ def get_registered_ddo(wallet):
         metadata=build_metadata_dict_type_dataset(),
         services=[
             build_service_dict_type_access(
-                # TODO: use actual datatoken address
-                datatoken_address="0x0000000000000000000000000000000000000000",
+                datatoken_address=datatoken_address,
                 service_endpoint="http://localhost:8030",
                 encrypted_files="0x1234",
             )
@@ -186,11 +205,23 @@ def get_registered_ddo(wallet):
         credentials=build_credentials_dict(),
     )
 
-    try:
-        send_create_tx(web3, data_nft_address, ddo, bytes([0]), wallet)
-    except Exception as e:
-        print(f"error publishing ddo {did} in Aquarius: {e}")
-        raise
+    ddo_string = json.dumps(ddo)
+    ddo_bytes = ddo_string.encode("utf-8")
+    # TODO: Compress and encrypt DDO
+    encrypted_ddo = ddo_bytes
+    ddo_hash = sha256(ddo_bytes).hexdigest()
+
+    set_metadata(
+        web3,
+        MetadataState.ACTIVE,
+        "http://localhost:8030",
+        from_wallet.address,
+        data_nft_address,
+        Flags.PLAIN.to_byte(),
+        encrypted_ddo,
+        ddo_hash,
+        from_wallet,
+    )
 
     aqua_root = "http://localhost:5000"
     ddo = wait_for_ddo(aqua_root, did)
@@ -199,25 +230,24 @@ def get_registered_ddo(wallet):
     return ddo
 
 
-def send_create_tx(web3, data_nft_address, ddo, flags, account):
-    provider_url = "http://localhost:8030"
-    provider_address = "0xe2DD09d719Da89e5a3D0F2549c7E24566e947260"
-    document = json.dumps(ddo)
-
-    # test asset - we are not compressing nor encrypting
-    encrypted_data = document.encode("utf-8")
-    dataHash = hashlib.sha256(document.encode("UTF-8")).hexdigest()
-
-    dt_contract = get_web3().eth.contract(
-        abi=ERC721Template.abi, address=data_nft_address
-    )
-
-    txn_hash = dt_contract.functions.setMetaData(
-        0, provider_url, provider_address, flags, encrypted_data, dataHash
-    ).transact({"from": account.address})
-    txn_receipt = get_web3().eth.wait_for_transaction_receipt(txn_hash)
-
-    return txn_receipt
+def set_metadata(
+    web3: Web3,
+    state: MetadataState,
+    provider_url: str,
+    provider_address: HexAddress,
+    data_nft_address: HexAddress,
+    flags: bytes,
+    encrypted_ddo: bytes,
+    ddo_hash: str,
+    from_wallet: LocalAccount,
+):
+    """Publish encrypted DDO on-chain by calling the ERC721Template setMetaData
+    contract function"""
+    data_nft_contract = get_data_nft_contract(web3, data_nft_address)
+    transaction = data_nft_contract.functions.setMetaData(
+        state, provider_url, provider_address, flags, encrypted_ddo, ddo_hash
+    ).buildTransaction({"from": from_wallet.address})
+    return sign_send_and_wait_for_receipt(web3, transaction, from_wallet)
 
 
 def get_dataset_ddo_with_access_service(client, wallet):
@@ -306,7 +336,7 @@ def get_algorithm_ddo_different_provider(client, wallet):
 
 
 def get_nonce(client, address):
-    endpoint = BaseURLs.ASSETS_URL + "/nonce"
+    endpoint = BaseURLs.SERVICES_URL + "/nonce"
     response = client.get(
         endpoint + "?" + f"&userAddress={address}", content_type="application/json"
     )
@@ -318,30 +348,8 @@ def get_nonce(client, address):
     return value["nonce"]
 
 
-def mint_tokens_and_wait(data_token_contract, receiver_wallet, minter_wallet):
-    web3 = get_web3()
-    dtc = data_token_contract
-    tx_id = mint(web3, dtc, receiver_wallet.address, to_wei(50), minter_wallet)
-    get_tx_receipt(web3, tx_id)
-    time.sleep(2)
-
-    def verify_supply(mint_amount=to_wei(50)):
-        supply = dtc.caller.totalSupply()
-        if supply <= 0:
-            _tx_id = mint(
-                web3, dtc, receiver_wallet.address, mint_amount, minter_wallet
-            )
-            get_tx_receipt(web3, _tx_id)
-            supply = dtc.caller.totalSupply()
-        return supply
-
-    while True:
-        try:
-            s = verify_supply()
-            if s > 0:
-                break
-        except (ValueError, Exception):
-            pass
+def mint_tokens_and_wait(datatoken_contract, receiver_wallet, minter_wallet):
+    pass
 
 
 def get_resource_path(dir_name, file_name):
@@ -398,6 +406,16 @@ def wait_for_ddo(metadata_cache_url, did, timeout=30):
             break
 
     return ddo
+
+
+def initialize_service(
+    web3: Web3,
+    did: str,
+    service_id: int,
+    datatoken_address: HexAddress,
+    from_wallet: LocalAccount,
+):
+    pass
 
 
 def send_order(client, ddo, datatoken, service, cons_wallet, expect_failure=False):

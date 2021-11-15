@@ -22,12 +22,12 @@ class BaseURLs:
 
     - `BASE_PROVIDER_URL`
     - `SWAGGER_URL`
-    - `ASSETS_URL`
+    - `SERVICES_URL`
     """
 
     BASE_PROVIDER_URL = "/api/v1"
     SWAGGER_URL = "/api/v1/docs"  # URL for exposing Swagger UI (without trailing '/')
-    ASSETS_URL = BASE_PROVIDER_URL + "/services"
+    SERVICES_URL = BASE_PROVIDER_URL + "/services"
 
 
 class Metadata:

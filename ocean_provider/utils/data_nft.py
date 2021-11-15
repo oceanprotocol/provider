@@ -21,6 +21,7 @@ class MetadataState(IntEnum):
     END_OF_LIFE = 1
     DEPRECATED = 2
     REVOKED = 3
+    TEMPORARILY_DISABLED = 4
 
 
 class Flags(IntFlag):
@@ -34,14 +35,13 @@ class Flags(IntFlag):
 
 def get_data_nft_contract(web3: Web3, address: Optional[str] = None) -> Contract:
     """
-    Build a web3 Contract instance using the standard ERC721Template ABI.
+    Build a web3 Contract instance using the Ocean Protocol ERC721Template ABI.
 
     This function assumes that the standard `ERC721Template` stored at index 1
     of the `ERC721Factory` provides all the functionality needed by Provider,
     especially the `getMetaData` contract method.
     """
-    abi = ERC721Template.abi
-    return web3.eth.contract(address=address, abi=abi)
+    return web3.eth.contract(address=address, abi=ERC721Template.abi)
 
 
 def get_metadata(web3: Web3, address: str) -> Tuple[str, str, MetadataState, bool]:

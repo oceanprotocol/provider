@@ -1,34 +1,32 @@
+from typing import Optional
+
 from jsonsempai import magic  # noqa: F401
 from artifacts import ERC20Template
 from eth_utils import remove_0x_prefix
 from hexbytes import HexBytes
 from ocean_provider.utils.currency import to_wei
+from web3.contract import Contract
 from web3.logs import DISCARD
+from web3.main import Web3
 from websockets import ConnectionClosed
 
 OPF_FEE_PER_TOKEN = to_wei("0.001")  # 0.1%
 MAX_MARKET_FEE_PER_TOKEN = to_wei("0.001")
 
 
-def get_dt_contract(web3, address):
-    abi = ERC20Template.abi
+def get_datatoken_contract(web3: Web3, address: Optional[str] = None) -> Contract:
+    """
+    Build a web3 Contract instance using the Ocean Protocol ERC20Template ABI.
 
-    return web3.eth.contract(address=address, abi=abi)
+    This function assumes that the `ERC20Template` stored at index 1 of the
+    `ERC721Factory` provides all the functionality needed by Provider,
+    especially the `getMetaData` contract method.
+    """
+    return web3.eth.contract(address=address, abi=ERC20Template.abi)
 
 
 def get_tx_receipt(web3, tx_hash):
     return web3.eth.wait_for_transaction_receipt(HexBytes(tx_hash), timeout=120)
-
-
-def mint(web3, contract, receiver_address, amount, minter_wallet):
-    contract_fn = contract.functions.mint(receiver_address, amount)
-    _transact = {
-        "from": minter_wallet.address,
-        "account_key": str(minter_wallet.key),
-        "chainId": web3.eth.chain_id,
-    }
-
-    return contract_fn.transact(_transact).hex()
 
 
 def verify_order_tx(

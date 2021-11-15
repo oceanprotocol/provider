@@ -6,13 +6,11 @@ import json
 import logging
 
 from eth_utils import add_0x_prefix
-from web3.logs import DISCARD
-
 from ocean_provider.constants import BaseURLs
 from ocean_provider.myapp import app
 from ocean_provider.serializers import StageAlgoSerializer
 from ocean_provider.utils.basics import get_asset_from_metadatastore, get_config
-from ocean_provider.utils.datatoken import get_dt_contract, get_tx_receipt
+from ocean_provider.utils.datatoken import get_datatoken_contract, get_tx_receipt
 from ocean_provider.utils.did import did_to_id
 from ocean_provider.utils.url import append_userdata
 from ocean_provider.utils.util import (
@@ -27,6 +25,7 @@ from ocean_provider.utils.util import (
     validate_order,
     validate_transfer_not_used_for_other_service,
 )
+from web3.logs import DISCARD
 
 logger = logging.getLogger(__name__)
 
@@ -147,7 +146,7 @@ class WorkflowValidator:
                 return False
 
             try:
-                dt = get_dt_contract(self.web3, self.consumer_address)
+                dt = get_datatoken_contract(self.web3, self.consumer_address)
                 tx_receipt = get_tx_receipt(self.web3, algorithm_tx_id)
                 event_logs = dt.events.OrderStarted().processReceipt(
                     tx_receipt, errors=DISCARD
@@ -350,7 +349,7 @@ class InputItemValidator:
 
         if trusted_publishers:
             algo_ddo = get_asset_from_metadatastore(get_metadata_url(), algorithm_did)
-            if not algo_ddo.publisher in trusted_publishers:
+            if algo_ddo.publisher not in trusted_publishers:
                 self.error = "this algorithm is not from a trusted publisher"
                 return False
 
@@ -466,8 +465,8 @@ class InputItemValidator:
 
 def build_stage_output_dict(output_def, service_endpoint, owner, provider_wallet):
     config = get_config()
-    if BaseURLs.ASSETS_URL in service_endpoint:
-        service_endpoint = service_endpoint.split(BaseURLs.ASSETS_URL)[0]
+    if BaseURLs.SERVICES_URL in service_endpoint:
+        service_endpoint = service_endpoint.split(BaseURLs.SERVICES_URL)[0]
 
     return dict(
         {

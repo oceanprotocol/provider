@@ -9,7 +9,7 @@ from tests.test_helpers import (
     get_dataset_with_invalid_url_ddo,
 )
 
-fileinfo_url = BaseURLs.ASSETS_URL + "/fileinfo"
+fileinfo_url = BaseURLs.SERVICES_URL + "/fileinfo"
 
 
 def test_asset_info(client, publisher_wallet):

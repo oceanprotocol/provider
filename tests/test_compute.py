@@ -6,7 +6,7 @@ import time
 
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
-from ocean_provider.utils.datatoken import get_dt_contract
+from ocean_provider.utils.datatoken import get_datatoken_contract
 from ocean_provider.validation.algo import build_stage_output_dict
 from tests.helpers.compute_helpers import (
     build_and_send_ddo_with_compute_service,
@@ -25,7 +25,7 @@ def test_compute_norawalgo_allowed(
 ):
     # publish a dataset asset
     dataset = comp_ds(client, publisher_wallet, "no_rawalgo")
-    dt_contract = get_dt_contract(web3, dataset.data_token_address)
+    dt_contract = get_datatoken_contract(web3, dataset.data_token_address)
     mint_tokens_and_wait(dt_contract, consumer_wallet, publisher_wallet)
 
     algorithm_meta = {
@@ -151,7 +151,7 @@ def test_compute(client, publisher_wallet, consumer_wallet):
         }
     )
 
-    compute_endpoint = BaseURLs.ASSETS_URL + "/compute"
+    compute_endpoint = BaseURLs.SERVICES_URL + "/compute"
     job_info = get_compute_job_info(client, compute_endpoint, payload)
     assert job_info, f"Failed to get job info for jobId {job_id}"
     print(f"got info for compute job {job_id}: {job_info}")
@@ -203,7 +203,7 @@ def test_compute(client, publisher_wallet, consumer_wallet):
     }
 
     result_without_signature = get_compute_result(
-        client, BaseURLs.ASSETS_URL + "/computeResult", payload, raw_response=True
+        client, BaseURLs.SERVICES_URL + "/computeResult", payload, raw_response=True
     )
     assert result_without_signature.status_code == 400
     assert (
@@ -214,7 +214,7 @@ def test_compute(client, publisher_wallet, consumer_wallet):
     signature = get_compute_signature(client, consumer_wallet, index, job_id)
     payload["signature"] = signature
     result_data = get_compute_result(
-        client, BaseURLs.ASSETS_URL + "/computeResult", payload
+        client, BaseURLs.SERVICES_URL + "/computeResult", payload
     )
     assert result_data, "We should have a result"
 
@@ -388,7 +388,7 @@ def test_compute_delete_job(
     assert response.status == "200 OK", f"start compute job failed: {response.data}"
 
     job_id = response.json[0]["jobId"]
-    compute_endpoint = BaseURLs.ASSETS_URL + "/compute"
+    compute_endpoint = BaseURLs.SERVICES_URL + "/compute"
     signature = get_compute_signature(client, consumer_wallet, ddo.did, job_id)
 
     query_string = {
