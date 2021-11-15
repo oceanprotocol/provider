@@ -39,7 +39,7 @@ install_requirements = [
     "coincurve>=13,<15",
     "ipaddress",
     "dnspython",
-    "flask-sieve==1.2.2",
+    "flask-sieve==1.3.1",
     "SQLAlchemy==1.3.23",
     "json-sempai==0.4.0",
 ]
