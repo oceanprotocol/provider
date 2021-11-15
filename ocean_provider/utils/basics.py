@@ -12,6 +12,7 @@ from eth_account import Account
 from hexbytes import HexBytes
 from ocean_provider.config import Config
 from ocean_provider.http_provider import CustomHTTPProvider
+from ocean_provider.utils.asset import Asset
 from ocean_provider.utils.datatoken import get_datatoken_contract
 from requests_testadapter import Resp
 from web3 import WebsocketProvider
@@ -127,7 +128,7 @@ def get_asset_from_metadatastore(metadata_url, document_id):
     url = f"{metadata_url}/api/v1/aquarius/assets/ddo/{document_id}"
     response = requests.get(url)
 
-    return response.json() if response.status_code == 200 else None
+    return Asset(response.json()) if response.status_code == 200 else None
 
 
 def send_ether(web3, from_wallet: Account, to_address: str, amount: int):

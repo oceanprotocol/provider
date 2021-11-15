@@ -13,7 +13,7 @@ from ocean_provider.validation.algo import build_stage_output_dict
 from ocean_provider.validation.provider_requests import RBACValidator
 from tests.helpers.compute_helpers import build_and_send_ddo_with_compute_service
 from tests.test_helpers import (
-    get_dataset_ddo_with_access_service,
+    get_dataset_asset_with_access_service,
     mint_tokens_and_wait,
     send_order,
 )
@@ -57,7 +57,7 @@ def test_encrypt_request_payload(consumer_wallet, publisher_wallet):
 def test_initialize_request_payload(
     client, publisher_wallet, consumer_wallet, provider_address, web3
 ):
-    ddo = get_dataset_ddo_with_access_service(client, publisher_wallet)
+    ddo = get_dataset_asset_with_access_service(client, publisher_wallet)
     dt_contract = get_datatoken_contract(web3, ddo.data_token_address)
     sa = ddo.get_service("access")
     mint_tokens_and_wait(dt_contract, consumer_wallet, publisher_wallet)
@@ -86,7 +86,7 @@ def test_initialize_request_payload(
 def test_access_request_payload(
     client, publisher_wallet, consumer_wallet, provider_address, web3
 ):
-    ddo = get_dataset_ddo_with_access_service(client, publisher_wallet)
+    ddo = get_dataset_asset_with_access_service(client, publisher_wallet)
     dt_token = get_datatoken_contract(web3, ddo.data_token_address)
 
     mint_tokens_and_wait(dt_token, consumer_wallet, publisher_wallet)

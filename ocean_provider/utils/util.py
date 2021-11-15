@@ -287,7 +287,7 @@ def process_consume_request(data: dict):
     asset = get_asset_from_metadatastore(get_metadata_url(), did)
     service = asset.get_service_by_index(service_id)
 
-    return asset, service, did, consumer_address, token_address
+    return asset, service, did, consumer_address, token_address, service_id
 
 
 def process_compute_request(data):

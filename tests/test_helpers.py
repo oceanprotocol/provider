@@ -11,20 +11,19 @@ from hashlib import sha256
 import ipfshttpclient
 from eth_account.signers.local import LocalAccount
 from eth_typing.evm import HexAddress
+from flask.testing import FlaskClient
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.basics import (
     get_asset_from_metadatastore,
     get_config,
-    get_datatoken_minter,
     get_web3,
 )
-from ocean_provider.utils.currency import to_wei
 from ocean_provider.utils.data_nft import Flags, MetadataState, get_data_nft_contract
 from ocean_provider.utils.data_nft_factory import (
     CHAIN_ID_TO_NETWORK_NAME,
     get_data_nft_factory_contract,
 )
-from ocean_provider.utils.datatoken import get_datatoken_contract, verify_order_tx
+from ocean_provider.utils.datatoken import get_datatoken_contract
 from ocean_provider.utils.did import compute_did_from_data_nft_address_and_chain_id
 from tests.ddo.ddo_sample1_v4 import json_dict as ddo_sample1_v4
 from tests.helpers.ddo_dict_builders import (
@@ -36,6 +35,8 @@ from tests.helpers.ddo_dict_builders import (
 )
 from web3.main import Web3
 from web3.types import TxParams, TxReceipt
+
+BLACK_HOLE_ADDRESS = "0x0000000000000000000000000000000000000000"
 
 
 def sign_tx(web3, tx, private_key):
@@ -94,9 +95,10 @@ def get_ocean_token_address(web3: Web3) -> HexAddress:
 def sign_send_and_wait_for_receipt(
     web3: Web3, transaction: TxParams, from_account: LocalAccount
 ) -> TxReceipt:
+    """Returns the transaction id and transaction receipt."""
     transaction_signed = sign_tx(web3, transaction, from_account.key)
     transaction_hash = web3.eth.send_raw_transaction(transaction_signed)
-    return web3.eth.wait_for_transaction_receipt(transaction_hash)
+    return (transaction_hash, web3.eth.wait_for_transaction_receipt(transaction_hash))
 
 
 def deploy_data_nft(
@@ -112,7 +114,7 @@ def deploy_data_nft(
     deploy_data_nft_tx = data_nft_factory.functions.deployERC721Contract(
         name, symbol, template_index, additional_erc20_deployer, base_uri
     ).buildTransaction({"from": from_wallet.address})
-    deploy_data_nft_receipt = sign_send_and_wait_for_receipt(
+    _, deploy_data_nft_receipt = sign_send_and_wait_for_receipt(
         web3, deploy_data_nft_tx, from_wallet
     )
     data_nft_address = (
@@ -146,7 +148,7 @@ def deploy_datatoken(
         [cap, publishing_market_fee_amount],
         [unused_bytes],
     ).buildTransaction({"from": from_wallet.address})
-    deploy_datatoken_receipt = sign_send_and_wait_for_receipt(
+    _, deploy_datatoken_receipt = sign_send_and_wait_for_receipt(
         web3, deploy_datatoken_tx, from_wallet
     )
     datatoken_address = (
@@ -172,14 +174,14 @@ def mint_100_datatokens(
     return datatoken_contract.caller.totalSupply()
 
 
-def get_registered_ddo(from_wallet):
+def get_registered_asset(from_wallet):
     web3 = get_web3()
     data_nft_address = deploy_data_nft(
         web3=web3,
         name="Data NFT 1",
         symbol="DNFT1",
         template_index=1,
-        additional_erc20_deployer="0x0000000000000000000000000000000000000000",
+        additional_erc20_deployer=BLACK_HOLE_ADDRESS,
         base_uri="",
         from_wallet=from_wallet,
     )
@@ -192,7 +194,7 @@ def get_registered_ddo(from_wallet):
         symbol="DT1",
         minter=from_wallet.address,
         fee_manager=from_wallet.address,
-        publishing_market="0x0000000000000000000000000000000000000000",
+        publishing_market=BLACK_HOLE_ADDRESS,
         publishing_market_fee_token=get_ocean_token_address(web3),
         cap=1000,
         publishing_market_fee_amount=0,
@@ -236,10 +238,10 @@ def get_registered_ddo(from_wallet):
     )
 
     aqua_root = "http://localhost:5000"
-    ddo = wait_for_ddo(aqua_root, did)
-    assert ddo, f"resolve did {did} failed."
+    asset = wait_for_asset(aqua_root, did)
+    assert asset, f"resolve did {did} failed."
 
-    return ddo
+    return asset
 
 
 def set_metadata(
@@ -262,8 +264,8 @@ def set_metadata(
     return sign_send_and_wait_for_receipt(web3, transaction, from_wallet)
 
 
-def get_dataset_ddo_with_access_service(client, wallet):
-    return get_registered_ddo(wallet)
+def get_dataset_asset_with_access_service(client, wallet):
+    return get_registered_asset(wallet)
 
 
 def get_dataset_ddo_with_multiple_files(client, wallet):
@@ -272,7 +274,7 @@ def get_dataset_ddo_with_multiple_files(client, wallet):
         metadata["main"]["files"][i]["checksum"] = str(uuid.uuid4())
     service = get_access_service(wallet.address, metadata)
     metadata["main"].pop("cost")
-    return get_registered_ddo(client, wallet, metadata, service)
+    return get_registered_asset(client, wallet, metadata, service)
 
 
 def get_dataset_ddo_disabled(client, wallet):
@@ -281,7 +283,7 @@ def get_dataset_ddo_disabled(client, wallet):
     service = get_access_service(wallet.address, metadata)
     metadata["main"].pop("cost")
 
-    return get_registered_ddo(client, wallet, metadata, service, disabled=True)
+    return get_registered_asset(client, wallet, metadata, service, disabled=True)
 
 
 def get_dataset_ddo_with_denied_consumer(client, wallet, consumer_addr):
@@ -290,7 +292,7 @@ def get_dataset_ddo_with_denied_consumer(client, wallet, consumer_addr):
     service = get_access_service(wallet.address, metadata)
     metadata["main"].pop("cost")
 
-    return get_registered_ddo(
+    return get_registered_asset(
         client,
         wallet,
         metadata,
@@ -320,7 +322,7 @@ def get_dataset_with_invalid_url_ddo(client, wallet):
     metadata["main"]["files"][0]["checksum"] = str(uuid.uuid4())
     service = get_access_service(wallet.address, metadata)
     metadata["main"].pop("cost")
-    return get_registered_ddo(client, wallet, metadata, service)
+    return get_registered_asset(client, wallet, metadata, service)
 
 
 def get_dataset_with_ipfs_url_ddo(client, wallet):
@@ -328,7 +330,7 @@ def get_dataset_with_ipfs_url_ddo(client, wallet):
     metadata["main"]["files"][0]["checksum"] = str(uuid.uuid4())
     service = get_access_service(wallet.address, metadata)
     metadata["main"].pop("cost")
-    return get_registered_ddo(client, wallet, metadata, service)
+    return get_registered_asset(client, wallet, metadata, service)
 
 
 def get_algorithm_ddo(client, wallet):
@@ -336,7 +338,7 @@ def get_algorithm_ddo(client, wallet):
     metadata["main"]["files"][0]["checksum"] = str(uuid.uuid4())
     service = get_access_service(wallet.address, metadata)
     metadata["main"].pop("cost")
-    return get_registered_ddo(client, wallet, metadata, service)
+    return get_registered_asset(client, wallet, metadata, service)
 
 
 def get_algorithm_ddo_different_provider(client, wallet):
@@ -344,7 +346,7 @@ def get_algorithm_ddo_different_provider(client, wallet):
     metadata["main"]["files"][0]["checksum"] = str(uuid.uuid4())
     service = get_access_service(wallet.address, metadata, diff_provider=True)
     metadata["main"].pop("cost")
-    return get_registered_ddo(client, wallet, metadata, service)
+    return get_registered_asset(client, wallet, metadata, service)
 
 
 def get_nonce(client, address):
@@ -405,7 +407,7 @@ def get_ipfs_url_ddo():
     return metadata_json
 
 
-def wait_for_ddo(metadata_cache_url, did, timeout=30):
+def wait_for_asset(metadata_cache_url, did, timeout=30):
     start = time.time()
     ddo = None
     while not ddo:
@@ -421,67 +423,43 @@ def wait_for_ddo(metadata_cache_url, did, timeout=30):
 
 
 def initialize_service(
-    web3: Web3,
+    client: FlaskClient,
     did: str,
     service_id: int,
+    service_type: str,
     datatoken_address: HexAddress,
     from_wallet: LocalAccount,
 ):
-    pass
-
-
-def send_order(client, ddo, datatoken, service, cons_wallet, expect_failure=False):
-    init_endpoint = BaseURLs.ASSETS_URL + "/initialize"
-    # initialize the service
-    payload = dict(
-        {
-            "documentId": ddo.did,
-            "serviceId": service.index,
-            "serviceType": service.type,
-            "dataToken": datatoken.address,
-            "consumerAddress": cons_wallet.address,
-        }
+    return client.get(
+        BaseURLs.ASSETS_URL + "/initialize",
+        json={
+            "documentId": did,
+            "serviceId": service_id,
+            "serviceType": service_type,
+            "dataToken": datatoken_address,
+            "consumerAddress": from_wallet.address,
+        },
     )
 
-    request_url = (
-        init_endpoint + "?" + "&".join([f"{k}={v}" for k, v in payload.items()])
-    )
 
-    response = client.get(request_url)
-
-    if expect_failure:
-        assert response.status == "400 BAD REQUEST"
-        return
-
-    assert response.status == "200 OK"
-
-    tx_params = response.json
-    num_tokens = tx_params["numTokens"]
-    nonce = tx_params.get("nonce")
-    receiver = tx_params["to"]
-    assert tx_params["from"] == cons_wallet.address
-    assert receiver == get_datatoken_minter(datatoken.address)
-    assert tx_params["dataToken"] == ddo.data_token_address
-    assert nonce is not None, f"expecting a `nonce` value in the response, got {nonce}"
-    # Transfer tokens to provider account
-    amount = to_wei(str(num_tokens))
-
-    contract_fn = datatoken.functions.startOrder(
-        cons_wallet.address,
+def start_order(
+    web3: Web3,
+    datatoken_address: HexAddress,
+    consumer: HexAddress,
+    amount: int,
+    service_index: int,
+    consumeFeeAddress: HexAddress,
+    consumeFeeToken: HexAddress,
+    consumeFeeAmount: int,
+    from_wallet: LocalAccount,
+):
+    datatoken_contract = get_datatoken_contract(web3, datatoken_address)
+    start_order_tx = datatoken_contract.functions.startOrder(
+        consumer,
         amount,
-        int(service.index),
-        "0xF9f2DB837b3db03Be72252fAeD2f6E0b73E428b9",
-    )
-
-    web3 = get_web3()
-    _transact = {
-        "from": cons_wallet.address,
-        "account_key": str(cons_wallet.key),
-        "chainId": web3.eth.chain_id,
-    }
-    tx_id = contract_fn.transact(_transact).hex()
-
-    verify_order_tx(
-        web3, datatoken, tx_id, ddo.asset_id, service.index, amount, cons_wallet.address
-    )
-    return tx_id
+        service_index,
+        consumeFeeAddress,
+        consumeFeeToken,
+        consumeFeeAmount,
+    ).buildTransaction({"from": from_wallet.address})
+    return sign_send_and_wait_for_receipt(web3, start_order_tx, from_wallet)

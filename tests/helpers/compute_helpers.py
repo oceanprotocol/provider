@@ -16,7 +16,7 @@ from tests.test_helpers import (
     get_algorithm_ddo,
     get_algorithm_ddo_different_provider,
     get_nonce,
-    get_registered_ddo,
+    get_registered_asset,
     get_sample_ddo_with_compute_service,
     get_web3,
     mint_tokens_and_wait,
@@ -184,4 +184,4 @@ def comp_ds(client, wallet, compute_service=None, algos=None, publishers=None):
         )
 
     metadata["main"].pop("cost")
-    return get_registered_ddo(client, wallet, metadata, service)
+    return get_registered_asset(client, wallet, metadata, service)

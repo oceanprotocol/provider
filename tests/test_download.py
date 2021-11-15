@@ -6,9 +6,11 @@ import pytest
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import generate_auth_token, sign_message
 from ocean_provider.utils.datatoken import get_datatoken_contract
+from ocean_provider.utils.services import ServiceType
 from tests.test_helpers import (
+    BLACK_HOLE_ADDRESS,
+    get_dataset_asset_with_access_service,
     get_dataset_ddo_disabled,
-    get_dataset_ddo_with_access_service,
     get_dataset_ddo_with_denied_consumer,
     get_dataset_ddo_with_multiple_files,
     get_dataset_with_invalid_url_ddo,
@@ -17,27 +19,36 @@ from tests.test_helpers import (
     mint_100_datatokens,
     mint_tokens_and_wait,
     send_order,
+    start_order,
 )
 
 
 @pytest.mark.parametrize("userdata", [False, "valid", "invalid"])
 def test_download_service(client, publisher_wallet, consumer_wallet, web3, userdata):
-    ddo = get_dataset_ddo_with_access_service(client, publisher_wallet)
-    datatoken_address = ddo["services"][0]["datatokenAddress"]
+    asset = get_dataset_asset_with_access_service(client, publisher_wallet)
+    service = asset.get_service_by_type(ServiceType.ACCESS)
     mint_100_datatokens(
-        web3, datatoken_address, consumer_wallet.address, publisher_wallet
+        web3, service.datatoken_address, consumer_wallet.address, publisher_wallet
     )
-
-    access_service = ddo["services"][0]
-    tx_id = send_order(client, ddo, datatoken_address, access_service, consumer_wallet)
+    tx_id, _ = start_order(
+        web3,
+        service.datatoken_address,
+        consumer_wallet.address,
+        1,
+        service.index,
+        BLACK_HOLE_ADDRESS,
+        BLACK_HOLE_ADDRESS,
+        0,
+        consumer_wallet,
+    )
 
     # Consume using url index and auth token
     # (let the provider do the decryption)
     payload = {
-        "documentId": ddo.did,
-        "serviceId": access_service.index,
-        "serviceType": access_service.type,
-        "dataToken": ddo.data_token_address,
+        "documentId": asset.did,
+        "serviceId": service.index,
+        "serviceType": service.type,
+        "dataToken": service.datatoken_address,
         "consumerAddress": consumer_wallet.address,
         "signature": generate_auth_token(consumer_wallet),
         "transferTxId": tx_id,
@@ -54,7 +65,7 @@ def test_download_service(client, publisher_wallet, consumer_wallet, web3, userd
     assert response.status_code == 200, f"{response.data}"
 
     # Consume using url index and signature (withOUT nonce), should fail
-    payload["signature"] = sign_message(ddo.did, consumer_wallet)
+    payload["signature"] = sign_message(asset.did, consumer_wallet)
     print(">>>> Expecting InvalidSignatureError from the download endpoint <<<<")
 
     response = client.get(download_endpoint, query_string=payload)
@@ -62,7 +73,7 @@ def test_download_service(client, publisher_wallet, consumer_wallet, web3, userd
 
     # Consume using url index and signature (with nonce)
     nonce = get_nonce(client, consumer_wallet.address)
-    _msg = f"{ddo.did}{nonce}"
+    _msg = f"{asset.did}{nonce}"
     payload["signature"] = sign_message(_msg, consumer_wallet)
     response = client.get(download_endpoint, query_string=payload)
     assert response.status_code == 200, f"{response.data}"

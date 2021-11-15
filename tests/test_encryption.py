@@ -8,7 +8,7 @@ from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.data_nft import Flags, MetadataState, get_data_nft_contract
 from tests.ddo.ddo_sample1_v4 import json_dict as ddo_sample1_v4
-from tests.test_helpers import deploy_data_nft, get_nonce, sign_tx
+from tests.test_helpers import BLACK_HOLE_ADDRESS, deploy_data_nft, get_nonce, sign_tx
 from web3.main import Web3
 
 
@@ -27,7 +27,7 @@ def test_decrypt_with_plain_input(
         "Data NFT Name",
         "DATANFTSYMBOL",
         1,
-        "0x0000000000000000000000000000000000000000",
+        BLACK_HOLE_ADDRESS,
         "",
         publisher_wallet,
     )
@@ -118,7 +118,7 @@ def test_decrypt_with_compressed_input(
         "Data NFT Name",
         "DATANFTSYMBOL",
         1,
-        "0x0000000000000000000000000000000000000000",
+        BLACK_HOLE_ADDRESS,
         "",
         publisher_wallet,
     )
@@ -212,7 +212,7 @@ def test_encrypt_and_decrypt_with_only_encryption(
         "Data NFT Name",
         "DATANFTSYMBOL",
         1,
-        "0x0000000000000000000000000000000000000000",
+        BLACK_HOLE_ADDRESS,
         "",
         publisher_wallet,
     )
@@ -317,7 +317,7 @@ def test_encrypt_and_decrypt_with_compression_and_encryption(
         "Data NFT Name",
         "DATANFTSYMBOL",
         1,
-        "0x0000000000000000000000000000000000000000",
+        BLACK_HOLE_ADDRESS,
         "",
         publisher_wallet,
     )

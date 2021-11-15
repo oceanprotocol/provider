@@ -5,7 +5,6 @@
 import json
 import logging
 
-from eth_utils import add_0x_prefix
 from flask import Response, jsonify, request
 from flask_sieve import validate
 from ocean_provider.log import setup_logging
@@ -19,7 +18,6 @@ from ocean_provider.utils.basics import (
     get_provider_wallet,
     get_web3,
 )
-from ocean_provider.utils.did import did_to_id
 from ocean_provider.utils.error_responses import service_unavailable
 from ocean_provider.utils.url import append_userdata, check_url_details
 from ocean_provider.utils.util import (
@@ -229,31 +227,20 @@ def download():
     data = get_request_data(request)
     logger.info(f"download endpoint called. {data}")
     try:
-        (
-            asset,
-            service,
-            did,
-            consumer_address,
-            token_address,
-        ) = process_consume_request(data)
-        service_id = data.get("serviceId")
+        did = data.get("documentId")
+        token_address = data.get("dataToken")
+        consumer_address = data.get("consumerAddress")
+        service_id = int(data.get("serviceId"))
         tx_id = data.get("transferTxId")
-        if did.startswith("did:"):
-            did = add_0x_prefix(did_to_id(did))
 
-        consumable, message = check_asset_consumable(asset, consumer_address, logger)
-        if not consumable:
-            return jsonify(error=message), 400
+        # grab asset for did from the metadatastore associated with
+        # the Data Token address
+        asset = get_asset_from_metadatastore(get_metadata_url(), did)
+        service = asset.get_service_by_index(service_id)
 
         logger.info("validate_order called from download endpoint.")
         _tx, _order_log, _transfer_log = validate_order(
-            get_web3(),
-            consumer_address,
-            token_address,
-            service.get_cost(),
-            tx_id,
-            did,
-            service_id,
+            get_web3(), consumer_address, token_address, 1, tx_id, did, service_id
         )
         validate_transfer_not_used_for_other_service(
             did, service_id, tx_id, consumer_address, token_address
