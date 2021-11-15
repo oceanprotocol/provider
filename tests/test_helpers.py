@@ -14,12 +14,16 @@ from eth_typing.evm import HexAddress
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.basics import (
     get_asset_from_metadatastore,
+    get_config,
     get_datatoken_minter,
     get_web3,
 )
 from ocean_provider.utils.currency import to_wei
 from ocean_provider.utils.data_nft import Flags, MetadataState, get_data_nft_contract
-from ocean_provider.utils.data_nft_factory import get_data_nft_factory_contract
+from ocean_provider.utils.data_nft_factory import (
+    CHAIN_ID_TO_NETWORK_NAME,
+    get_data_nft_factory_contract,
+)
 from ocean_provider.utils.datatoken import get_datatoken_contract, verify_order_tx
 from ocean_provider.utils.did import compute_did_from_data_nft_address_and_chain_id
 from tests.ddo.ddo_sample1_v4 import json_dict as ddo_sample1_v4
@@ -74,9 +78,17 @@ def deploy_contract(w3, _json, private_key, *args):
         raise
 
 
-def get_ocean_token_address() -> HexAddress:
-    # TODO: Return actual ocean address
-    return "0x0000000000000000000000000000000000000000"
+def get_ocean_token_address(web3: Web3) -> HexAddress:
+    address_file = pathlib.Path(get_config().address_file).expanduser().resolve()
+    with open(address_file) as f:
+        address_json = json.load(f)
+
+    chain_id = web3.eth.chain_id
+    network_name = CHAIN_ID_TO_NETWORK_NAME.get(chain_id)
+    if not network_name:
+        raise ValueError(f"Unsupported chain id: {chain_id}")
+
+    return address_json[network_name]["Ocean"]
 
 
 def sign_send_and_wait_for_receipt(
@@ -181,7 +193,7 @@ def get_registered_ddo(from_wallet):
         minter=from_wallet.address,
         fee_manager=from_wallet.address,
         publishing_market="0x0000000000000000000000000000000000000000",
-        publishing_market_fee_token=get_ocean_token_address(),
+        publishing_market_fee_token=get_ocean_token_address(web3),
         cap=1000,
         publishing_market_fee_amount=0,
         from_wallet=from_wallet,
