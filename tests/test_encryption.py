@@ -4,6 +4,7 @@ import lzma
 
 from eth_account.signers.local import LocalAccount
 from flask.testing import FlaskClient
+from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.data_nft import Flags, MetadataState, get_data_nft_contract
 from tests.ddo.ddo_sample1_v4 import json_dict as ddo_sample1_v4
@@ -61,7 +62,7 @@ def test_decrypt_with_plain_input(
     message_to_be_signed = f"{set_metadata_tx_id}{decrypter_address}{chain_id}{nonce}"
     signature = sign_message(message_to_be_signed, consumer_wallet)
     decrypt_response = client.post(
-        "/api/v1/services/decrypt",
+        BaseURLs.SERVICES_URL + "/decrypt",
         json={
             "decrypterAddress": consumer_wallet.address,
             "chainId": chain_id,
@@ -82,7 +83,7 @@ def test_decrypt_with_plain_input(
     message_to_be_signed = f"{data_nft_address}{decrypter_address}{chain_id}{nonce}"
     signature = sign_message(message_to_be_signed, consumer_wallet)
     decrypt_response = client.post(
-        "/api/v1/services/decrypt",
+        BaseURLs.SERVICES_URL + "/decrypt",
         json={
             "decrypterAddress": consumer_wallet.address,
             "chainId": chain_id,
@@ -155,7 +156,7 @@ def test_decrypt_with_compressed_input(
     message_to_be_signed = f"{set_metadata_tx_id}{decrypter_address}{chain_id}{nonce}"
     signature = sign_message(message_to_be_signed, consumer_wallet)
     decrypt_response = client.post(
-        "/api/v1/services/decrypt",
+        BaseURLs.SERVICES_URL + "/decrypt",
         json={
             "decrypterAddress": consumer_wallet.address,
             "chainId": chain_id,
@@ -176,7 +177,7 @@ def test_decrypt_with_compressed_input(
     message_to_be_signed = f"{data_nft_address}{decrypter_address}{chain_id}{nonce}"
     signature = sign_message(message_to_be_signed, consumer_wallet)
     decrypt_response = client.post(
-        "/api/v1/services/decrypt",
+        BaseURLs.SERVICES_URL + "/decrypt",
         json={
             "decrypterAddress": consumer_wallet.address,
             "chainId": chain_id,
@@ -224,7 +225,7 @@ def test_encrypt_and_decrypt_with_only_encryption(
 
     # Encrypt DDO
     encrypt_response = client.post(
-        "/api/v1/services/encrypt",
+        BaseURLs.SERVICES_URL + "/encrypt",
         data=ddo_string,
         content_type="application/octet-stream",
     )
@@ -260,7 +261,7 @@ def test_encrypt_and_decrypt_with_only_encryption(
     message_to_be_signed = f"{set_metadata_tx_id}{decrypter_address}{chain_id}{nonce}"
     signature = sign_message(message_to_be_signed, consumer_wallet)
     decrypt_response = client.post(
-        "/api/v1/services/decrypt",
+        BaseURLs.SERVICES_URL + "/decrypt",
         json={
             "decrypterAddress": consumer_wallet.address,
             "chainId": chain_id,
@@ -281,7 +282,7 @@ def test_encrypt_and_decrypt_with_only_encryption(
     message_to_be_signed = f"{data_nft_address}{decrypter_address}{chain_id}{nonce}"
     signature = sign_message(message_to_be_signed, consumer_wallet)
     decrypt_response = client.post(
-        "/api/v1/services/decrypt",
+        BaseURLs.SERVICES_URL + "/decrypt",
         json={
             "decrypterAddress": consumer_wallet.address,
             "chainId": chain_id,
@@ -332,7 +333,7 @@ def test_encrypt_and_decrypt_with_compression_and_encryption(
 
     # Encrypt DDO
     encrypt_response = client.post(
-        "/api/v1/services/encrypt",
+        BaseURLs.SERVICES_URL + "/encrypt",
         data=ddo_compressed,
         content_type="application/octet-stream",
     )
@@ -366,7 +367,7 @@ def test_encrypt_and_decrypt_with_compression_and_encryption(
     message_to_be_signed = f"{set_metadata_tx_id}{decrypter_address}{chain_id}{nonce}"
     signature = sign_message(message_to_be_signed, consumer_wallet)
     decrypt_response = client.post(
-        "/api/v1/services/decrypt",
+        BaseURLs.SERVICES_URL + "/decrypt",
         json={
             "decrypterAddress": consumer_wallet.address,
             "chainId": chain_id,
@@ -387,7 +388,7 @@ def test_encrypt_and_decrypt_with_compression_and_encryption(
     message_to_be_signed = f"{data_nft_address}{decrypter_address}{chain_id}{nonce}"
     signature = sign_message(message_to_be_signed, consumer_wallet)
     decrypt_response = client.post(
-        "/api/v1/services/decrypt",
+        BaseURLs.SERVICES_URL + "/decrypt",
         json={
             "decrypterAddress": consumer_wallet.address,
             "chainId": chain_id,
