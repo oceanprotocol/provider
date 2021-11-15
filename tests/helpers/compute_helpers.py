@@ -5,7 +5,7 @@ import uuid
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.datatoken import get_dt_contract
-from tests.helpers.service_definitions import (
+from tests.helpers.ddo_dict_builders import (
     get_compute_service,
     get_compute_service_allow_all_published,
     get_compute_service_no_rawalgo,

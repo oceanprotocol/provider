@@ -194,17 +194,15 @@ class DecryptRequest(CustomJsonRequest):
                 "required_without:transactionId",
                 "required_with:flags,documentHash",
             ],
-            # TODO Adapt flags validation to accept "\x00"
-            # "flags": [
-            #     "required_without:transactionId",
-            #     "required_with:encryptedDocument,documentHash",
-            # ],
+            "flags": [
+                "required_without:transactionId",
+                "required_with:encryptedDocument,documentHash",
+            ],
             "documentHash": [
                 "required_without:transactionId",
                 "required_with:encryptedDocument,flags",
             ],
-            # TODO: put this back. This also fails when sending 0
-            # "nonce": ["required"],
+            "nonce": ["required"],
             "signature": [
                 "bail",
                 "required",
