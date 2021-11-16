@@ -13,6 +13,7 @@ RUN apt-get update && \
     python3.8 \
     python3-pip \
     python3.8-dev \
+    libffi-dev \
     gettext-base
 
 COPY . /ocean-provider
