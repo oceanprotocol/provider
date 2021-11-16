@@ -22,7 +22,10 @@ def test_encryption_with_hexstr(provider_wallet):
 
 
 def test_encryption_with_text(provider_wallet):
-    test_string = "hello_world"
+    test_string = (
+        '["https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt", '
+        '"https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt"]'
+    )
     result = do_encrypt(test_string, provider_wallet)
     assert result.startswith("0x")
     assert do_decrypt(result, provider_wallet) == Web3.toBytes(text=test_string)

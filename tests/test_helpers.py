@@ -6,6 +6,7 @@ import os
 import pathlib
 import time
 import uuid
+from copy import deepcopy
 from hashlib import sha256
 from typing import Tuple
 
@@ -206,7 +207,7 @@ def get_registered_asset(from_wallet):
     )
 
     # TODO: Encrypt files
-    # 'https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt'
+    # "["https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt"]""
     encrypted_files = "0x04f0dddf93c186c38bfea243e06889b490a491141585669cfbe7521a5c7acb3bfea5a5527f17eb75ae1f66501e1f70f73df757490c8df479a618b0dd23b2bf3c62d07c372f64c6ad94209947471a898c71f1b2f0ab2a965024fa8e454644661d538b6aa025e517197ac87a3767820f018358999afda760225053df20ff14f499fcf4e7e036beb843ad95587c138e1f972e370d4c68c99ab2602b988c837f6f76658a23e99da369f6898ce1426d49c199cf8ffa33b79002765325c12781a2202239381866c6a06b07754024ee9a6e4aabc8"
 
     chain_id = web3.eth.chain_id
@@ -385,11 +386,14 @@ def get_sample_ddo():
 
 
 def get_sample_ddo_with_multiple_files():
-    path = get_resource_path("ddo", "ddo_sa_sample_multiple_files.json")
-    assert path.exists(), f"{path} does not exist!"
-    with open(path, "r") as file_handle:
-        metadata = file_handle.read()
-    return json.loads(metadata)
+    ddo = deepcopy(ddo_sample1_v4)
+    # Update files to be encrypted string of the following file list
+    # '["https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt", '
+    # '"https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt"]'
+    ddo["services"][0][
+        "files"
+    ] = "0x049086c93e2c6979563c9204fea45d5e01f7211e7ddc55c20ab93a838fa3b056b2eb7cf1503ab872d864c816ac4225ca45d6e61d187266bfc5bcf4a8667a3c656d573508585cfbf186256ed06043318cb0e0d9229c2ff1336fece2f3b5b698821e616ebde99cd950df32a326eaa042aa903eebd46eaf546d882bb47b4459effe1e5013b1114558746556cad3161bb8de766a160437557d3947454b59c877ef0c5b7f44ff4eb8b54b65169335cf757f5d305911a3881d6e47d701d91ab4175bbf2331fcc2286cdc42c3970de3274798fdb23198a04e356dd06bb7c8467177f2800c66af0a7be7ed96081e62e1c96c5099b743077685171b99bf7ce54590d9938b58b8a50ec732f838b25ac48476197a9acb68175ebdbd4053be72e8a8d473cd26916af84a881a0e0ac29c5fcf36e02986b2539eb665a7e38bc251957a3ca8a937e4"
+    return ddo
 
 
 def get_invalid_url_ddo():
