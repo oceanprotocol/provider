@@ -7,9 +7,11 @@ import pathlib
 import time
 import uuid
 from hashlib import sha256
+from typing import Tuple
 
 import ipfshttpclient
 from eth_account.signers.local import LocalAccount
+from eth_typing.encoding import HexStr
 from eth_typing.evm import HexAddress
 from flask.testing import FlaskClient
 from ocean_provider.constants import BaseURLs
@@ -95,7 +97,7 @@ def get_ocean_token_address(web3: Web3) -> HexAddress:
 
 def sign_send_and_wait_for_receipt(
     web3: Web3, transaction: TxParams, from_account: LocalAccount
-) -> TxReceipt:
+) -> Tuple[HexStr, TxReceipt]:
     """Returns the transaction id and transaction receipt."""
     transaction_signed = sign_tx(web3, transaction, from_account.key)
     transaction_hash = web3.eth.send_raw_transaction(transaction_signed)
@@ -231,10 +233,10 @@ def get_registered_asset(from_wallet):
 
     set_metadata(
         web3,
+        data_nft_address,
         MetadataState.ACTIVE,
         "http://localhost:8030",
         from_wallet.address,
-        data_nft_address,
         Flags.PLAIN.to_byte(),
         encrypted_ddo,
         ddo_hash,
@@ -250,15 +252,15 @@ def get_registered_asset(from_wallet):
 
 def set_metadata(
     web3: Web3,
+    data_nft_address: HexAddress,
     state: MetadataState,
     provider_url: str,
     provider_address: HexAddress,
-    data_nft_address: HexAddress,
     flags: bytes,
     encrypted_ddo: bytes,
     ddo_hash: str,
     from_wallet: LocalAccount,
-):
+) -> Tuple[HexStr, TxReceipt]:
     """Publish encrypted DDO on-chain by calling the ERC721Template setMetaData
     contract function"""
     data_nft_contract = get_data_nft_contract(web3, data_nft_address)
@@ -463,7 +465,7 @@ def start_order(
     consumeFeeToken: HexAddress,
     consumeFeeAmount: int,
     from_wallet: LocalAccount,
-):
+) -> Tuple[HexStr, TxReceipt]:
     datatoken_contract = get_datatoken_contract(web3, datatoken_address)
     start_order_tx = datatoken_contract.functions.startOrder(
         consumer,
