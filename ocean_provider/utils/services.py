@@ -1,56 +1,56 @@
-import copy
+from copy import deepcopy
+from typing import Any, Dict, Optional
+
+from eth_typing.encoding import HexStr
+from eth_typing.evm import HexAddress
+
+
+class ServiceType:
+    ACCESS = "access"
+    COMPUTE = "compute"
 
 
 class Service:
     def __init__(
         self,
-        service_endpoint,
-        service_type,
-        index,
-        attributes=None,
+        index: int,
+        service_id: str,
+        service_type: ServiceType,
+        datatoken_address: HexAddress,
+        service_endpoint: str,
+        encrypted_files: HexStr,
+        timeout: int,
+        name: Optional[str] = None,
+        description: Optional[str] = None,
+        compute_dict: Optional[dict] = None,
     ) -> None:
-        """Initialize Service instance."""
-        self.service_endpoint = service_endpoint
-        self.type = service_type or ""
+        """Initialize Service instance.
+        If service is type "compute", then, compute_dict should be set
+        """
         self.index = index
-        self.attributes = attributes or {}
-
-    @property
-    def main(self):
-        return self.attributes["main"]
-
-    def get_cost(self) -> float:
-        return float(self.main["cost"])
-
-    def as_dictionary(self):
-        """Return the service as a python dictionary."""
-        attributes = {}
-        for key, value in self.attributes.items():
-            if isinstance(value, object) and hasattr(value, "as_dictionary"):
-                value = value.as_dictionary()
-            elif isinstance(value, list):
-                value = [
-                    v.as_dictionary() if hasattr(v, "as_dictionary") else v
-                    for v in value
-                ]
-
-            attributes[key] = value
-
-        values = {"type": self.type, "attributes": attributes}
-        if self.service_endpoint:
-            values["serviceEndpoint"] = self.service_endpoint
-        if self.index is not None:
-            values["index"] = self.index
-
-        return values
+        self.id = service_id
+        self.type = service_type
+        self.name = name
+        self.description = description
+        self.datatoken_address = datatoken_address
+        self.service_endpoint = service_endpoint
+        self.encrypted_files = encrypted_files
+        self.timeout = timeout
+        self.compute_dict = compute_dict
 
     @staticmethod
-    def from_json(service_dict):
-        """Create a service object from a JSON string."""
-        sd = copy.deepcopy(service_dict)
-        _service_endpoint = sd.pop("serviceEndpoint", None)
-        _type = sd.pop("type", None)
-        _index = sd.pop("index", None)
-        _attributes = sd.pop("attributes", None)
-
-        return Service(_service_endpoint, _type, _index, _attributes)
+    def from_json(index: int, service_dict: Dict[str, Any]):
+        """Create a Service object from a JSON string."""
+        sd = deepcopy(service_dict)
+        return Service(
+            index=index,
+            service_id=sd.pop("id"),
+            service_type=sd.pop("type"),
+            datatoken_address=sd.pop("datatokenAddress"),
+            service_endpoint=sd.pop("serviceEndpoint"),
+            encrypted_files=sd.pop("files"),
+            timeout=sd.pop("timeout"),
+            name=sd.pop("name", None),
+            description=sd.pop("description", None),
+            compute_dict=sd.pop("compute", None),
+        )

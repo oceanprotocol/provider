@@ -9,7 +9,6 @@ from flask import request as flask_request
 from flask_sieve import JsonRequest, ValidationException
 from flask_sieve.rules_processor import RulesProcessor
 from flask_sieve.validator import Validator
-
 from ocean_provider.exceptions import InvalidSignatureError
 from ocean_provider.user_nonce import get_nonce
 from ocean_provider.utils.accounts import verify_signature
@@ -39,6 +38,7 @@ class CustomJsonRequest(JsonRequest):
                 messages={
                     "signature.signature": "Invalid signature provided.",
                     "signature.download_signature": "Invalid signature provided.",
+                    "signature.decrypt_signature": "Invalid signature provided.",
                 },
                 request=request,
             )
@@ -128,6 +128,41 @@ class CustomRulesProcessor(RulesProcessor):
 
         return False
 
+    def validate_decrypt_signature(self, value, params, **kwargs):
+        """
+        Validates a signature using the decrypterAddress.
+
+        parameters:
+          - name: value
+            type: string
+            description: Value of the field being validated
+          - name: params
+            type: list
+            description: The list of parameters defined for the rule,
+                         i.e. names of other fields inside the request.
+        """
+        self._assert_params_size(size=4, params=params, rule="signature")
+        transaction_id = self._attribute_value(params[0])
+        data_nft_address = self._attribute_value(params[1])
+        decrypter_address = self._attribute_value(params[2])
+        chain_id = self._attribute_value(params[3])
+        nonce = self._attribute_value(params[4])
+
+        if transaction_id:
+            first_arg = transaction_id
+        else:
+            first_arg = data_nft_address
+
+        original_msg = f"{first_arg}{decrypter_address}{chain_id}"
+
+        try:
+            verify_signature(decrypter_address, value, original_msg, nonce)
+            return True
+        except InvalidSignatureError:
+            pass
+
+        return False
+
 
 class NonceRequest(CustomJsonRequest):
     def rules(self):
@@ -143,11 +178,45 @@ class EncryptRequest(CustomJsonRequest):
         }
 
 
+class DecryptRequest(CustomJsonRequest):
+    def rules(self):
+        return {
+            "decrypterAddress": ["required"],
+            "chainId": ["required"],
+            "transactionId": [
+                "required_without:dataNftAddress,encryptedDocument,flags,documentHash"
+            ],
+            "dataNftAddress": [
+                "required_without:transactionId",
+                "required_with:encryptedDocument,flags,documentHash",
+            ],
+            "encryptedDocument": [
+                "required_without:transactionId",
+                "required_with:flags,documentHash",
+            ],
+            "flags": [
+                "required_without:transactionId",
+                "required_with:encryptedDocument,documentHash",
+            ],
+            "documentHash": [
+                "required_without:transactionId",
+                "required_with:encryptedDocument,flags",
+            ],
+            "nonce": ["required"],
+            "signature": [
+                "bail",
+                "required",
+                "decrypt_signature:transactionId,dataNftAddress,decrypterAddress,chainId,nonce",
+            ],
+        }
+
+
 class FileInfoRequest(CustomJsonRequest):
     def rules(self):
         return {
             "url": ["required_without:did"],
             "did": ["required_without:url", "regex:^did:op"],
+            "service_index": ["required_without:url"],
         }
 
 

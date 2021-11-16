@@ -5,10 +5,8 @@
 import json
 import logging
 
-from eth_utils import add_0x_prefix
 from flask import Response, jsonify, request
 from flask_sieve import validate
-
 from ocean_provider.log import setup_logging
 from ocean_provider.myapp import app
 from ocean_provider.requests_session import get_requests_session
@@ -20,27 +18,22 @@ from ocean_provider.utils.basics import (
     get_provider_wallet,
     get_web3,
 )
-from ocean_provider.utils.did import did_to_id
-from ocean_provider.utils.encryption import do_encrypt
+from ocean_provider.utils.error_responses import service_unavailable
+from ocean_provider.utils.services import ServiceType
 from ocean_provider.utils.url import append_userdata, check_url_details
 from ocean_provider.utils.util import (
     build_download_response,
     check_asset_consumable,
-    get_asset_download_urls,
-    get_asset_url_at_index,
     get_compute_info,
     get_download_url,
     get_metadata_url,
     get_request_data,
-    process_consume_request,
-    record_consume_request,
-    service_unavailable,
+    get_service_download_urls,
+    get_service_url_at_index,
     validate_order,
-    validate_transfer_not_used_for_other_service,
 )
 from ocean_provider.validation.provider_requests import (
     DownloadRequest,
-    EncryptRequest,
     FileInfoRequest,
     InitializeRequest,
     NonceRequest,
@@ -55,6 +48,8 @@ requests_session.mount("file://", LocalFileAdapter())
 
 logger = logging.getLogger(__name__)
 
+standard_headers = {"Content-type": "application/json", "Connection": "close"}
+
 
 @services.route("/nonce", methods=["GET"])
 @validate(NonceRequest)
@@ -65,87 +60,7 @@ def nonce():
     address = data.get("userAddress")
     nonce = get_nonce(address)
     logger.info(f"nonce for user {address} is {nonce}")
-    return Response(
-        json.dumps({"nonce": nonce}), 200, headers={"content-type": "application/json"}
-    )
-
-
-@services.route("/encrypt", methods=["POST"])
-@validate(EncryptRequest)
-def encrypt():
-    """Encrypt document using the Provider's own symmetric key (symmetric encryption).
-    This can be used by the publisher of an asset to encrypt the urls of the
-    asset data files before publishing the asset ddo. The publisher to use this
-    service is one that is using a front-end with a wallet app such as MetaMask.
-    The `urls` are encrypted by the provider so that the provider will be able
-    to decrypt at time of providing the service later on.
-
-    ---
-    tags:
-      - services
-    consumes:
-      - application/json
-    parameters:
-      - in: body
-        name: body
-        required: true
-        description: Asset urls encryption.
-        schema:
-          type: object
-          required:
-            - documentId
-            - document
-            - publisherAddress:
-          properties:
-            documentId:
-              description: Identifier of the asset to be registered in ocean.
-              type: string
-              example: 'did:op:08a429b8529856d59867503f8056903a680935a76950bb9649785cc97869a43d'
-            document:
-              description: document
-              type: string
-              example: '/some-url'
-            publisherAddress:
-              description: Publisher address.
-              type: string
-              example: '0x00a329c0648769A73afAc7F9381E08FB43dBEA72'
-    responses:
-      201:
-        description: document successfully encrypted.
-      503:
-        description: Service Unavailable
-
-    return: the encrypted document (hex str)
-    """
-    data = get_request_data(request)
-    logger.info(f"encrypt endpoint called. {data}")
-    did = data.get("documentId")
-    document = json.dumps(json.loads(data.get("document")), separators=(",", ":"))
-    publisher_address = data.get("publisherAddress")
-
-    try:
-        encrypted_document = do_encrypt(document, provider_wallet)
-        logger.info(
-            f"encrypted urls {encrypted_document}, "
-            f"publisher {publisher_address}, "
-            f"documentId {did}"
-        )
-        increment_nonce(publisher_address)
-        return Response(
-            json.dumps({"encryptedDocument": encrypted_document}),
-            201,
-            headers={"content-type": "application/json"},
-        )
-
-    except Exception as e:
-        return service_unavailable(
-            e,
-            {
-                "providerAddress": provider_wallet.address if provider_wallet else "",
-                "documentId": did,
-                "publisherAddress": publisher_address,
-            },
-        )
+    return Response(json.dumps({"nonce": nonce}), 200, headers=standard_headers)
 
 
 @services.route("/fileinfo", methods=["POST"])
@@ -173,12 +88,14 @@ def fileinfo():
     data = get_request_data(request)
     logger.info(f"fileinfo endpoint called. {data}")
     did = data.get("did")
+    service_index = data.get("serviceIndex")
     url = data.get("url")
 
     if did:
         asset = get_asset_from_metadatastore(get_metadata_url(), did)
-        url_list = get_asset_download_urls(
-            asset, provider_wallet, config_file=app.config["PROVIDER_CONFIG_FILE"]
+        service = asset.get_service_by_index(service_index)
+        url_list = get_service_download_urls(
+            service, provider_wallet, config_file=app.config["PROVIDER_CONFIG_FILE"]
         )
     else:
         url_list = [get_download_url(url, app.config["PROVIDER_CONFIG_FILE"])]
@@ -192,9 +109,7 @@ def fileinfo():
         info.update(details)
         files_info.append(info)
 
-    return Response(
-        json.dumps(files_info), 200, headers={"content-type": "application/json"}
-    )
+    return Response(json.dumps(files_info), 200, headers=standard_headers)
 
 
 @services.route("/initialize", methods=["GET"])
@@ -234,7 +149,7 @@ def initialize():
         if not consumable:
             return jsonify(error=message), 400
 
-        url = get_asset_url_at_index(0, asset, provider_wallet)
+        url = get_service_url_at_index(0, asset, provider_wallet)
         download_url = get_download_url(url, app.config["PROVIDER_CONFIG_FILE"])
         download_url = append_userdata(download_url, data)
         valid, _ = check_url_details(download_url)
@@ -255,16 +170,12 @@ def initialize():
         approve_params = {
             "from": consumer_address,
             "to": get_datatoken_minter(token_address),
-            "numTokens": service.get_cost(),
+            "numTokens": 1,
             "dataToken": token_address,
             "nonce": get_nonce(consumer_address),
             "computeAddress": compute_address,
         }
-        return Response(
-            json.dumps(approve_params),
-            200,
-            headers={"content-type": "application/json"},
-        )
+        return Response(json.dumps(approve_params), 200, headers=standard_headers)
 
     except Exception as e:
         return service_unavailable(e, data, logger)
@@ -316,47 +227,42 @@ def download():
     data = get_request_data(request)
     logger.info(f"download endpoint called. {data}")
     try:
-        (
-            asset,
-            service,
-            did,
-            consumer_address,
-            token_address,
-        ) = process_consume_request(data)
-        service_id = data.get("serviceId")
+        did = data.get("documentId")
+        token_address = data.get("dataToken")
+        consumer_address = data.get("consumerAddress")
+        service_index = int(data.get("serviceId"))
         tx_id = data.get("transferTxId")
-        if did.startswith("did:"):
-            did = add_0x_prefix(did_to_id(did))
 
-        consumable, message = check_asset_consumable(asset, consumer_address, logger)
-        if not consumable:
-            return jsonify(error=message), 400
+        # grab asset for did from the metadatastore associated with
+        # the Data Token address
+        asset = get_asset_from_metadatastore(get_metadata_url(), did)
+        service = asset.get_service_by_index(service_index)
+
+        if service.type != ServiceType.ACCESS:
+            return jsonify(
+                error=f"Service with index={service_index} is not an access service."
+            )
 
         logger.info("validate_order called from download endpoint.")
         _tx, _order_log, _transfer_log = validate_order(
-            get_web3(),
-            consumer_address,
-            token_address,
-            service.get_cost(),
-            tx_id,
-            did,
-            service_id,
-        )
-        validate_transfer_not_used_for_other_service(
-            did, service_id, tx_id, consumer_address, token_address
-        )
-        record_consume_request(
-            did, service_id, tx_id, consumer_address, token_address, service.get_cost()
+            get_web3(), consumer_address, token_address, 1, tx_id, did, service_index
         )
 
-        assert service.type == "access"
+        # TODO: validate transfer not used for other service?
 
         file_index = int(data.get("fileIndex"))
-        file_attributes = asset.metadata["main"]["files"][file_index]
-        content_type = file_attributes.get("contentType", None)
-        url = get_asset_url_at_index(file_index, asset, provider_wallet)
+
+        # TODO: get content type
+        content_type = None
+
+        url = get_service_url_at_index(file_index, service, provider_wallet)
         if not url:
-            return jsonify(error="Cannot decrypt files for this asset."), 400
+            return (
+                jsonify(
+                    error=f"Cannot decrypt files for this service. index={service_index}"
+                ),
+                400,
+            )
 
         download_url = get_download_url(url, app.config["PROVIDER_CONFIG_FILE"])
         download_url = append_userdata(download_url, data)
@@ -380,3 +286,17 @@ def download():
             },
             logger,
         )
+
+
+def process_consume_request(data: dict):
+    did = data.get("documentId")
+    token_address = data.get("dataToken")
+    consumer_address = data.get("consumerAddress")
+    service_id = int(data.get("serviceId"))
+
+    # grab asset for did from the metadatastore associated with
+    # the Data Token address
+    asset = get_asset_from_metadatastore(get_metadata_url(), did)
+    service = asset.get_service_by_index(service_id)
+
+    return asset, service, did, consumer_address, token_address, service_id

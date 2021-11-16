@@ -9,7 +9,6 @@ import logging
 from flask import jsonify
 from flask_swagger import swagger
 from flask_swagger_ui import get_swaggerui_blueprint
-
 from ocean_provider.config import Config
 from ocean_provider.constants import BaseURLs, ConfigSections, Metadata
 from ocean_provider.log import setup_logging
@@ -110,7 +109,7 @@ swaggerui_blueprint = get_swaggerui_blueprint(
 
 # Register blueprint at URL
 app.register_blueprint(swaggerui_blueprint, url_prefix=BaseURLs.SWAGGER_URL)
-app.register_blueprint(services, url_prefix=BaseURLs.ASSETS_URL)
+app.register_blueprint(services, url_prefix=BaseURLs.SERVICES_URL)
 
 if __name__ == "__main__":
     app.run(port=8030)

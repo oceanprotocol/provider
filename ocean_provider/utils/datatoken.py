@@ -1,45 +1,38 @@
-from eth_utils import remove_0x_prefix
-from hexbytes import HexBytes
-from web3.logs import DISCARD
-from websockets import ConnectionClosed
-from ocean_provider.utils.currency import to_wei
+from typing import Optional
 
 from jsonsempai import magic  # noqa: F401
-from artifacts import DataTokenTemplate
+from artifacts import ERC20Template
+from eth_typing.encoding import HexStr
+from eth_typing.evm import HexAddress
+from hexbytes import HexBytes
+from web3.contract import Contract
+from web3.logs import DISCARD
+from web3.main import Web3
+from websockets import ConnectionClosed
 
-OPF_FEE_PER_TOKEN = to_wei("0.001")  # 0.1%
-MAX_MARKET_FEE_PER_TOKEN = to_wei("0.001")
 
+def get_datatoken_contract(web3: Web3, address: Optional[str] = None) -> Contract:
+    """
+    Build a web3 Contract instance using the Ocean Protocol ERC20Template ABI.
 
-def get_dt_contract(web3, address):
-    abi = DataTokenTemplate.abi
-
-    return web3.eth.contract(address=address, abi=abi)
+    This function assumes that the `ERC20Template` stored at index 1 of the
+    `ERC721Factory` provides all the functionality needed by Provider,
+    especially the `getMetaData` contract method.
+    """
+    return web3.eth.contract(address=address, abi=ERC20Template.abi)
 
 
 def get_tx_receipt(web3, tx_hash):
     return web3.eth.wait_for_transaction_receipt(HexBytes(tx_hash), timeout=120)
 
 
-def mint(web3, contract, receiver_address, amount, minter_wallet):
-    contract_fn = contract.functions.mint(receiver_address, amount)
-    _transact = {
-        "from": minter_wallet.address,
-        "account_key": str(minter_wallet.key),
-        "chainId": web3.eth.chain_id,
-    }
-
-    return contract_fn.transact(_transact).hex()
-
-
 def verify_order_tx(
-    web3,
-    contract,
-    tx_id: str,
-    did: str,
-    service_id,
-    amount,
-    sender: str,
+    web3: Web3,
+    datatoken_address: HexAddress,
+    tx_id: HexStr,
+    service_id: int,
+    amount: int,
+    sender: HexAddress,
 ):
     try:
         tx_receipt = get_tx_receipt(web3, tx_id)
@@ -55,8 +48,8 @@ def verify_order_tx(
     if tx_receipt.status == 0:
         raise AssertionError("order transaction failed.")
 
-    receiver = contract.caller.minter()
-    event_logs = contract.events.OrderStarted().processReceipt(
+    datatoken_contract = get_datatoken_contract(web3, datatoken_address)
+    event_logs = datatoken_contract.events.OrderStarted().processReceipt(
         tx_receipt, errors=DISCARD
     )
     order_log = event_logs[0] if event_logs else None
@@ -68,33 +61,25 @@ def verify_order_tx(
         len(event_logs) == 1
     ), f"Multiple order events in the same transaction !!! {event_logs}"
 
-    asset_id = remove_0x_prefix(did).lower()
-    assert (
-        asset_id == remove_0x_prefix(contract.address).lower()
-    ), "asset-id does not match the datatoken id."
-    if str(order_log.args.serviceId) != str(service_id):
+    if order_log.args.serviceId != service_id:
         raise AssertionError(
-            f"The asset id (DID) or service id in the event does "
+            f"The service id in the event does "
             f"not match the requested asset. \n"
-            f"requested: (did={did}, serviceId={service_id}\n"
-            f"event: (serviceId={order_log.args.serviceId}"
+            f"requested: serviceId={service_id}\n"
+            f"event: serviceId={order_log.args.serviceId}"
         )
 
-    target_amount = amount - contract.caller.calculateFee(amount, OPF_FEE_PER_TOKEN)
-    if order_log.args.mrktFeeCollector and order_log.args.marketFee > 0:
-        max_market_fee = contract.caller.calculateFee(amount, MAX_MARKET_FEE_PER_TOKEN)
-        assert order_log.args.marketFee <= (max_market_fee + 5), (
-            f"marketFee {order_log.args.marketFee} exceeds the expected maximum "
-            f"of {max_market_fee} based on feePercentage="
-            f"{MAX_MARKET_FEE_PER_TOKEN} ."
+    if order_log.args.amount < amount:
+        raise ValueError(
+            f"The amount in the event is less than the amount requested. \n"
+            f"requested: amount={amount}\n"
+            f"event: amount={order_log.args.amount}"
         )
-        target_amount = target_amount - order_log.args.marketFee
 
-    # verify sender of the tx using the Tx record
-    tx = web3.eth.get_transaction(tx_id)
     if sender not in [order_log.args.consumer, order_log.args.payer]:
-        raise AssertionError("sender of order transaction is not the consumer/payer.")
-    transfer_logs = contract.events.Transfer().processReceipt(
+        raise ValueError("sender of order transaction is not the consumer/payer.")
+
+    transfer_logs = datatoken_contract.events.Transfer().processReceipt(
         tx_receipt, errors=DISCARD
     )
     receiver_to_transfers = {}
@@ -102,16 +87,13 @@ def verify_order_tx(
         if tr.args.to not in receiver_to_transfers:
             receiver_to_transfers[tr.args.to] = []
         receiver_to_transfers[tr.args.to].append(tr)
+    receiver = datatoken_contract.caller.getFeeCollector()
     if receiver not in receiver_to_transfers:
         raise AssertionError(
             f"receiver {receiver} is not found in the transfer events."
         )
     transfers = sorted(receiver_to_transfers[receiver], key=lambda x: x.args.value)
-    total = sum(tr.args.value for tr in transfers)
-    if total < (target_amount - 5):
-        raise ValueError(
-            f"transferred value does meet the service cost: "
-            f"service.cost - fees={target_amount}, "
-            f"transferred value={total}"
-        )
+
+    tx = web3.eth.get_transaction(HexBytes(tx_id))
+
     return tx, order_log, transfers[-1]

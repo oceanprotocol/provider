@@ -13,7 +13,7 @@ from hexbytes import HexBytes
 from ocean_provider.config import Config
 from ocean_provider.http_provider import CustomHTTPProvider
 from ocean_provider.utils.asset import Asset
-from ocean_provider.utils.datatoken import get_dt_contract
+from ocean_provider.utils.datatoken import get_datatoken_contract
 from requests_testadapter import Resp
 from web3 import WebsocketProvider
 from web3.main import Web3
@@ -59,7 +59,7 @@ def get_datatoken_minter(datatoken_address):
     """
     :return: Eth account address of the Datatoken minter
     """
-    dt = get_dt_contract(get_web3(), datatoken_address)
+    dt = get_datatoken_contract(get_web3(), datatoken_address)
     publisher = dt.caller.minter()
     return publisher
 
@@ -125,7 +125,7 @@ def get_asset_from_metadatastore(metadata_url, document_id):
     """
     :return: `Ddo` instance
     """
-    url = f"{metadata_url}/api/aquarius/assets/ddo/{document_id}"
+    url = f"{metadata_url}/api/v1/aquarius/assets/ddo/{document_id}"
     response = requests.get(url)
 
     return Asset(response.json()) if response.status_code == 200 else None

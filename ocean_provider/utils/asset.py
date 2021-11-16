@@ -3,96 +3,44 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import copy
-import json
 from typing import Optional
 
-from eth_utils import add_0x_prefix
 from ocean_provider.utils.consumable import ConsumableCodes
 from ocean_provider.utils.credentials import AddressCredential
-from ocean_provider.utils.did import did_to_id
-from ocean_provider.utils.services import Service
+from ocean_provider.utils.services import Service, ServiceType
 
 
 class Asset:
-    @property
-    def data_token_address(self) -> Optional[str]:
-        return self.other_values["dataToken"]
+    def __init__(self, asset_dict: dict) -> None:
+        ad = copy.deepcopy(asset_dict)
+        self.did = ad.pop("id")
+        self.version = ad.pop("version")
+        self.chain_id = ad.pop("chainId")
+        self.metadata = ad.pop("metadata")
+        self.services = [
+            Service.from_json(index, service_dict)
+            for index, service_dict in enumerate(ad.pop("services"))
+        ]
+        self.credentials = ad.pop("credentials")
+        self.nft = ad.pop("nft")
+        self.datatokens = ad.pop("datatokens")
+        self.event = ad.pop("event")
+        # TODO: uncomment when aquarius supports stats attribute
+        # self.stats = asset.pop("stats")
 
-    def __init__(self, dictionary: Optional[dict] = None) -> None:
-        """Clear the DDO data values."""
-        self._read_dict(dictionary)
-
-    @property
-    def is_disabled(self) -> bool:
-        """Returns whether the asset is disabled."""
-        return self.is_flag_enabled("isOrderDisabled")
-
-    @property
-    def is_retired(self) -> bool:
-        """Returns whether the asset is retired."""
-        return self.is_flag_enabled("isRetired")
-
-    @property
-    def asset_id(self) -> Optional[str]:
-        """The asset id part of the DID"""
-        if not self.did:
-            return None
-        return add_0x_prefix(did_to_id(self.did))
-
-    @property
-    def publisher(self) -> Optional[str]:
-        return self.proof.get("creator") if self.proof else None
-
-    @property
-    def metadata(self) -> Optional[dict]:
-        """Get the metadata service."""
-        metadata_service = self.get_service("metadata")
-        return metadata_service.attributes if metadata_service else None
-
-    @property
-    def encrypted_files(self) -> Optional[dict]:
-        """Return encryptedFiles field in the base metadata."""
-        return self.metadata["encryptedFiles"]
-
-    def _read_dict(self, dictionary: dict) -> None:
-        """Import a JSON dict into this DDO."""
-        values = copy.deepcopy(dictionary)
-        id_key = "id" if "id" in values else "_id"
-        self.did = values.pop(id_key)
-        self.created = values.pop("created", None)
-        self.credentials = {}
-
-        if "service" in values:
-            self.services = []
-            for value in values.pop("service"):
-                # TODO
-                if isinstance(value, str):
-                    value = json.loads(value)
-
-                service = Service.from_json(value)
-                self.services.append(service)
-        if "proof" in values:
-            self.proof = values.pop("proof")
-        if "credentials" in values:
-            self.credentials = values.pop("credentials")
-
-        self.other_values = values
-
-    def get_service(self, service_type: str):
-        """Return a service using."""
+    def get_service_by_type(self, service_type: ServiceType) -> Service:
+        """Return the first Service with the given ServiceType."""
         return next(
-            (service for service in self.services if service.type == service_type), None
+            (service for service in self.services if service.type == service_type)
         )
 
-    def get_service_by_index(self, index: int):
-        """
-        Get service for a given index.
-        :param index: Service id, str
-        :return: Service
-        """
-        return next(
-            (service for service in self.services if service.index == index), None
-        )
+    def get_service_by_index(self, index: int) -> Service:
+        """Return the first Service with the given index"""
+        return next((service for service in self.services if service.index == index))
+
+    def get_service_by_id(self, service_id: str) -> Service:
+        """Return the Service with teh matching id"""
+        return next((service for service in self.services if service.id == service_id))
 
     @property
     def requires_address_credential(self) -> bool:
@@ -134,7 +82,7 @@ class Asset:
         """
         :return: `isListed` or `bool` in metadata_service.attributes["status"]
         """
-        metadata_service = self.get_service("metadata")
+        metadata_service = self.get_service_by_type("metadata")
         default = flag_name == "isListed"  # only one that defaults to True
 
         if not metadata_service or "status" not in metadata_service.attributes:

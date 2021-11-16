@@ -2,18 +2,11 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
-
-import json
-
 from ocean_provider.constants import BaseURLs
 from ocean_provider.run import get_provider_address, get_services_endpoints
 from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.basics import get_provider_wallet
-from tests.test_helpers import (
-    get_dataset_ddo_with_access_service,
-    get_nonce,
-    get_sample_ddo,
-)
+from tests.test_helpers import get_dataset_asset_with_access_service, get_nonce
 
 
 def test_get_provider_address(client):
@@ -45,7 +38,7 @@ def test_spec(client):
     assert response.status == "200 OK"
 
 
-encrypt_endpoint = BaseURLs.ASSETS_URL + "/encrypt"
+encrypt_endpoint = BaseURLs.SERVICES_URL + "/encrypt"
 
 
 def test_empty_payload_encryption(client):
@@ -54,24 +47,22 @@ def test_empty_payload_encryption(client):
 
 
 def test_encrypt_endpoint(client, provider_wallet, publisher_wallet):
-    ddo = get_dataset_ddo_with_access_service(client, publisher_wallet)
-    metadata = get_sample_ddo()["service"][0]["attributes"]
-    files_list_str = json.dumps(metadata["main"]["files"])
+    asset = get_dataset_asset_with_access_service(client, publisher_wallet)
+    files_list_str = '["https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt"]'
 
     nonce = get_nonce(client, provider_wallet.address)
-    msg = f"{ddo.did}{nonce}"
+    msg = f"{asset.did}{nonce}"
     signature = sign_message(msg, provider_wallet)
 
     payload = {
-        "documentId": ddo.did,
+        "documentId": asset.did,
         "signature": signature,
         "document": files_list_str,
         "publisherAddress": provider_wallet.address,
     }
     response = client.post(
-        encrypt_endpoint, json=payload, content_type="application/json"
+        encrypt_endpoint, json=payload, content_type="application/octet-stream"
     )
-    assert (
-        response.status_code == 201 and response.data
-    ), f"encrypt endpoint failed: response status {response.status}, data {response.data}"
-    assert response.json["encryptedDocument"]
+    assert response.content_type == "text/plain"
+    assert response.data
+    assert response.status_code == 201
