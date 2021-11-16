@@ -1,10 +1,10 @@
 from typing import Optional
 
+from jsonsempai import magic  # noqa: F401
 from artifacts import ERC20Template
 from eth_typing.encoding import HexStr
 from eth_typing.evm import HexAddress
 from hexbytes import HexBytes
-from jsonsempai import magic  # noqa: F401
 from web3.contract import Contract
 from web3.logs import DISCARD
 from web3.main import Web3
