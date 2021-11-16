@@ -5,15 +5,15 @@
 
 from ocean_provider.constants import BaseURLs
 from tests.test_helpers import (
-    get_dataset_ddo_with_access_service,
+    get_dataset_asset_with_access_service,
     get_dataset_with_invalid_url_ddo,
 )
 
-fileinfo_url = BaseURLs.ASSETS_URL + "/fileinfo"
+fileinfo_url = BaseURLs.SERVICES_URL + "/fileinfo"
 
 
 def test_asset_info(client, publisher_wallet):
-    asset = get_dataset_ddo_with_access_service(client, publisher_wallet)
+    asset = get_dataset_asset_with_access_service(client, publisher_wallet)
     response = client.post(fileinfo_url, json={"did": asset.did, "checksum": "true"})
 
     result = response.get_json()
