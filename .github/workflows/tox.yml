@@ -23,12 +23,14 @@ jobs:
         with:
           repository: "oceanprotocol/barge"
           path: 'barge'
+          ref: v4
       - name: Run Barge
         working-directory: ${{ github.workspace }}/barge
         env:
           IPFS_GATEWAY: http://172.15.0.16:8080
           PROVIDER_IPFS_GATEWAY: http://172.15.0.16:8080
         run: |
+          export PROVIDER_VERSION=encrypt_decrypt
           bash -x start_ocean.sh --no-dashboard 2>&1 --with-rbac --with-provider2 --with-thegraph > start_ocean.log &
           for i in $(seq 1 50); do
             sleep 5
