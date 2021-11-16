@@ -18,7 +18,7 @@ class Service:
         service_type: ServiceType,
         datatoken_address: HexAddress,
         service_endpoint: str,
-        files: HexStr,
+        encrypted_files: HexStr,
         timeout: int,
         name: Optional[str] = None,
         description: Optional[str] = None,
@@ -34,7 +34,7 @@ class Service:
         self.description = description
         self.datatoken_address = datatoken_address
         self.service_endpoint = service_endpoint
-        self.files = files
+        self.encrypted_files = encrypted_files
         self.timeout = timeout
         self.compute_dict = compute_dict
 
@@ -43,14 +43,14 @@ class Service:
         """Create a Service object from a JSON string."""
         sd = deepcopy(service_dict)
         return Service(
-            index,
-            sd.pop("id"),
-            sd.pop("type"),
-            sd.pop("datatokenAddress"),
-            sd.pop("serviceEndpoint"),
-            sd.pop("files"),
-            sd.pop("timeout"),
-            sd.pop("name", None),
-            sd.pop("description", None),
-            sd.pop("compute", None),
+            index=index,
+            service_id=sd.pop("id"),
+            service_type=sd.pop("type"),
+            datatoken_address=sd.pop("datatokenAddress"),
+            service_endpoint=sd.pop("serviceEndpoint"),
+            encrypted_files=sd.pop("files"),
+            timeout=sd.pop("timeout"),
+            name=sd.pop("name", None),
+            description=sd.pop("description", None),
+            compute_dict=sd.pop("compute", None),
         )

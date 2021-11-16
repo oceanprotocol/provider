@@ -10,18 +10,16 @@ import os
 from cgi import parse_header
 
 import requests
+from eth_account.signers.local import LocalAccount
 from flask import Response
 from ocean_provider.log import setup_logging
 from ocean_provider.utils.accounts import sign_message
-from ocean_provider.utils.basics import (
-    get_asset_from_metadatastore,
-    get_config,
-    get_provider_wallet,
-)
+from ocean_provider.utils.basics import get_config, get_provider_wallet
 from ocean_provider.utils.consumable import ConsumableCodes
 from ocean_provider.utils.currency import to_wei
 from ocean_provider.utils.datatoken import verify_order_tx
 from ocean_provider.utils.encryption import do_decrypt
+from ocean_provider.utils.services import Service
 from ocean_provider.utils.url import is_safe_url
 from osmosis_driver_interface.osmosis import Osmosis
 from websockets import ConnectionClosed
@@ -113,12 +111,9 @@ def build_download_response(
         raise
 
 
-def get_asset_files_list(asset, wallet):
+def get_service_files_list(service: Service, provider_wallet: LocalAccount) -> list:
     try:
-        encrypted_files = asset.encrypted_files
-        if encrypted_files.startswith("{"):
-            encrypted_files = json.loads(encrypted_files)["encryptedDocument"]
-        files_str = do_decrypt(encrypted_files, wallet)
+        files_str = do_decrypt(service.encrypted_files, provider_wallet)
         if not files_str:
             return None
         logger.debug(f"Got decrypted files str {files_str}")
@@ -128,17 +123,17 @@ def get_asset_files_list(asset, wallet):
 
         return files_list
     except Exception as e:
-        logger.error(f"Error decrypting asset files for asset {asset.did}: {str(e)}")
+        logger.error(f"Error decrypting service files {Service}: {str(e)}")
         raise
 
 
-def get_asset_url_at_index(url_index, asset, wallet):
+def get_service_url_at_index(url_index: int, service: Service, wallet: LocalAccount):
     logger.debug(
-        f"get_asset_url_at_index(): url_index={url_index}, "
-        f"did={asset.did}, provider={wallet.address}"
+        f"get_service_url_at_index(): url_index={url_index}, "
+        f"service_id={service.id}, service_index={service.index} provider={wallet.address}"
     )
     try:
-        files_list = get_asset_urls(asset, wallet)
+        files_list = get_service_urls(service, wallet)
         if not files_list:
             return None
         if url_index >= len(files_list):
@@ -148,41 +143,31 @@ def get_asset_url_at_index(url_index, asset, wallet):
     except Exception as e:
         logger.error(
             f"Error decrypting url at index {url_index} for "
-            f"asset {asset.did}: {str(e)}"
+            f"asset {service.did}: {str(e)}"
         )
         raise
 
 
-def get_asset_urls(asset, wallet):
-    """Returns list of urls of the files included in this `asset` in order."""
-    logger.debug(f"get_asset_urls(): did={asset.did}, provider={wallet.address}")
+def get_service_urls(service: Service, wallet: LocalAccount):
+    """Returns list of urls of the files included in this Service in order."""
+    logger.debug(
+        f"get_asset_urls(): service_id={service.id}, "
+        f"service_index={service.index}, provider={wallet.address}"
+    )
     try:
-        files_list = get_asset_files_list(asset, wallet)
+        files_list = get_service_files_list(service, wallet)
         if not files_list:
             return []
-        input_urls = []
-        for i, file_meta_dict in enumerate(files_list):
-            if not file_meta_dict or not isinstance(file_meta_dict, dict):
-                raise TypeError(
-                    f"Invalid file meta at index {i}, expected a dict, got a "
-                    f"{type(file_meta_dict)}."
-                )
-            if "url" not in file_meta_dict:
-                raise ValueError(
-                    f'The "url" key is not found in the '
-                    f"file dict {file_meta_dict} at index {i}."
-                )
-
-            input_urls.append(file_meta_dict["url"])
-
-        return input_urls
+        return files_list
     except Exception as e:
-        logger.error(f"Error decrypting urls for asset {asset.did}: {str(e)}")
+        logger.exception(f"Error decrypting urls for service: {str(e)}")
         raise
 
 
-def get_asset_download_urls(asset, wallet, config_file):
-    return [get_download_url(url, config_file) for url in get_asset_urls(asset, wallet)]
+def get_service_download_urls(service: Service, wallet: LocalAccount, config_file):
+    return [
+        get_download_url(url, config_file) for url in get_service_urls(service, wallet)
+    ]
 
 
 def get_download_url(url, config_file):
@@ -233,7 +218,7 @@ def validate_order(web3, sender, token_address, num_tokens, tx_id, did, service_
         i += 1
         try:
             tx, order_event, transfer_event = verify_order_tx(
-                web3, token_address, tx_id, did, int(service_id), amount, sender
+                web3, token_address, tx_id, int(service_id), amount, sender
             )
             logger.debug(
                 f"validate_order succeeded for: did={did}, service_id={service_id}, tx_id={tx_id}, "
@@ -272,20 +257,6 @@ def record_consume_request(
         f"amount={amount}"
     )
     return
-
-
-def process_consume_request(data: dict):
-    did = data.get("documentId")
-    token_address = data.get("dataToken")
-    consumer_address = data.get("consumerAddress")
-    service_id = int(data.get("serviceId"))
-
-    # grab asset for did from the metadatastore associated with
-    # the Data Token address
-    asset = get_asset_from_metadatastore(get_metadata_url(), did)
-    service = asset.get_service_by_index(service_id)
-
-    return asset, service, did, consumer_address, token_address, service_id
 
 
 def process_compute_request(data):

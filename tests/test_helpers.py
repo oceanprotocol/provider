@@ -18,6 +18,7 @@ from ocean_provider.utils.basics import (
     get_config,
     get_web3,
 )
+from ocean_provider.utils.currency import to_wei
 from ocean_provider.utils.data_nft import Flags, MetadataState, get_data_nft_contract
 from ocean_provider.utils.data_nft_factory import (
     CHAIN_ID_TO_NETWORK_NAME,
@@ -169,7 +170,7 @@ def mint_100_datatokens(
     """Mint 100 datatokens to the receiver address and return totalSupply"""
     datatoken_contract = get_datatoken_contract(web3, datatoken_address)
     mint_datatoken_tx = datatoken_contract.functions.mint(
-        receiver_address, 100
+        receiver_address, to_wei(100)
     ).buildTransaction({"from": from_wallet.address})
     sign_send_and_wait_for_receipt(web3, mint_datatoken_tx, from_wallet)
     return datatoken_contract.caller.totalSupply()
@@ -197,12 +198,14 @@ def get_registered_asset(from_wallet):
         fee_manager=from_wallet.address,
         publishing_market=BLACK_HOLE_ADDRESS,
         publishing_market_fee_token=get_ocean_token_address(web3),
-        cap=1000,
+        cap=to_wei(1000),
         publishing_market_fee_amount=0,
         from_wallet=from_wallet,
     )
 
     # TODO: Encrypt files
+    # 'https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt'
+    encrypted_files = "0x04f0dddf93c186c38bfea243e06889b490a491141585669cfbe7521a5c7acb3bfea5a5527f17eb75ae1f66501e1f70f73df757490c8df479a618b0dd23b2bf3c62d07c372f64c6ad94209947471a898c71f1b2f0ab2a965024fa8e454644661d538b6aa025e517197ac87a3767820f018358999afda760225053df20ff14f499fcf4e7e036beb843ad95587c138e1f972e370d4c68c99ab2602b988c837f6f76658a23e99da369f6898ce1426d49c199cf8ffa33b79002765325c12781a2202239381866c6a06b07754024ee9a6e4aabc8"
 
     chain_id = web3.eth.chain_id
     did = compute_did_from_data_nft_address_and_chain_id(data_nft_address, chain_id)
@@ -214,7 +217,7 @@ def get_registered_asset(from_wallet):
             build_service_dict_type_access(
                 datatoken_address=datatoken_address,
                 service_endpoint="http://localhost:8030",
-                encrypted_files="0x1234",
+                encrypted_files=encrypted_files,
             )
         ],
         credentials=build_credentials_dict(),

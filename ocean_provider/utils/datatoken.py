@@ -1,19 +1,14 @@
 from typing import Optional
 
-from jsonsempai import magic  # noqa: F401
 from artifacts import ERC20Template
 from eth_typing.encoding import HexStr
 from eth_typing.evm import HexAddress
-from eth_utils import remove_0x_prefix
 from hexbytes import HexBytes
-from ocean_provider.utils.currency import to_wei
+from jsonsempai import magic  # noqa: F401
 from web3.contract import Contract
 from web3.logs import DISCARD
 from web3.main import Web3
 from websockets import ConnectionClosed
-
-OPF_FEE_PER_TOKEN = to_wei("0.001")  # 0.1%
-MAX_MARKET_FEE_PER_TOKEN = to_wei("0.001")
 
 
 def get_datatoken_contract(web3: Web3, address: Optional[str] = None) -> Contract:
@@ -35,7 +30,6 @@ def verify_order_tx(
     web3: Web3,
     datatoken_address: HexAddress,
     tx_id: HexStr,
-    did: str,
     service_id: int,
     amount: int,
     sender: HexAddress,
@@ -67,36 +61,24 @@ def verify_order_tx(
         len(event_logs) == 1
     ), f"Multiple order events in the same transaction !!! {event_logs}"
 
-    asset_id = remove_0x_prefix(did).lower()
-    assert (
-        asset_id == remove_0x_prefix(datatoken_contract.address).lower()
-    ), "asset-id does not match the datatoken id."
-    if str(order_log.args.serviceId) != str(service_id):
+    if order_log.args.serviceId != service_id:
         raise AssertionError(
-            f"The asset id (DID) or service id in the event does "
+            f"The service id in the event does "
             f"not match the requested asset. \n"
-            f"requested: (did={did}, serviceId={service_id}\n"
-            f"event: (serviceId={order_log.args.serviceId}"
+            f"requested: serviceId={service_id}\n"
+            f"event: serviceId={order_log.args.serviceId}"
         )
 
-    target_amount = amount - datatoken_contract.caller.calculateFee(
-        amount, OPF_FEE_PER_TOKEN
-    )
-    if order_log.args.mrktFeeCollector and order_log.args.marketFee > 0:
-        max_market_fee = datatoken_contract.caller.calculateFee(
-            amount, MAX_MARKET_FEE_PER_TOKEN
+    if order_log.args.amount < amount:
+        raise ValueError(
+            f"The amount in the event is less than the amount requested. \n"
+            f"requested: amount={amount}\n"
+            f"event: amount={order_log.args.amount}"
         )
-        assert order_log.args.marketFee <= (max_market_fee + 5), (
-            f"marketFee {order_log.args.marketFee} exceeds the expected maximum "
-            f"of {max_market_fee} based on feePercentage="
-            f"{MAX_MARKET_FEE_PER_TOKEN} ."
-        )
-        target_amount = target_amount - order_log.args.marketFee
 
-    # verify sender of the tx using the Tx record
-    tx = web3.eth.get_transaction(tx_id)
     if sender not in [order_log.args.consumer, order_log.args.payer]:
-        raise AssertionError("sender of order transaction is not the consumer/payer.")
+        raise ValueError("sender of order transaction is not the consumer/payer.")
+
     transfer_logs = datatoken_contract.events.Transfer().processReceipt(
         tx_receipt, errors=DISCARD
     )
@@ -105,17 +87,13 @@ def verify_order_tx(
         if tr.args.to not in receiver_to_transfers:
             receiver_to_transfers[tr.args.to] = []
         receiver_to_transfers[tr.args.to].append(tr)
-    receiver = datatoken_address.caller.getFeeCollector()
+    receiver = datatoken_contract.caller.getFeeCollector()
     if receiver not in receiver_to_transfers:
         raise AssertionError(
             f"receiver {receiver} is not found in the transfer events."
         )
     transfers = sorted(receiver_to_transfers[receiver], key=lambda x: x.args.value)
-    total = sum(tr.args.value for tr in transfers)
-    if total < (target_amount - 5):
-        raise ValueError(
-            f"transferred value does meet the service cost: "
-            f"service.cost - fees={target_amount}, "
-            f"transferred value={total}"
-        )
+
+    tx = web3.eth.get_transaction(HexBytes(tx_id))
+
     return tx, order_log, transfers[-1]

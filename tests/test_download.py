@@ -5,6 +5,7 @@
 import pytest
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import generate_auth_token, sign_message
+from ocean_provider.utils.currency import to_wei
 from ocean_provider.utils.datatoken import get_datatoken_contract
 from ocean_provider.utils.services import ServiceType
 from tests.test_helpers import (
@@ -34,7 +35,7 @@ def test_download_service(client, publisher_wallet, consumer_wallet, web3, userd
         web3,
         service.datatoken_address,
         consumer_wallet.address,
-        1,
+        to_wei(1),
         service.index,
         BLACK_HOLE_ADDRESS,
         BLACK_HOLE_ADDRESS,

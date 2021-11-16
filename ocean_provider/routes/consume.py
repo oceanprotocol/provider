@@ -19,20 +19,18 @@ from ocean_provider.utils.basics import (
     get_web3,
 )
 from ocean_provider.utils.error_responses import service_unavailable
+from ocean_provider.utils.services import ServiceType
 from ocean_provider.utils.url import append_userdata, check_url_details
 from ocean_provider.utils.util import (
     build_download_response,
     check_asset_consumable,
-    get_asset_download_urls,
-    get_asset_url_at_index,
     get_compute_info,
     get_download_url,
     get_metadata_url,
     get_request_data,
-    process_consume_request,
-    record_consume_request,
+    get_service_download_urls,
+    get_service_url_at_index,
     validate_order,
-    validate_transfer_not_used_for_other_service,
 )
 from ocean_provider.validation.provider_requests import (
     DownloadRequest,
@@ -90,12 +88,14 @@ def fileinfo():
     data = get_request_data(request)
     logger.info(f"fileinfo endpoint called. {data}")
     did = data.get("did")
+    service_index = data.get("serviceIndex")
     url = data.get("url")
 
     if did:
         asset = get_asset_from_metadatastore(get_metadata_url(), did)
-        url_list = get_asset_download_urls(
-            asset, provider_wallet, config_file=app.config["PROVIDER_CONFIG_FILE"]
+        service = asset.get_service_by_index(service_index)
+        url_list = get_service_download_urls(
+            service, provider_wallet, config_file=app.config["PROVIDER_CONFIG_FILE"]
         )
     else:
         url_list = [get_download_url(url, app.config["PROVIDER_CONFIG_FILE"])]
@@ -149,7 +149,7 @@ def initialize():
         if not consumable:
             return jsonify(error=message), 400
 
-        url = get_asset_url_at_index(0, asset, provider_wallet)
+        url = get_service_url_at_index(0, asset, provider_wallet)
         download_url = get_download_url(url, app.config["PROVIDER_CONFIG_FILE"])
         download_url = append_userdata(download_url, data)
         valid, _ = check_url_details(download_url)
@@ -170,7 +170,7 @@ def initialize():
         approve_params = {
             "from": consumer_address,
             "to": get_datatoken_minter(token_address),
-            "numTokens": service.get_cost(),
+            "numTokens": 1,
             "dataToken": token_address,
             "nonce": get_nonce(consumer_address),
             "computeAddress": compute_address,
@@ -230,33 +230,39 @@ def download():
         did = data.get("documentId")
         token_address = data.get("dataToken")
         consumer_address = data.get("consumerAddress")
-        service_id = int(data.get("serviceId"))
+        service_index = int(data.get("serviceId"))
         tx_id = data.get("transferTxId")
 
         # grab asset for did from the metadatastore associated with
         # the Data Token address
         asset = get_asset_from_metadatastore(get_metadata_url(), did)
-        service = asset.get_service_by_index(service_id)
+        service = asset.get_service_by_index(service_index)
+
+        if service.type != ServiceType.ACCESS:
+            return jsonify(
+                error=f"Service with index={service_index} is not an access service."
+            )
 
         logger.info("validate_order called from download endpoint.")
         _tx, _order_log, _transfer_log = validate_order(
-            get_web3(), consumer_address, token_address, 1, tx_id, did, service_id
-        )
-        validate_transfer_not_used_for_other_service(
-            did, service_id, tx_id, consumer_address, token_address
-        )
-        record_consume_request(
-            did, service_id, tx_id, consumer_address, token_address, service.get_cost()
+            get_web3(), consumer_address, token_address, 1, tx_id, did, service_index
         )
 
-        assert service.type == "access"
+        # TODO: validate transfer not used for other service?
 
         file_index = int(data.get("fileIndex"))
-        file_attributes = asset.metadata["main"]["files"][file_index]
-        content_type = file_attributes.get("contentType", None)
-        url = get_asset_url_at_index(file_index, asset, provider_wallet)
+
+        # TODO: get content type
+        content_type = None
+
+        url = get_service_url_at_index(file_index, service, provider_wallet)
         if not url:
-            return jsonify(error="Cannot decrypt files for this asset."), 400
+            return (
+                jsonify(
+                    error=f"Cannot decrypt files for this service. index={service_index}"
+                ),
+                400,
+            )
 
         download_url = get_download_url(url, app.config["PROVIDER_CONFIG_FILE"])
         download_url = append_userdata(download_url, data)
@@ -280,3 +286,17 @@ def download():
             },
             logger,
         )
+
+
+def process_consume_request(data: dict):
+    did = data.get("documentId")
+    token_address = data.get("dataToken")
+    consumer_address = data.get("consumerAddress")
+    service_id = int(data.get("serviceId"))
+
+    # grab asset for did from the metadatastore associated with
+    # the Data Token address
+    asset = get_asset_from_metadatastore(get_metadata_url(), did)
+    service = asset.get_service_by_index(service_id)
+
+    return asset, service, did, consumer_address, token_address, service_id

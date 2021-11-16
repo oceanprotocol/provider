@@ -38,6 +38,10 @@ class Asset:
         """Return the first Service with the given index"""
         return next((service for service in self.services if service.index == index))
 
+    def get_service_by_id(self, service_id: str) -> Service:
+        """Return the Service with teh matching id"""
+        return next((service for service in self.services if service.id == service_id))
+
     @property
     def requires_address_credential(self) -> bool:
         """Checks if an address credential is required on this asset."""

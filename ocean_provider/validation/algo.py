@@ -5,21 +5,19 @@
 import json
 import logging
 
-from eth_utils import add_0x_prefix
 from ocean_provider.constants import BaseURLs
 from ocean_provider.myapp import app
 from ocean_provider.serializers import StageAlgoSerializer
 from ocean_provider.utils.basics import get_asset_from_metadatastore, get_config
 from ocean_provider.utils.datatoken import get_datatoken_contract, get_tx_receipt
-from ocean_provider.utils.did import did_to_id
 from ocean_provider.utils.url import append_userdata
 from ocean_provider.utils.util import (
     check_asset_consumable,
     decode_from_data,
     filter_dictionary,
     filter_dictionary_starts_with,
-    get_asset_download_urls,
     get_metadata_url,
+    get_service_download_urls,
     msg_hash,
     record_consume_request,
     validate_order,
@@ -157,7 +155,7 @@ class WorkflowValidator:
                 self.algo_service = algo.get_service_by_index(algo_service_id)
 
                 if self.algo_service.type == "compute":
-                    asset_urls = get_asset_download_urls(
+                    asset_urls = get_service_download_urls(
                         algo,
                         self.provider_wallet,
                         config_file=app.config["PROVIDER_CONFIG_FILE"],
@@ -176,11 +174,9 @@ class WorkflowValidator:
                     self.web3,
                     self.consumer_address,
                     algorithm_token_address,
-                    self.algo_service.get_cost(),
+                    1,
                     algorithm_tx_id,
-                    add_0x_prefix(did_to_id(algorithm_did))
-                    if algorithm_did.startswith("did:")
-                    else algorithm_did,
+                    algorithm_did,
                     self.algo_service.index,
                 )
                 validate_transfer_not_used_for_other_service(
@@ -196,7 +192,7 @@ class WorkflowValidator:
                     algorithm_tx_id,
                     self.consumer_address,
                     algorithm_token_address,
-                    self.algo_service.get_cost(),
+                    1,
                 )
             except Exception as e:
                 logger.debug(
@@ -301,7 +297,7 @@ class InputItemValidator:
             self.error = "Service for main asset must be compute."
             return False
 
-        asset_urls = get_asset_download_urls(
+        asset_urls = get_service_download_urls(
             self.asset,
             self.provider_wallet,
             config_file=app.config["PROVIDER_CONFIG_FILE"],
@@ -433,11 +429,9 @@ class InputItemValidator:
                 self.web3,
                 self.consumer_address,
                 token_address,
-                self.service.get_cost(),
+                1,
                 tx_id,
-                add_0x_prefix(did_to_id(self.did))
-                if self.did.startswith("did:")
-                else self.did,
+                self.did,
                 self.service.index,
             )
             validate_transfer_not_used_for_other_service(
@@ -453,7 +447,7 @@ class InputItemValidator:
                 tx_id,
                 self.consumer_address,
                 token_address,
-                self.service.get_cost(),
+                1,
             )
         except Exception as e:
             logger.debug(f"validate_usage failed with {str(e)}.")
