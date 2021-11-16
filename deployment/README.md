@@ -27,7 +27,7 @@ and the following template (annotated) could be edited and used for deployment.
 *provider-standard-networks-deployment-example* deployment (annotated)
 
 ```yaml
-apiVersion: apps
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
