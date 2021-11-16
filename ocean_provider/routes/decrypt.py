@@ -159,8 +159,7 @@ def _decrypt(
 def _convert_args_to_bytes(
     encrypted_document: HexStr, flags: int, document_hash: HexStr
 ) -> Tuple[bytes, bytes, bytes]:
-    """Return the encrypted_document, flags, and document_hash as bytes.
-    """
+    """Return the encrypted_document, flags, and document_hash as bytes."""
     return (
         Web3.toBytes(hexstr=encrypted_document),
         flags.to_bytes(1, "big"),
