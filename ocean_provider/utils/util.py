@@ -20,7 +20,7 @@ from ocean_provider.utils.basics import (
 )
 from ocean_provider.utils.consumable import ConsumableCodes
 from ocean_provider.utils.currency import to_wei
-from ocean_provider.utils.datatoken import get_datatoken_contract, verify_order_tx
+from ocean_provider.utils.datatoken import verify_order_tx
 from ocean_provider.utils.encryption import do_decrypt
 from ocean_provider.utils.url import is_safe_url
 from osmosis_driver_interface.osmosis import Osmosis
@@ -225,9 +225,7 @@ def validate_order(web3, sender, token_address, num_tokens, tx_id, did, service_
         f"sender={sender}, num_tokens={num_tokens}, token_address={token_address}"
     )
 
-    dt_contract = get_datatoken_contract(web3, token_address)
-
-    amount = to_wei(str(num_tokens))
+    amount = to_wei(num_tokens)
     num_tries = 3
     i = 0
     while i < num_tries:
@@ -235,7 +233,7 @@ def validate_order(web3, sender, token_address, num_tokens, tx_id, did, service_
         i += 1
         try:
             tx, order_event, transfer_event = verify_order_tx(
-                web3, dt_contract, tx_id, did, int(service_id), amount, sender
+                web3, token_address, tx_id, did, int(service_id), amount, sender
             )
             logger.debug(
                 f"validate_order succeeded for: did={did}, service_id={service_id}, tx_id={tx_id}, "

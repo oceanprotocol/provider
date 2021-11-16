@@ -98,7 +98,8 @@ def sign_send_and_wait_for_receipt(
     """Returns the transaction id and transaction receipt."""
     transaction_signed = sign_tx(web3, transaction, from_account.key)
     transaction_hash = web3.eth.send_raw_transaction(transaction_signed)
-    return (transaction_hash, web3.eth.wait_for_transaction_receipt(transaction_hash))
+    transaction_id = Web3.toHex(transaction_hash)
+    return (transaction_id, web3.eth.wait_for_transaction_receipt(transaction_hash))
 
 
 def deploy_data_nft(
@@ -425,20 +426,27 @@ def wait_for_asset(metadata_cache_url, did, timeout=30):
 def initialize_service(
     client: FlaskClient,
     did: str,
-    service_id: int,
+    service_index: int,
     service_type: str,
     datatoken_address: HexAddress,
     from_wallet: LocalAccount,
 ):
-    return client.get(
+    response = client.get(
         BaseURLs.ASSETS_URL + "/initialize",
         json={
             "documentId": did,
-            "serviceId": service_id,
+            "serviceId": service_index,
             "serviceType": service_type,
             "dataToken": datatoken_address,
             "consumerAddress": from_wallet.address,
         },
+    )
+    return (
+        response.json.get("from"),
+        response.json.get("to"),
+        response.json.get("numTokens"),
+        response.json.get("dataToken"),
+        response.json.get("nonce"),
     )
 
 
@@ -463,3 +471,7 @@ def start_order(
         consumeFeeAmount,
     ).buildTransaction({"from": from_wallet.address})
     return sign_send_and_wait_for_receipt(web3, start_order_tx, from_wallet)
+
+
+def send_order():
+    pass
