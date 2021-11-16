@@ -25,8 +25,8 @@ class BaseURLs:
     - `SERVICES_URL`
     """
 
-    BASE_PROVIDER_URL = "/api/v1"
-    SWAGGER_URL = "/api/v1/docs"  # URL for exposing Swagger UI (without trailing '/')
+    BASE_PROVIDER_URL = "/api"
+    SWAGGER_URL = "/api/docs"  # URL for exposing Swagger UI (without trailing '/')
     SERVICES_URL = BASE_PROVIDER_URL + "/services"
 
 

@@ -13,7 +13,7 @@ accessed via:
 
 
 ## nonce endpoint 
-### GET /api/v1/services/nonce
+### GET /api/services/nonce
 Parameters
 ```
     userAddress: String object containing a user's ethereum address
@@ -24,7 +24,7 @@ Json object containing the nonce value.
 
 Example:
 ```
-POST /api/v1/services/nonce?userAddress=0x990922334
+POST /api/services/nonce?userAddress=0x990922334
 
 ```
 
@@ -38,7 +38,7 @@ Response:
 
 ## Encrypt endpoint
 
-### GET /api/v1/services/encrypt
+### GET /api/services/encrypt
 Parameters
 ```
     documentId: String object containing document id (e.g. a DID)
@@ -53,7 +53,7 @@ Json object containing the encrypted document.
 
 Example:
 ```
-POST /api/v1/services/encrypt
+POST /api/services/encrypt
 payload:
 {
     "signature":"0x00110011",
@@ -74,7 +74,7 @@ Response:
 
 
 ## Initial service request endpoint
-### POST /api/v1/services/initialize
+### POST /api/services/initialize
 Parameters
 ```
     documentId: String object containing document id (e.g. a DID)
@@ -89,7 +89,7 @@ Json document with a quote for amount of tokens to transfer to the provider acco
 
 Example:
 ```
-POST /api/v1/services/initialize
+POST /api/services/initialize
 payload:
 {
     "documentId":"0x1111",
@@ -113,7 +113,7 @@ Response:
 
 
 ## Download endpoint
-### GET /api/v1/services/download
+### GET /api/services/download
 Parameters
 ```
     documentId: String object containing document id (e.g. a DID)
@@ -132,7 +132,7 @@ File stream
 
 Example:
 ```
-POST /api/v1/services/download
+POST /api/services/download
 payload:
 {
     "documentId":"0x1111",
@@ -202,7 +202,7 @@ The `output` section required in creating a new compute job looks like this:
 
 ## Create new job or restart an existing stopped job
 
-### POST /api/v1/services/compute
+### POST /api/services/compute
 
 Start a new job
 
@@ -230,7 +230,7 @@ Array of `status` objects as described above, in this case the array will have o
 
 Example:
 ```
-POST /api/v1/compute?signature=0x00110011&documentId=did:op:1111&algorithmDid=0xa203e320008999099000&consumerAddress=0x990922334
+POST /api/compute?signature=0x00110011&documentId=did:op:1111&algorithmDid=0xa203e320008999099000&consumerAddress=0x990922334
 ```
 
 Response:
@@ -250,7 +250,7 @@ Response:
 ## Status and Result
   
   
-### GET /api/v1/services/compute
+### GET /api/services/compute
    
    
 Get all jobs and corresponding stats
@@ -272,7 +272,7 @@ Array of `status` objects as described above
 
 Example:
 ```
-GET /api/v1/services/compute?signature=0x00110011&documentId=did:op:1111&jobId=012023
+GET /api/services/compute?signature=0x00110011&documentId=did:op:1111&jobId=012023
 ```
 
 Response:
@@ -315,7 +315,7 @@ Response:
 ## Stop
   
   
-### PUT /api/v1/services/compute
+### PUT /api/services/compute
 
 Stop a running compute job.
 
@@ -335,7 +335,7 @@ Array of `status` objects as described above
 
 Example:
 ```
-PUT /api/v1/services/compute?signature=0x00110011&documentId=did:op:1111&jobId=012023
+PUT /api/services/compute?signature=0x00110011&documentId=did:op:1111&jobId=012023
 ```
 
 Response:
@@ -353,7 +353,7 @@ Response:
 
 ## Delete
 
-### DELETE /api/v1/services/compute
+### DELETE /api/services/compute
 
 Delete a compute job and all resources associated with the job. If job is running it will be stopped first.
 
@@ -374,7 +374,7 @@ Array of `status` objects as described above
 
 Example:
 ```
-DELETE /api/v1/services/compute?signature=0x00110011&documentId=did:op:1111&jobId=012023
+DELETE /api/services/compute?signature=0x00110011&documentId=did:op:1111&jobId=012023
 ```
 
 Response:

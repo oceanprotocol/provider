@@ -27,7 +27,7 @@ and the following template (annotated) could be edited and used for deployment.
 *provider-standard-networks-deployment-example* deployment (annotated)
 
 ```yaml
-apiVersion: apps/v1
+apiVersion: apps
 kind: Deployment
 metadata:
   labels:
@@ -218,7 +218,7 @@ confirm provider service is accessible on localhost port 8030/tcp:
 
 ```shell
 $ curl localhost:8030
-{"computeAddress":null,"chainId":"3","providerAddress":"0xe08A1dAe983BC701D05E492DB80e0144f8f4b909","serviceEndpoints":{"computeDelete":["DELETE","/api/v1/services/compute"],"computeStart":["POST","/api/v1/services/compute"],"computeStatus":["GET","/api/v1/services/compute"],"computeStop":["PUT","/api/v1/services/compute"],"download":["GET","/api/v1/services/download"],"encrypt":["POST","/api/v1/services/encrypt"],"fileinfo":["POST","/api/v1/services/fileinfo"],"initialize":["GET","/api/v1/services/initialize"],"nonce":["GET","/api/v1/services/nonce"]},"software":"Provider","version":"0.4.8"}
+{"computeAddress":null,"chainId":"3","providerAddress":"0xe08A1dAe983BC701D05E492DB80e0144f8f4b909","serviceEndpoints":{"computeDelete":["DELETE","/api/services/compute"],"computeStart":["POST","/api/services/compute"],"computeStatus":["GET","/api/services/compute"],"computeStop":["PUT","/api/services/compute"],"download":["GET","/api/services/download"],"encrypt":["POST","/api/services/encrypt"],"fileinfo":["POST","/api/services/fileinfo"],"initialize":["GET","/api/services/initialize"],"nonce":["GET","/api/services/nonce"]},"software":"Provider","version":"0.4.8"}
 
 ```
 

@@ -125,7 +125,7 @@ def get_asset_from_metadatastore(metadata_url, document_id):
     """
     :return: `Ddo` instance
     """
-    url = f"{metadata_url}/api/v1/aquarius/assets/ddo/{document_id}"
+    url = f"{metadata_url}/api/aquarius/assets/ddo/{document_id}"
     response = requests.get(url)
 
     return Asset(response.json()) if response.status_code == 200 else None
