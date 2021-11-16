@@ -19,6 +19,8 @@ with open("README.md") as readme_file:
 # or pip install -e .
 install_requirements = [
     # Install ocean-utils first
+    "ocean-contracts==0.6.7",
+    "web3==5.19.0",
     "Flask==1.1.2",
     "Flask-Cors==3.0.9",
     "Flask-RESTful==0.3.8",
@@ -32,7 +34,6 @@ install_requirements = [
     "osmosis-on-premise-driver==0.1.0",
     "osmosis-ipfs-driver==0.1.0",
     "Werkzeug>=0.15.3",
-    "ocean-lib==0.8.4",
     "requests_testadapter",
     "eciespy",
     "coincurve>=13,<15",
