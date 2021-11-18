@@ -2,30 +2,19 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
-import json
-from pathlib import Path
-
 from jsonsempai import magic  # noqa: F401
 from artifacts import ERC721Factory
+from ocean_provider.utils.address import get_contract_address
 from ocean_provider.utils.basics import get_config
 from web3.contract import Contract
 from web3.logs import DISCARD
 from web3.main import Web3
 
-CHAIN_ID_TO_NETWORK_NAME = {1337: "development"}
-
 
 def get_data_nft_factory_address(web3: Web3) -> str:
-    address_file = Path(get_config().address_file).expanduser().resolve()
-    with open(address_file) as f:
-        address_json = json.load(f)
-
-    chain_id = web3.eth.chain_id
-    network_name = CHAIN_ID_TO_NETWORK_NAME.get(chain_id)
-    if not network_name:
-        raise ValueError(f"Unsupported chain id: {chain_id}")
-
-    return address_json[network_name]["ERC721Factory"]
+    return get_contract_address(
+        get_config().address_file, "ERC721Factory", web3.eth.chain_id
+    )
 
 
 def get_data_nft_factory_contract(web3: Web3) -> Contract:
