@@ -8,7 +8,7 @@ ddo_event_sample_v4 = {
     "created": "2000-10-31T01:30:00.000-05:00",
     "updated": "2000-10-31T01:30:00.000-05:00",
     "version": "4.0.0",
-    "chainId": 1337,
+    "chainId": 8996,
     "metadata": {
         "type": "dataset",
         "name": "Event DDO sample",

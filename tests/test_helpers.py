@@ -16,6 +16,7 @@ from eth_typing.encoding import HexStr
 from eth_typing.evm import HexAddress
 from flask.testing import FlaskClient
 from ocean_provider.constants import BaseURLs
+from ocean_provider.utils.address import get_contract_address
 from ocean_provider.utils.basics import (
     get_asset_from_metadatastore,
     get_config,
@@ -23,10 +24,7 @@ from ocean_provider.utils.basics import (
 )
 from ocean_provider.utils.currency import to_wei
 from ocean_provider.utils.data_nft import Flags, MetadataState, get_data_nft_contract
-from ocean_provider.utils.data_nft_factory import (
-    CHAIN_ID_TO_NETWORK_NAME,
-    get_data_nft_factory_contract,
-)
+from ocean_provider.utils.data_nft_factory import get_data_nft_factory_contract
 from ocean_provider.utils.datatoken import get_datatoken_contract
 from ocean_provider.utils.did import compute_did_from_data_nft_address_and_chain_id
 from tests.ddo.ddo_sample1_v4 import json_dict as ddo_sample1_v4
@@ -84,16 +82,7 @@ def deploy_contract(w3, _json, private_key, *args):
 
 
 def get_ocean_token_address(web3: Web3) -> HexAddress:
-    address_file = pathlib.Path(get_config().address_file).expanduser().resolve()
-    with open(address_file) as f:
-        address_json = json.load(f)
-
-    chain_id = web3.eth.chain_id
-    network_name = CHAIN_ID_TO_NETWORK_NAME.get(chain_id)
-    if not network_name:
-        raise ValueError(f"Unsupported chain id: {chain_id}")
-
-    return address_json[network_name]["Ocean"]
+    return get_contract_address(get_config().address_file, "Ocean", web3.eth.chain_id)
 
 
 def sign_send_and_wait_for_receipt(
