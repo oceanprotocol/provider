@@ -208,7 +208,7 @@ def get_registered_asset(from_wallet):
         services=[
             build_service_dict_type_access(
                 datatoken_address=datatoken_address,
-                service_endpoint="http://localhost:8030",
+                service_endpoint="http://172.15.0.4:8030",
                 encrypted_files=encrypted_files,
             )
         ],
@@ -225,7 +225,7 @@ def get_registered_asset(from_wallet):
         web3,
         data_nft_address,
         MetadataState.ACTIVE,
-        "http://localhost:8030",
+        "http://172.15.0.4:8030",
         from_wallet.address,
         Flags.PLAIN.to_byte(),
         encrypted_ddo,
