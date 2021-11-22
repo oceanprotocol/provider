@@ -233,7 +233,7 @@ def get_registered_asset(from_wallet):
         from_wallet,
     )
 
-    aqua_root = "http://localhost:5000"
+    aqua_root = "http://172.15.0.5:5000"
     asset = wait_for_asset(aqua_root, did)
     assert asset, f"resolve did {did} failed."
 
