@@ -55,15 +55,6 @@ def get_provider_wallet(web3: Optional[Web3] = None):
     return wallet
 
 
-def get_datatoken_minter(datatoken_address):
-    """
-    :return: Eth account address of the Datatoken minter
-    """
-    dt = get_datatoken_contract(get_web3(), datatoken_address)
-    publisher = dt.caller.minter()
-    return publisher
-
-
 def get_artifacts_path():
     """
     :return: Path to the artifact directory

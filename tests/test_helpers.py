@@ -329,11 +329,12 @@ def get_dataset_with_invalid_url_ddo(client, wallet):
 
 
 def get_dataset_with_ipfs_url_ddo(client, wallet):
-    metadata = get_ipfs_url_ddo()["service"][0]["attributes"]
-    metadata["main"]["files"][0]["checksum"] = str(uuid.uuid4())
-    service = get_access_service(wallet.address, metadata)
-    metadata["main"].pop("cost")
-    return get_registered_asset(client, wallet, metadata, service)
+    return get_registered_asset(
+        wallet,
+        unencrypted_files_list=[
+            "ipfs://QmXtkGkWCG47tVpiBr8f5FdHuCMPq8h2jhck4jgjSXKiWZ"
+        ],
+    )
 
 
 def get_algorithm_ddo(client, wallet):
@@ -433,11 +434,10 @@ def initialize_service(
         return response
 
     return (
-        response.json.get("from"),
-        response.json.get("to"),
         response.json.get("numTokens"),
         response.json.get("dataToken"),
         response.json.get("nonce"),
+        response.json.get("computeAddress"),
     )
 
 

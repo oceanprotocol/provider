@@ -110,11 +110,24 @@ def test_initialize_on_bad_url(client, publisher_wallet, consumer_wallet, web3):
 
 
 def test_initialize_on_ipfs_url(client, publisher_wallet, consumer_wallet, web3):
-    ddo = get_dataset_with_ipfs_url_ddo(client, publisher_wallet)
-    dt_contract = get_datatoken_contract(web3, ddo.data_token_address)
-    sa = ddo.get_service("access")
+    asset = get_dataset_with_ipfs_url_ddo(client, publisher_wallet)
+    service = asset.get_service_by_type(ServiceType.ACCESS)
 
-    send_order(client, ddo, dt_contract, sa, consumer_wallet)
+    mint_100_datatokens(
+        web3, service.datatoken_address, consumer_wallet.address, publisher_wallet
+    )
+
+    numTokens, datatoken, _, _ = initialize_service(
+        client,
+        asset.did,
+        service.index,
+        service.type,
+        service.datatoken_address,
+        consumer_wallet,
+    )
+
+    assert numTokens == 1
+    assert datatoken == service.datatoken_address
 
 
 def test_initialize_on_disabled_asset(client, publisher_wallet, consumer_wallet, web3):

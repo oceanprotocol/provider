@@ -14,7 +14,6 @@ from ocean_provider.user_nonce import get_nonce, increment_nonce
 from ocean_provider.utils.basics import (
     LocalFileAdapter,
     get_asset_from_metadatastore,
-    get_datatoken_minter,
     get_provider_wallet,
     get_web3,
 )
@@ -168,8 +167,6 @@ def initialize():
         # able to consume the service
         compute_address, compute_limits = get_compute_info()
         approve_params = {
-            "from": consumer_address,
-            "to": get_datatoken_minter(token_address),
             "numTokens": 1,
             "dataToken": token_address,
             "nonce": get_nonce(consumer_address),
