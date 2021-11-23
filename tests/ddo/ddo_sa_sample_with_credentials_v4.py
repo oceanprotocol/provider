@@ -37,11 +37,7 @@ json_dict = {
         }
     ],
     "credentials": {
-        "allow": [
-            {"type": "address", "values": ["0x123", "0x456A"]}
-        ],
-        "deny": [
-            {"type": "address", "values": ["0x2222", "0x333"]}
-        ]
-    }
+        "allow": [{"type": "address", "values": ["0x123", "0x456A"]}],
+        "deny": [{"type": "address", "values": ["0x2222", "0x333"]}],
+    },
 }
