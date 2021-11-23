@@ -22,9 +22,9 @@ class Asset:
             for index, service_dict in enumerate(ad.pop("services"))
         ]
         self.credentials = ad.pop("credentials")
-        self.nft = ad.pop("nft")
-        self.datatokens = ad.pop("datatokens")
-        self.event = ad.pop("event")
+        self.nft = ad.pop("nft", None)
+        self.datatokens = ad.pop("datatokens", None)
+        self.event = ad.pop("event", None)
         # TODO: uncomment when aquarius supports stats attribute
         # self.stats = asset.pop("stats")
 
@@ -67,8 +67,8 @@ class Asset:
         provider_uri: Optional[str] = None,
     ) -> ConsumableCodes:
         """Checks whether an asset is consumable and returns a ConsumableCode."""
-        if self.is_disabled or self.is_retired:
-            return ConsumableCodes.ASSET_DISABLED
+        # TODO: add metadata state checks?
+        # let's see what we do in ocean.py, and have the same behaviour here
 
         # to be parameterized in the future, can implement other credential classes
         manager = AddressCredential(self)

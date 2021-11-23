@@ -21,12 +21,14 @@ from ocean_provider.utils.basics import (
     get_asset_from_metadatastore,
     get_config,
     get_web3,
+    get_provider_wallet,
 )
 from ocean_provider.utils.currency import to_wei
 from ocean_provider.utils.data_nft import Flags, MetadataState, get_data_nft_contract
 from ocean_provider.utils.data_nft_factory import get_data_nft_factory_contract
 from ocean_provider.utils.datatoken import get_datatoken_contract
 from ocean_provider.utils.did import compute_did_from_data_nft_address_and_chain_id
+from ocean_provider.utils.encryption import do_encrypt
 from tests.ddo.ddo_sample1_v4 import json_dict as ddo_sample1_v4
 from tests.helpers.ddo_dict_builders import (
     build_credentials_dict,
@@ -168,7 +170,9 @@ def mint_100_datatokens(
     return datatoken_contract.caller.totalSupply()
 
 
-def get_registered_asset(from_wallet):
+def get_registered_asset(
+    from_wallet, unencrypted_files_list=None, custom_credentials=None
+):
     web3 = get_web3()
     data_nft_address = deploy_data_nft(
         web3=web3,
@@ -195,9 +199,19 @@ def get_registered_asset(from_wallet):
         from_wallet=from_wallet,
     )
 
-    # TODO: Encrypt files
-    # "["https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt"]""
-    encrypted_files = "0x04f0dddf93c186c38bfea243e06889b490a491141585669cfbe7521a5c7acb3bfea5a5527f17eb75ae1f66501e1f70f73df757490c8df479a618b0dd23b2bf3c62d07c372f64c6ad94209947471a898c71f1b2f0ab2a965024fa8e454644661d538b6aa025e517197ac87a3767820f018358999afda760225053df20ff14f499fcf4e7e036beb843ad95587c138e1f972e370d4c68c99ab2602b988c837f6f76658a23e99da369f6898ce1426d49c199cf8ffa33b79002765325c12781a2202239381866c6a06b07754024ee9a6e4aabc8"
+    if not unencrypted_files_list:
+        unencrypted_files_list = [
+            "https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt"
+        ]
+
+    encrypted_files_str = json.dumps(unencrypted_files_list, separators=(",", ":"))
+    encrypted_files = do_encrypt(
+        Web3.toHex(text=encrypted_files_str), get_provider_wallet()
+    )
+
+    credentials = (
+        build_credentials_dict() if not custom_credentials else custom_credentials
+    )
 
     chain_id = web3.eth.chain_id
     did = compute_did_from_data_nft_address_and_chain_id(data_nft_address, chain_id)
@@ -208,11 +222,11 @@ def get_registered_asset(from_wallet):
         services=[
             build_service_dict_type_access(
                 datatoken_address=datatoken_address,
-                service_endpoint="http://localhost:8030",
+                service_endpoint="http://172.15.0.4:8030",
                 encrypted_files=encrypted_files,
             )
         ],
-        credentials=build_credentials_dict(),
+        credentials=credentials,
     )
 
     ddo_string = json.dumps(ddo)
@@ -225,7 +239,7 @@ def get_registered_asset(from_wallet):
         web3,
         data_nft_address,
         MetadataState.ACTIVE,
-        "http://localhost:8030",
+        "http://172.15.0.4:8030",
         from_wallet.address,
         Flags.PLAIN.to_byte(),
         encrypted_ddo,
@@ -233,7 +247,7 @@ def get_registered_asset(from_wallet):
         from_wallet,
     )
 
-    aqua_root = "http://localhost:5000"
+    aqua_root = "http://172.15.0.5:5000"
     asset = wait_for_asset(aqua_root, did)
     assert asset, f"resolve did {did} failed."
 
@@ -283,16 +297,8 @@ def get_dataset_ddo_disabled(client, wallet):
 
 
 def get_dataset_ddo_with_denied_consumer(client, wallet, consumer_addr):
-    metadata = get_sample_ddo()["service"][0]["attributes"]
-    metadata["main"]["files"][0]["checksum"] = str(uuid.uuid4())
-    service = get_access_service(wallet.address, metadata)
-    metadata["main"].pop("cost")
-
     return get_registered_asset(
-        client,
         wallet,
-        metadata,
-        service,
         custom_credentials={"deny": [{"type": "address", "values": [consumer_addr]}]},
     )
 
