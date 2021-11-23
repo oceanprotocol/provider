@@ -17,6 +17,7 @@ from tests.test_helpers import (
     get_dataset_with_invalid_url_ddo,
     get_dataset_with_ipfs_url_ddo,
     get_nonce,
+    initialize_service,
     mint_100_datatokens,
     mint_tokens_and_wait,
     send_order,
@@ -88,11 +89,24 @@ def test_empty_payload(client):
 
 
 def test_initialize_on_bad_url(client, publisher_wallet, consumer_wallet, web3):
-    ddo = get_dataset_with_invalid_url_ddo(client, publisher_wallet)
-    dt_contract = get_datatoken_contract(web3, ddo.data_token_address)
-    sa = ddo.get_service("access")
+    asset = get_dataset_with_invalid_url_ddo(client, publisher_wallet)
+    service = asset.get_service_by_type(ServiceType.ACCESS)
 
-    send_order(client, ddo, dt_contract, sa, consumer_wallet, expect_failure=True)
+    mint_100_datatokens(
+        web3, service.datatoken_address, consumer_wallet.address, publisher_wallet
+    )
+
+    response = initialize_service(
+        client,
+        asset.did,
+        service.index,
+        service.type,
+        service.datatoken_address,
+        consumer_wallet,
+        raw_response=True,
+    )
+    assert "error" in response.json
+    assert response.json["error"] == "Asset URL not found or not available."
 
 
 def test_initialize_on_ipfs_url(client, publisher_wallet, consumer_wallet, web3):
@@ -116,17 +130,30 @@ def test_initialize_on_disabled_asset(client, publisher_wallet, consumer_wallet,
 def test_initialize_on_asset_with_custom_credentials(
     client, publisher_wallet, consumer_wallet, web3
 ):
-    ddo = get_dataset_ddo_with_denied_consumer(
+    asset = get_dataset_ddo_with_denied_consumer(
         client, publisher_wallet, consumer_wallet.address
     )
 
-    assert ddo.requires_address_credential
-    assert consumer_wallet.address not in ddo.allowed_addresses
-    dt_contract = get_datatoken_contract(web3, ddo.data_token_address)
-    sa = ddo.get_service("access")
-    mint_tokens_and_wait(dt_contract, consumer_wallet, publisher_wallet)
+    service = asset.get_service_by_type(ServiceType.ACCESS)
 
-    send_order(client, ddo, dt_contract, sa, consumer_wallet, expect_failure=True)
+    mint_100_datatokens(
+        web3, service.datatoken_address, consumer_wallet.address, publisher_wallet
+    )
+
+    response = initialize_service(
+        client,
+        asset.did,
+        service.index,
+        service.type,
+        service.datatoken_address,
+        consumer_wallet,
+        raw_response=True,
+    )
+    assert "error" in response.json
+    assert (
+        response.json["error"]
+        == f"Error: Access to asset {asset.did} was denied with code: ConsumableCodes.CREDENTIAL_IN_DENY_LIST."
+    )
 
 
 def test_download_multiple_files(client, publisher_wallet, consumer_wallet, web3):

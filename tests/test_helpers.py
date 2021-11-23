@@ -288,6 +288,7 @@ def get_dataset_ddo_with_multiple_files(client, wallet):
 
 
 def get_dataset_ddo_disabled(client, wallet):
+    return get_registered_asset(wallet)
     metadata = get_sample_ddo()["service"][0]["attributes"]
     metadata["main"]["files"][0]["checksum"] = str(uuid.uuid4())
     service = get_access_service(wallet.address, metadata)
@@ -320,11 +321,9 @@ def get_sample_ddo_with_compute_service():
 
 
 def get_dataset_with_invalid_url_ddo(client, wallet):
-    metadata = get_invalid_url_ddo()["service"][0]["attributes"]
-    metadata["main"]["files"][0]["checksum"] = str(uuid.uuid4())
-    service = get_access_service(wallet.address, metadata)
-    metadata["main"].pop("cost")
-    return get_registered_asset(client, wallet, metadata, service)
+    return get_registered_asset(
+        wallet, unencrypted_files_list=["http://localhost/not_valid_url"]
+    )
 
 
 def get_dataset_with_ipfs_url_ddo(client, wallet):
@@ -391,14 +390,6 @@ def get_sample_ddo_with_multiple_files():
     return ddo
 
 
-def get_invalid_url_ddo():
-    path = get_resource_path("ddo", "ddo_sample_invalid_url.json")
-    assert path.exists(), f"{path} does not exist!"
-    with open(path, "r") as file_handle:
-        metadata = file_handle.read()
-    return json.loads(metadata)
-
-
 def get_ipfs_url_ddo():
     path = get_resource_path("ddo", "ddo_sample_ipfs_url.json")
     assert path.exists(), f"{path} does not exist!"
@@ -434,9 +425,10 @@ def initialize_service(
     service_type: str,
     datatoken_address: HexAddress,
     from_wallet: LocalAccount,
+    raw_response=False,
 ):
     response = client.get(
-        BaseURLs.ASSETS_URL + "/initialize",
+        BaseURLs.SERVICES_URL + "/initialize",
         json={
             "documentId": did,
             "serviceId": service_index,
@@ -445,6 +437,10 @@ def initialize_service(
             "consumerAddress": from_wallet.address,
         },
     )
+
+    if raw_response:
+        return response
+
     return (
         response.json.get("from"),
         response.json.get("to"),

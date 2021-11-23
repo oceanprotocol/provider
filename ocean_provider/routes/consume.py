@@ -149,7 +149,7 @@ def initialize():
         if not consumable:
             return jsonify(error=message), 400
 
-        url = get_service_url_at_index(0, asset, provider_wallet)
+        url = get_service_url_at_index(0, service, provider_wallet)
         download_url = get_download_url(url, app.config["PROVIDER_CONFIG_FILE"])
         download_url = append_userdata(download_url, data)
         valid, _ = check_url_details(download_url)
@@ -299,4 +299,4 @@ def process_consume_request(data: dict):
     asset = get_asset_from_metadatastore(get_metadata_url(), did)
     service = asset.get_service_by_index(service_id)
 
-    return asset, service, did, consumer_address, token_address, service_id
+    return asset, service, did, consumer_address, token_address
