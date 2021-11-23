@@ -157,21 +157,32 @@ def test_initialize_on_asset_with_custom_credentials(
 
 
 def test_download_multiple_files(client, publisher_wallet, consumer_wallet, web3):
-    ddo = get_dataset_ddo_with_multiple_files(client, publisher_wallet)
-    dt_token = get_datatoken_contract(web3, ddo.data_token_address)
+    asset = get_dataset_ddo_with_multiple_files(client, publisher_wallet)
+    service = asset.get_service_by_type(ServiceType.ACCESS)
 
-    mint_tokens_and_wait(dt_token, consumer_wallet, publisher_wallet)
+    mint_100_datatokens(
+        web3, service.datatoken_address, consumer_wallet.address, publisher_wallet
+    )
 
-    sa = ddo.get_service("access")
-    tx_id = send_order(client, ddo, dt_token, sa, consumer_wallet)
+    tx_id, _ = start_order(
+        web3,
+        service.datatoken_address,
+        consumer_wallet.address,
+        to_wei(1),
+        service.index,
+        BLACK_HOLE_ADDRESS,
+        BLACK_HOLE_ADDRESS,
+        0,
+        consumer_wallet,
+    )
 
     # Consume using url index and auth token
     # (let the provider do the decryption)
     payload = {
-        "documentId": ddo.did,
-        "serviceId": sa.index,
-        "serviceType": sa.type,
-        "dataToken": ddo.data_token_address,
+        "documentId": asset.did,
+        "serviceId": service.index,
+        "serviceType": service.type,
+        "dataToken": service.datatoken_address,
         "consumerAddress": consumer_wallet.address,
         "signature": generate_auth_token(consumer_wallet),
         "transferTxId": tx_id,

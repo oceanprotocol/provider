@@ -279,12 +279,14 @@ def get_dataset_asset_with_access_service(client, wallet):
 
 
 def get_dataset_ddo_with_multiple_files(client, wallet):
-    metadata = get_sample_ddo_with_multiple_files()["service"][0]["attributes"]
-    for i in range(3):
-        metadata["main"]["files"][i]["checksum"] = str(uuid.uuid4())
-    service = get_access_service(wallet.address, metadata)
-    metadata["main"].pop("cost")
-    return get_registered_asset(client, wallet, metadata, service)
+    return get_registered_asset(
+        wallet,
+        unencrypted_files_list=[
+            "https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt",
+            "https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt",
+            "https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt",
+        ],
+    )
 
 
 def get_dataset_ddo_disabled(client, wallet):
@@ -377,17 +379,6 @@ def get_resource_path(dir_name, file_name):
 
 def get_sample_ddo():
     return ddo_sample1_v4
-
-
-def get_sample_ddo_with_multiple_files():
-    ddo = deepcopy(ddo_sample1_v4)
-    # Update files to be encrypted string of the following file list
-    # '["https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt", '
-    # '"https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt"]'
-    ddo["services"][0][
-        "files"
-    ] = "0x049086c93e2c6979563c9204fea45d5e01f7211e7ddc55c20ab93a838fa3b056b2eb7cf1503ab872d864c816ac4225ca45d6e61d187266bfc5bcf4a8667a3c656d573508585cfbf186256ed06043318cb0e0d9229c2ff1336fece2f3b5b698821e616ebde99cd950df32a326eaa042aa903eebd46eaf546d882bb47b4459effe1e5013b1114558746556cad3161bb8de766a160437557d3947454b59c877ef0c5b7f44ff4eb8b54b65169335cf757f5d305911a3881d6e47d701d91ab4175bbf2331fcc2286cdc42c3970de3274798fdb23198a04e356dd06bb7c8467177f2800c66af0a7be7ed96081e62e1c96c5099b743077685171b99bf7ce54590d9938b58b8a50ec732f838b25ac48476197a9acb68175ebdbd4053be72e8a8d473cd26916af84a881a0e0ac29c5fcf36e02986b2539eb665a7e38bc251957a3ca8a937e4"
-    return ddo
 
 
 def get_ipfs_url_ddo():
