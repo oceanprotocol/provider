@@ -25,8 +25,7 @@ class Asset:
         self.nft = ad.pop("nft", None)
         self.datatokens = ad.pop("datatokens", None)
         self.event = ad.pop("event", None)
-        # TODO: uncomment when aquarius supports stats attribute
-        # self.stats = asset.pop("stats")
+        self.stats = ad.pop("stats", None)
 
     def get_service_by_type(self, service_type: ServiceType) -> Service:
         """Return the first Service with the given ServiceType."""
@@ -60,6 +59,10 @@ class Asset:
         manager = AddressCredential(self)
         return manager.get_addresses_of_class("deny")
 
+    @property
+    def is_disabled(self) -> bool:
+        return self.nft and self.nft["state"] != 0
+
     def is_consumable(
         self,
         credential: Optional[dict] = None,
@@ -67,10 +70,9 @@ class Asset:
         provider_uri: Optional[str] = None,
     ) -> ConsumableCodes:
         """Checks whether an asset is consumable and returns a ConsumableCode."""
-        # TODO: add metadata state checks?
-        # let's see what we do in ocean.py, and have the same behaviour here
+        if self.is_disabled:
+            return ConsumableCodes.ASSET_DISABLED
 
-        # to be parameterized in the future, can implement other credential classes
         manager = AddressCredential(self)
 
         if manager.requires_credential():

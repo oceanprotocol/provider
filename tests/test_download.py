@@ -131,13 +131,27 @@ def test_initialize_on_ipfs_url(client, publisher_wallet, consumer_wallet, web3)
 
 
 def test_initialize_on_disabled_asset(client, publisher_wallet, consumer_wallet, web3):
-    ddo = get_dataset_ddo_disabled(client, publisher_wallet)
-    assert ddo.is_disabled
-    dt_contract = get_datatoken_contract(web3, ddo.data_token_address)
-    sa = ddo.get_service("access")
-    mint_tokens_and_wait(dt_contract, consumer_wallet, publisher_wallet)
+    asset = get_dataset_ddo_disabled(client, publisher_wallet)
+    # TODO: need to merge state changed processing in Aqua
+    assert asset.is_disabled
 
-    send_order(client, ddo, dt_contract, sa, consumer_wallet, expect_failure=True)
+    service = asset.get_service_by_type(ServiceType.ACCESS)
+
+    mint_100_datatokens(
+        web3, service.datatoken_address, consumer_wallet.address, publisher_wallet
+    )
+
+    response = initialize_service(
+        client,
+        asset.did,
+        service.index,
+        service.type,
+        service.datatoken_address,
+        consumer_wallet,
+        raw_response=True,
+    )
+    assert "error" in response.json
+    assert response.json["error"] == "Asset is not consumable."
 
 
 def test_initialize_on_asset_with_custom_credentials(

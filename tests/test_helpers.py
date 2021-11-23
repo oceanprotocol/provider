@@ -6,15 +6,17 @@ import os
 import pathlib
 import time
 import uuid
-from copy import deepcopy
 from hashlib import sha256
 from typing import Tuple
-
 import ipfshttpclient
+
 from eth_account.signers.local import LocalAccount
 from eth_typing.encoding import HexStr
 from eth_typing.evm import HexAddress
 from flask.testing import FlaskClient
+
+from jsonsempai import magic  # noqa: F401
+from artifacts import ERC721Template
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.address import get_contract_address
 from ocean_provider.utils.basics import (
@@ -290,13 +292,21 @@ def get_dataset_ddo_with_multiple_files(client, wallet):
 
 
 def get_dataset_ddo_disabled(client, wallet):
-    return get_registered_asset(wallet)
-    metadata = get_sample_ddo()["service"][0]["attributes"]
-    metadata["main"]["files"][0]["checksum"] = str(uuid.uuid4())
-    service = get_access_service(wallet.address, metadata)
-    metadata["main"].pop("cost")
+    asset = get_registered_asset(wallet)
+    did = asset.did
+    datatoken_address = asset.nft["address"]
 
-    return get_registered_asset(client, wallet, metadata, service, disabled=True)
+    web3 = get_web3()
+    dt_contract = get_web3().eth.contract(
+        abi=ERC721Template.abi, address=datatoken_address
+    )
+
+    txn_hash = dt_contract.functions.setMetaDataState(1).transact({"from": wallet.address})
+    _ = web3.eth.wait_for_transaction_receipt(txn_hash)
+
+    aqua_root = "http://172.15.0.5:5000"
+    time.sleep(3)
+    return wait_for_asset(aqua_root, did)
 
 
 def get_dataset_ddo_with_denied_consumer(client, wallet, consumer_addr):
