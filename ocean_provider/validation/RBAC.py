@@ -8,7 +8,6 @@ import os
 
 import requests
 
-from ocean_provider.constants import ServiceTypesIndices
 from ocean_provider.exceptions import RequestNotFound
 from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.basics import get_provider_wallet
@@ -50,8 +49,10 @@ class RBACValidator:
         response = requests.post(os.getenv("RBAC_SERVER_URL"), json=payload)
         return not response.json()
 
-    def get_dids(self, service_index: int):
-        return [{"did": self.request["documentId"], "serviceId": service_index}]
+    def get_dids(self):
+        return [
+            {"did": self.request["documentId"], "serviceId": self.request["serviceId"]}
+        ]
 
     def get_algos(self):
         if "algorithmDid" not in self.request.keys():
@@ -59,7 +60,7 @@ class RBACValidator:
         return [
             {
                 "did": self.request["algorithmDid"],
-                "serviceId": ServiceTypesIndices.DEFAULT_COMPUTING_INDEX,
+                "serviceId": self.request["serviceId"],
             }
         ]
 
@@ -94,25 +95,20 @@ class RBACValidator:
         return {"signature": signature}
 
     def build_initialize_payload(self):
-        dids = self.get_dids(ServiceTypesIndices.DEFAULT_ACCESS_INDEX)
         message = "initialize" + json.dumps(self.credentials)
         signature = sign_message(message, get_provider_wallet())
         return {
             "signature": signature,
-            "dids": dids,
+            "dids": self.get_dids(),
         }
 
     def build_access_payload(self):
-        dids = self.get_dids(ServiceTypesIndices.DEFAULT_ACCESS_INDEX)
         message = "access" + json.dumps(self.credentials)
         signature = sign_message(message, get_provider_wallet())
-        return {
-            "signature": signature,
-            "dids": dids,
-        }
+        return {"signature": signature, "dids": self.get_dids()}
 
     def build_compute_payload(self):
-        dids = self.get_dids(ServiceTypesIndices.DEFAULT_COMPUTING_INDEX)
+        dids = self.get_dids()
         algos = self.get_algos()
         algos_text = json.dumps(algos) if algos else ""
         additional_dids = self.get_additional_dids()

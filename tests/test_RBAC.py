@@ -8,14 +8,16 @@ import pytest
 from ocean_provider.constants import BaseURLs
 from ocean_provider.exceptions import RequestNotFound
 from ocean_provider.utils.accounts import generate_auth_token
-from ocean_provider.utils.datatoken import get_datatoken_contract
+from ocean_provider.utils.currency import to_wei
+from ocean_provider.utils.services import ServiceType
 from ocean_provider.validation.algo import build_stage_output_dict
 from ocean_provider.validation.provider_requests import RBACValidator
 from tests.helpers.compute_helpers import build_and_send_ddo_with_compute_service
 from tests.test_helpers import (
+    BLACK_HOLE_ADDRESS,
     get_dataset_asset_with_access_service,
-    mint_tokens_and_wait,
-    send_order,
+    mint_100_datatokens,
+    start_order,
 )
 
 
@@ -57,16 +59,17 @@ def test_encrypt_request_payload(consumer_wallet, publisher_wallet):
 def test_initialize_request_payload(
     client, publisher_wallet, consumer_wallet, provider_address, web3
 ):
-    ddo = get_dataset_asset_with_access_service(client, publisher_wallet)
-    dt_contract = get_datatoken_contract(web3, ddo.data_token_address)
-    sa = ddo.get_service("access")
-    mint_tokens_and_wait(dt_contract, consumer_wallet, publisher_wallet)
+    asset = get_dataset_asset_with_access_service(client, publisher_wallet)
+    service = asset.get_service_by_type(ServiceType.ACCESS)
+    mint_100_datatokens(
+        web3, service.datatoken_address, consumer_wallet.address, publisher_wallet
+    )
 
     req = {
-        "documentId": ddo.did,
-        "serviceId": sa.index,
-        "serviceType": sa.type,
-        "dataToken": ddo.data_token_address,
+        "documentId": asset.did,
+        "serviceId": service.index,
+        "serviceType": service.type,
+        "dataToken": service.datatoken_address,
         "consumerAddress": consumer_wallet.address,
     }
 
@@ -79,26 +82,36 @@ def test_initialize_request_payload(
         "type": "address",
         "address": consumer_wallet.address,
     }
-    assert payload["dids"][0]["did"] == ddo.did
-    assert payload["dids"][0]["serviceId"] == sa.index
+    assert payload["dids"][0]["did"] == asset.did
+    assert payload["dids"][0]["serviceId"] == service.index
 
 
 def test_access_request_payload(
     client, publisher_wallet, consumer_wallet, provider_address, web3
 ):
-    ddo = get_dataset_asset_with_access_service(client, publisher_wallet)
-    dt_token = get_datatoken_contract(web3, ddo.data_token_address)
+    asset = get_dataset_asset_with_access_service(client, publisher_wallet)
+    service = asset.get_service_by_type(ServiceType.ACCESS)
+    mint_100_datatokens(
+        web3, service.datatoken_address, consumer_wallet.address, publisher_wallet
+    )
 
-    mint_tokens_and_wait(dt_token, consumer_wallet, publisher_wallet)
-
-    sa = ddo.get_service("access")
-    tx_id = send_order(client, ddo, dt_token, sa, consumer_wallet)
+    tx_id, _ = start_order(
+        web3,
+        service.datatoken_address,
+        consumer_wallet.address,
+        to_wei(1),
+        service.index,
+        BLACK_HOLE_ADDRESS,
+        BLACK_HOLE_ADDRESS,
+        0,
+        consumer_wallet,
+    )
 
     req = {
-        "documentId": ddo.did,
-        "serviceId": sa.index,
-        "serviceType": sa.type,
-        "dataToken": ddo.data_token_address,
+        "documentId": asset.did,
+        "serviceId": service.index,
+        "serviceType": service.type,
+        "dataToken": service.datatoken_address,
         "consumerAddress": consumer_wallet.address,
         "signature": generate_auth_token(consumer_wallet),
         "transferTxId": tx_id,
@@ -114,8 +127,8 @@ def test_access_request_payload(
         "type": "address",
         "address": consumer_wallet.address,
     }
-    assert payload["dids"][0]["did"] == ddo.did
-    assert payload["dids"][0]["serviceId"] == sa.index
+    assert payload["dids"][0]["did"] == asset.did
+    assert payload["dids"][0]["serviceId"] == service.index
 
 
 def test_compute_payload_without_additional_inputs(
