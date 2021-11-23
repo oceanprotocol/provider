@@ -301,7 +301,9 @@ def get_dataset_ddo_disabled(client, wallet):
         abi=ERC721Template.abi, address=datatoken_address
     )
 
-    txn_hash = dt_contract.functions.setMetaDataState(1).transact({"from": wallet.address})
+    txn_hash = dt_contract.functions.setMetaDataState(1).transact(
+        {"from": wallet.address}
+    )
     _ = web3.eth.wait_for_transaction_receipt(txn_hash)
 
     aqua_root = "http://172.15.0.5:5000"

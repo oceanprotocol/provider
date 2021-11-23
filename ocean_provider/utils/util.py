@@ -124,50 +124,7 @@ def get_service_files_list(service: Service, provider_wallet: LocalAccount) -> l
         return files_list
     except Exception as e:
         logger.error(f"Error decrypting service files {Service}: {str(e)}")
-        raise
-
-
-def get_service_url_at_index(url_index: int, service: Service, wallet: LocalAccount):
-    logger.debug(
-        f"get_service_url_at_index(): url_index={url_index}, "
-        f"service_id={service.id}, service_index={service.index} provider={wallet.address}"
-    )
-    try:
-        files_list = get_service_urls(service, wallet)
-        if not files_list:
-            return None
-        if url_index >= len(files_list):
-            raise ValueError(f'url index "{url_index}"" is invalid.')
-        return files_list[url_index]
-
-    except Exception as e:
-        logger.error(
-            f"Error decrypting url at index {url_index} for "
-            f"asset {service.did}: {str(e)}"
-        )
-        raise
-
-
-def get_service_urls(service: Service, wallet: LocalAccount):
-    """Returns list of urls of the files included in this Service in order."""
-    logger.debug(
-        f"get_asset_urls(): service_id={service.id}, "
-        f"service_index={service.index}, provider={wallet.address}"
-    )
-    try:
-        files_list = get_service_files_list(service, wallet)
-        if not files_list:
-            return []
-        return files_list
-    except Exception as e:
-        logger.exception(f"Error decrypting urls for service: {str(e)}")
-        raise
-
-
-def get_service_download_urls(service: Service, wallet: LocalAccount, config_file):
-    return [
-        get_download_url(url, config_file) for url in get_service_urls(service, wallet)
-    ]
+        return None
 
 
 def get_download_url(url, config_file):

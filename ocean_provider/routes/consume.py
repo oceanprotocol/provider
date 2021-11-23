@@ -27,8 +27,7 @@ from ocean_provider.utils.util import (
     get_download_url,
     get_metadata_url,
     get_request_data,
-    get_service_download_urls,
-    get_service_url_at_index,
+    get_service_files_list,
     validate_order,
 )
 from ocean_provider.validation.provider_requests import (
@@ -93,9 +92,7 @@ def fileinfo():
     if did:
         asset = get_asset_from_metadatastore(get_metadata_url(), did)
         service = asset.get_service_by_index(service_index)
-        url_list = get_service_download_urls(
-            service, provider_wallet, config_file=app.config["PROVIDER_CONFIG_FILE"]
-        )
+        url_list = get_service_files_list(service, provider_wallet)
     else:
         url_list = [get_download_url(url, app.config["PROVIDER_CONFIG_FILE"])]
 
@@ -148,7 +145,7 @@ def initialize():
         if not consumable:
             return jsonify(error=message), 400
 
-        url = get_service_url_at_index(0, service, provider_wallet)
+        url = get_service_files_list(service, provider_wallet)[0]
         download_url = get_download_url(url, app.config["PROVIDER_CONFIG_FILE"])
         download_url = append_userdata(download_url, data)
         valid, _ = check_url_details(download_url)
@@ -252,7 +249,7 @@ def download():
         # TODO: get content type
         content_type = None
 
-        url = get_service_url_at_index(file_index, service, provider_wallet)
+        url = get_service_files_list(service, provider_wallet)[file_index]
         if not url:
             return (
                 jsonify(

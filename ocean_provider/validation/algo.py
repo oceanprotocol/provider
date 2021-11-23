@@ -17,7 +17,7 @@ from ocean_provider.utils.util import (
     filter_dictionary,
     filter_dictionary_starts_with,
     get_metadata_url,
-    get_service_download_urls,
+    get_service_files_list,
     msg_hash,
     record_consume_request,
     validate_order,
@@ -155,11 +155,8 @@ class WorkflowValidator:
                 self.algo_service = algo.get_service_by_index(algo_service_id)
 
                 if self.algo_service.type == "compute":
-                    asset_urls = get_service_download_urls(
-                        algo,
-                        self.provider_wallet,
-                        config_file=app.config["PROVIDER_CONFIG_FILE"],
-                    )
+                    # TODO
+                    asset_urls = get_service_files_list(algo, self.provider_wallet)
 
                     if not asset_urls:
                         self.error = "Services in algorithm with compute type must be in the same provider you are calling."
@@ -297,10 +294,10 @@ class InputItemValidator:
             self.error = "Service for main asset must be compute."
             return False
 
-        asset_urls = get_service_download_urls(
+        # TODO
+        asset_urls = get_service_files_list(
             self.asset,
             self.provider_wallet,
-            config_file=app.config["PROVIDER_CONFIG_FILE"],
         )
 
         if self.service.type == "compute" and not asset_urls:

@@ -9,16 +9,14 @@ from copy import deepcopy
 from unittest.mock import MagicMock, Mock
 
 import ipfshttpclient
-import pytest
+from web3.main import Web3
 from ocean_provider.requests_session import get_requests_session
-from ocean_provider.utils.asset import Asset
+from ocean_provider.utils.services import Service
 from ocean_provider.utils.encryption import do_encrypt
 from ocean_provider.utils.util import (
     build_download_response,
     get_download_url,
     get_service_files_list,
-    get_service_url_at_index,
-    get_service_urls,
     msg_hash,
 )
 from werkzeug.utils import get_content_type
@@ -143,45 +141,29 @@ def test_download_ipfs_file():
     assert response.data, f"got no data {response.data}"
 
 
-def test_get_assets_files_list(provider_wallet):
-    asset = Mock(template=Asset)
-    encr = do_encrypt(json.dumps(["test1", "test2"]), provider_wallet)
-    asset.encrypted_files = json.dumps({"encryptedDocument": encr})
-    assert ["test1", "test2"] == get_service_files_list(asset, provider_wallet)
+def test_get_service_files_list(provider_wallet):
+    service = Mock(template=Service)
+    encrypted_files_str = json.dumps(["test1", "test2"], separators=(",", ":"))
+    service.encrypted_files = do_encrypt(
+        Web3.toHex(text=encrypted_files_str), provider_wallet
+    )
+    assert ["test1", "test2"] == get_service_files_list(service, provider_wallet)
 
-    # empty
-    asset.encrypted_files = ""
-    assert get_service_files_list(asset, provider_wallet) is None
+    # empty and raw
+    service.encrypted_files = ""
+    assert get_service_files_list(service, provider_wallet) is None
 
-    # not a list
-    encr = do_encrypt(json.dumps({"test": "test"}), provider_wallet)
-    asset.encrypted_files = json.dumps({"encryptedDocument": encr})
-    with pytest.raises(TypeError):
-        get_service_files_list(asset, provider_wallet)
-
-
-def test_get_asset_urls(provider_wallet):
-    # empty
-    asset = Mock(template=Asset)
-    asset.encrypted_files = ""
-    assert get_service_urls(asset, provider_wallet) == []
-    assert get_service_url_at_index(0, asset, provider_wallet) is None
+    # empty and encrypted
+    encrypted_files_str = ""
+    service.encrypted_files = do_encrypt(
+        Web3.toHex(text=encrypted_files_str), provider_wallet
+    )
+    assert get_service_files_list(service, provider_wallet) is None
 
     # not a list
-    encr = do_encrypt(json.dumps({"test": "test"}), provider_wallet)
-    asset.encrypted_files = json.dumps({"encryptedDocument": encr})
-    with pytest.raises(TypeError):
-        get_service_urls(asset, provider_wallet)
+    encrypted_files_str = json.dumps({"test": "test"}, separators=(",", ":"))
+    service.encrypted_files = do_encrypt(
+        Web3.toHex(text=encrypted_files_str), provider_wallet
+    )
 
-    # does not have url there
-    encr = do_encrypt(json.dumps([{"noturl": "test"}]), provider_wallet)
-    asset.encrypted_files = json.dumps({"encryptedDocument": encr})
-    with pytest.raises(ValueError):
-        get_service_urls(asset, provider_wallet)
-
-    # correct with url
-    encr = do_encrypt(json.dumps([{"url": "test"}]), provider_wallet)
-    asset.encrypted_files = json.dumps({"encryptedDocument": encr})
-    assert get_service_urls(asset, provider_wallet) == ["test"]
-    with pytest.raises(ValueError):
-        get_service_url_at_index(3, asset, provider_wallet)
+    assert get_service_files_list(service, provider_wallet) is None
