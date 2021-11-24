@@ -17,6 +17,7 @@ def test_passes(
         client, publisher_wallet, consumer_wallet
     )
     sa = alg_ddo.get_service_by_type(ServiceType.ACCESS)
+    sa_compute = ddo.get_service_by_type(ServiceType.COMPUTE)
 
     data = {
         "documentId": ddo.did,
@@ -26,7 +27,7 @@ def test_passes(
             dict(), sa.service_endpoint, consumer_address, publisher_wallet
         ),
         "algorithmDid": alg_ddo.did,
-        "algorithmDataToken": sa.datatoken_address,
+        "algorithmDataToken": sa_compute.datatoken_address,
         "algorithmTransferTxId": alg_tx_id,
     }
 

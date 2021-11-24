@@ -7,6 +7,7 @@ import time
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.datatoken import get_datatoken_contract
+from ocean_provider.utils.services import ServiceType
 from ocean_provider.validation.algo import build_stage_output_dict
 from tests.helpers.compute_helpers import (
     build_and_send_ddo_with_compute_service,
@@ -102,7 +103,8 @@ def test_compute(client, publisher_wallet, consumer_wallet):
     ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
         client, publisher_wallet, consumer_wallet
     )
-    sa = ddo.get_service("compute")
+    sa = alg_ddo.get_service_by_type(ServiceType.ACCESS)
+    sa_compute = ddo.get_service_by_type(ServiceType.COMPUTE)
     signature = get_compute_signature(client, consumer_wallet, ddo.did)
 
     # Start the compute job
@@ -114,12 +116,12 @@ def test_compute(client, publisher_wallet, consumer_wallet):
             "serviceType": sa.type,
             "consumerAddress": consumer_wallet.address,
             "transferTxId": tx_id,
-            "dataToken": ddo.data_token_address,
+            "dataToken": sa.datatoken_address,
             "output": build_stage_output_dict(
                 dict(), sa.service_endpoint, consumer_wallet.address, publisher_wallet
             ),
             "algorithmDid": alg_ddo.did,
-            "algorithmDataToken": alg_ddo.data_token_address,
+            "algorithmDataToken": sa_compute.datatoken_address,
             "algorithmTransferTxId": alg_tx_id,
         }
     )
