@@ -129,10 +129,8 @@ def test_initialize_on_ipfs_url(client, publisher_wallet, consumer_wallet, web3)
 
 
 def test_initialize_on_disabled_asset(client, publisher_wallet, consumer_wallet, web3):
-    asset = get_dataset_ddo_disabled(client, publisher_wallet)
-    # TODO: need to merge state changed processing in Aqua
-    assert asset.is_disabled
-
+    asset, real_asset = get_dataset_ddo_disabled(client, publisher_wallet)
+    assert real_asset
     service = asset.get_service_by_type(ServiceType.ACCESS)
 
     mint_100_datatokens(

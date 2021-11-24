@@ -6,9 +6,7 @@ from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.currency import to_wei
 from ocean_provider.utils.services import ServiceType
-from tests.helpers.ddo_dict_builders import (
-    build_metadata_dict_type_algorithm,
-)
+from tests.helpers.ddo_dict_builders import build_metadata_dict_type_algorithm
 from tests.test_helpers import (
     BLACK_HOLE_ADDRESS,
     get_nonce,
@@ -29,7 +27,7 @@ def build_and_send_ddo_with_compute_service(
         alg_ddo = get_registered_asset(
             publisher_wallet,
             custom_metadata=algo_metadata,
-            custom_service_endpoint="http://172.15.0.7:8030"
+            custom_service_endpoint="http://172.15.0.7:8030",
         )
     else:
         alg_ddo = get_registered_asset(publisher_wallet, custom_metadata=algo_metadata)

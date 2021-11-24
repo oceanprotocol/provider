@@ -17,10 +17,10 @@ from tests.helpers.compute_helpers import (
     get_compute_signature,
     get_possible_compute_job_status_text,
     get_registered_asset,
+    get_web3,
     mint_100_datatokens,
     post_to_compute,
     start_order,
-    get_web3
 )
 from tests.helpers.ddo_dict_builders import build_metadata_dict_type_algorithm
 
@@ -367,7 +367,9 @@ def test_compute_additional_input(client, publisher_wallet, consumer_wallet):
 
     web3 = get_web3()
     sa2 = ddo2.get_service_by_type(ServiceType.COMPUTE)
-    mint_100_datatokens(web3, sa2.datatoken_address, consumer_wallet.address, publisher_wallet)
+    mint_100_datatokens(
+        web3, sa2.datatoken_address, consumer_wallet.address, publisher_wallet
+    )
     tx_id2, _ = start_order(
         web3,
         sa2.datatoken_address,

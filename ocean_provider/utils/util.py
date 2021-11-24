@@ -12,12 +12,14 @@ from cgi import parse_header
 import requests
 from eth_account.signers.local import LocalAccount
 from flask import Response
+from jsonsempai import magic  # noqa: F401
 from osmosis_driver_interface.osmosis import Osmosis
 from websockets import ConnectionClosed
 
+from artifacts import ERC721Template
 from ocean_provider.log import setup_logging
 from ocean_provider.utils.accounts import sign_message
-from ocean_provider.utils.basics import get_config, get_provider_wallet
+from ocean_provider.utils.basics import get_config, get_provider_wallet, get_web3
 from ocean_provider.utils.consumable import ConsumableCodes
 from ocean_provider.utils.currency import to_wei
 from ocean_provider.utils.datatoken import verify_order_tx
@@ -272,6 +274,16 @@ def decode_from_data(data, key, dec_type="list"):
 
 
 def check_asset_consumable(asset, consumer_address, logger, custom_url=None):
+    if not asset.nft or "address" not in asset.nft:
+        return False, "Asset malformed"
+
+    dt_contract = get_web3().eth.contract(
+        abi=ERC721Template.abi, address=asset.nft["address"]
+    )
+
+    if dt_contract.caller.getMetaData()[2] != 0:
+        return False, "Asset is not consumable."
+
     code = asset.is_consumable({"type": "address", "value": consumer_address})
 
     if code == ConsumableCodes.OK:  # is consumable

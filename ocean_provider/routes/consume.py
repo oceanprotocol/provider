@@ -138,13 +138,17 @@ def initialize():
     logger.info(f"initialize endpoint called. {data}")
 
     try:
-        (asset, service, _, consumer_address, token_address) = process_consume_request(
-            data
-        )
+        did = data.get("documentId")
+        consumer_address = data.get("consumerAddress")
 
+        asset = get_asset_from_metadatastore(get_metadata_url(), did)
         consumable, message = check_asset_consumable(asset, consumer_address, logger)
         if not consumable:
             return jsonify(error=message), 400
+
+        service_id = int(data.get("serviceId"))
+        service = asset.get_service_by_index(service_id)
+        token_address = data.get("dataToken")
 
         url = get_service_files_list(service, provider_wallet)[0]
         download_url = get_download_url(url, app.config["PROVIDER_CONFIG_FILE"])

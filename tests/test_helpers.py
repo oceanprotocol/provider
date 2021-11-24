@@ -177,7 +177,7 @@ def get_registered_asset(
     custom_metadata=None,
     custom_services=None,
     custom_services_args=None,
-    custom_service_endpoint=None
+    custom_service_endpoint=None,
 ):
     web3 = get_web3()
     data_nft_address = deploy_data_nft(
@@ -224,7 +224,11 @@ def get_registered_asset(
     metadata = (
         build_metadata_dict_type_dataset() if not custom_metadata else custom_metadata
     )
-    service_endpoint = "http://172.15.0.4:8030" if not custom_service_endpoint else custom_service_endpoint
+    service_endpoint = (
+        "http://172.15.0.4:8030"
+        if not custom_service_endpoint
+        else custom_service_endpoint
+    )
 
     services = (
         [
@@ -319,14 +323,15 @@ def get_dataset_ddo_disabled(client, wallet):
         abi=ERC721Template.abi, address=datatoken_address
     )
 
+    time.sleep(10)
     txn_hash = dt_contract.functions.setMetaDataState(1).transact(
         {"from": wallet.address}
     )
     _ = web3.eth.wait_for_transaction_receipt(txn_hash)
 
     aqua_root = "http://172.15.0.5:5000"
-    time.sleep(3)
-    return wait_for_asset(aqua_root, did)
+    time.sleep(5)
+    return asset, wait_for_asset(aqua_root, did)
 
 
 def get_dataset_ddo_with_denied_consumer(client, wallet, consumer_addr):

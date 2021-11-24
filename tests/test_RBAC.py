@@ -13,7 +13,11 @@ from ocean_provider.utils.currency import to_wei
 from ocean_provider.utils.services import ServiceType
 from ocean_provider.validation.algo import build_stage_output_dict
 from ocean_provider.validation.provider_requests import RBACValidator
-from tests.helpers.compute_helpers import build_and_send_ddo_with_compute_service, get_web3, get_registered_asset
+from tests.helpers.compute_helpers import (
+    build_and_send_ddo_with_compute_service,
+    get_registered_asset,
+    get_web3,
+)
 from tests.test_helpers import (
     BLACK_HOLE_ADDRESS,
     get_dataset_asset_with_access_service,
@@ -195,7 +199,9 @@ def test_compute_request_payload(
 
     web3 = get_web3()
     sa2 = ddo2.get_service_by_type(ServiceType.COMPUTE)
-    mint_100_datatokens(web3, sa2.datatoken_address, consumer_wallet.address, publisher_wallet)
+    mint_100_datatokens(
+        web3, sa2.datatoken_address, consumer_wallet.address, publisher_wallet
+    )
     tx_id2, _ = start_order(
         web3,
         sa2.datatoken_address,
