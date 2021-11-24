@@ -22,6 +22,7 @@ from tests.helpers.compute_helpers import (
     mint_100_datatokens,
     post_to_compute,
     start_order,
+    get_web3
 )
 from tests.helpers.ddo_dict_builders import build_metadata_dict_type_algorithm
 from tests.test_helpers import mint_tokens_and_wait, send_order
@@ -351,11 +352,35 @@ def test_compute_additional_input(client, publisher_wallet, consumer_wallet):
     ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
         client, publisher_wallet, consumer_wallet
     )
-    sa = ddo.get_service("compute")
-    ddo2, tx_id2, _, _ = build_and_send_ddo_with_compute_service(
-        client, publisher_wallet, consumer_wallet
+    sa = alg_ddo.get_service_by_type(ServiceType.ACCESS)
+    sa_compute = ddo.get_service_by_type(ServiceType.COMPUTE)
+
+    ddo2 = get_registered_asset(
+        publisher_wallet,
+        custom_services="vanilla_compute",
+        custom_services_args=[
+            {
+                "did": alg_ddo.did,
+                "filesChecksum": "TODO",
+                "containerSectionChecksum": "TODO",
+            }
+        ],
     )
-    sa2 = ddo2.get_service("compute")
+
+    web3 = get_web3()
+    sa2 = ddo2.get_service_by_type(ServiceType.COMPUTE)
+    mint_100_datatokens(web3, sa2.datatoken_address, consumer_wallet.address, publisher_wallet)
+    tx_id2, _ = start_order(
+        web3,
+        sa2.datatoken_address,
+        consumer_wallet.address,
+        to_wei(1),
+        sa2.index,
+        BLACK_HOLE_ADDRESS,
+        BLACK_HOLE_ADDRESS,
+        0,
+        consumer_wallet,
+    )
 
     signature = get_compute_signature(client, consumer_wallet, ddo.did)
 
@@ -368,12 +393,12 @@ def test_compute_additional_input(client, publisher_wallet, consumer_wallet):
             "serviceType": sa.type,
             "consumerAddress": consumer_wallet.address,
             "transferTxId": tx_id,
-            "dataToken": ddo.data_token_address,
+            "dataToken": sa.datatoken_address,
             "output": build_stage_output_dict(
                 dict(), sa.service_endpoint, consumer_wallet.address, publisher_wallet
             ),
             "algorithmDid": alg_ddo.did,
-            "algorithmDataToken": alg_ddo.data_token_address,
+            "algorithmDataToken": sa_compute.datatoken_address,
             "algorithmTransferTxId": alg_tx_id,
             "additionalInputs": [
                 {
