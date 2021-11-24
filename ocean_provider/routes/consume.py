@@ -7,6 +7,7 @@ import logging
 
 from flask import Response, jsonify, request
 from flask_sieve import validate
+
 from ocean_provider.log import setup_logging
 from ocean_provider.myapp import app
 from ocean_provider.requests_session import get_requests_session

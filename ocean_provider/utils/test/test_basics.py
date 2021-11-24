@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import pytest
+
 from ocean_provider.utils.basics import (
     get_web3,
     get_web3_connection_provider,

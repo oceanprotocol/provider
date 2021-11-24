@@ -5,6 +5,8 @@
 import json
 import logging
 
+from web3.logs import DISCARD
+
 from ocean_provider.constants import BaseURLs
 from ocean_provider.myapp import app
 from ocean_provider.serializers import StageAlgoSerializer
@@ -23,7 +25,6 @@ from ocean_provider.utils.util import (
     validate_order,
     validate_transfer_not_used_for_other_service,
 )
-from web3.logs import DISCARD
 
 logger = logging.getLogger(__name__)
 
@@ -333,12 +334,7 @@ class InputItemValidator:
         self, algorithm_did, trusted_algorithms, trusted_publishers
     ):
         if not trusted_algorithms and not trusted_publishers:
-            self.error = (
-                "Using algorithmDid but allowAllPublishedAlgorithms is False and no "
-                "trusted algorithms are set in publisherTrustedAlgorithms, "
-                "nor are publisherTrustedAlgorithmPublishers set."
-            )
-            return False
+            return True
 
         if trusted_publishers:
             algo_ddo = get_asset_from_metadatastore(get_metadata_url(), algorithm_did)

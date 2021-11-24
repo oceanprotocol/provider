@@ -8,22 +8,24 @@ import time
 import uuid
 from hashlib import sha256
 from typing import Tuple
-import ipfshttpclient
 
+import ipfshttpclient
 from eth_account.signers.local import LocalAccount
 from eth_typing.encoding import HexStr
 from eth_typing.evm import HexAddress
 from flask.testing import FlaskClient
-
 from jsonsempai import magic  # noqa: F401
+from web3.main import Web3
+from web3.types import TxParams, TxReceipt
+
 from artifacts import ERC721Template
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.address import get_contract_address
 from ocean_provider.utils.basics import (
     get_asset_from_metadatastore,
     get_config,
-    get_web3,
     get_provider_wallet,
+    get_web3,
 )
 from ocean_provider.utils.currency import to_wei
 from ocean_provider.utils.data_nft import Flags, MetadataState, get_data_nft_contract
@@ -33,16 +35,14 @@ from ocean_provider.utils.did import compute_did_from_data_nft_address_and_chain
 from ocean_provider.utils.encryption import do_encrypt
 from tests.ddo.ddo_sample1_v4 import json_dict as ddo_sample1_v4
 from tests.helpers.ddo_dict_builders import (
-    get_compute_service,
-    get_compute_service_no_rawalgo,
     build_credentials_dict,
     build_ddo_dict,
     build_metadata_dict_type_dataset,
     build_service_dict_type_access,
     get_access_service,
+    get_compute_service,
+    get_compute_service_no_rawalgo,
 )
-from web3.main import Web3
-from web3.types import TxParams, TxReceipt
 
 BLACK_HOLE_ADDRESS = "0x0000000000000000000000000000000000000000"
 

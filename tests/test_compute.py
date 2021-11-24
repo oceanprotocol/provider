@@ -10,22 +10,20 @@ from ocean_provider.utils.currency import to_wei
 from ocean_provider.utils.datatoken import get_datatoken_contract
 from ocean_provider.utils.services import ServiceType
 from ocean_provider.validation.algo import build_stage_output_dict
-from tests.helpers.ddo_dict_builders import (
-    build_metadata_dict_type_algorithm,
-)
 from tests.helpers.compute_helpers import (
+    BLACK_HOLE_ADDRESS,
     build_and_send_ddo_with_compute_service,
     comp_ds,
     get_compute_job_info,
     get_compute_result,
     get_compute_signature,
     get_possible_compute_job_status_text,
-    post_to_compute,
     get_registered_asset,
     mint_100_datatokens,
-    BLACK_HOLE_ADDRESS,
+    post_to_compute,
     start_order,
 )
+from tests.helpers.ddo_dict_builders import build_metadata_dict_type_algorithm
 from tests.test_helpers import mint_tokens_and_wait, send_order
 
 
@@ -289,7 +287,8 @@ def test_compute_allow_all_published(client, publisher_wallet, consumer_wallet):
     ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
         client, publisher_wallet, consumer_wallet, asset_type="allow_all_published"
     )
-    sa = ddo.get_service("compute")
+    sa = alg_ddo.get_service_by_type(ServiceType.ACCESS)
+    sa_compute = ddo.get_service_by_type(ServiceType.COMPUTE)
     signature = get_compute_signature(client, consumer_wallet, ddo.did)
 
     # Start the compute job
@@ -301,12 +300,12 @@ def test_compute_allow_all_published(client, publisher_wallet, consumer_wallet):
             "serviceType": sa.type,
             "consumerAddress": consumer_wallet.address,
             "transferTxId": tx_id,
-            "dataToken": ddo.data_token_address,
+            "dataToken": sa.datatoken_address,
             "output": build_stage_output_dict(
                 dict(), sa.service_endpoint, consumer_wallet.address, publisher_wallet
             ),
             "algorithmDid": alg_ddo.did,
-            "algorithmDataToken": alg_ddo.data_token_address,
+            "algorithmDataToken": sa_compute.datatoken_address,
             "algorithmTransferTxId": alg_tx_id,
         }
     )
@@ -319,7 +318,8 @@ def test_compute_not_an_algo(client, publisher_wallet, consumer_wallet):
     ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
         client, publisher_wallet, consumer_wallet, asset_type="allow_all_published"
     )
-    sa = ddo.get_service("compute")
+    sa = alg_ddo.get_service_by_type(ServiceType.ACCESS)
+    sa_compute = ddo.get_service_by_type(ServiceType.COMPUTE)
     signature = get_compute_signature(client, consumer_wallet, ddo.did)
 
     # Start the compute job
@@ -331,12 +331,12 @@ def test_compute_not_an_algo(client, publisher_wallet, consumer_wallet):
             "serviceType": sa.type,
             "consumerAddress": consumer_wallet.address,
             "transferTxId": tx_id,
-            "dataToken": ddo.data_token_address,
+            "dataToken": sa.datatoken_address,
             "output": build_stage_output_dict(
                 dict(), sa.service_endpoint, consumer_wallet.address, publisher_wallet
             ),
             "algorithmDid": ddo.did,  # intentionally, should not be an algo did
-            "algorithmDataToken": alg_ddo.data_token_address,
+            "algorithmDataToken": sa_compute.datatoken_address,
             "algorithmTransferTxId": alg_tx_id,
         }
     )
@@ -398,7 +398,8 @@ def test_compute_delete_job(
     ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
         client, publisher_wallet, consumer_wallet
     )
-    sa = ddo.get_service("compute")
+    sa = alg_ddo.get_service_by_type(ServiceType.ACCESS)
+    sa_compute = ddo.get_service_by_type(ServiceType.COMPUTE)
     signature = get_compute_signature(client, consumer_wallet, ddo.did)
 
     # Start the compute job
@@ -408,14 +409,14 @@ def test_compute_delete_job(
             "documentId": ddo.did,
             "serviceId": sa.index,
             "serviceType": sa.type,
-            "consumerAddress": consumer_address,
+            "consumerAddress": consumer_wallet.address,
             "transferTxId": tx_id,
-            "dataToken": ddo.data_token_address,
+            "dataToken": sa.datatoken_address,
             "output": build_stage_output_dict(
-                dict(), sa.service_endpoint, consumer_address, publisher_wallet
+                dict(), sa.service_endpoint, consumer_wallet.address, publisher_wallet
             ),
             "algorithmDid": alg_ddo.did,
-            "algorithmDataToken": alg_ddo.data_token_address,
+            "algorithmDataToken": sa_compute.datatoken_address,
             "algorithmTransferTxId": alg_tx_id,
         }
     )

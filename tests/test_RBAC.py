@@ -5,6 +5,7 @@
 import json
 
 import pytest
+
 from ocean_provider.constants import BaseURLs
 from ocean_provider.exceptions import RequestNotFound
 from ocean_provider.utils.accounts import generate_auth_token

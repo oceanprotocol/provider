@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import pytest
+
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import generate_auth_token, sign_message
 from ocean_provider.utils.currency import to_wei

@@ -10,16 +10,17 @@ from unittest.mock import MagicMock, Mock
 
 import ipfshttpclient
 from web3.main import Web3
+from werkzeug.utils import get_content_type
+
 from ocean_provider.requests_session import get_requests_session
-from ocean_provider.utils.services import Service
 from ocean_provider.utils.encryption import do_encrypt
+from ocean_provider.utils.services import Service
 from ocean_provider.utils.util import (
     build_download_response,
     get_download_url,
     get_service_files_list,
     msg_hash,
 )
-from werkzeug.utils import get_content_type
 
 test_logger = logging.getLogger(__name__)
 

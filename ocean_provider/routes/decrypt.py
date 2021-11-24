@@ -11,6 +11,8 @@ from eth_typing.encoding import HexStr
 from eth_typing.evm import HexAddress
 from flask import Response, request
 from flask_sieve import validate
+from web3.main import Web3
+
 from ocean_provider.log import setup_logging
 from ocean_provider.requests_session import get_requests_session
 from ocean_provider.user_nonce import increment_nonce
@@ -29,7 +31,6 @@ from ocean_provider.utils.encryption import do_decrypt
 from ocean_provider.utils.error_responses import error_response, service_unavailable
 from ocean_provider.utils.util import get_request_data
 from ocean_provider.validation.provider_requests import DecryptRequest
-from web3.main import Web3
 
 from . import services
 

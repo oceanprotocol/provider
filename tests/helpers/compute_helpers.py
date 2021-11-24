@@ -4,28 +4,28 @@ import uuid
 
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
+from ocean_provider.utils.currency import to_wei
 from ocean_provider.utils.datatoken import get_datatoken_contract
 from ocean_provider.utils.services import ServiceType
-from ocean_provider.utils.currency import to_wei
 from tests.helpers.ddo_dict_builders import (
+    build_metadata_dict_type_algorithm,
     get_compute_service,
     get_compute_service_no_rawalgo,
     get_compute_service_specific_algo_publishers,
-    build_metadata_dict_type_algorithm,
 )
 from tests.test_helpers import (
     BLACK_HOLE_ADDRESS,
+    deploy_datatoken,
     get_algorithm_ddo,
     get_algorithm_ddo_different_provider,
     get_nonce,
+    get_ocean_token_address,
     get_registered_asset,
     get_sample_ddo_with_compute_service,
     get_web3,
-    mint_tokens_and_wait,
     mint_100_datatokens,
+    mint_tokens_and_wait,
     send_order,
-    get_ocean_token_address,
-    deploy_datatoken,
     start_order,
 )
 
@@ -50,7 +50,13 @@ def build_and_send_ddo_with_compute_service(
     # TODO: remove comp_ds, move these ifs to build_custom_services
 
     # publish a dataset asset
-    if asset_type == "specific_algo_publishers":
+    if asset_type == "allow_all_published":
+        dataset_ddo_w_compute_service = get_registered_asset(
+            publisher_wallet,
+            custom_services="vanilla_compute",
+            custom_services_args=[],
+        )
+    elif asset_type == "specific_algo_publishers":
         alg_ddo = get_algorithm_ddo(client, consumer_wallet)
         alg_data_token = alg_ddo.data_token_address
         alg_dt_contract = get_datatoken_contract(web3, alg_data_token)

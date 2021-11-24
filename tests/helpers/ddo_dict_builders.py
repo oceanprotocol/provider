@@ -10,11 +10,12 @@ from typing import Any, Dict, List
 
 from eth_typing.encoding import HexStr
 from eth_typing.evm import HexAddress
-from ocean_provider.constants import BaseURLs
-from ocean_provider.utils.services import Service
-from ocean_provider.utils.encryption import do_encrypt
-from ocean_provider.utils.basics import get_provider_wallet
 from web3.main import Web3
+
+from ocean_provider.constants import BaseURLs
+from ocean_provider.utils.basics import get_provider_wallet
+from ocean_provider.utils.encryption import do_encrypt
+from ocean_provider.utils.services import Service
 
 """Test helpers for building service dicts to be used in DDOs"""
 

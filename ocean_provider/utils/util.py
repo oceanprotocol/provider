@@ -12,6 +12,9 @@ from cgi import parse_header
 import requests
 from eth_account.signers.local import LocalAccount
 from flask import Response
+from osmosis_driver_interface.osmosis import Osmosis
+from websockets import ConnectionClosed
+
 from ocean_provider.log import setup_logging
 from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.basics import get_config, get_provider_wallet
@@ -21,8 +24,6 @@ from ocean_provider.utils.datatoken import verify_order_tx
 from ocean_provider.utils.encryption import do_decrypt
 from ocean_provider.utils.services import Service
 from ocean_provider.utils.url import is_safe_url
-from osmosis_driver_interface.osmosis import Osmosis
-from websockets import ConnectionClosed
 
 setup_logging()
 logger = logging.getLogger(__name__)
