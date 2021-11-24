@@ -9,9 +9,7 @@ from ocean_provider.utils.services import ServiceType
 from ocean_provider.utils.currency import to_wei
 from tests.helpers.ddo_dict_builders import (
     get_compute_service,
-    get_compute_service_allow_all_published,
     get_compute_service_no_rawalgo,
-    get_compute_service_specific_algo_dids,
     get_compute_service_specific_algo_publishers,
     build_metadata_dict_type_algorithm,
 )
@@ -52,11 +50,7 @@ def build_and_send_ddo_with_compute_service(
     # TODO: remove comp_ds, move these ifs to build_custom_services
 
     # publish a dataset asset
-    if asset_type == "allow_all_published":
-        dataset_ddo_w_compute_service = get_registered_asset(
-            publisher_wallet, "allow_all_published"
-        )
-    elif asset_type == "specific_algo_publishers":
+    if asset_type == "specific_algo_publishers":
         alg_ddo = get_algorithm_ddo(client, consumer_wallet)
         alg_data_token = alg_ddo.data_token_address
         alg_dt_contract = get_datatoken_contract(web3, alg_data_token)
@@ -187,21 +181,9 @@ def comp_ds(client, wallet, compute_service=None, algos=None, publishers=None):
     metadata = get_sample_ddo_with_compute_service()["service"][0]["attributes"]
     metadata["main"]["files"][0]["checksum"] = str(uuid.uuid4())
 
-    if compute_service == "no_rawalgo":
-        service = get_compute_service_no_rawalgo(
-            wallet.address, metadata["main"]["cost"], metadata
-        )
-    elif compute_service == "specific_algo_dids":
-        service = get_compute_service_specific_algo_dids(
-            wallet.address, metadata["main"]["cost"], metadata, algos
-        )
-    elif compute_service == "specific_algo_publishers":
+    if compute_service == "specific_algo_publishers":
         service = get_compute_service_specific_algo_publishers(
             wallet.address, metadata["main"]["cost"], metadata, publishers
-        )
-    elif compute_service == "allow_all_published":
-        service = get_compute_service_allow_all_published(
-            wallet.address, metadata["main"]["cost"], metadata
         )
     else:
         service = get_compute_service(

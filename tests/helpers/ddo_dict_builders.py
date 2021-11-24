@@ -183,7 +183,7 @@ def get_access_service():
 def get_compute_service(address, price, datatoken_address, trusted_algos):
     compute_service_attributes = {
         "namespace": "test",
-        "allowRawAlgorithm": False,
+        "allowRawAlgorithm": True,
         "allowNetworkAccess": False,
         "publisherTrustedAlgorithmPublishers": [],
         "publisherTrustedAlgorithms": trusted_algos,
@@ -242,55 +242,6 @@ def get_compute_service_no_rawalgo(address, price, datatoken_address):
     }
 
 
-def get_compute_service_specific_algo_dids(address, price, metadata, algos):
-    compute_service_attributes = {
-        "main": {
-            "name": "dataAssetComputeServiceAgreement",
-            "creator": address,
-            "cost": price,
-            "privacy": {
-                "allowRawAlgorithm": False,
-                "allowAllPublishedAlgorithms": False,
-                "publisherTrustedAlgorithms": [],
-                "allowNetworkAccess": True,
-            },
-            "timeout": 3600,
-            "datePublished": metadata["main"]["dateCreated"],
-        }
-    }
-
-    for algo in algos:
-        service = algo.get_service("metadata")
-        compute_service_attributes["main"]["privacy"][
-            "publisherTrustedAlgorithms"
-        ].append(
-            {
-                "did": algo.did,
-                "filesChecksum": hashlib.sha256(
-                    (
-                        service.attributes["encryptedFiles"]
-                        + json.dumps(service.main["files"], separators=(",", ":"))
-                    ).encode("utf-8")
-                ).hexdigest(),
-                "containerSectionChecksum": hashlib.sha256(
-                    (
-                        json.dumps(
-                            service.main["algorithm"]["container"],
-                            separators=(",", ":"),
-                        )
-                    ).encode("utf-8")
-                ).hexdigest(),
-            }
-        )
-
-    return Service(
-        service_endpoint=f"http://localhost:8030{BaseURLs.SERVICES_URL}/compute",
-        service_type="compute",
-        index=4,
-        attributes=compute_service_attributes,
-    )
-
-
 def get_compute_service_specific_algo_publishers(address, price, metadata, publishers):
     compute_service_attributes = {
         "main": {
@@ -303,31 +254,6 @@ def get_compute_service_specific_algo_publishers(address, price, metadata, publi
                 "publisherTrustedAlgorithms": [],
                 "publisherTrustedAlgorithmPublishers": publishers,
                 "allowNetworkAccess": True,
-            },
-            "timeout": 3600,
-            "datePublished": metadata["main"]["dateCreated"],
-        }
-    }
-
-    return Service(
-        service_endpoint=f"http://localhost:8030{BaseURLs.SERVICES_URL}/compute",
-        service_type="compute",
-        index=4,
-        attributes=compute_service_attributes,
-    )
-
-
-def get_compute_service_allow_all_published(address, price, metadata):
-    compute_service_attributes = {
-        "main": {
-            "name": "dataAssetComputeServiceAgreement",
-            "creator": address,
-            "cost": price,
-            "privacy": {
-                "allowRawAlgorithm": False,
-                "allowNetworkAccess": True,
-                "allowAllPublishedAlgorithms": True,
-                "publisherTrustedAlgorithms": [],
             },
             "timeout": 3600,
             "datePublished": metadata["main"]["dateCreated"],
