@@ -13,7 +13,7 @@ from ocean_provider.utils.currency import to_wei
 from ocean_provider.utils.services import ServiceType
 from ocean_provider.validation.algo import build_stage_output_dict
 from ocean_provider.validation.provider_requests import RBACValidator
-from tests.helpers.compute_helpers import build_and_send_ddo_with_compute_service
+from tests.helpers.compute_helpers import build_and_send_ddo_with_compute_service, get_web3, get_registered_asset
 from tests.test_helpers import (
     BLACK_HOLE_ADDRESS,
     get_dataset_asset_with_access_service,
@@ -135,26 +135,25 @@ def test_access_request_payload(
 def test_compute_payload_without_additional_inputs(
     client, publisher_wallet, consumer_wallet, provider_address
 ):
-    dataset, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
+    ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
         client, publisher_wallet, consumer_wallet
     )
-    did = dataset.did
-    sa = dataset.get_service("compute")
-    alg_data_token = alg_ddo.data_token_address
+    sa = alg_ddo.get_service_by_type(ServiceType.ACCESS)
+    sa_compute = ddo.get_service_by_type(ServiceType.COMPUTE)
 
     req = {
         "signature": generate_auth_token(consumer_wallet),
-        "documentId": did,
+        "documentId": ddo.did,
         "serviceId": sa.index,
         "serviceType": sa.type,
         "consumerAddress": consumer_wallet.address,
         "transferTxId": tx_id,
-        "dataToken": dataset.data_token_address,
+        "dataToken": sa.datatoken_address,
         "output": build_stage_output_dict(
             dict(), sa.service_endpoint, consumer_wallet.address, publisher_wallet
         ),
         "algorithmDid": alg_ddo.did,
-        "algorithmDataToken": alg_data_token,
+        "algorithmDataToken": sa_compute.datatoken_address,
         "algorithmTransferTxId": alg_tx_id,
     }
 
@@ -167,40 +166,61 @@ def test_compute_payload_without_additional_inputs(
         "type": "address",
         "address": consumer_wallet.address,
     }
-    assert payload["dids"][0]["did"] == dataset.did
+    assert payload["dids"][0]["did"] == ddo.did
     assert payload["dids"][0]["serviceId"] == sa.index
     assert payload["algos"][0]["did"] == alg_ddo.did
-    assert payload["algos"][0]["serviceId"] == sa.index
+    assert payload["algos"][0]["serviceId"] == sa_compute.index
 
 
 def test_compute_request_payload(
     client, publisher_wallet, consumer_wallet, provider_address
 ):
-    dataset, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
+    ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
         client, publisher_wallet, consumer_wallet
     )
-    did = dataset.did
-    sa = dataset.get_service("compute")
-    alg_data_token = alg_ddo.data_token_address
+    sa = alg_ddo.get_service_by_type(ServiceType.ACCESS)
+    sa_compute = ddo.get_service_by_type(ServiceType.COMPUTE)
 
-    ddo2, tx_id2, _, _ = build_and_send_ddo_with_compute_service(
-        client, publisher_wallet, consumer_wallet
+    ddo2 = get_registered_asset(
+        publisher_wallet,
+        custom_services="vanilla_compute",
+        custom_services_args=[
+            {
+                "did": alg_ddo.did,
+                "filesChecksum": "TODO",
+                "containerSectionChecksum": "TODO",
+            }
+        ],
     )
-    sa2 = ddo2.get_service("compute")
+
+    web3 = get_web3()
+    sa2 = ddo2.get_service_by_type(ServiceType.COMPUTE)
+    mint_100_datatokens(web3, sa2.datatoken_address, consumer_wallet.address, publisher_wallet)
+    tx_id2, _ = start_order(
+        web3,
+        sa2.datatoken_address,
+        consumer_wallet.address,
+        to_wei(1),
+        sa2.index,
+        BLACK_HOLE_ADDRESS,
+        BLACK_HOLE_ADDRESS,
+        0,
+        consumer_wallet,
+    )
 
     req = {
         "signature": generate_auth_token(consumer_wallet),
-        "documentId": did,
+        "documentId": ddo.did,
         "serviceId": sa.index,
         "serviceType": sa.type,
         "consumerAddress": consumer_wallet.address,
         "transferTxId": tx_id,
-        "dataToken": dataset.data_token_address,
+        "dataToken": sa.datatoken_address,
         "output": build_stage_output_dict(
             dict(), sa.service_endpoint, consumer_wallet.address, publisher_wallet
         ),
         "algorithmDid": alg_ddo.did,
-        "algorithmDataToken": alg_data_token,
+        "algorithmDataToken": sa_compute.datatoken_address,
         "algorithmTransferTxId": alg_tx_id,
         "additionalInputs": [
             {"documentId": ddo2.did, "transferTxId": tx_id2, "serviceId": sa2.index}
@@ -215,10 +235,10 @@ def test_compute_request_payload(
         "type": "address",
         "address": consumer_wallet.address,
     }
-    assert payload["dids"][0]["did"] == dataset.did
+    assert payload["dids"][0]["did"] == ddo.did
     assert payload["dids"][0]["serviceId"] == sa.index
     assert payload["algos"][0]["did"] == alg_ddo.did
-    assert payload["algos"][0]["serviceId"] == sa.index
+    assert payload["algos"][0]["serviceId"] == sa_compute.index
     assert payload["additionalDids"][0]["did"] == ddo2.did
     assert payload["additionalDids"][0]["serviceId"] == sa2.index
 
@@ -233,24 +253,25 @@ def test_fails(
 ):
     """Tests possible failures of the compute request."""
     monkeypatch.setenv("RBAC_SERVER_URL", "http://172.15.0.8:3000")
-    dataset, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
+    ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
         client, publisher_wallet, consumer_wallet
     )
-    did = dataset.did
-    sa = dataset.get_service("compute")
-    alg_data_token = alg_ddo.data_token_address
+    sa = alg_ddo.get_service_by_type(ServiceType.ACCESS)
+    sa_compute = ddo.get_service_by_type(ServiceType.COMPUTE)
 
     # output key is invalid
     req = {
         "signature": generate_auth_token(consumer_wallet),
-        "documentId": did,
+        "documentId": ddo.did,
         "serviceId": sa.index,
         "serviceType": sa.type,
         "consumerAddress": consumer_wallet.address,
         "transferTxId": tx_id,
-        "output": "this can not be decoded",
+        "output": build_stage_output_dict(
+            dict(), sa.service_endpoint, consumer_wallet.address, publisher_wallet
+        ),
         "algorithmDid": alg_ddo.did,
-        "algorithmDataToken": alg_data_token,
+        "algorithmDataToken": sa_compute.datatoken_address,
         "algorithmTransferTxId": alg_tx_id,
     }
 
