@@ -10,6 +10,9 @@ from ocean_provider.utils.currency import to_wei
 from ocean_provider.utils.datatoken import get_datatoken_contract
 from ocean_provider.utils.services import ServiceType
 from ocean_provider.validation.algo import build_stage_output_dict
+from tests.helpers.ddo_dict_builders import (
+    build_metadata_dict_type_algorithm,
+)
 from tests.helpers.compute_helpers import (
     build_and_send_ddo_with_compute_service,
     comp_ds,
@@ -21,7 +24,7 @@ from tests.helpers.compute_helpers import (
     get_registered_asset,
     mint_100_datatokens,
     BLACK_HOLE_ADDRESS,
-    start_order
+    start_order,
 )
 from tests.test_helpers import mint_tokens_and_wait, send_order
 
@@ -57,7 +60,9 @@ def test_compute_norawalgo_allowed(
         0,
         consumer_wallet,
     )
-    signature = get_compute_signature(client, consumer_wallet, dataset_ddo_w_compute_service.did)
+    signature = get_compute_signature(
+        client, consumer_wallet, dataset_ddo_w_compute_service.did
+    )
 
     # Start the compute job
     payload = dict(
@@ -88,10 +93,16 @@ def test_compute_specific_algo_dids(
     client, publisher_wallet, consumer_wallet, consumer_address
 ):
     ddo, tx_id, alg_ddo, _ = build_and_send_ddo_with_compute_service(
-        client, publisher_wallet, consumer_wallet, asset_type="specific_algo_dids"
+        client, publisher_wallet, consumer_wallet
     )
-    sa = ddo.get_service("compute")
+    sa = alg_ddo.get_service_by_type(ServiceType.ACCESS)
     signature = get_compute_signature(client, consumer_wallet, ddo.did)
+
+    algo_metadata = build_metadata_dict_type_algorithm()
+    another_alg_ddo = get_registered_asset(
+        publisher_wallet, custom_metadata=algo_metadata
+    )
+    not_sa_compute = another_alg_ddo.get_service_by_type(ServiceType.ACCESS)
 
     # Start the compute job
     payload = dict(
@@ -102,12 +113,12 @@ def test_compute_specific_algo_dids(
             "serviceType": sa.type,
             "consumerAddress": consumer_address,
             "transferTxId": tx_id,
-            "dataToken": ddo.data_token_address,
+            "dataToken": sa.datatoken_address,
             "output": build_stage_output_dict(
                 dict(), sa.service_endpoint, consumer_address, publisher_wallet
             ),
-            "algorithmDid": alg_ddo.did,
-            "algorithmDataToken": alg_ddo.data_token_address,
+            "algorithmDid": another_alg_ddo.did,
+            "algorithmDataToken": not_sa_compute.datatoken_address,
         }
     )
 
@@ -116,6 +127,10 @@ def test_compute_specific_algo_dids(
     assert (
         response.status == "400 BAD REQUEST"
     ), f"start compute job failed: {response.status} , {response.data}"
+    assert (
+        response.json["error"]
+        == f"this algorithm did {another_alg_ddo.did} is not trusted."
+    )
 
 
 def test_compute(client, publisher_wallet, consumer_wallet):

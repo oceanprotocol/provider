@@ -217,7 +217,7 @@ def get_compute_service_no_rawalgo(address, price, datatoken_address):
         "allowRawAlgorithm": False,
         "allowNetworkAccess": False,
         "publisherTrustedAlgorithmPublishers": [],
-        "publisherTrustedAlgorithms": []
+        "publisherTrustedAlgorithms": [],
     }
 
     unencrypted_files_list = [

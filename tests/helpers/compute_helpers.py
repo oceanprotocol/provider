@@ -56,19 +56,6 @@ def build_and_send_ddo_with_compute_service(
         dataset_ddo_w_compute_service = get_registered_asset(
             publisher_wallet, "allow_all_published"
         )
-    elif asset_type == "specific_algo_dids":
-        algos = []
-
-        for _ in itertools.repeat(None, 2):
-            alg_ddo = get_algorithm_ddo(client, consumer_wallet)
-            alg_data_token = alg_ddo.data_token_address
-            alg_dt_contract = get_datatoken_contract(web3, alg_data_token)
-            mint_tokens_and_wait(alg_dt_contract, consumer_wallet, consumer_wallet)
-            algos.append(alg_ddo)
-
-        dataset_ddo_w_compute_service = comp_ds(
-            client, publisher_wallet, "specific_algo_dids", algos
-        )
     elif asset_type == "specific_algo_publishers":
         alg_ddo = get_algorithm_ddo(client, consumer_wallet)
         alg_data_token = alg_ddo.data_token_address
