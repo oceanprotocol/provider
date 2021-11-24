@@ -12,6 +12,9 @@ from eth_typing.encoding import HexStr
 from eth_typing.evm import HexAddress
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.services import Service
+from ocean_provider.utils.encryption import do_encrypt
+from ocean_provider.utils.basics import get_provider_wallet
+from web3.main import Web3
 
 """Test helpers for building service dicts to be used in DDOs"""
 
@@ -177,29 +180,35 @@ def get_access_service():
     return Service()
 
 
-def get_compute_service(address, price, metadata):
+def get_compute_service(address, price, datatoken_address, trusted_algos):
     compute_service_attributes = {
-        "main": {
-            "name": "dataAssetComputeServiceAgreement",
-            "creator": address,
-            "cost": price,
-            "timeout": 3600,
-            "datePublished": metadata["main"]["dateCreated"],
-            "privacy": {
-                "allowRawAlgorithm": True,
-                "allowAllPublishedAlgorithms": True,
-                "publisherTrustedAlgorithms": [],
-                "allowNetworkAccess": False,
-            },
-        }
+        "namespace": "test",
+        "allowRawAlgorithm": True,
+        "allowNetworkAccess": False,
+        "publisherTrustedAlgorithmPublishers": [],
+        "publisherTrustedAlgorithms": trusted_algos,
     }
 
-    return Service(
-        service_endpoint=f"http://localhost:8030{BaseURLs.SERVICES_URL}/compute",
-        service_type="compute",
-        index=4,
-        attributes=compute_service_attributes,
+    unencrypted_files_list = [
+        "https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt"
+    ]
+
+    encrypted_files_str = json.dumps(unencrypted_files_list, separators=(",", ":"))
+    encrypted_files = do_encrypt(
+        Web3.toHex(text=encrypted_files_str), get_provider_wallet()
     )
+
+    return {
+        "id": "compute_1",
+        "type": "compute",
+        "name": "compute_1",
+        "description": "compute_1",
+        "datatokenAddress": datatoken_address,
+        "timeout": 3600,
+        "serviceEndpoint": "http://172.15.0.4:8030/",
+        "files": encrypted_files,
+        "compute": compute_service_attributes,
+    }
 
 
 def get_compute_service_no_rawalgo(address, price, metadata):

@@ -42,7 +42,8 @@ class StageAlgoSerializer:
         dict_template["id"] = algorithm_did
         dict_template["rawcode"] = ""
 
-        asset_url = get_service_files_list(algo_asset, self.provider_wallet)[0]
+        asset_urls = get_service_files_list(algo_asset, self.provider_wallet)
+        asset_url = asset_urls[0] if asset_urls else None
         if asset_url:
             asset_url = append_userdata(asset_url, self.algo_data, "algouserdata")
             dict_template["url"] = asset_url
@@ -57,8 +58,6 @@ class StageAlgoSerializer:
             if userdata:
                 dict_template["remote"]["algouserdata"] = userdata
 
-        dict_template["container"] = algo_asset.metadata["main"]["algorithm"][
-            "container"
-        ]
+        dict_template["container"] = algo_asset.metadata["algorithm"]["container"]
 
         return dict(dict_template)

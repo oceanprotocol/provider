@@ -87,7 +87,7 @@ def verify_order_tx(
         if tr.args.to not in receiver_to_transfers:
             receiver_to_transfers[tr.args.to] = []
         receiver_to_transfers[tr.args.to].append(tr)
-    receiver = datatoken_contract.caller.getFeeCollector()
+    receiver = datatoken_contract.caller.getPaymentCollector()
     if receiver not in receiver_to_transfers:
         raise AssertionError(
             f"receiver {receiver} is not found in the transfer events."

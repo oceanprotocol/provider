@@ -5,6 +5,7 @@
 import json
 
 from ocean_provider.validation.algo import WorkflowValidator, build_stage_output_dict
+from ocean_provider.utils.services import ServiceType
 from tests.helpers.compute_helpers import build_and_send_ddo_with_compute_service
 
 
@@ -15,7 +16,7 @@ def test_passes(
     ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
         client, publisher_wallet, consumer_wallet
     )
-    sa = ddo.get_service("compute")
+    sa = alg_ddo.get_service_by_type(ServiceType.ACCESS)
 
     data = {
         "documentId": ddo.did,
@@ -25,7 +26,7 @@ def test_passes(
             dict(), sa.service_endpoint, consumer_address, publisher_wallet
         ),
         "algorithmDid": alg_ddo.did,
-        "algorithmDataToken": alg_ddo.data_token_address,
+        "algorithmDataToken": sa.datatoken_address,
         "algorithmTransferTxId": alg_tx_id,
     }
 

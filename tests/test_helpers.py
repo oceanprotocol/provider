@@ -33,6 +33,7 @@ from ocean_provider.utils.did import compute_did_from_data_nft_address_and_chain
 from ocean_provider.utils.encryption import do_encrypt
 from tests.ddo.ddo_sample1_v4 import json_dict as ddo_sample1_v4
 from tests.helpers.ddo_dict_builders import (
+    get_compute_service,
     build_credentials_dict,
     build_ddo_dict,
     build_metadata_dict_type_dataset,
@@ -173,7 +174,12 @@ def mint_100_datatokens(
 
 
 def get_registered_asset(
-    from_wallet, unencrypted_files_list=None, custom_credentials=None
+    from_wallet,
+    unencrypted_files_list=None,
+    custom_credentials=None,
+    custom_metadata=None,
+    custom_services=None,
+    custom_services_args=None,
 ):
     web3 = get_web3()
     data_nft_address = deploy_data_nft(
@@ -217,17 +223,28 @@ def get_registered_asset(
 
     chain_id = web3.eth.chain_id
     did = compute_did_from_data_nft_address_and_chain_id(data_nft_address, chain_id)
-    ddo = build_ddo_dict(
-        did=did,
-        chain_id=chain_id,
-        metadata=build_metadata_dict_type_dataset(),
-        services=[
+    metadata = (
+        build_metadata_dict_type_dataset() if not custom_metadata else custom_metadata
+    )
+    services = (
+        [
             build_service_dict_type_access(
                 datatoken_address=datatoken_address,
                 service_endpoint="http://172.15.0.4:8030",
                 encrypted_files=encrypted_files,
             )
-        ],
+        ]
+        if not custom_services
+        else build_custom_services(
+            custom_services, from_wallet, web3, data_nft_address, custom_services_args
+        )
+    )
+
+    ddo = build_ddo_dict(
+        did=did,
+        chain_id=chain_id,
+        metadata=metadata,
+        services=services,
         credentials=credentials,
     )
 
@@ -474,6 +491,37 @@ def start_order(
         consumeFeeAmount,
     ).buildTransaction({"from": from_wallet.address})
     return sign_send_and_wait_for_receipt(web3, start_order_tx, from_wallet)
+
+
+def build_custom_services(
+    services_type, from_wallet, web3, data_nft_address, custom_services_args
+):
+    datatoken_address = deploy_datatoken(
+        web3=web3,
+        data_nft_address=data_nft_address,
+        template_index=1,
+        name="Datatoken 1",
+        symbol="DT1",
+        minter=from_wallet.address,
+        fee_manager=from_wallet.address,
+        publishing_market=BLACK_HOLE_ADDRESS,
+        publishing_market_fee_token=get_ocean_token_address(web3),
+        cap=to_wei(1000),
+        publishing_market_fee_amount=0,
+        from_wallet=from_wallet,
+    )
+
+    if services_type == "vanilla_compute":
+        return [
+            get_compute_service(
+                from_wallet.address,
+                10,
+                datatoken_address,
+                trusted_algos=custom_services_args,
+            )
+        ]
+
+    return []
 
 
 def send_order():
