@@ -6,6 +6,7 @@ import time
 
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
+from ocean_provider.utils.currency import to_wei
 from ocean_provider.utils.datatoken import get_datatoken_contract
 from ocean_provider.utils.services import ServiceType
 from ocean_provider.validation.algo import build_stage_output_dict
@@ -17,6 +18,10 @@ from tests.helpers.compute_helpers import (
     get_compute_signature,
     get_possible_compute_job_status_text,
     post_to_compute,
+    get_registered_asset,
+    mint_100_datatokens,
+    BLACK_HOLE_ADDRESS,
+    start_order
 )
 from tests.test_helpers import mint_tokens_and_wait, send_order
 
@@ -25,9 +30,14 @@ def test_compute_norawalgo_allowed(
     client, publisher_wallet, consumer_wallet, consumer_address, web3
 ):
     # publish a dataset asset
-    dataset = comp_ds(client, publisher_wallet, "no_rawalgo")
-    dt_contract = get_datatoken_contract(web3, dataset.data_token_address)
-    mint_tokens_and_wait(dt_contract, consumer_wallet, publisher_wallet)
+    dataset_ddo_w_compute_service = get_registered_asset(
+        publisher_wallet,
+        custom_services="norawalgo",
+    )
+
+    sa = dataset_ddo_w_compute_service.get_service_by_type(ServiceType.COMPUTE)
+    datatoken = sa.datatoken_address
+    mint_100_datatokens(web3, datatoken, consumer_wallet.address, publisher_wallet)
 
     algorithm_meta = {
         "rawcode": "console.log('Hello world'!)",
@@ -36,20 +46,29 @@ def test_compute_norawalgo_allowed(
         "container": {"entrypoint": "node $ALGO", "image": "node", "tag": "10"},
     }
 
-    sa = dataset.get_service("compute")
-    tx_id = send_order(client, dataset, dt_contract, sa, consumer_wallet)
-    signature = get_compute_signature(client, consumer_wallet, dataset.did)
+    tx_id, _ = start_order(
+        web3,
+        datatoken,
+        consumer_wallet.address,
+        to_wei(1),
+        sa.index,
+        BLACK_HOLE_ADDRESS,
+        BLACK_HOLE_ADDRESS,
+        0,
+        consumer_wallet,
+    )
+    signature = get_compute_signature(client, consumer_wallet, dataset_ddo_w_compute_service.did)
 
     # Start the compute job
     payload = dict(
         {
             "signature": signature,
-            "documentId": dataset.did,
+            "documentId": dataset_ddo_w_compute_service.did,
             "serviceId": sa.index,
             "serviceType": sa.type,
             "consumerAddress": consumer_address,
             "transferTxId": tx_id,
-            "dataToken": dataset.data_token_address,
+            "dataToken": sa.datatoken_address,
             "output": build_stage_output_dict(
                 dict(), sa.service_endpoint, consumer_address, publisher_wallet
             ),

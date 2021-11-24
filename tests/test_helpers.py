@@ -34,6 +34,7 @@ from ocean_provider.utils.encryption import do_encrypt
 from tests.ddo.ddo_sample1_v4 import json_dict as ddo_sample1_v4
 from tests.helpers.ddo_dict_builders import (
     get_compute_service,
+    get_compute_service_no_rawalgo,
     build_credentials_dict,
     build_ddo_dict,
     build_metadata_dict_type_dataset,
@@ -518,6 +519,14 @@ def build_custom_services(
                 10,
                 datatoken_address,
                 trusted_algos=custom_services_args,
+            )
+        ]
+    elif services_type == "norawalgo":
+        return [
+            get_compute_service_no_rawalgo(
+                from_wallet.address,
+                10,
+                datatoken_address,
             )
         ]
 

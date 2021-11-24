@@ -183,7 +183,7 @@ def get_access_service():
 def get_compute_service(address, price, datatoken_address, trusted_algos):
     compute_service_attributes = {
         "namespace": "test",
-        "allowRawAlgorithm": True,
+        "allowRawAlgorithm": False,
         "allowNetworkAccess": False,
         "publisherTrustedAlgorithmPublishers": [],
         "publisherTrustedAlgorithms": trusted_algos,
@@ -211,29 +211,35 @@ def get_compute_service(address, price, datatoken_address, trusted_algos):
     }
 
 
-def get_compute_service_no_rawalgo(address, price, metadata):
+def get_compute_service_no_rawalgo(address, price, datatoken_address):
     compute_service_attributes = {
-        "main": {
-            "name": "dataAssetComputeServiceAgreement",
-            "creator": address,
-            "cost": price,
-            "privacy": {
-                "allowRawAlgorithm": False,
-                "allowAllPublishedAlgorithms": False,
-                "publisherTrustedAlgorithms": [],
-                "allowNetworkAccess": True,
-            },
-            "timeout": 3600,
-            "datePublished": metadata["main"]["dateCreated"],
-        }
+        "namespace": "test",
+        "allowRawAlgorithm": False,
+        "allowNetworkAccess": False,
+        "publisherTrustedAlgorithmPublishers": [],
+        "publisherTrustedAlgorithms": []
     }
 
-    return Service(
-        service_endpoint=f"http://localhost:8030{BaseURLs.SERVICES_URL}/compute",
-        service_type="compute",
-        index=4,
-        attributes=compute_service_attributes,
+    unencrypted_files_list = [
+        "https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt"
+    ]
+
+    encrypted_files_str = json.dumps(unencrypted_files_list, separators=(",", ":"))
+    encrypted_files = do_encrypt(
+        Web3.toHex(text=encrypted_files_str), get_provider_wallet()
     )
+
+    return {
+        "id": "compute_1",
+        "type": "compute",
+        "name": "compute_1",
+        "description": "compute_1",
+        "datatokenAddress": datatoken_address,
+        "timeout": 3600,
+        "serviceEndpoint": "http://172.15.0.4:8030/",
+        "files": encrypted_files,
+        "compute": compute_service_attributes,
+    }
 
 
 def get_compute_service_specific_algo_dids(address, price, metadata, algos):
