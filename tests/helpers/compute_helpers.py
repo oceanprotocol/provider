@@ -25,7 +25,14 @@ def build_and_send_ddo_with_compute_service(
     web3 = get_web3()
     algo_metadata = build_metadata_dict_type_algorithm()
 
-    alg_ddo = get_registered_asset(publisher_wallet, custom_metadata=algo_metadata)
+    if alg_diff:
+        alg_ddo = get_registered_asset(
+            publisher_wallet,
+            custom_metadata=algo_metadata,
+            custom_service_endpoint="http://172.15.0.7:8030"
+        )
+    else:
+        alg_ddo = get_registered_asset(publisher_wallet, custom_metadata=algo_metadata)
 
     # TODO: diff provider and remove get_algorithm_ddo_different_provider
 

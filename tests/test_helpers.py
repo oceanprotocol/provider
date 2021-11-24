@@ -177,6 +177,7 @@ def get_registered_asset(
     custom_metadata=None,
     custom_services=None,
     custom_services_args=None,
+    custom_service_endpoint=None
 ):
     web3 = get_web3()
     data_nft_address = deploy_data_nft(
@@ -223,11 +224,13 @@ def get_registered_asset(
     metadata = (
         build_metadata_dict_type_dataset() if not custom_metadata else custom_metadata
     )
+    service_endpoint = "http://172.15.0.4:8030" if not custom_service_endpoint else custom_service_endpoint
+
     services = (
         [
             build_service_dict_type_access(
                 datatoken_address=datatoken_address,
-                service_endpoint="http://172.15.0.4:8030",
+                service_endpoint=service_endpoint,
                 encrypted_files=encrypted_files,
             )
         ]
