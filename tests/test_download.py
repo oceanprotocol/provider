@@ -7,7 +7,6 @@ import pytest
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import generate_auth_token, sign_message
 from ocean_provider.utils.currency import to_wei
-from ocean_provider.utils.datatoken import get_datatoken_contract
 from ocean_provider.utils.services import ServiceType
 from tests.test_helpers import (
     BLACK_HOLE_ADDRESS,
@@ -20,8 +19,6 @@ from tests.test_helpers import (
     get_nonce,
     initialize_service,
     mint_100_datatokens,
-    mint_tokens_and_wait,
-    send_order,
     start_order,
 )
 

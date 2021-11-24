@@ -5,27 +5,16 @@ import uuid
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.currency import to_wei
-from ocean_provider.utils.datatoken import get_datatoken_contract
 from ocean_provider.utils.services import ServiceType
 from tests.helpers.ddo_dict_builders import (
     build_metadata_dict_type_algorithm,
-    get_compute_service,
-    get_compute_service_no_rawalgo,
-    get_compute_service_specific_algo_publishers,
 )
 from tests.test_helpers import (
     BLACK_HOLE_ADDRESS,
-    deploy_datatoken,
-    get_algorithm_ddo,
-    get_algorithm_ddo_different_provider,
     get_nonce,
-    get_ocean_token_address,
     get_registered_asset,
-    get_sample_ddo_with_compute_service,
     get_web3,
     mint_100_datatokens,
-    mint_tokens_and_wait,
-    send_order,
     start_order,
 )
 
@@ -42,12 +31,9 @@ def build_and_send_ddo_with_compute_service(
 
     # publish an algorithm asset (asset with metadata of type `algorithm`)
     service = alg_ddo.get_service_by_type(ServiceType.ACCESS)
-    alg_data_token = service.datatoken_address
     mint_100_datatokens(
         web3, service.datatoken_address, consumer_wallet.address, publisher_wallet
     )
-
-    # TODO: remove comp_ds, move these ifs to build_custom_services
 
     # publish a dataset asset
     if asset_type == "allow_all_published":
@@ -55,18 +41,6 @@ def build_and_send_ddo_with_compute_service(
             publisher_wallet,
             custom_services="vanilla_compute",
             custom_services_args=[],
-        )
-    elif asset_type == "specific_algo_publishers":
-        alg_ddo = get_algorithm_ddo(client, consumer_wallet)
-        alg_data_token = alg_ddo.data_token_address
-        alg_dt_contract = get_datatoken_contract(web3, alg_data_token)
-        mint_tokens_and_wait(alg_dt_contract, consumer_wallet, consumer_wallet)
-
-        dataset_ddo_w_compute_service = comp_ds(
-            client,
-            publisher_wallet,
-            "specific_algo_publishers",
-            publishers=[alg_ddo.publisher],
         )
     else:
         dataset_ddo_w_compute_service = get_registered_asset(
@@ -181,20 +155,3 @@ def get_compute_result(client, endpoint, params, raw_response=False):
     ), f"get compute result failed: status {response.status}, data {response.data}"
 
     return response.data
-
-
-def comp_ds(client, wallet, compute_service=None, algos=None, publishers=None):
-    metadata = get_sample_ddo_with_compute_service()["service"][0]["attributes"]
-    metadata["main"]["files"][0]["checksum"] = str(uuid.uuid4())
-
-    if compute_service == "specific_algo_publishers":
-        service = get_compute_service_specific_algo_publishers(
-            wallet.address, metadata["main"]["cost"], metadata, publishers
-        )
-    else:
-        service = get_compute_service(
-            wallet.address, metadata["main"]["cost"], metadata
-        )
-
-    metadata["main"].pop("cost")
-    return get_registered_asset(client, wallet, metadata, service)

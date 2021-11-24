@@ -5,11 +5,9 @@ import json
 import os
 import pathlib
 import time
-import uuid
 from hashlib import sha256
 from typing import Tuple
 
-import ipfshttpclient
 from eth_account.signers.local import LocalAccount
 from eth_typing.encoding import HexStr
 from eth_typing.evm import HexAddress
@@ -33,13 +31,11 @@ from ocean_provider.utils.data_nft_factory import get_data_nft_factory_contract
 from ocean_provider.utils.datatoken import get_datatoken_contract
 from ocean_provider.utils.did import compute_did_from_data_nft_address_and_chain_id
 from ocean_provider.utils.encryption import do_encrypt
-from tests.ddo.ddo_sample1_v4 import json_dict as ddo_sample1_v4
 from tests.helpers.ddo_dict_builders import (
     build_credentials_dict,
     build_ddo_dict,
     build_metadata_dict_type_dataset,
     build_service_dict_type_access,
-    get_access_service,
     get_compute_service,
     get_compute_service_no_rawalgo,
 )
@@ -295,6 +291,7 @@ def set_metadata(
 
 
 def get_dataset_asset_with_access_service(client, wallet):
+    # TODO: remove this layer, use get_registered_asset directly
     return get_registered_asset(wallet)
 
 
@@ -336,22 +333,6 @@ def get_dataset_ddo_with_denied_consumer(client, wallet, consumer_addr):
     )
 
 
-def get_sample_algorithm_ddo():
-    path = get_resource_path("ddo", "ddo_sample_algorithm.json")
-    assert path.exists(), f"{path} does not exist!"
-    with open(path, "r") as file_handle:
-        metadata = file_handle.read()
-    return json.loads(metadata)
-
-
-def get_sample_ddo_with_compute_service():
-    path = get_resource_path("ddo", "ddo_with_compute_service.json")
-    assert path.exists(), f"{path} does not exist!"
-    with open(path, "r") as file_handle:
-        metadata = file_handle.read()
-    return json.loads(metadata)
-
-
 def get_dataset_with_invalid_url_ddo(client, wallet):
     return get_registered_asset(
         wallet, unencrypted_files_list=["http://localhost/not_valid_url"]
@@ -367,20 +348,8 @@ def get_dataset_with_ipfs_url_ddo(client, wallet):
     )
 
 
-def get_algorithm_ddo(client, wallet):
-    metadata = get_sample_algorithm_ddo()["service"][0]["attributes"]
-    metadata["main"]["files"][0]["checksum"] = str(uuid.uuid4())
-    service = get_access_service(wallet.address, metadata)
-    metadata["main"].pop("cost")
-    return get_registered_asset(client, wallet, metadata, service)
-
-
 def get_algorithm_ddo_different_provider(client, wallet):
-    metadata = get_sample_algorithm_ddo()["service"][0]["attributes"]
-    metadata["main"]["files"][0]["checksum"] = str(uuid.uuid4())
-    service = get_access_service(wallet.address, metadata, diff_provider=True)
-    metadata["main"].pop("cost")
-    return get_registered_asset(client, wallet, metadata, service)
+    pass
 
 
 def get_nonce(client, address):
@@ -396,33 +365,12 @@ def get_nonce(client, address):
     return value["nonce"]
 
 
-def mint_tokens_and_wait(datatoken_contract, receiver_wallet, minter_wallet):
-    pass
-
-
 def get_resource_path(dir_name, file_name):
     base = os.path.realpath(__file__).split(os.path.sep)[1:-1]
     if dir_name:
         return pathlib.Path(os.path.join(os.path.sep, *base, dir_name, file_name))
     else:
         return pathlib.Path(os.path.join(os.path.sep, *base, file_name))
-
-
-def get_sample_ddo():
-    return ddo_sample1_v4
-
-
-def get_ipfs_url_ddo():
-    path = get_resource_path("ddo", "ddo_sample_ipfs_url.json")
-    assert path.exists(), f"{path} does not exist!"
-    with open(path, "r") as file_handle:
-        metadata = file_handle.read()
-    client = ipfshttpclient.connect("/dns/172.15.0.16/tcp/5001/http")
-    cid = client.add("./tests/resources/ddo_sample_file.txt")["Hash"]
-    url = f"ipfs://{cid}"
-    metadata_json = json.loads(metadata)
-    metadata_json["service"][0]["attributes"]["main"]["files"][0]["url"] = url
-    return metadata_json
 
 
 def wait_for_asset(metadata_cache_url, did, timeout=30):
@@ -531,7 +479,3 @@ def build_custom_services(
         ]
 
     return []
-
-
-def send_order():
-    pass

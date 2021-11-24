@@ -7,13 +7,11 @@ import time
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.currency import to_wei
-from ocean_provider.utils.datatoken import get_datatoken_contract
 from ocean_provider.utils.services import ServiceType
 from ocean_provider.validation.algo import build_stage_output_dict
 from tests.helpers.compute_helpers import (
     BLACK_HOLE_ADDRESS,
     build_and_send_ddo_with_compute_service,
-    comp_ds,
     get_compute_job_info,
     get_compute_result,
     get_compute_signature,
@@ -25,7 +23,6 @@ from tests.helpers.compute_helpers import (
     get_web3
 )
 from tests.helpers.ddo_dict_builders import build_metadata_dict_type_algorithm
-from tests.test_helpers import mint_tokens_and_wait, send_order
 
 
 def test_compute_norawalgo_allowed(
