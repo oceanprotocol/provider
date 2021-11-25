@@ -212,6 +212,28 @@ def get_compute_service(address, price, datatoken_address, trusted_algos):
     }
 
 
+def get_bogus_service(datatoken_address):
+    unencrypted_files_list = [
+        "https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt"
+    ]
+
+    encrypted_files_str = json.dumps(unencrypted_files_list, separators=(",", ":"))
+    encrypted_files = do_encrypt(
+        Web3.toHex(text=encrypted_files_str), get_provider_wallet()
+    )
+
+    return {
+        "id": "bogus_invalid_1",
+        "type": "bogus_invalid",
+        "name": "bogus_invalid_1",
+        "description": "bogus_invalid_1",
+        "datatokenAddress": datatoken_address,
+        "timeout": 3600,
+        "serviceEndpoint": "http://172.15.0.4:8030/",
+        "files": encrypted_files,
+    }
+
+
 def get_compute_service_no_rawalgo(address, price, datatoken_address):
     compute_service_attributes = {
         "namespace": "test",

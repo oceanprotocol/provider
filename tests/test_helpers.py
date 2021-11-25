@@ -37,6 +37,7 @@ from tests.helpers.ddo_dict_builders import (
     build_metadata_dict_type_dataset,
     build_service_dict_type_access,
     get_compute_service,
+    get_bogus_service,
     get_compute_service_no_rawalgo,
 )
 
@@ -476,6 +477,16 @@ def build_custom_services(
                 datatoken_address,
                 trusted_algos=custom_services_args,
             )
+        ]
+    if services_type == "allow_all_published_and_one_bogus":
+        return [
+            get_compute_service(
+                from_wallet.address,
+                10,
+                datatoken_address,
+                trusted_algos=[],
+            ),
+            get_bogus_service(datatoken_address),
         ]
     elif services_type == "norawalgo":
         return [

@@ -47,6 +47,11 @@ def build_and_send_ddo_with_compute_service(
             custom_services="vanilla_compute",
             custom_services_args=[],
         )
+    elif asset_type == "allow_all_published_and_one_bogus":
+        dataset_ddo_w_compute_service = get_registered_asset(
+            publisher_wallet,
+            custom_services="allow_all_published_and_one_bogus",
+        )
     else:
         dataset_ddo_w_compute_service = get_registered_asset(
             publisher_wallet,
