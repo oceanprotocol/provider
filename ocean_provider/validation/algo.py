@@ -338,7 +338,7 @@ class InputItemValidator:
 
         if trusted_publishers:
             algo_ddo = get_asset_from_metadatastore(get_metadata_url(), algorithm_did)
-            if algo_ddo.publisher not in trusted_publishers:
+            if algo_ddo.nft["owner"] not in trusted_publishers:
                 self.error = "this algorithm is not from a trusted publisher"
                 return False
 

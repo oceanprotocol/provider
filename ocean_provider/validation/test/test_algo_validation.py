@@ -288,33 +288,41 @@ def test_fails(
     )
 
     # Additional input has other trusted publishers
-    # TODO: reinstate and adapt build_and_send_ddo_with_compute_service
-    # trust_ddo, trust_tx_id, _, _ = build_and_send_ddo_with_compute_service(
-    #    client, publisher_wallet, consumer_wallet, asset_type="specific_algo_publishers"
-    # )
-    # trust_sa = trust_ddo.get_service("compute")
+    (
+        trust_ddo,
+        trust_tx_id,
+        alg_ddo,
+        alg_tx_id,
+    ) = build_and_send_ddo_with_compute_service(
+        client, publisher_wallet, consumer_wallet, asset_type="specific_algo_publishers"
+    )
+    did = trust_ddo.did
+    trust_sa = trust_ddo.get_service_by_type(ServiceType.COMPUTE)
+    sa = alg_ddo.get_service_by_type(ServiceType.ACCESS)
+    sa_compute = trust_ddo.get_service_by_type(ServiceType.COMPUTE)
+    alg_data_token = sa_compute.datatoken_address
+
+    valid_output = build_stage_output_dict(
+        dict(), sa.service_endpoint, consumer_address, publisher_wallet
+    )
 
     data = {
         "documentId": did,
-        "transferTxId": tx_id,
+        "transferTxId": trust_tx_id,
         "serviceId": sa.index,
         "output": valid_output,
         "algorithmDid": alg_ddo.did,
         "algorithmDataToken": alg_data_token,
         "algorithmTransferTxId": alg_tx_id,
-        # "additionalInputs": [
-        #    {
-        #        "documentId": trust_ddo.did,
-        #        "transferTxId": trust_tx_id,
-        #        "serviceId": trust_sa.index,
-        #    }
-        # ],
+        "additionalInputs": [
+            {
+                "documentId": trust_ddo.did,
+                "transferTxId": trust_tx_id,
+                "serviceId": trust_sa.index,
+            }
+        ],
     }
 
-    # validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
-    # passes through the trusted Publishers, but fails on trusted dids
-    # assert validator.validate() is False
-    # assert (
-    #    validator.error
-    #    == f"Error in input at index 1: this algorithm did {alg_ddo.did} is not trusted."
-    # )
+    validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
+    assert validator.validate() is False
+    assert validator.error == "this algorithm is not from a trusted publisher"

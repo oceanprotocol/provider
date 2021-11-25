@@ -357,10 +357,6 @@ def get_dataset_with_ipfs_url_ddo(client, wallet):
     )
 
 
-def get_algorithm_ddo_different_provider(client, wallet):
-    pass
-
-
 def get_nonce(client, address):
     endpoint = BaseURLs.SERVICES_URL + "/nonce"
     response = client.get(
@@ -488,7 +484,16 @@ def build_custom_services(
             ),
             get_bogus_service(datatoken_address),
         ]
-    elif services_type == "norawalgo":
+    if services_type == "specific_algo_publishers":
+        return [
+            get_compute_service(
+                from_wallet.address,
+                10,
+                datatoken_address,
+                trusted_publishers=custom_services_args,
+            ),
+        ]
+    if services_type == "norawalgo":
         return [
             get_compute_service_no_rawalgo(
                 from_wallet.address,

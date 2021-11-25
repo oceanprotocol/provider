@@ -32,8 +32,6 @@ def build_and_send_ddo_with_compute_service(
     else:
         alg_ddo = get_registered_asset(publisher_wallet, custom_metadata=algo_metadata)
 
-    # TODO: diff provider and remove get_algorithm_ddo_different_provider
-
     # publish an algorithm asset (asset with metadata of type `algorithm`)
     service = alg_ddo.get_service_by_type(ServiceType.ACCESS)
     mint_100_datatokens(
@@ -46,6 +44,12 @@ def build_and_send_ddo_with_compute_service(
             publisher_wallet,
             custom_services="vanilla_compute",
             custom_services_args=[],
+        )
+    if asset_type == "specific_algo_publishers":
+        dataset_ddo_w_compute_service = get_registered_asset(
+            publisher_wallet,
+            custom_services="specific_algo_publishers",
+            custom_services_args=["0x0"],
         )
     elif asset_type == "allow_all_published_and_one_bogus":
         dataset_ddo_w_compute_service = get_registered_asset(

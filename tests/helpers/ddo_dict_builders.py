@@ -181,12 +181,16 @@ def get_access_service():
     return Service()
 
 
-def get_compute_service(address, price, datatoken_address, trusted_algos):
+def get_compute_service(
+    address, price, datatoken_address, trusted_algos=None, trusted_publishers=None
+):
+    trusted_algos = [] if not trusted_algos else trusted_algos
+    trusted_publishers = [] if not trusted_publishers else trusted_publishers
     compute_service_attributes = {
         "namespace": "test",
         "allowRawAlgorithm": True,
         "allowNetworkAccess": False,
-        "publisherTrustedAlgorithmPublishers": [],
+        "publisherTrustedAlgorithmPublishers": trusted_publishers,
         "publisherTrustedAlgorithms": trusted_algos,
     }
 
