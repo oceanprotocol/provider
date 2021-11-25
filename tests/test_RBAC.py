@@ -57,7 +57,7 @@ def test_encrypt_request_payload(consumer_wallet, publisher_wallet):
     assert payload["component"] == "provider"
     assert payload["credentials"] == {
         "type": "address",
-        "address": publisher_wallet.address,
+        "value": publisher_wallet.address,
     }
 
 
@@ -85,7 +85,7 @@ def test_initialize_request_payload(
     assert payload["component"] == "provider"
     assert payload["credentials"] == {
         "type": "address",
-        "address": consumer_wallet.address,
+        "value": consumer_wallet.address,
     }
     assert payload["dids"][0]["did"] == asset.did
     assert payload["dids"][0]["serviceId"] == service.index
@@ -130,7 +130,7 @@ def test_access_request_payload(
     assert payload["component"] == "provider"
     assert payload["credentials"] == {
         "type": "address",
-        "address": consumer_wallet.address,
+        "value": consumer_wallet.address,
     }
     assert payload["dids"][0]["did"] == asset.did
     assert payload["dids"][0]["serviceId"] == service.index
@@ -168,7 +168,7 @@ def test_compute_payload_without_additional_inputs(
     assert payload["component"] == "provider"
     assert payload["credentials"] == {
         "type": "address",
-        "address": consumer_wallet.address,
+        "value": consumer_wallet.address,
     }
     assert payload["dids"][0]["did"] == ddo.did
     assert payload["dids"][0]["serviceId"] == sa.index
@@ -239,7 +239,7 @@ def test_compute_request_payload(
     assert payload["component"] == "provider"
     assert payload["credentials"] == {
         "type": "address",
-        "address": consumer_wallet.address,
+        "value": consumer_wallet.address,
     }
     assert payload["dids"][0]["did"] == ddo.did
     assert payload["dids"][0]["serviceId"] == sa.index
@@ -265,7 +265,6 @@ def test_fails(
     sa = alg_ddo.get_service_by_type(ServiceType.ACCESS)
     sa_compute = ddo.get_service_by_type(ServiceType.COMPUTE)
 
-    # output key is invalid
     req = {
         "signature": generate_auth_token(consumer_wallet),
         "documentId": ddo.did,

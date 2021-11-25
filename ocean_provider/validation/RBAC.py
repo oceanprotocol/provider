@@ -28,7 +28,7 @@ class RBACValidator:
         address = self.request.get(
             "consumerAddress", self.request.get("publisherAddress")
         )
-        self.credentials = {"type": "address", "address": address}
+        self.credentials = {"type": "address", "value": address}
         self.component = "provider"
 
     @staticmethod
