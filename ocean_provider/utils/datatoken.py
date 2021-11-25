@@ -1,14 +1,15 @@
 from typing import Optional
 
-from jsonsempai import magic  # noqa: F401
-from artifacts import ERC20Template
 from eth_typing.encoding import HexStr
 from eth_typing.evm import HexAddress
 from hexbytes import HexBytes
+from jsonsempai import magic  # noqa: F401
 from web3.contract import Contract
 from web3.logs import DISCARD
 from web3.main import Web3
 from websockets import ConnectionClosed
+
+from artifacts import ERC20Template
 
 
 def get_datatoken_contract(web3: Web3, address: Optional[str] = None) -> Contract:
@@ -87,7 +88,7 @@ def verify_order_tx(
         if tr.args.to not in receiver_to_transfers:
             receiver_to_transfers[tr.args.to] = []
         receiver_to_transfers[tr.args.to].append(tr)
-    receiver = datatoken_contract.caller.getFeeCollector()
+    receiver = datatoken_contract.caller.getPaymentCollector()
     if receiver not in receiver_to_transfers:
         raise AssertionError(
             f"receiver {receiver} is not found in the transfer events."

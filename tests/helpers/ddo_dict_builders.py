@@ -10,7 +10,11 @@ from typing import Any, Dict, List
 
 from eth_typing.encoding import HexStr
 from eth_typing.evm import HexAddress
+from web3.main import Web3
+
 from ocean_provider.constants import BaseURLs
+from ocean_provider.utils.basics import get_provider_wallet
+from ocean_provider.utils.encryption import do_encrypt
 from ocean_provider.utils.services import Service
 
 """Test helpers for building service dicts to be used in DDOs"""
@@ -177,103 +181,92 @@ def get_access_service():
     return Service()
 
 
-def get_compute_service(address, price, metadata):
+def get_compute_service(
+    address, price, datatoken_address, trusted_algos=None, trusted_publishers=None
+):
+    trusted_algos = [] if not trusted_algos else trusted_algos
+    trusted_publishers = [] if not trusted_publishers else trusted_publishers
     compute_service_attributes = {
-        "main": {
-            "name": "dataAssetComputeServiceAgreement",
-            "creator": address,
-            "cost": price,
-            "timeout": 3600,
-            "datePublished": metadata["main"]["dateCreated"],
-            "privacy": {
-                "allowRawAlgorithm": True,
-                "allowAllPublishedAlgorithms": True,
-                "publisherTrustedAlgorithms": [],
-                "allowNetworkAccess": False,
-            },
-        }
+        "namespace": "test",
+        "allowRawAlgorithm": True,
+        "allowNetworkAccess": False,
+        "publisherTrustedAlgorithmPublishers": trusted_publishers,
+        "publisherTrustedAlgorithms": trusted_algos,
     }
 
-    return Service(
-        service_endpoint=f"http://localhost:8030{BaseURLs.SERVICES_URL}/compute",
-        service_type="compute",
-        index=4,
-        attributes=compute_service_attributes,
+    unencrypted_files_list = [
+        "https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt"
+    ]
+
+    encrypted_files_str = json.dumps(unencrypted_files_list, separators=(",", ":"))
+    encrypted_files = do_encrypt(
+        Web3.toHex(text=encrypted_files_str), get_provider_wallet()
     )
 
-
-def get_compute_service_no_rawalgo(address, price, metadata):
-    compute_service_attributes = {
-        "main": {
-            "name": "dataAssetComputeServiceAgreement",
-            "creator": address,
-            "cost": price,
-            "privacy": {
-                "allowRawAlgorithm": False,
-                "allowAllPublishedAlgorithms": False,
-                "publisherTrustedAlgorithms": [],
-                "allowNetworkAccess": True,
-            },
-            "timeout": 3600,
-            "datePublished": metadata["main"]["dateCreated"],
-        }
+    return {
+        "id": "compute_1",
+        "type": "compute",
+        "name": "compute_1",
+        "description": "compute_1",
+        "datatokenAddress": datatoken_address,
+        "timeout": 3600,
+        "serviceEndpoint": "http://172.15.0.4:8030/",
+        "files": encrypted_files,
+        "compute": compute_service_attributes,
     }
 
-    return Service(
-        service_endpoint=f"http://localhost:8030{BaseURLs.SERVICES_URL}/compute",
-        service_type="compute",
-        index=4,
-        attributes=compute_service_attributes,
+
+def get_bogus_service(datatoken_address):
+    unencrypted_files_list = [
+        "https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt"
+    ]
+
+    encrypted_files_str = json.dumps(unencrypted_files_list, separators=(",", ":"))
+    encrypted_files = do_encrypt(
+        Web3.toHex(text=encrypted_files_str), get_provider_wallet()
     )
 
-
-def get_compute_service_specific_algo_dids(address, price, metadata, algos):
-    compute_service_attributes = {
-        "main": {
-            "name": "dataAssetComputeServiceAgreement",
-            "creator": address,
-            "cost": price,
-            "privacy": {
-                "allowRawAlgorithm": False,
-                "allowAllPublishedAlgorithms": False,
-                "publisherTrustedAlgorithms": [],
-                "allowNetworkAccess": True,
-            },
-            "timeout": 3600,
-            "datePublished": metadata["main"]["dateCreated"],
-        }
+    return {
+        "id": "bogus_invalid_1",
+        "type": "bogus_invalid",
+        "name": "bogus_invalid_1",
+        "description": "bogus_invalid_1",
+        "datatokenAddress": datatoken_address,
+        "timeout": 3600,
+        "serviceEndpoint": "http://172.15.0.4:8030/",
+        "files": encrypted_files,
     }
 
-    for algo in algos:
-        service = algo.get_service("metadata")
-        compute_service_attributes["main"]["privacy"][
-            "publisherTrustedAlgorithms"
-        ].append(
-            {
-                "did": algo.did,
-                "filesChecksum": hashlib.sha256(
-                    (
-                        service.attributes["encryptedFiles"]
-                        + json.dumps(service.main["files"], separators=(",", ":"))
-                    ).encode("utf-8")
-                ).hexdigest(),
-                "containerSectionChecksum": hashlib.sha256(
-                    (
-                        json.dumps(
-                            service.main["algorithm"]["container"],
-                            separators=(",", ":"),
-                        )
-                    ).encode("utf-8")
-                ).hexdigest(),
-            }
-        )
 
-    return Service(
-        service_endpoint=f"http://localhost:8030{BaseURLs.SERVICES_URL}/compute",
-        service_type="compute",
-        index=4,
-        attributes=compute_service_attributes,
+def get_compute_service_no_rawalgo(address, price, datatoken_address):
+    compute_service_attributes = {
+        "namespace": "test",
+        "allowRawAlgorithm": False,
+        "allowNetworkAccess": False,
+        "publisherTrustedAlgorithmPublishers": [],
+        "publisherTrustedAlgorithms": [],
+    }
+
+    unencrypted_files_list = [
+        "https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt"
+    ]
+
+    encrypted_files_str = json.dumps(unencrypted_files_list, separators=(",", ":"))
+    encrypted_files = do_encrypt(
+        Web3.toHex(text=encrypted_files_str), get_provider_wallet()
     )
+
+    return {
+        "id": "compute_1",
+        "type": "compute",
+        "name": "compute_1",
+        "description": "compute_1",
+        "datatokenAddress": datatoken_address,
+        "timeout": 3600,
+        "serviceEndpoint": "http://172.15.0.4:8030/",
+        "files": encrypted_files,
+        "compute": compute_service_attributes,
+    }
 
 
 def get_compute_service_specific_algo_publishers(address, price, metadata, publishers):
@@ -288,31 +281,6 @@ def get_compute_service_specific_algo_publishers(address, price, metadata, publi
                 "publisherTrustedAlgorithms": [],
                 "publisherTrustedAlgorithmPublishers": publishers,
                 "allowNetworkAccess": True,
-            },
-            "timeout": 3600,
-            "datePublished": metadata["main"]["dateCreated"],
-        }
-    }
-
-    return Service(
-        service_endpoint=f"http://localhost:8030{BaseURLs.SERVICES_URL}/compute",
-        service_type="compute",
-        index=4,
-        attributes=compute_service_attributes,
-    )
-
-
-def get_compute_service_allow_all_published(address, price, metadata):
-    compute_service_attributes = {
-        "main": {
-            "name": "dataAssetComputeServiceAgreement",
-            "creator": address,
-            "cost": price,
-            "privacy": {
-                "allowRawAlgorithm": False,
-                "allowNetworkAccess": True,
-                "allowAllPublishedAlgorithms": True,
-                "publisherTrustedAlgorithms": [],
             },
             "timeout": 3600,
             "datePublished": metadata["main"]["dateCreated"],

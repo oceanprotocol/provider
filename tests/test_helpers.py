@@ -5,23 +5,25 @@ import json
 import os
 import pathlib
 import time
-import uuid
-from copy import deepcopy
 from hashlib import sha256
 from typing import Tuple
 
-import ipfshttpclient
 from eth_account.signers.local import LocalAccount
 from eth_typing.encoding import HexStr
 from eth_typing.evm import HexAddress
 from flask.testing import FlaskClient
+from jsonsempai import magic  # noqa: F401
+from web3.main import Web3
+from web3.types import TxParams, TxReceipt
+
+from artifacts import ERC721Template
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.address import get_contract_address
 from ocean_provider.utils.basics import (
     get_asset_from_metadatastore,
     get_config,
-    get_web3,
     get_provider_wallet,
+    get_web3,
 )
 from ocean_provider.utils.currency import to_wei
 from ocean_provider.utils.data_nft import Flags, MetadataState, get_data_nft_contract
@@ -29,16 +31,15 @@ from ocean_provider.utils.data_nft_factory import get_data_nft_factory_contract
 from ocean_provider.utils.datatoken import get_datatoken_contract
 from ocean_provider.utils.did import compute_did_from_data_nft_address_and_chain_id
 from ocean_provider.utils.encryption import do_encrypt
-from tests.ddo.ddo_sample1_v4 import json_dict as ddo_sample1_v4
 from tests.helpers.ddo_dict_builders import (
     build_credentials_dict,
     build_ddo_dict,
     build_metadata_dict_type_dataset,
     build_service_dict_type_access,
-    get_access_service,
+    get_compute_service,
+    get_bogus_service,
+    get_compute_service_no_rawalgo,
 )
-from web3.main import Web3
-from web3.types import TxParams, TxReceipt
 
 BLACK_HOLE_ADDRESS = "0x0000000000000000000000000000000000000000"
 
@@ -171,7 +172,13 @@ def mint_100_datatokens(
 
 
 def get_registered_asset(
-    from_wallet, unencrypted_files_list=None, custom_credentials=None
+    from_wallet,
+    unencrypted_files_list=None,
+    custom_credentials=None,
+    custom_metadata=None,
+    custom_services=None,
+    custom_services_args=None,
+    custom_service_endpoint=None,
 ):
     web3 = get_web3()
     data_nft_address = deploy_data_nft(
@@ -215,17 +222,34 @@ def get_registered_asset(
 
     chain_id = web3.eth.chain_id
     did = compute_did_from_data_nft_address_and_chain_id(data_nft_address, chain_id)
+    metadata = (
+        build_metadata_dict_type_dataset() if not custom_metadata else custom_metadata
+    )
+    service_endpoint = (
+        "http://172.15.0.4:8030"
+        if not custom_service_endpoint
+        else custom_service_endpoint
+    )
+
+    services = (
+        [
+            build_service_dict_type_access(
+                datatoken_address=datatoken_address,
+                service_endpoint=service_endpoint,
+                encrypted_files=encrypted_files,
+            )
+        ]
+        if not custom_services
+        else build_custom_services(
+            custom_services, from_wallet, web3, data_nft_address, custom_services_args
+        )
+    )
+
     ddo = build_ddo_dict(
         did=did,
         chain_id=chain_id,
-        metadata=build_metadata_dict_type_dataset(),
-        services=[
-            build_service_dict_type_access(
-                datatoken_address=datatoken_address,
-                service_endpoint="http://172.15.0.4:8030",
-                encrypted_files=encrypted_files,
-            )
-        ],
+        metadata=metadata,
+        services=services,
         credentials=credentials,
     )
 
@@ -275,25 +299,40 @@ def set_metadata(
 
 
 def get_dataset_asset_with_access_service(client, wallet):
+    # TODO: remove this layer, use get_registered_asset directly
     return get_registered_asset(wallet)
 
 
 def get_dataset_ddo_with_multiple_files(client, wallet):
-    metadata = get_sample_ddo_with_multiple_files()["service"][0]["attributes"]
-    for i in range(3):
-        metadata["main"]["files"][i]["checksum"] = str(uuid.uuid4())
-    service = get_access_service(wallet.address, metadata)
-    metadata["main"].pop("cost")
-    return get_registered_asset(client, wallet, metadata, service)
+    return get_registered_asset(
+        wallet,
+        unencrypted_files_list=[
+            "https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt",
+            "https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt",
+            "https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt",
+        ],
+    )
 
 
 def get_dataset_ddo_disabled(client, wallet):
-    metadata = get_sample_ddo()["service"][0]["attributes"]
-    metadata["main"]["files"][0]["checksum"] = str(uuid.uuid4())
-    service = get_access_service(wallet.address, metadata)
-    metadata["main"].pop("cost")
+    asset = get_registered_asset(wallet)
+    did = asset.did
+    datatoken_address = asset.nft["address"]
 
-    return get_registered_asset(client, wallet, metadata, service, disabled=True)
+    web3 = get_web3()
+    dt_contract = get_web3().eth.contract(
+        abi=ERC721Template.abi, address=datatoken_address
+    )
+
+    time.sleep(10)
+    txn_hash = dt_contract.functions.setMetaDataState(1).transact(
+        {"from": wallet.address}
+    )
+    _ = web3.eth.wait_for_transaction_receipt(txn_hash)
+
+    aqua_root = "http://172.15.0.5:5000"
+    time.sleep(5)
+    return asset, wait_for_asset(aqua_root, did)
 
 
 def get_dataset_ddo_with_denied_consumer(client, wallet, consumer_addr):
@@ -303,52 +342,19 @@ def get_dataset_ddo_with_denied_consumer(client, wallet, consumer_addr):
     )
 
 
-def get_sample_algorithm_ddo():
-    path = get_resource_path("ddo", "ddo_sample_algorithm.json")
-    assert path.exists(), f"{path} does not exist!"
-    with open(path, "r") as file_handle:
-        metadata = file_handle.read()
-    return json.loads(metadata)
-
-
-def get_sample_ddo_with_compute_service():
-    path = get_resource_path("ddo", "ddo_with_compute_service.json")
-    assert path.exists(), f"{path} does not exist!"
-    with open(path, "r") as file_handle:
-        metadata = file_handle.read()
-    return json.loads(metadata)
-
-
 def get_dataset_with_invalid_url_ddo(client, wallet):
-    metadata = get_invalid_url_ddo()["service"][0]["attributes"]
-    metadata["main"]["files"][0]["checksum"] = str(uuid.uuid4())
-    service = get_access_service(wallet.address, metadata)
-    metadata["main"].pop("cost")
-    return get_registered_asset(client, wallet, metadata, service)
+    return get_registered_asset(
+        wallet, unencrypted_files_list=["http://localhost/not_valid_url"]
+    )
 
 
 def get_dataset_with_ipfs_url_ddo(client, wallet):
-    metadata = get_ipfs_url_ddo()["service"][0]["attributes"]
-    metadata["main"]["files"][0]["checksum"] = str(uuid.uuid4())
-    service = get_access_service(wallet.address, metadata)
-    metadata["main"].pop("cost")
-    return get_registered_asset(client, wallet, metadata, service)
-
-
-def get_algorithm_ddo(client, wallet):
-    metadata = get_sample_algorithm_ddo()["service"][0]["attributes"]
-    metadata["main"]["files"][0]["checksum"] = str(uuid.uuid4())
-    service = get_access_service(wallet.address, metadata)
-    metadata["main"].pop("cost")
-    return get_registered_asset(client, wallet, metadata, service)
-
-
-def get_algorithm_ddo_different_provider(client, wallet):
-    metadata = get_sample_algorithm_ddo()["service"][0]["attributes"]
-    metadata["main"]["files"][0]["checksum"] = str(uuid.uuid4())
-    service = get_access_service(wallet.address, metadata, diff_provider=True)
-    metadata["main"].pop("cost")
-    return get_registered_asset(client, wallet, metadata, service)
+    return get_registered_asset(
+        wallet,
+        unencrypted_files_list=[
+            "ipfs://QmXtkGkWCG47tVpiBr8f5FdHuCMPq8h2jhck4jgjSXKiWZ"
+        ],
+    )
 
 
 def get_nonce(client, address):
@@ -364,52 +370,12 @@ def get_nonce(client, address):
     return value["nonce"]
 
 
-def mint_tokens_and_wait(datatoken_contract, receiver_wallet, minter_wallet):
-    pass
-
-
 def get_resource_path(dir_name, file_name):
     base = os.path.realpath(__file__).split(os.path.sep)[1:-1]
     if dir_name:
         return pathlib.Path(os.path.join(os.path.sep, *base, dir_name, file_name))
     else:
         return pathlib.Path(os.path.join(os.path.sep, *base, file_name))
-
-
-def get_sample_ddo():
-    return ddo_sample1_v4
-
-
-def get_sample_ddo_with_multiple_files():
-    ddo = deepcopy(ddo_sample1_v4)
-    # Update files to be encrypted string of the following file list
-    # '["https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt", '
-    # '"https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt"]'
-    ddo["services"][0][
-        "files"
-    ] = "0x049086c93e2c6979563c9204fea45d5e01f7211e7ddc55c20ab93a838fa3b056b2eb7cf1503ab872d864c816ac4225ca45d6e61d187266bfc5bcf4a8667a3c656d573508585cfbf186256ed06043318cb0e0d9229c2ff1336fece2f3b5b698821e616ebde99cd950df32a326eaa042aa903eebd46eaf546d882bb47b4459effe1e5013b1114558746556cad3161bb8de766a160437557d3947454b59c877ef0c5b7f44ff4eb8b54b65169335cf757f5d305911a3881d6e47d701d91ab4175bbf2331fcc2286cdc42c3970de3274798fdb23198a04e356dd06bb7c8467177f2800c66af0a7be7ed96081e62e1c96c5099b743077685171b99bf7ce54590d9938b58b8a50ec732f838b25ac48476197a9acb68175ebdbd4053be72e8a8d473cd26916af84a881a0e0ac29c5fcf36e02986b2539eb665a7e38bc251957a3ca8a937e4"
-    return ddo
-
-
-def get_invalid_url_ddo():
-    path = get_resource_path("ddo", "ddo_sample_invalid_url.json")
-    assert path.exists(), f"{path} does not exist!"
-    with open(path, "r") as file_handle:
-        metadata = file_handle.read()
-    return json.loads(metadata)
-
-
-def get_ipfs_url_ddo():
-    path = get_resource_path("ddo", "ddo_sample_ipfs_url.json")
-    assert path.exists(), f"{path} does not exist!"
-    with open(path, "r") as file_handle:
-        metadata = file_handle.read()
-    client = ipfshttpclient.connect("/dns/172.15.0.16/tcp/5001/http")
-    cid = client.add("./tests/resources/ddo_sample_file.txt")["Hash"]
-    url = f"ipfs://{cid}"
-    metadata_json = json.loads(metadata)
-    metadata_json["service"][0]["attributes"]["main"]["files"][0]["url"] = url
-    return metadata_json
 
 
 def wait_for_asset(metadata_cache_url, did, timeout=30):
@@ -434,9 +400,10 @@ def initialize_service(
     service_type: str,
     datatoken_address: HexAddress,
     from_wallet: LocalAccount,
+    raw_response=False,
 ):
     response = client.get(
-        BaseURLs.ASSETS_URL + "/initialize",
+        BaseURLs.SERVICES_URL + "/initialize",
         json={
             "documentId": did,
             "serviceId": service_index,
@@ -445,12 +412,15 @@ def initialize_service(
             "consumerAddress": from_wallet.address,
         },
     )
+
+    if raw_response:
+        return response
+
     return (
-        response.json.get("from"),
-        response.json.get("to"),
         response.json.get("numTokens"),
         response.json.get("dataToken"),
         response.json.get("nonce"),
+        response.json.get("computeAddress"),
     )
 
 
@@ -477,5 +447,59 @@ def start_order(
     return sign_send_and_wait_for_receipt(web3, start_order_tx, from_wallet)
 
 
-def send_order():
-    pass
+def build_custom_services(
+    services_type, from_wallet, web3, data_nft_address, custom_services_args
+):
+    datatoken_address = deploy_datatoken(
+        web3=web3,
+        data_nft_address=data_nft_address,
+        template_index=1,
+        name="Datatoken 1",
+        symbol="DT1",
+        minter=from_wallet.address,
+        fee_manager=from_wallet.address,
+        publishing_market=BLACK_HOLE_ADDRESS,
+        publishing_market_fee_token=get_ocean_token_address(web3),
+        cap=to_wei(1000),
+        publishing_market_fee_amount=0,
+        from_wallet=from_wallet,
+    )
+
+    if services_type == "vanilla_compute":
+        return [
+            get_compute_service(
+                from_wallet.address,
+                10,
+                datatoken_address,
+                trusted_algos=custom_services_args,
+            )
+        ]
+    if services_type == "allow_all_published_and_one_bogus":
+        return [
+            get_compute_service(
+                from_wallet.address,
+                10,
+                datatoken_address,
+                trusted_algos=[],
+            ),
+            get_bogus_service(datatoken_address),
+        ]
+    if services_type == "specific_algo_publishers":
+        return [
+            get_compute_service(
+                from_wallet.address,
+                10,
+                datatoken_address,
+                trusted_publishers=custom_services_args,
+            ),
+        ]
+    if services_type == "norawalgo":
+        return [
+            get_compute_service_no_rawalgo(
+                from_wallet.address,
+                10,
+                datatoken_address,
+            )
+        ]
+
+    return []

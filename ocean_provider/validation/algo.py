@@ -5,6 +5,8 @@
 import json
 import logging
 
+from web3.logs import DISCARD
+
 from ocean_provider.constants import BaseURLs
 from ocean_provider.myapp import app
 from ocean_provider.serializers import StageAlgoSerializer
@@ -17,13 +19,12 @@ from ocean_provider.utils.util import (
     filter_dictionary,
     filter_dictionary_starts_with,
     get_metadata_url,
-    get_service_download_urls,
+    get_service_files_list,
     msg_hash,
     record_consume_request,
     validate_order,
     validate_transfer_not_used_for_other_service,
 )
-from web3.logs import DISCARD
 
 logger = logging.getLogger(__name__)
 
@@ -135,7 +136,7 @@ class WorkflowValidator:
             algo = get_asset_from_metadatastore(get_metadata_url(), algorithm_did)
 
             try:
-                asset_type = algo.metadata["main"]["type"]
+                asset_type = algo.metadata["type"]
             except ValueError:
                 asset_type = None
 
@@ -155,10 +156,8 @@ class WorkflowValidator:
                 self.algo_service = algo.get_service_by_index(algo_service_id)
 
                 if self.algo_service.type == "compute":
-                    asset_urls = get_service_download_urls(
-                        algo,
-                        self.provider_wallet,
-                        config_file=app.config["PROVIDER_CONFIG_FILE"],
+                    asset_urls = get_service_files_list(
+                        self.algo_service, self.provider_wallet
                     )
 
                     if not asset_urls:
@@ -168,7 +167,6 @@ class WorkflowValidator:
                 if not self.algo_service:
                     self.error = "Failed to retrieve purchased algorithm service id."
                     return False
-
                 logger.debug("validate_order called for ALGORITHM usage.")
                 _tx, _order_log, _transfer_log = validate_order(
                     self.web3,
@@ -297,10 +295,10 @@ class InputItemValidator:
             self.error = "Service for main asset must be compute."
             return False
 
-        asset_urls = get_service_download_urls(
-            self.asset,
+        # TODO: add files to compute service (encryptedFiles)
+        asset_urls = get_service_files_list(
+            self.service,
             self.provider_wallet,
-            config_file=app.config["PROVIDER_CONFIG_FILE"],
         )
 
         if self.service.type == "compute" and not asset_urls:
@@ -336,16 +334,11 @@ class InputItemValidator:
         self, algorithm_did, trusted_algorithms, trusted_publishers
     ):
         if not trusted_algorithms and not trusted_publishers:
-            self.error = (
-                "Using algorithmDid but allowAllPublishedAlgorithms is False and no "
-                "trusted algorithms are set in publisherTrustedAlgorithms, "
-                "nor are publisherTrustedAlgorithmPublishers set."
-            )
-            return False
+            return True
 
         if trusted_publishers:
             algo_ddo = get_asset_from_metadatastore(get_metadata_url(), algorithm_did)
-            if algo_ddo.publisher not in trusted_publishers:
+            if algo_ddo.nft["owner"] not in trusted_publishers:
                 self.error = "this algorithm is not from a trusted publisher"
                 return False
 
@@ -369,6 +362,8 @@ class InputItemValidator:
         algo_ddo = get_asset_from_metadatastore(
             get_metadata_url(), trusted_algo_dict["did"]
         )
+        #  TODO: reinstate
+        return True
         service = algo_ddo.get_service("metadata")
 
         files_checksum = msg_hash(
@@ -401,9 +396,7 @@ class InputItemValidator:
             self.error = "both algorithmMeta and algorithmDid are missing, at least one of these is required."
             return False
 
-        privacy_options = self.service.main.get("privacy", {})
-        if algorithm_did and privacy_options.get("allowAllPublishedAlgorithms", False):
-            return True
+        privacy_options = self.service.compute_dict
 
         if algorithm_did:
             return self._validate_trusted_algos(
@@ -422,7 +415,7 @@ class InputItemValidator:
     def validate_usage(self):
         """Verify that the tokens have been transferred to the provider's wallet."""
         tx_id = self.data.get("transferTxId")
-        token_address = self.asset.other_values["dataToken"]
+        token_address = self.service.datatoken_address
         logger.debug("Validating ASSET usage.")
         try:
             _tx, _order_log, _transfer_log = validate_order(

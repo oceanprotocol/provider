@@ -7,6 +7,7 @@ import logging
 
 from flask import Response, jsonify, request
 from flask_sieve import validate
+
 from ocean_provider.log import setup_logging
 from ocean_provider.myapp import app
 from ocean_provider.requests_session import get_requests_session
@@ -14,7 +15,6 @@ from ocean_provider.user_nonce import get_nonce, increment_nonce
 from ocean_provider.utils.basics import (
     LocalFileAdapter,
     get_asset_from_metadatastore,
-    get_datatoken_minter,
     get_provider_wallet,
     get_web3,
 )
@@ -28,8 +28,7 @@ from ocean_provider.utils.util import (
     get_download_url,
     get_metadata_url,
     get_request_data,
-    get_service_download_urls,
-    get_service_url_at_index,
+    get_service_files_list,
     validate_order,
 )
 from ocean_provider.validation.provider_requests import (
@@ -94,9 +93,7 @@ def fileinfo():
     if did:
         asset = get_asset_from_metadatastore(get_metadata_url(), did)
         service = asset.get_service_by_index(service_index)
-        url_list = get_service_download_urls(
-            service, provider_wallet, config_file=app.config["PROVIDER_CONFIG_FILE"]
-        )
+        url_list = get_service_files_list(service, provider_wallet)
     else:
         url_list = [get_download_url(url, app.config["PROVIDER_CONFIG_FILE"])]
 
@@ -141,15 +138,19 @@ def initialize():
     logger.info(f"initialize endpoint called. {data}")
 
     try:
-        (asset, service, _, consumer_address, token_address) = process_consume_request(
-            data
-        )
+        did = data.get("documentId")
+        consumer_address = data.get("consumerAddress")
 
+        asset = get_asset_from_metadatastore(get_metadata_url(), did)
         consumable, message = check_asset_consumable(asset, consumer_address, logger)
         if not consumable:
             return jsonify(error=message), 400
 
-        url = get_service_url_at_index(0, asset, provider_wallet)
+        service_id = int(data.get("serviceId"))
+        service = asset.get_service_by_index(service_id)
+        token_address = data.get("dataToken")
+
+        url = get_service_files_list(service, provider_wallet)[0]
         download_url = get_download_url(url, app.config["PROVIDER_CONFIG_FILE"])
         download_url = append_userdata(download_url, data)
         valid, _ = check_url_details(download_url)
@@ -168,8 +169,6 @@ def initialize():
         # able to consume the service
         compute_address, compute_limits = get_compute_info()
         approve_params = {
-            "from": consumer_address,
-            "to": get_datatoken_minter(token_address),
             "numTokens": 1,
             "dataToken": token_address,
             "nonce": get_nonce(consumer_address),
@@ -255,7 +254,7 @@ def download():
         # TODO: get content type
         content_type = None
 
-        url = get_service_url_at_index(file_index, service, provider_wallet)
+        url = get_service_files_list(service, provider_wallet)[file_index]
         if not url:
             return (
                 jsonify(
@@ -299,4 +298,4 @@ def process_consume_request(data: dict):
     asset = get_asset_from_metadatastore(get_metadata_url(), did)
     service = asset.get_service_by_index(service_id)
 
-    return asset, service, did, consumer_address, token_address, service_id
+    return asset, service, did, consumer_address, token_address

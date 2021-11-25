@@ -12,17 +12,20 @@ from cgi import parse_header
 import requests
 from eth_account.signers.local import LocalAccount
 from flask import Response
+from jsonsempai import magic  # noqa: F401
+from osmosis_driver_interface.osmosis import Osmosis
+from websockets import ConnectionClosed
+
+from artifacts import ERC721Template
 from ocean_provider.log import setup_logging
 from ocean_provider.utils.accounts import sign_message
-from ocean_provider.utils.basics import get_config, get_provider_wallet
+from ocean_provider.utils.basics import get_config, get_provider_wallet, get_web3
 from ocean_provider.utils.consumable import ConsumableCodes
 from ocean_provider.utils.currency import to_wei
 from ocean_provider.utils.datatoken import verify_order_tx
 from ocean_provider.utils.encryption import do_decrypt
 from ocean_provider.utils.services import Service
 from ocean_provider.utils.url import is_safe_url
-from osmosis_driver_interface.osmosis import Osmosis
-from websockets import ConnectionClosed
 
 setup_logging()
 logger = logging.getLogger(__name__)
@@ -124,50 +127,7 @@ def get_service_files_list(service: Service, provider_wallet: LocalAccount) -> l
         return files_list
     except Exception as e:
         logger.error(f"Error decrypting service files {Service}: {str(e)}")
-        raise
-
-
-def get_service_url_at_index(url_index: int, service: Service, wallet: LocalAccount):
-    logger.debug(
-        f"get_service_url_at_index(): url_index={url_index}, "
-        f"service_id={service.id}, service_index={service.index} provider={wallet.address}"
-    )
-    try:
-        files_list = get_service_urls(service, wallet)
-        if not files_list:
-            return None
-        if url_index >= len(files_list):
-            raise ValueError(f'url index "{url_index}"" is invalid.')
-        return files_list[url_index]
-
-    except Exception as e:
-        logger.error(
-            f"Error decrypting url at index {url_index} for "
-            f"asset {service.did}: {str(e)}"
-        )
-        raise
-
-
-def get_service_urls(service: Service, wallet: LocalAccount):
-    """Returns list of urls of the files included in this Service in order."""
-    logger.debug(
-        f"get_asset_urls(): service_id={service.id}, "
-        f"service_index={service.index}, provider={wallet.address}"
-    )
-    try:
-        files_list = get_service_files_list(service, wallet)
-        if not files_list:
-            return []
-        return files_list
-    except Exception as e:
-        logger.exception(f"Error decrypting urls for service: {str(e)}")
-        raise
-
-
-def get_service_download_urls(service: Service, wallet: LocalAccount, config_file):
-    return [
-        get_download_url(url, config_file) for url in get_service_urls(service, wallet)
-    ]
+        return None
 
 
 def get_download_url(url, config_file):
@@ -183,11 +143,11 @@ def get_download_url(url, config_file):
 
 
 def get_compute_endpoint():
-    return get_config().operator_service_url + "/api/operator/compute"
+    return get_config().operator_service_url + "api/v1/operator/compute"
 
 
 def get_compute_result_endpoint():
-    return get_config().operator_service_url + "/api/operator/getResult"
+    return get_config().operator_service_url + "api/v1/operator/getResult"
 
 
 def get_compute_info():
@@ -314,6 +274,16 @@ def decode_from_data(data, key, dec_type="list"):
 
 
 def check_asset_consumable(asset, consumer_address, logger, custom_url=None):
+    if not asset.nft or "address" not in asset.nft:
+        return False, "Asset malformed"
+
+    dt_contract = get_web3().eth.contract(
+        abi=ERC721Template.abi, address=asset.nft["address"]
+    )
+
+    if dt_contract.caller.getMetaData()[2] != 0:
+        return False, "Asset is not consumable."
+
     code = asset.is_consumable({"type": "address", "value": consumer_address})
 
     if code == ConsumableCodes.OK:  # is consumable

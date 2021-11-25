@@ -6,6 +6,8 @@ from eth_account.signers.local import LocalAccount
 from eth_typing.encoding import HexStr
 from eth_typing.evm import HexAddress
 from flask.testing import FlaskClient
+from web3.main import Web3
+
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.data_nft import Flags, MetadataState
@@ -16,7 +18,6 @@ from tests.test_helpers import (
     get_nonce,
     set_metadata,
 )
-from web3.main import Web3
 
 
 def test_decrypt_with_plain_input(

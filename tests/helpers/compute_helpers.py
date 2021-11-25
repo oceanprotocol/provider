@@ -4,23 +4,16 @@ import uuid
 
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
-from ocean_provider.utils.datatoken import get_datatoken_contract
-from tests.helpers.ddo_dict_builders import (
-    get_compute_service,
-    get_compute_service_allow_all_published,
-    get_compute_service_no_rawalgo,
-    get_compute_service_specific_algo_dids,
-    get_compute_service_specific_algo_publishers,
-)
+from ocean_provider.utils.currency import to_wei
+from ocean_provider.utils.services import ServiceType
+from tests.helpers.ddo_dict_builders import build_metadata_dict_type_algorithm
 from tests.test_helpers import (
-    get_algorithm_ddo,
-    get_algorithm_ddo_different_provider,
+    BLACK_HOLE_ADDRESS,
     get_nonce,
     get_registered_asset,
-    get_sample_ddo_with_compute_service,
     get_web3,
-    mint_tokens_and_wait,
-    send_order,
+    mint_100_datatokens,
+    start_order,
 )
 
 
@@ -28,61 +21,81 @@ def build_and_send_ddo_with_compute_service(
     client, publisher_wallet, consumer_wallet, alg_diff=False, asset_type=None
 ):
     web3 = get_web3()
-    # publish an algorithm asset (asset with metadata of type `algorithm`)
-    alg_ddo = (
-        get_algorithm_ddo_different_provider(client, consumer_wallet)
-        if alg_diff
-        else get_algorithm_ddo(client, consumer_wallet)
-    )
-    alg_data_token = alg_ddo.data_token_address
-    alg_dt_contract = get_datatoken_contract(web3, alg_data_token)
+    algo_metadata = build_metadata_dict_type_algorithm()
 
-    mint_tokens_and_wait(alg_dt_contract, consumer_wallet, consumer_wallet)
+    if alg_diff:
+        alg_ddo = get_registered_asset(
+            publisher_wallet,
+            custom_metadata=algo_metadata,
+            custom_service_endpoint="http://172.15.0.7:8030",
+        )
+    else:
+        alg_ddo = get_registered_asset(publisher_wallet, custom_metadata=algo_metadata)
+
+    # publish an algorithm asset (asset with metadata of type `algorithm`)
+    service = alg_ddo.get_service_by_type(ServiceType.ACCESS)
+    mint_100_datatokens(
+        web3, service.datatoken_address, consumer_wallet.address, publisher_wallet
+    )
 
     # publish a dataset asset
     if asset_type == "allow_all_published":
-        dataset_ddo_w_compute_service = comp_ds(
-            client, publisher_wallet, "allow_all_published"
-        )
-    elif asset_type == "specific_algo_dids":
-        algos = []
-
-        for _ in itertools.repeat(None, 2):
-            alg_ddo = get_algorithm_ddo(client, consumer_wallet)
-            alg_data_token = alg_ddo.data_token_address
-            alg_dt_contract = get_datatoken_contract(web3, alg_data_token)
-            mint_tokens_and_wait(alg_dt_contract, consumer_wallet, consumer_wallet)
-            algos.append(alg_ddo)
-
-        dataset_ddo_w_compute_service = comp_ds(
-            client, publisher_wallet, "specific_algo_dids", algos
-        )
-    elif asset_type == "specific_algo_publishers":
-        alg_ddo = get_algorithm_ddo(client, consumer_wallet)
-        alg_data_token = alg_ddo.data_token_address
-        alg_dt_contract = get_datatoken_contract(web3, alg_data_token)
-        mint_tokens_and_wait(alg_dt_contract, consumer_wallet, consumer_wallet)
-
-        dataset_ddo_w_compute_service = comp_ds(
-            client,
+        dataset_ddo_w_compute_service = get_registered_asset(
             publisher_wallet,
-            "specific_algo_publishers",
-            publishers=[alg_ddo.publisher],
+            custom_services="vanilla_compute",
+            custom_services_args=[],
+        )
+    if asset_type == "specific_algo_publishers":
+        dataset_ddo_w_compute_service = get_registered_asset(
+            publisher_wallet,
+            custom_services="specific_algo_publishers",
+            custom_services_args=["0x0"],
+        )
+    elif asset_type == "allow_all_published_and_one_bogus":
+        dataset_ddo_w_compute_service = get_registered_asset(
+            publisher_wallet,
+            custom_services="allow_all_published_and_one_bogus",
         )
     else:
-        dataset_ddo_w_compute_service = comp_ds(client, publisher_wallet)
+        dataset_ddo_w_compute_service = get_registered_asset(
+            publisher_wallet,
+            custom_services="vanilla_compute",
+            custom_services_args=[
+                {
+                    "did": alg_ddo.did,
+                    "filesChecksum": "TODO",
+                    "containerSectionChecksum": "TODO",
+                }
+            ],
+        )
 
-    ddo = dataset_ddo_w_compute_service
-    data_token = dataset_ddo_w_compute_service.data_token_address
-    dt_contract = get_datatoken_contract(web3, data_token)
-    mint_tokens_and_wait(dt_contract, consumer_wallet, publisher_wallet)
+    service = dataset_ddo_w_compute_service.get_service_by_type(ServiceType.COMPUTE)
+    datatoken = service.datatoken_address
+    mint_100_datatokens(web3, datatoken, consumer_wallet.address, publisher_wallet)
 
-    sa = dataset_ddo_w_compute_service.get_service("compute")
+    tx_id, _ = start_order(
+        web3,
+        datatoken,
+        consumer_wallet.address,
+        to_wei(1),
+        service.index,
+        BLACK_HOLE_ADDRESS,
+        BLACK_HOLE_ADDRESS,
+        0,
+        consumer_wallet,
+    )
 
-    tx_id = send_order(client, ddo, dt_contract, sa, consumer_wallet)
-    alg_service = alg_ddo.get_service("access")
-    alg_tx_id = send_order(
-        client, alg_ddo, alg_dt_contract, alg_service, consumer_wallet
+    alg_service = alg_ddo.get_service_by_type(ServiceType.ACCESS)
+    alg_tx_id, _ = start_order(
+        web3,
+        alg_service.datatoken_address,
+        consumer_wallet.address,
+        to_wei(1),
+        alg_service.index,
+        BLACK_HOLE_ADDRESS,
+        BLACK_HOLE_ADDRESS,
+        0,
+        consumer_wallet,
     )
 
     return (dataset_ddo_w_compute_service, tx_id, alg_ddo, alg_tx_id)
@@ -156,32 +169,3 @@ def get_compute_result(client, endpoint, params, raw_response=False):
     ), f"get compute result failed: status {response.status}, data {response.data}"
 
     return response.data
-
-
-def comp_ds(client, wallet, compute_service=None, algos=None, publishers=None):
-    metadata = get_sample_ddo_with_compute_service()["service"][0]["attributes"]
-    metadata["main"]["files"][0]["checksum"] = str(uuid.uuid4())
-
-    if compute_service == "no_rawalgo":
-        service = get_compute_service_no_rawalgo(
-            wallet.address, metadata["main"]["cost"], metadata
-        )
-    elif compute_service == "specific_algo_dids":
-        service = get_compute_service_specific_algo_dids(
-            wallet.address, metadata["main"]["cost"], metadata, algos
-        )
-    elif compute_service == "specific_algo_publishers":
-        service = get_compute_service_specific_algo_publishers(
-            wallet.address, metadata["main"]["cost"], metadata, publishers
-        )
-    elif compute_service == "allow_all_published":
-        service = get_compute_service_allow_all_published(
-            wallet.address, metadata["main"]["cost"], metadata
-        )
-    else:
-        service = get_compute_service(
-            wallet.address, metadata["main"]["cost"], metadata
-        )
-
-    metadata["main"].pop("cost")
-    return get_registered_asset(client, wallet, metadata, service)

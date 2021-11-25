@@ -5,8 +5,9 @@
 import json
 
 from ocean_provider.utils.basics import get_asset_from_metadatastore
+from ocean_provider.utils.services import ServiceType
 from ocean_provider.utils.url import append_userdata
-from ocean_provider.utils.util import get_metadata_url, get_service_url_at_index
+from ocean_provider.utils.util import get_metadata_url, get_service_files_list
 
 
 class StageAlgoSerializer:
@@ -38,11 +39,13 @@ class StageAlgoSerializer:
             )
 
         algo_asset = get_asset_from_metadatastore(get_metadata_url(), algorithm_did)
+        sa = algo_asset.get_service_by_type(ServiceType.ACCESS)
 
         dict_template["id"] = algorithm_did
         dict_template["rawcode"] = ""
 
-        asset_url = get_service_url_at_index(0, algo_asset, self.provider_wallet)
+        asset_urls = get_service_files_list(sa, self.provider_wallet)
+        asset_url = asset_urls[0] if asset_urls else None
         if asset_url:
             asset_url = append_userdata(asset_url, self.algo_data, "algouserdata")
             dict_template["url"] = asset_url
@@ -57,8 +60,6 @@ class StageAlgoSerializer:
             if userdata:
                 dict_template["remote"]["algouserdata"] = userdata
 
-        dict_template["container"] = algo_asset.metadata["main"]["algorithm"][
-            "container"
-        ]
+        dict_template["container"] = algo_asset.metadata["algorithm"]["container"]
 
         return dict(dict_template)

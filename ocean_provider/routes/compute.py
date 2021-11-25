@@ -7,6 +7,8 @@ import logging
 
 from flask import Response, jsonify, request
 from flask_sieve import validate
+from requests.models import PreparedRequest
+
 from ocean_provider.exceptions import InvalidSignatureError
 from ocean_provider.log import setup_logging
 from ocean_provider.requests_session import get_requests_session
@@ -28,7 +30,6 @@ from ocean_provider.validation.provider_requests import (
     ComputeStartRequest,
     UnsignedComputeRequest,
 )
-from requests.models import PreparedRequest
 
 from . import services
 

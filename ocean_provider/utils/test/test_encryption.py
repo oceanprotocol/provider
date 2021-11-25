@@ -2,8 +2,9 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
-from ocean_provider.utils.encryption import do_decrypt, do_encrypt
 from web3.main import Web3
+
+from ocean_provider.utils.encryption import do_decrypt, do_encrypt
 
 
 def test_encryption_with_bytes(provider_wallet):

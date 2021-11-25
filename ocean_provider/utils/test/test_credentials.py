@@ -2,10 +2,11 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
-from copy import deepcopy
 import json
+from copy import deepcopy
 
 import pytest
+
 from ocean_provider.utils.asset import Asset
 from ocean_provider.utils.consumable import ConsumableCodes, MalformedCredential
 from ocean_provider.utils.credentials import AddressCredential

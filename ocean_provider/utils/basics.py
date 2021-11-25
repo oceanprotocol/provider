@@ -6,17 +6,20 @@ import os
 from pathlib import Path
 from typing import Optional, Union
 
-import artifacts
 import requests
 from eth_account import Account
 from hexbytes import HexBytes
+from jsonsempai import magic  # noqa: F401
+from requests_testadapter import Resp
+from web3 import WebsocketProvider
+from web3.main import Web3
+
+import artifacts
+from artifacts import ERC721Template
 from ocean_provider.config import Config
 from ocean_provider.http_provider import CustomHTTPProvider
 from ocean_provider.utils.asset import Asset
 from ocean_provider.utils.datatoken import get_datatoken_contract
-from requests_testadapter import Resp
-from web3 import WebsocketProvider
-from web3.main import Web3
 
 
 def get_config(config_file: Optional[str] = None) -> Config:
@@ -53,15 +56,6 @@ def get_provider_wallet(web3: Optional[Web3] = None):
         )
 
     return wallet
-
-
-def get_datatoken_minter(datatoken_address):
-    """
-    :return: Eth account address of the Datatoken minter
-    """
-    dt = get_datatoken_contract(get_web3(), datatoken_address)
-    publisher = dt.caller.minter()
-    return publisher
 
 
 def get_artifacts_path():

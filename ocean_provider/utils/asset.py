@@ -13,20 +13,19 @@ from ocean_provider.utils.services import Service, ServiceType
 class Asset:
     def __init__(self, asset_dict: dict) -> None:
         ad = copy.deepcopy(asset_dict)
-        self.did = ad.pop("id")
-        self.version = ad.pop("version")
-        self.chain_id = ad.pop("chainId")
-        self.metadata = ad.pop("metadata")
+        self.did = ad.pop("id", None)
+        self.version = ad.pop("version", None)
+        self.chain_id = ad.pop("chainId", None)
+        self.metadata = ad.pop("metadata", None)
         self.services = [
             Service.from_json(index, service_dict)
-            for index, service_dict in enumerate(ad.pop("services"))
+            for index, service_dict in enumerate(ad.pop("services", []))
         ]
-        self.credentials = ad.pop("credentials")
+        self.credentials = ad.pop("credentials", None)
         self.nft = ad.pop("nft", None)
         self.datatokens = ad.pop("datatokens", None)
         self.event = ad.pop("event", None)
-        # TODO: uncomment when aquarius supports stats attribute
-        # self.stats = asset.pop("stats")
+        self.stats = ad.pop("stats", None)
 
     def get_service_by_type(self, service_type: ServiceType) -> Service:
         """Return the first Service with the given ServiceType."""
@@ -60,6 +59,10 @@ class Asset:
         manager = AddressCredential(self)
         return manager.get_addresses_of_class("deny")
 
+    @property
+    def is_disabled(self) -> bool:
+        return not self.metadata or (self.nft and self.nft["state"] != 0)
+
     def is_consumable(
         self,
         credential: Optional[dict] = None,
@@ -67,10 +70,9 @@ class Asset:
         provider_uri: Optional[str] = None,
     ) -> ConsumableCodes:
         """Checks whether an asset is consumable and returns a ConsumableCode."""
-        # TODO: add metadata state checks?
-        # let's see what we do in ocean.py, and have the same behaviour here
+        if self.is_disabled:
+            return ConsumableCodes.ASSET_DISABLED
 
-        # to be parameterized in the future, can implement other credential classes
         manager = AddressCredential(self)
 
         if manager.requires_credential():

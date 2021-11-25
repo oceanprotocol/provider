@@ -4,6 +4,7 @@
 #
 
 from ocean_provider.constants import BaseURLs
+from ocean_provider.utils.services import ServiceType
 from tests.test_helpers import (
     get_dataset_asset_with_access_service,
     get_dataset_with_invalid_url_ddo,
@@ -14,7 +15,11 @@ fileinfo_url = BaseURLs.SERVICES_URL + "/fileinfo"
 
 def test_asset_info(client, publisher_wallet):
     asset = get_dataset_asset_with_access_service(client, publisher_wallet)
-    response = client.post(fileinfo_url, json={"did": asset.did, "checksum": "true"})
+    service = asset.get_service_by_type(ServiceType.ACCESS)
+    response = client.post(
+        fileinfo_url,
+        json={"did": asset.did, "serviceIndex": service.index, "checksum": "true"},
+    )
 
     result = response.get_json()
     assert response.status == "200 OK"
@@ -32,7 +37,10 @@ def test_asset_info(client, publisher_wallet):
         assert file_info["checksumType"] == "sha256"
 
     asset = get_dataset_with_invalid_url_ddo(client, publisher_wallet)
-    response = client.post(fileinfo_url, json={"did": asset.did})
+    service = asset.get_service_by_type(ServiceType.ACCESS)
+    response = client.post(
+        fileinfo_url, json={"did": asset.did, "serviceIndex": service.index}
+    )
 
     result = response.get_json()
     assert response.status == "200 OK"

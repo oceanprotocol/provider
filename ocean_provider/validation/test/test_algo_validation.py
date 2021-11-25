@@ -1,9 +1,10 @@
 #
-# Copyright 2021 Ocean Protocol Foundation
+## Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
 import json
 
+from ocean_provider.utils.services import ServiceType
 from ocean_provider.validation.algo import WorkflowValidator, build_stage_output_dict
 from tests.helpers.compute_helpers import build_and_send_ddo_with_compute_service
 
@@ -15,7 +16,8 @@ def test_passes(
     ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
         client, publisher_wallet, consumer_wallet
     )
-    sa = ddo.get_service("compute")
+    sa = alg_ddo.get_service_by_type(ServiceType.ACCESS)
+    sa_compute = ddo.get_service_by_type(ServiceType.COMPUTE)
 
     data = {
         "documentId": ddo.did,
@@ -25,7 +27,7 @@ def test_passes(
             dict(), sa.service_endpoint, consumer_address, publisher_wallet
         ),
         "algorithmDid": alg_ddo.did,
-        "algorithmDataToken": alg_ddo.data_token_address,
+        "algorithmDataToken": sa_compute.datatoken_address,
         "algorithmTransferTxId": alg_tx_id,
     }
 
@@ -56,12 +58,16 @@ def test_fails(
     client, provider_wallet, consumer_wallet, consumer_address, publisher_wallet, web3
 ):
     """Tests possible failures of the algo validation."""
-    dataset, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
-        client, publisher_wallet, consumer_wallet
+    ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
+        client,
+        publisher_wallet,
+        consumer_wallet,
+        asset_type="allow_all_published_and_one_bogus",
     )
-    did = dataset.did
-    sa = dataset.get_service("compute")
-    alg_data_token = alg_ddo.data_token_address
+    did = ddo.did
+    sa = alg_ddo.get_service_by_type(ServiceType.ACCESS)
+    sa_compute = ddo.get_service_by_type(ServiceType.COMPUTE)
+    alg_data_token = sa_compute.datatoken_address
 
     # output key is invalid
     data = {
@@ -230,9 +236,7 @@ def test_fails(
     )
 
     # Service is not compute, nor access
-    other_service = [
-        s for s in dataset.services if s.type not in ["compute", "access"]
-    ][0]
+    other_service = [s for s in ddo.services if s.type not in ["compute", "access"]][0]
     data = {
         "documentId": did,
         "transferTxId": tx_id,
@@ -255,9 +259,9 @@ def test_fails(
 
     # Additional input has other trusted algs
     trust_ddo, trust_tx_id, _, _ = build_and_send_ddo_with_compute_service(
-        client, publisher_wallet, consumer_wallet, asset_type="specific_algo_dids"
+        client, publisher_wallet, consumer_wallet
     )
-    trust_sa = trust_ddo.get_service("compute")
+    trust_sa = trust_ddo.get_service_by_type(ServiceType.COMPUTE)
 
     data = {
         "documentId": did,
@@ -284,14 +288,27 @@ def test_fails(
     )
 
     # Additional input has other trusted publishers
-    trust_ddo, trust_tx_id, _, _ = build_and_send_ddo_with_compute_service(
+    (
+        trust_ddo,
+        trust_tx_id,
+        alg_ddo,
+        alg_tx_id,
+    ) = build_and_send_ddo_with_compute_service(
         client, publisher_wallet, consumer_wallet, asset_type="specific_algo_publishers"
     )
-    trust_sa = trust_ddo.get_service("compute")
+    did = trust_ddo.did
+    trust_sa = trust_ddo.get_service_by_type(ServiceType.COMPUTE)
+    sa = alg_ddo.get_service_by_type(ServiceType.ACCESS)
+    sa_compute = trust_ddo.get_service_by_type(ServiceType.COMPUTE)
+    alg_data_token = sa_compute.datatoken_address
+
+    valid_output = build_stage_output_dict(
+        dict(), sa.service_endpoint, consumer_address, publisher_wallet
+    )
 
     data = {
         "documentId": did,
-        "transferTxId": tx_id,
+        "transferTxId": trust_tx_id,
         "serviceId": sa.index,
         "output": valid_output,
         "algorithmDid": alg_ddo.did,
@@ -307,9 +324,5 @@ def test_fails(
     }
 
     validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
-    # passes through the trusted Publishers, but fails on trusted dids
     assert validator.validate() is False
-    assert (
-        validator.error
-        == f"Error in input at index 1: this algorithm did {alg_ddo.did} is not trusted."
-    )
+    assert validator.error == "this algorithm is not from a trusted publisher"

@@ -9,6 +9,7 @@ from flask import request as flask_request
 from flask_sieve import JsonRequest, ValidationException
 from flask_sieve.rules_processor import RulesProcessor
 from flask_sieve.validator import Validator
+
 from ocean_provider.exceptions import InvalidSignatureError
 from ocean_provider.user_nonce import get_nonce
 from ocean_provider.utils.accounts import verify_signature
@@ -216,7 +217,7 @@ class FileInfoRequest(CustomJsonRequest):
         return {
             "url": ["required_without:did"],
             "did": ["required_without:url", "regex:^did:op"],
-            "service_index": ["required_without:url"],
+            "serviceIndex": ["required_without:url"],
         }
 
 

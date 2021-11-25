@@ -7,11 +7,12 @@ from enum import IntEnum, IntFlag
 from typing import Iterable, Optional, Tuple
 
 from jsonsempai import magic  # noqa: F401
-from artifacts import ERC721Template
 from web3.contract import Contract
 from web3.logs import DISCARD
 from web3.main import Web3
 from web3.types import EventData, TxReceipt
+
+from artifacts import ERC721Template
 
 logger = logging.getLogger(__name__)
 
