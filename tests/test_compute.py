@@ -313,39 +313,6 @@ def test_compute_allow_all_published(client, publisher_wallet, consumer_wallet):
     assert response.status == "200 OK"
 
 
-def test_compute_not_an_algo(client, publisher_wallet, consumer_wallet):
-    ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
-        client, publisher_wallet, consumer_wallet, asset_type="allow_all_published"
-    )
-    sa = alg_ddo.get_service_by_type(ServiceType.ACCESS)
-    sa_compute = ddo.get_service_by_type(ServiceType.COMPUTE)
-    signature = get_compute_signature(client, consumer_wallet, ddo.did)
-
-    # Start the compute job
-    payload = dict(
-        {
-            "signature": signature,
-            "documentId": ddo.did,
-            "serviceId": sa.index,
-            "serviceType": sa.type,
-            "consumerAddress": consumer_wallet.address,
-            "transferTxId": tx_id,
-            "dataToken": sa.datatoken_address,
-            "output": build_stage_output_dict(
-                dict(), sa.service_endpoint, consumer_wallet.address, publisher_wallet
-            ),
-            "algorithmDid": ddo.did,  # intentionally, should not be an algo did
-            "algorithmDataToken": sa_compute.datatoken_address,
-            "algorithmTransferTxId": alg_tx_id,
-        }
-    )
-
-    response = post_to_compute(client, payload)
-    assert response.status == "400 BAD REQUEST"
-    error = response.get_json()["error"]
-    assert "is not a valid algorithm" in error
-
-
 def test_compute_additional_input(client, publisher_wallet, consumer_wallet):
     ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
         client, publisher_wallet, consumer_wallet
