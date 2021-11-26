@@ -133,8 +133,8 @@ def test_compute(client, publisher_wallet, consumer_wallet):
     ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
         client, publisher_wallet, consumer_wallet
     )
-    sa = alg_ddo.get_service_by_type(ServiceType.ACCESS)
-    sa_compute = ddo.get_service_by_type(ServiceType.COMPUTE)
+    sa_compute = alg_ddo.get_service_by_type(ServiceType.ACCESS)
+    sa = ddo.get_service_by_type(ServiceType.COMPUTE)
     signature = get_compute_signature(client, consumer_wallet, ddo.did)
 
     # Start the compute job
