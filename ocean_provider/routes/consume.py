@@ -87,12 +87,12 @@ def fileinfo():
     data = get_request_data(request)
     logger.info(f"fileinfo endpoint called. {data}")
     did = data.get("did")
-    service_index = data.get("serviceIndex")
+    service_id = data.get("serviceId")
     url = data.get("url")
 
     if did:
         asset = get_asset_from_metadatastore(get_metadata_url(), did)
-        service = asset.get_service_by_index(service_index)
+        service = asset.get_service_by_id(service_id)
         url_list = get_service_files_list(service, provider_wallet)
     else:
         url_list = [get_download_url(url, app.config["PROVIDER_CONFIG_FILE"])]
@@ -146,8 +146,8 @@ def initialize():
         if not consumable:
             return jsonify(error=message), 400
 
-        service_id = int(data.get("serviceId"))
-        service = asset.get_service_by_index(service_id)
+        service_id = data.get("serviceId")
+        service = asset.get_service_by_id(service_id)
         token_address = data.get("dataToken")
 
         url = get_service_files_list(service, provider_wallet)[0]
@@ -229,22 +229,22 @@ def download():
         did = data.get("documentId")
         token_address = data.get("dataToken")
         consumer_address = data.get("consumerAddress")
-        service_index = int(data.get("serviceId"))
+        service_id = data.get("serviceId")
         tx_id = data.get("transferTxId")
 
         # grab asset for did from the metadatastore associated with
         # the Data Token address
         asset = get_asset_from_metadatastore(get_metadata_url(), did)
-        service = asset.get_service_by_index(service_index)
+        service = asset.get_service_by_id(service_id)
 
         if service.type != ServiceType.ACCESS:
             return jsonify(
-                error=f"Service with index={service_index} is not an access service."
+                error=f"Service with index={service_id} is not an access service."
             )
 
         logger.info("validate_order called from download endpoint.")
         _tx, _order_log, _transfer_log = validate_order(
-            get_web3(), consumer_address, token_address, 1, tx_id, did, service_index
+            get_web3(), consumer_address, token_address, 1, tx_id, did, service
         )
 
         # TODO: validate transfer not used for other service?
@@ -258,7 +258,7 @@ def download():
         if not url:
             return (
                 jsonify(
-                    error=f"Cannot decrypt files for this service. index={service_index}"
+                    error=f"Cannot decrypt files for this service. id={service_id}"
                 ),
                 400,
             )
@@ -296,6 +296,6 @@ def process_consume_request(data: dict):
     # grab asset for did from the metadatastore associated with
     # the Data Token address
     asset = get_asset_from_metadatastore(get_metadata_url(), did)
-    service = asset.get_service_by_index(service_id)
+    service = asset.get_service_by_id(service_id)
 
     return asset, service, did, consumer_address, token_address

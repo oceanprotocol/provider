@@ -53,7 +53,7 @@ class StageAlgoSerializer:
             dict_template["remote"] = {
                 "serviceEndpoint": self.algo_service.service_endpoint,
                 "txId": algorithm_tx_id,
-                "serviceIndex": self.algo_service.index,
+                "serviceId": self.algo_service.id,
             }
 
             userdata = self.algo_data.get("algouserdata")

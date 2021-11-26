@@ -217,7 +217,7 @@ class FileInfoRequest(CustomJsonRequest):
         return {
             "url": ["required_without:did"],
             "did": ["required_without:url", "regex:^did:op"],
-            "serviceIndex": ["required_without:url"],
+            "serviceId": ["required_without:url"],
         }
 
 

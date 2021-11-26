@@ -16,12 +16,12 @@ def test_passes(
     ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
         client, publisher_wallet, consumer_wallet
     )
-    sa = alg_ddo.get_service_by_type(ServiceType.ACCESS)
-    sa_compute = ddo.get_service_by_type(ServiceType.COMPUTE)
+    sa_compute = alg_ddo.get_service_by_type(ServiceType.ACCESS)
+    sa = ddo.get_service_by_type(ServiceType.COMPUTE)
 
     data = {
         "documentId": ddo.did,
-        "serviceId": sa.index,
+        "serviceId": sa.id,
         "transferTxId": tx_id,
         "output": build_stage_output_dict(
             dict(), sa.service_endpoint, consumer_address, publisher_wallet
@@ -36,7 +36,7 @@ def test_passes(
 
     data = {
         "documentId": ddo.did,
-        "serviceId": sa.index,
+        "serviceId": sa.id,
         "transferTxId": tx_id,
         "output": build_stage_output_dict(
             dict(), sa.service_endpoint, consumer_address, publisher_wallet
@@ -65,15 +65,15 @@ def test_fails(
         asset_type="allow_all_published_and_one_bogus",
     )
     did = ddo.did
-    sa = alg_ddo.get_service_by_type(ServiceType.ACCESS)
-    sa_compute = ddo.get_service_by_type(ServiceType.COMPUTE)
+    sa_compute = alg_ddo.get_service_by_type(ServiceType.ACCESS)
+    sa = ddo.get_service_by_type(ServiceType.COMPUTE)
     alg_data_token = sa_compute.datatoken_address
 
     # output key is invalid
     data = {
         "documentId": did,
         "transferTxId": tx_id,
-        "serviceId": sa.index,
+        "serviceId": sa.id,
         "output": "this can not be decoded",
         "algorithmDid": alg_ddo.did,
         "algorithmDataToken": alg_data_token,
@@ -88,7 +88,7 @@ def test_fails(
     data = {
         "documentId": did,
         "transferTxId": tx_id,
-        "serviceId": sa.index,
+        "serviceId": sa.id,
         "output": build_stage_output_dict(
             dict(), sa.service_endpoint, consumer_address, publisher_wallet
         ),
@@ -109,7 +109,7 @@ def test_fails(
     data = {
         "documentId": did,
         "transferTxId": tx_id,
-        "serviceId": sa.index,
+        "serviceId": sa.id,
         "output": valid_output,
         "algorithmMeta": {},
     }
@@ -125,7 +125,7 @@ def test_fails(
     data = {
         "documentId": did,
         "transferTxId": tx_id,
-        "serviceId": sa.index,
+        "serviceId": sa.id,
         "output": valid_output,
         "algorithmMeta": {
             "rawcode": "console.log('Hello world'!)",
@@ -146,7 +146,7 @@ def test_fails(
     data = {
         "documentId": did,
         "transferTxId": tx_id,
-        "serviceId": sa.index,
+        "serviceId": sa.id,
         "output": valid_output,
         "algorithmMeta": {
             "rawcode": "console.log('Hello world'!)",
@@ -167,7 +167,7 @@ def test_fails(
     data = {
         "documentId": did,
         "transferTxId": tx_id,
-        "serviceId": sa.index,
+        "serviceId": sa.id,
         "output": valid_output,
         "algorithmDid": alg_ddo.did,
         "algorithmDataToken": alg_data_token,
@@ -182,7 +182,7 @@ def test_fails(
     data = {
         "documentId": did,
         "transferTxId": tx_id,
-        "serviceId": sa.index,
+        "serviceId": sa.id,
         "output": valid_output,
         "algorithmDid": alg_ddo.did,
         "algorithmDataToken": alg_data_token,
@@ -198,12 +198,12 @@ def test_fails(
     data = {
         "documentId": did,
         "transferTxId": tx_id,
-        "serviceId": sa.index,
+        "serviceId": sa.id,
         "output": valid_output,
         "algorithmDid": alg_ddo.did,
         "algorithmDataToken": alg_data_token,
         "algorithmTransferTxId": alg_tx_id,
-        "additionalInputs": [{"transferTxId": tx_id, "serviceId": sa.index}],
+        "additionalInputs": [{"transferTxId": tx_id, "serviceId": sa.id}],
     }
 
     validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
@@ -214,7 +214,7 @@ def test_fails(
     data = {
         "documentId": did,
         "transferTxId": tx_id,
-        "serviceId": sa.index,
+        "serviceId": sa.id,
         "output": valid_output,
         "algorithmDid": alg_ddo.did,
         "algorithmDataToken": alg_data_token,
@@ -223,7 +223,7 @@ def test_fails(
             {
                 "documentId": "i am not a did",
                 "transferTxId": tx_id,
-                "serviceId": sa.index,
+                "serviceId": sa.id,
             }
         ],
     }
@@ -240,13 +240,13 @@ def test_fails(
     data = {
         "documentId": did,
         "transferTxId": tx_id,
-        "serviceId": sa.index,
+        "serviceId": sa.id,
         "output": valid_output,
         "algorithmDid": alg_ddo.did,
         "algorithmDataToken": alg_data_token,
         "algorithmTransferTxId": alg_tx_id,
         "additionalInputs": [
-            {"documentId": did, "transferTxId": tx_id, "serviceId": other_service.index}
+            {"documentId": did, "transferTxId": tx_id, "serviceId": other_service.id}
         ],
     }
 
@@ -266,7 +266,7 @@ def test_fails(
     data = {
         "documentId": did,
         "transferTxId": tx_id,
-        "serviceId": sa.index,
+        "serviceId": sa.id,
         "output": valid_output,
         "algorithmDid": alg_ddo.did,
         "algorithmDataToken": alg_data_token,
@@ -275,7 +275,7 @@ def test_fails(
             {
                 "documentId": trust_ddo.did,
                 "transferTxId": trust_tx_id,
-                "serviceId": trust_sa.index,
+                "serviceId": trust_sa.id,
             }
         ],
     }
@@ -298,8 +298,8 @@ def test_fails(
     )
     did = trust_ddo.did
     trust_sa = trust_ddo.get_service_by_type(ServiceType.COMPUTE)
-    sa = alg_ddo.get_service_by_type(ServiceType.ACCESS)
-    sa_compute = trust_ddo.get_service_by_type(ServiceType.COMPUTE)
+    sa_compute = alg_ddo.get_service_by_type(ServiceType.ACCESS)
+    sa = trust_ddo.get_service_by_type(ServiceType.COMPUTE)
     alg_data_token = sa_compute.datatoken_address
 
     valid_output = build_stage_output_dict(
@@ -309,7 +309,7 @@ def test_fails(
     data = {
         "documentId": did,
         "transferTxId": trust_tx_id,
-        "serviceId": sa.index,
+        "serviceId": sa.id,
         "output": valid_output,
         "algorithmDid": alg_ddo.did,
         "algorithmDataToken": alg_data_token,
@@ -318,7 +318,7 @@ def test_fails(
             {
                 "documentId": trust_ddo.did,
                 "transferTxId": trust_tx_id,
-                "serviceId": trust_sa.index,
+                "serviceId": trust_sa.id,
             }
         ],
     }
