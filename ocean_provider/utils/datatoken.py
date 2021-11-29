@@ -63,13 +63,12 @@ def verify_order_tx(
         len(event_logs) == 1
     ), f"Multiple order events in the same transaction !!! {event_logs}"
 
-    # in order logs, serviceId is actually the index
-    if order_log.args.serviceId != service.index:
+    if order_log.args.serviceIndex != service.index:
         raise AssertionError(
             f"The service id in the event does "
             f"not match the requested asset. \n"
             f"requested: serviceIndex={service.index}\n"
-            f"event: serviceIndex={order_log.args.serviceId}"
+            f"event: serviceIndex={order_log.args.serviceIndex}"
         )
 
     if order_log.args.amount < amount:

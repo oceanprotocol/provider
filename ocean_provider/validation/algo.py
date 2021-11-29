@@ -152,8 +152,7 @@ class WorkflowValidator:
                 )
 
                 order_log = event_logs[0] if event_logs else None
-                # in order logs, serviceId is actually the index
-                algo_service_index = order_log.args.serviceId
+                algo_service_index = order_log.args.serviceIndex
                 self.algo_service = algo.get_service_by_index(algo_service_index)
 
                 if self.algo_service.type == "compute":
