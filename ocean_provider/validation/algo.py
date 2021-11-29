@@ -266,6 +266,10 @@ class InputItemValidator:
             self.error = "No serviceId in input item."
             return False
 
+        if not self.data.get("algorithmServiceId"):
+            self.error = "No algorithmServiceId in input item."
+            return False
+
         self.did = self.data.get("documentId")
         self.asset = get_asset_from_metadatastore(get_metadata_url(), self.did)
 

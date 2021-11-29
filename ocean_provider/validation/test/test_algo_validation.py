@@ -22,6 +22,7 @@ def test_passes(
     data = {
         "documentId": ddo.did,
         "serviceId": sa.id,
+        "algorithmServiceId": sa.id,
         "transferTxId": tx_id,
         "output": build_stage_output_dict(
             dict(), sa.service_endpoint, consumer_address, publisher_wallet
@@ -37,6 +38,7 @@ def test_passes(
     data = {
         "documentId": ddo.did,
         "serviceId": sa.id,
+        "algorithmServiceId": sa.id,
         "transferTxId": tx_id,
         "output": build_stage_output_dict(
             dict(), sa.service_endpoint, consumer_address, publisher_wallet
@@ -74,6 +76,7 @@ def test_fails(
         "documentId": did,
         "transferTxId": tx_id,
         "serviceId": sa.id,
+        "algorithmServiceId": sa.id,
         "output": "this can not be decoded",
         "algorithmDid": alg_ddo.did,
         "algorithmDataToken": alg_data_token,
@@ -89,6 +92,7 @@ def test_fails(
         "documentId": did,
         "transferTxId": tx_id,
         "serviceId": sa.id,
+        "algorithmServiceId": sa.id,
         "output": build_stage_output_dict(
             dict(), sa.service_endpoint, consumer_address, publisher_wallet
         ),
@@ -110,6 +114,7 @@ def test_fails(
         "documentId": did,
         "transferTxId": tx_id,
         "serviceId": sa.id,
+        "algorithmServiceId": sa.id,
         "output": valid_output,
         "algorithmMeta": {},
     }
@@ -126,6 +131,7 @@ def test_fails(
         "documentId": did,
         "transferTxId": tx_id,
         "serviceId": sa.id,
+        "algorithmServiceId": sa.id,
         "output": valid_output,
         "algorithmMeta": {
             "rawcode": "console.log('Hello world'!)",
@@ -148,6 +154,7 @@ def test_fails(
         "transferTxId": tx_id,
         "serviceId": sa.id,
         "output": valid_output,
+        "algorithmServiceId": sa.id,
         "algorithmMeta": {
             "rawcode": "console.log('Hello world'!)",
             "format": "docker-image",
@@ -168,6 +175,7 @@ def test_fails(
         "documentId": did,
         "transferTxId": tx_id,
         "serviceId": sa.id,
+        "algorithmServiceId": sa.id,
         "output": valid_output,
         "algorithmDid": alg_ddo.did,
         "algorithmDataToken": alg_data_token,
@@ -183,6 +191,7 @@ def test_fails(
         "documentId": did,
         "transferTxId": tx_id,
         "serviceId": sa.id,
+        "algorithmServiceId": sa.id,
         "output": valid_output,
         "algorithmDid": alg_ddo.did,
         "algorithmDataToken": alg_data_token,
@@ -199,6 +208,7 @@ def test_fails(
         "documentId": did,
         "transferTxId": tx_id,
         "serviceId": sa.id,
+        "algorithmServiceId": sa.id,
         "output": valid_output,
         "algorithmDid": alg_ddo.did,
         "algorithmDataToken": alg_data_token,
@@ -215,6 +225,7 @@ def test_fails(
         "documentId": did,
         "transferTxId": tx_id,
         "serviceId": sa.id,
+        "algorithmServiceId": sa.id,
         "output": valid_output,
         "algorithmDid": alg_ddo.did,
         "algorithmDataToken": alg_data_token,
@@ -241,6 +252,7 @@ def test_fails(
         "documentId": did,
         "transferTxId": tx_id,
         "serviceId": sa.id,
+        "algorithmServiceId": sa.id,
         "output": valid_output,
         "algorithmDid": alg_ddo.did,
         "algorithmDataToken": alg_data_token,
@@ -267,6 +279,7 @@ def test_fails(
         "documentId": did,
         "transferTxId": tx_id,
         "serviceId": sa.id,
+        "algorithmServiceId": sa.id,
         "output": valid_output,
         "algorithmDid": alg_ddo.did,
         "algorithmDataToken": alg_data_token,
@@ -310,6 +323,7 @@ def test_fails(
         "documentId": did,
         "transferTxId": trust_tx_id,
         "serviceId": sa.id,
+        "algorithmServiceId": sa.id,
         "output": valid_output,
         "algorithmDid": alg_ddo.did,
         "algorithmDataToken": alg_data_token,
@@ -326,3 +340,23 @@ def test_fails(
     validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
     assert validator.validate() is False
     assert validator.error == "this algorithm is not from a trusted publisher"
+
+    # Missing algorithmServiceId param ###
+    sa_compute = alg_ddo.get_service_by_type(ServiceType.ACCESS)
+    sa = ddo.get_service_by_type(ServiceType.COMPUTE)
+
+    data = {
+        "documentId": ddo.did,
+        "serviceId": sa.id,
+        "transferTxId": tx_id,
+        "output": build_stage_output_dict(
+            dict(), sa.service_endpoint, consumer_address, publisher_wallet
+        ),
+        "algorithmDid": alg_ddo.did,
+        "algorithmDataToken": sa_compute.datatoken_address,
+        "algorithmTransferTxId": alg_tx_id,
+    }
+
+    validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
+    assert validator.validate() is False
+    assert validator.error == "No algorithmServiceId in input item."

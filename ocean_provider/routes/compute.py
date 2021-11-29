@@ -273,6 +273,11 @@ def computeStart():
         description: The DID of the algorithm Asset to be executed
         required: false
         type: string
+      - name: algorithmServiceId
+        in: query
+        description: the id of the service to use to process the algorithm
+        required: true
+        type: string
       - name: algorithmMeta
         in: query
         description: json object that define the algorithm attributes and url or raw code
