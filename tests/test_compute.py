@@ -65,7 +65,7 @@ def test_compute_norawalgo_allowed(
         {
             "signature": signature,
             "documentId": dataset_ddo_w_compute_service.did,
-            "serviceId": sa.index,
+            "serviceId": sa.id,
             "serviceType": sa.type,
             "consumerAddress": consumer_address,
             "transferTxId": tx_id,
@@ -91,7 +91,7 @@ def test_compute_specific_algo_dids(
     ddo, tx_id, alg_ddo, _ = build_and_send_ddo_with_compute_service(
         client, publisher_wallet, consumer_wallet
     )
-    sa = alg_ddo.get_service_by_type(ServiceType.ACCESS)
+    sa = ddo.get_service_by_type(ServiceType.COMPUTE)
     signature = get_compute_signature(client, consumer_wallet, ddo.did)
 
     algo_metadata = build_metadata_dict_type_algorithm()
@@ -105,7 +105,7 @@ def test_compute_specific_algo_dids(
         {
             "signature": signature,
             "documentId": ddo.did,
-            "serviceId": sa.index,
+            "serviceId": sa.id,
             "serviceType": sa.type,
             "consumerAddress": consumer_address,
             "transferTxId": tx_id,
@@ -133,8 +133,8 @@ def test_compute(client, publisher_wallet, consumer_wallet):
     ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
         client, publisher_wallet, consumer_wallet
     )
-    sa = alg_ddo.get_service_by_type(ServiceType.ACCESS)
-    sa_compute = ddo.get_service_by_type(ServiceType.COMPUTE)
+    sa_compute = alg_ddo.get_service_by_type(ServiceType.ACCESS)
+    sa = ddo.get_service_by_type(ServiceType.COMPUTE)
     signature = get_compute_signature(client, consumer_wallet, ddo.did)
 
     # Start the compute job
@@ -142,7 +142,7 @@ def test_compute(client, publisher_wallet, consumer_wallet):
         {
             "signature": signature,
             "documentId": ddo.did,
-            "serviceId": sa.index,
+            "serviceId": sa.id,
             "serviceType": sa.type,
             "consumerAddress": consumer_wallet.address,
             "transferTxId": tx_id,
@@ -255,8 +255,8 @@ def test_compute_diff_provider(client, publisher_wallet, consumer_wallet):
     ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
         client, publisher_wallet, consumer_wallet, alg_diff=True
     )
-    sa = alg_ddo.get_service_by_type(ServiceType.ACCESS)
-    sa_compute = ddo.get_service_by_type(ServiceType.COMPUTE)
+    sa_compute = alg_ddo.get_service_by_type(ServiceType.ACCESS)
+    sa = ddo.get_service_by_type(ServiceType.COMPUTE)
     signature = get_compute_signature(client, consumer_wallet, ddo.did)
 
     # Start the compute job
@@ -264,7 +264,7 @@ def test_compute_diff_provider(client, publisher_wallet, consumer_wallet):
         {
             "signature": signature,
             "documentId": ddo.did,
-            "serviceId": sa.index,
+            "serviceId": sa.id,
             "serviceType": sa.type,
             "consumerAddress": consumer_wallet.address,
             "transferTxId": tx_id,
@@ -286,8 +286,8 @@ def test_compute_allow_all_published(client, publisher_wallet, consumer_wallet):
     ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
         client, publisher_wallet, consumer_wallet, asset_type="allow_all_published"
     )
-    sa = alg_ddo.get_service_by_type(ServiceType.ACCESS)
-    sa_compute = ddo.get_service_by_type(ServiceType.COMPUTE)
+    sa_compute = alg_ddo.get_service_by_type(ServiceType.ACCESS)
+    sa = ddo.get_service_by_type(ServiceType.COMPUTE)
     signature = get_compute_signature(client, consumer_wallet, ddo.did)
 
     # Start the compute job
@@ -295,7 +295,7 @@ def test_compute_allow_all_published(client, publisher_wallet, consumer_wallet):
         {
             "signature": signature,
             "documentId": ddo.did,
-            "serviceId": sa.index,
+            "serviceId": sa.id,
             "serviceType": sa.type,
             "consumerAddress": consumer_wallet.address,
             "transferTxId": tx_id,
@@ -317,8 +317,8 @@ def test_compute_additional_input(client, publisher_wallet, consumer_wallet):
     ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
         client, publisher_wallet, consumer_wallet
     )
-    sa = alg_ddo.get_service_by_type(ServiceType.ACCESS)
-    sa_compute = ddo.get_service_by_type(ServiceType.COMPUTE)
+    sa_compute = alg_ddo.get_service_by_type(ServiceType.ACCESS)
+    sa = ddo.get_service_by_type(ServiceType.COMPUTE)
 
     ddo2 = get_registered_asset(
         publisher_wallet,
@@ -356,7 +356,7 @@ def test_compute_additional_input(client, publisher_wallet, consumer_wallet):
         {
             "signature": signature,
             "documentId": ddo.did,
-            "serviceId": sa.index,
+            "serviceId": sa.id,
             "serviceType": sa.type,
             "consumerAddress": consumer_wallet.address,
             "transferTxId": tx_id,
@@ -371,7 +371,7 @@ def test_compute_additional_input(client, publisher_wallet, consumer_wallet):
                 {
                     "documentId": ddo2.did,
                     "transferTxId": tx_id2,
-                    "serviceId": sa2.index,
+                    "serviceId": sa2.id,
                     "userdata": {"test_key": "test_value"},
                 }
             ],
@@ -390,8 +390,8 @@ def test_compute_delete_job(
     ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
         client, publisher_wallet, consumer_wallet
     )
-    sa = alg_ddo.get_service_by_type(ServiceType.ACCESS)
-    sa_compute = ddo.get_service_by_type(ServiceType.COMPUTE)
+    sa_compute = alg_ddo.get_service_by_type(ServiceType.ACCESS)
+    sa = ddo.get_service_by_type(ServiceType.COMPUTE)
     signature = get_compute_signature(client, consumer_wallet, ddo.did)
 
     # Start the compute job
@@ -399,7 +399,7 @@ def test_compute_delete_job(
         {
             "signature": signature,
             "documentId": ddo.did,
-            "serviceId": sa.index,
+            "serviceId": sa.id,
             "serviceType": sa.type,
             "consumerAddress": consumer_wallet.address,
             "transferTxId": tx_id,

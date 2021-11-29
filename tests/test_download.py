@@ -46,7 +46,7 @@ def test_download_service(client, publisher_wallet, consumer_wallet, web3, userd
     # (let the provider do the decryption)
     payload = {
         "documentId": asset.did,
-        "serviceId": service.index,
+        "serviceId": service.id,
         "serviceType": service.type,
         "dataToken": service.datatoken_address,
         "consumerAddress": consumer_wallet.address,
@@ -97,7 +97,7 @@ def test_initialize_on_bad_url(client, publisher_wallet, consumer_wallet, web3):
     response = initialize_service(
         client,
         asset.did,
-        service.index,
+        service.id,
         service.type,
         service.datatoken_address,
         consumer_wallet,
@@ -118,7 +118,7 @@ def test_initialize_on_ipfs_url(client, publisher_wallet, consumer_wallet, web3)
     numTokens, datatoken, _, _ = initialize_service(
         client,
         asset.did,
-        service.index,
+        service.id,
         service.type,
         service.datatoken_address,
         consumer_wallet,
@@ -140,7 +140,7 @@ def test_initialize_on_disabled_asset(client, publisher_wallet, consumer_wallet,
     response = initialize_service(
         client,
         asset.did,
-        service.index,
+        service.id,
         service.type,
         service.datatoken_address,
         consumer_wallet,
@@ -166,7 +166,7 @@ def test_initialize_on_asset_with_custom_credentials(
     response = initialize_service(
         client,
         asset.did,
-        service.index,
+        service.id,
         service.type,
         service.datatoken_address,
         consumer_wallet,
@@ -203,7 +203,7 @@ def test_download_multiple_files(client, publisher_wallet, consumer_wallet, web3
     # (let the provider do the decryption)
     payload = {
         "documentId": asset.did,
-        "serviceId": service.index,
+        "serviceId": service.id,
         "serviceType": service.type,
         "dataToken": service.datatoken_address,
         "consumerAddress": consumer_wallet.address,

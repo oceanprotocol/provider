@@ -18,7 +18,7 @@ def test_asset_info(client, publisher_wallet):
     service = asset.get_service_by_type(ServiceType.ACCESS)
     response = client.post(
         fileinfo_url,
-        json={"did": asset.did, "serviceIndex": service.index, "checksum": "true"},
+        json={"did": asset.did, "serviceId": service.id, "checksum": "true"},
     )
 
     result = response.get_json()
@@ -39,7 +39,7 @@ def test_asset_info(client, publisher_wallet):
     asset = get_dataset_with_invalid_url_ddo(client, publisher_wallet)
     service = asset.get_service_by_type(ServiceType.ACCESS)
     response = client.post(
-        fileinfo_url, json={"did": asset.did, "serviceIndex": service.index}
+        fileinfo_url, json={"did": asset.did, "serviceId": service.id}
     )
 
     result = response.get_json()

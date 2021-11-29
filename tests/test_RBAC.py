@@ -72,7 +72,7 @@ def test_initialize_request_payload(
 
     req = {
         "documentId": asset.did,
-        "serviceId": service.index,
+        "serviceId": service.id,
         "serviceType": service.type,
         "dataToken": service.datatoken_address,
         "consumerAddress": consumer_wallet.address,
@@ -88,7 +88,7 @@ def test_initialize_request_payload(
         "value": consumer_wallet.address,
     }
     assert payload["dids"][0]["did"] == asset.did
-    assert payload["dids"][0]["serviceId"] == service.index
+    assert payload["dids"][0]["serviceId"] == service.id
 
 
 def test_access_request_payload(
@@ -114,7 +114,7 @@ def test_access_request_payload(
 
     req = {
         "documentId": asset.did,
-        "serviceId": service.index,
+        "serviceId": service.id,
         "serviceType": service.type,
         "dataToken": service.datatoken_address,
         "consumerAddress": consumer_wallet.address,
@@ -133,7 +133,7 @@ def test_access_request_payload(
         "value": consumer_wallet.address,
     }
     assert payload["dids"][0]["did"] == asset.did
-    assert payload["dids"][0]["serviceId"] == service.index
+    assert payload["dids"][0]["serviceId"] == service.id
 
 
 def test_compute_payload_without_additional_inputs(
@@ -148,7 +148,7 @@ def test_compute_payload_without_additional_inputs(
     req = {
         "signature": generate_auth_token(consumer_wallet),
         "documentId": ddo.did,
-        "serviceId": sa.index,
+        "serviceId": sa.id,
         "serviceType": sa.type,
         "consumerAddress": consumer_wallet.address,
         "transferTxId": tx_id,
@@ -171,9 +171,9 @@ def test_compute_payload_without_additional_inputs(
         "value": consumer_wallet.address,
     }
     assert payload["dids"][0]["did"] == ddo.did
-    assert payload["dids"][0]["serviceId"] == sa.index
+    assert payload["dids"][0]["serviceId"] == sa.id
     assert payload["algos"][0]["did"] == alg_ddo.did
-    assert payload["algos"][0]["serviceId"] == sa_compute.index
+    assert payload["algos"][0]["serviceId"] == sa_compute.id
 
 
 def test_compute_request_payload(
@@ -217,7 +217,7 @@ def test_compute_request_payload(
     req = {
         "signature": generate_auth_token(consumer_wallet),
         "documentId": ddo.did,
-        "serviceId": sa.index,
+        "serviceId": sa.id,
         "serviceType": sa.type,
         "consumerAddress": consumer_wallet.address,
         "transferTxId": tx_id,
@@ -229,7 +229,7 @@ def test_compute_request_payload(
         "algorithmDataToken": sa_compute.datatoken_address,
         "algorithmTransferTxId": alg_tx_id,
         "additionalInputs": [
-            {"documentId": ddo2.did, "transferTxId": tx_id2, "serviceId": sa2.index}
+            {"documentId": ddo2.did, "transferTxId": tx_id2, "serviceId": sa2.id}
         ],
     }
     validator = RBACValidator(request_name="ComputeRequest", request=req)
@@ -242,11 +242,11 @@ def test_compute_request_payload(
         "value": consumer_wallet.address,
     }
     assert payload["dids"][0]["did"] == ddo.did
-    assert payload["dids"][0]["serviceId"] == sa.index
+    assert payload["dids"][0]["serviceId"] == sa.id
     assert payload["algos"][0]["did"] == alg_ddo.did
-    assert payload["algos"][0]["serviceId"] == sa_compute.index
+    assert payload["algos"][0]["serviceId"] == sa_compute.id
     assert payload["additionalDids"][0]["did"] == ddo2.did
-    assert payload["additionalDids"][0]["serviceId"] == sa2.index
+    assert payload["additionalDids"][0]["serviceId"] == sa2.id
 
 
 def test_fails(
@@ -268,7 +268,7 @@ def test_fails(
     req = {
         "signature": generate_auth_token(consumer_wallet),
         "documentId": ddo.did,
-        "serviceId": sa.index,
+        "serviceId": sa.id,
         "serviceType": sa.type,
         "consumerAddress": consumer_wallet.address,
         "transferTxId": tx_id,

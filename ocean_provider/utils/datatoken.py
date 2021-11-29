@@ -10,6 +10,7 @@ from web3.main import Web3
 from websockets import ConnectionClosed
 
 from artifacts import ERC20Template
+from ocean_provider.utils.services import Service
 
 
 def get_datatoken_contract(web3: Web3, address: Optional[str] = None) -> Contract:
@@ -31,7 +32,7 @@ def verify_order_tx(
     web3: Web3,
     datatoken_address: HexAddress,
     tx_id: HexStr,
-    service_id: int,
+    service: Service,
     amount: int,
     sender: HexAddress,
 ):
@@ -62,12 +63,12 @@ def verify_order_tx(
         len(event_logs) == 1
     ), f"Multiple order events in the same transaction !!! {event_logs}"
 
-    if order_log.args.serviceId != service_id:
+    if order_log.args.serviceIndex != service.index:
         raise AssertionError(
             f"The service id in the event does "
             f"not match the requested asset. \n"
-            f"requested: serviceId={service_id}\n"
-            f"event: serviceId={order_log.args.serviceId}"
+            f"requested: serviceIndex={service.index}\n"
+            f"event: serviceIndex={order_log.args.serviceIndex}"
         )
 
     if order_log.args.amount < amount:

@@ -152,8 +152,8 @@ class WorkflowValidator:
                 )
 
                 order_log = event_logs[0] if event_logs else None
-                algo_service_id = order_log.args.serviceId
-                self.algo_service = algo.get_service_by_index(algo_service_id)
+                algo_service_index = order_log.args.serviceIndex
+                self.algo_service = algo.get_service_by_index(algo_service_index)
 
                 if self.algo_service.type == "compute":
                     asset_urls = get_service_files_list(
@@ -175,18 +175,18 @@ class WorkflowValidator:
                     1,
                     algorithm_tx_id,
                     algorithm_did,
-                    self.algo_service.index,
+                    self.algo_service,
                 )
                 validate_transfer_not_used_for_other_service(
                     algorithm_did,
-                    self.algo_service.index,
+                    self.algo_service.id,
                     algorithm_tx_id,
                     self.consumer_address,
                     algorithm_token_address,
                 )
                 record_consume_request(
                     algorithm_did,
-                    self.algo_service.index,
+                    self.algo_service.id,
                     algorithm_tx_id,
                     self.consumer_address,
                     algorithm_token_address,
@@ -273,7 +273,7 @@ class InputItemValidator:
             self.error = f"Asset for did {self.did} not found."
             return False
 
-        self.service = self.asset.get_service_by_index(int(self.data["serviceId"]))
+        self.service = self.asset.get_service_by_id(self.data["serviceId"])
 
         consumable, message = check_asset_consumable(
             self.asset, self.consumer_address, logger, self.service.service_endpoint
@@ -284,7 +284,7 @@ class InputItemValidator:
             return False
 
         if not self.service:
-            self.error = f"Service index {self.data['serviceId']} not found."
+            self.error = f"Service id {self.data['serviceId']} not found."
             return False
 
         if self.service.type not in ["access", "compute"]:
@@ -320,7 +320,7 @@ class InputItemValidator:
                 "id": self.did,
                 "remote": {
                     "txid": self.data.get("transferTxId"),
-                    "serviceIndex": self.service.index,
+                    "serviceId": self.service.id,
                 },
             }
 
@@ -425,18 +425,18 @@ class InputItemValidator:
                 1,
                 tx_id,
                 self.did,
-                self.service.index,
+                self.service,
             )
             validate_transfer_not_used_for_other_service(
                 self.did,
-                self.service.index,
+                self.service.id,
                 tx_id,
                 self.consumer_address,
                 token_address,
             )
             record_consume_request(
                 self.did,
-                self.service.index,
+                self.service.id,
                 tx_id,
                 self.consumer_address,
                 token_address,
@@ -444,7 +444,7 @@ class InputItemValidator:
             )
         except Exception as e:
             logger.debug(f"validate_usage failed with {str(e)}.")
-            self.error = f"Order for serviceId {self.service.index} is not valid."
+            self.error = f"Order for serviceId {self.service.id} is not valid."
             return False
 
         return True
