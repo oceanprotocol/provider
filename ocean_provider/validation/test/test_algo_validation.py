@@ -22,7 +22,7 @@ def test_passes(
     data = {
         "documentId": ddo.did,
         "serviceId": sa.id,
-        "algorithmServiceId": sa.id,
+        "algorithmServiceId": sa_compute.id,
         "transferTxId": tx_id,
         "output": build_stage_output_dict(
             dict(), sa.service_endpoint, consumer_address, publisher_wallet
@@ -38,7 +38,7 @@ def test_passes(
     data = {
         "documentId": ddo.did,
         "serviceId": sa.id,
-        "algorithmServiceId": sa.id,
+        "algorithmServiceId": sa_compute.id,
         "transferTxId": tx_id,
         "output": build_stage_output_dict(
             dict(), sa.service_endpoint, consumer_address, publisher_wallet
@@ -76,7 +76,7 @@ def test_fails(
         "documentId": did,
         "transferTxId": tx_id,
         "serviceId": sa.id,
-        "algorithmServiceId": sa.id,
+        "algorithmServiceId": sa_compute.id,
         "output": "this can not be decoded",
         "algorithmDid": alg_ddo.did,
         "algorithmDataToken": alg_data_token,
@@ -92,7 +92,7 @@ def test_fails(
         "documentId": did,
         "transferTxId": tx_id,
         "serviceId": sa.id,
-        "algorithmServiceId": sa.id,
+        "algorithmServiceId": sa_compute.id,
         "output": build_stage_output_dict(
             dict(), sa.service_endpoint, consumer_address, publisher_wallet
         ),
@@ -114,7 +114,7 @@ def test_fails(
         "documentId": did,
         "transferTxId": tx_id,
         "serviceId": sa.id,
-        "algorithmServiceId": sa.id,
+        "algorithmServiceId": sa_compute.id,
         "output": valid_output,
         "algorithmMeta": {},
     }
@@ -131,7 +131,7 @@ def test_fails(
         "documentId": did,
         "transferTxId": tx_id,
         "serviceId": sa.id,
-        "algorithmServiceId": sa.id,
+        "algorithmServiceId": sa_compute.id,
         "output": valid_output,
         "algorithmMeta": {
             "rawcode": "console.log('Hello world'!)",
@@ -154,7 +154,7 @@ def test_fails(
         "transferTxId": tx_id,
         "serviceId": sa.id,
         "output": valid_output,
-        "algorithmServiceId": sa.id,
+        "algorithmServiceId": sa_compute.id,
         "algorithmMeta": {
             "rawcode": "console.log('Hello world'!)",
             "format": "docker-image",
@@ -175,7 +175,7 @@ def test_fails(
         "documentId": did,
         "transferTxId": tx_id,
         "serviceId": sa.id,
-        "algorithmServiceId": sa.id,
+        "algorithmServiceId": sa_compute.id,
         "output": valid_output,
         "algorithmDid": alg_ddo.did,
         "algorithmDataToken": alg_data_token,
@@ -191,7 +191,7 @@ def test_fails(
         "documentId": did,
         "transferTxId": tx_id,
         "serviceId": sa.id,
-        "algorithmServiceId": sa.id,
+        "algorithmServiceId": sa_compute.id,
         "output": valid_output,
         "algorithmDid": alg_ddo.did,
         "algorithmDataToken": alg_data_token,
@@ -208,7 +208,7 @@ def test_fails(
         "documentId": did,
         "transferTxId": tx_id,
         "serviceId": sa.id,
-        "algorithmServiceId": sa.id,
+        "algorithmServiceId": sa_compute.id,
         "output": valid_output,
         "algorithmDid": alg_ddo.did,
         "algorithmDataToken": alg_data_token,
@@ -225,7 +225,7 @@ def test_fails(
         "documentId": did,
         "transferTxId": tx_id,
         "serviceId": sa.id,
-        "algorithmServiceId": sa.id,
+        "algorithmServiceId": sa_compute.id,
         "output": valid_output,
         "algorithmDid": alg_ddo.did,
         "algorithmDataToken": alg_data_token,
@@ -252,7 +252,7 @@ def test_fails(
         "documentId": did,
         "transferTxId": tx_id,
         "serviceId": sa.id,
-        "algorithmServiceId": sa.id,
+        "algorithmServiceId": sa_compute.id,
         "output": valid_output,
         "algorithmDid": alg_ddo.did,
         "algorithmDataToken": alg_data_token,
@@ -279,7 +279,7 @@ def test_fails(
         "documentId": did,
         "transferTxId": tx_id,
         "serviceId": sa.id,
-        "algorithmServiceId": sa.id,
+        "algorithmServiceId": sa_compute.id,
         "output": valid_output,
         "algorithmDid": alg_ddo.did,
         "algorithmDataToken": alg_data_token,
@@ -323,7 +323,7 @@ def test_fails(
         "documentId": did,
         "transferTxId": trust_tx_id,
         "serviceId": sa.id,
-        "algorithmServiceId": sa.id,
+        "algorithmServiceId": sa_compute.id,
         "output": valid_output,
         "algorithmDid": alg_ddo.did,
         "algorithmDataToken": alg_data_token,

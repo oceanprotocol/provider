@@ -60,7 +60,7 @@ class RBACValidator:
         return [
             {
                 "did": self.request["algorithmDid"],
-                "serviceId": self.request["serviceId"],
+                "algorithmServiceId": self.request["algorithmServiceId"],
             }
         ]
 
