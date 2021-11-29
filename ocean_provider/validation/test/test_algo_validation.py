@@ -360,3 +360,26 @@ def test_fails(
     validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
     assert validator.validate() is False
     assert validator.error == "No algorithmServiceId in input item."
+
+    # AlgorithmServiceId and algorithmTransferTxId are not matching ###
+    sa_compute = alg_ddo.get_service_by_type(ServiceType.ACCESS)
+    sa = ddo.get_service_by_type(ServiceType.COMPUTE)
+
+    data = {
+        "documentId": ddo.did,
+        "serviceId": sa.id,
+        "algorithmServiceId": sa_compute.id,
+        "transferTxId": tx_id,
+        "output": build_stage_output_dict(
+            dict(), sa.service_endpoint, consumer_address, publisher_wallet
+        ),
+        "algorithmDid": alg_ddo.did,
+        "algorithmDataToken": sa_compute.datatoken_address,
+        "algorithmTransferTxId": "0x12345",
+    }
+
+    validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
+    assert validator.validate() is False
+    assert (
+        validator.error == "Algorithm is already in use or can not be found on chain."
+    )

@@ -174,7 +174,7 @@ def test_compute_payload_without_additional_inputs(
     assert payload["dids"][0]["did"] == ddo.did
     assert payload["dids"][0]["serviceId"] == sa.id
     assert payload["algos"][0]["did"] == alg_ddo.did
-    assert payload["algos"][0]["algorithmServiceId"] == sa_compute.id
+    assert payload["algos"][0]["serviceId"] == sa_compute.id
 
 
 def test_compute_request_payload(
@@ -246,7 +246,7 @@ def test_compute_request_payload(
     assert payload["dids"][0]["did"] == ddo.did
     assert payload["dids"][0]["serviceId"] == sa.id
     assert payload["algos"][0]["did"] == alg_ddo.did
-    assert payload["algos"][0]["algorithmServiceId"] == sa_compute.id
+    assert payload["algos"][0]["serviceId"] == sa_compute.id
     assert payload["additionalDids"][0]["did"] == ddo2.did
     assert payload["additionalDids"][0]["serviceId"] == sa2.id
 

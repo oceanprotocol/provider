@@ -145,6 +145,10 @@ class WorkflowValidator:
                 self.error = f"DID {algorithm_did} is not a valid algorithm"
                 return False
 
+            if not algorithm_service_id:
+                self.error = "No algorithmServiceId in input item."
+                return False
+
             try:
                 self.algo_service = algo.get_service_by_id(algorithm_service_id)
 
@@ -257,10 +261,6 @@ class InputItemValidator:
 
         if not self.data.get("serviceId") and self.data.get("serviceId") != 0:
             self.error = "No serviceId in input item."
-            return False
-
-        if not self.data.get("algorithmServiceId"):
-            self.error = "No algorithmServiceId in input item."
             return False
 
         self.did = self.data.get("documentId")
