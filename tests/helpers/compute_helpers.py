@@ -1,11 +1,10 @@
-import itertools
 import json
-import uuid
 
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.currency import to_wei
 from ocean_provider.utils.services import ServiceType
+from ocean_provider.utils.util import msg_hash
 from tests.helpers.ddo_dict_builders import build_metadata_dict_type_algorithm
 from tests.test_helpers import (
     BLACK_HOLE_ADDRESS,
@@ -41,9 +40,7 @@ def build_and_send_ddo_with_compute_service(
     # publish a dataset asset
     if asset_type == "allow_all_published":
         dataset_ddo_w_compute_service = get_registered_asset(
-            publisher_wallet,
-            custom_services="vanilla_compute",
-            custom_services_args=[],
+            publisher_wallet, custom_services="vanilla_compute", custom_services_args=[]
         )
     if asset_type == "specific_algo_publishers":
         dataset_ddo_w_compute_service = get_registered_asset(
@@ -53,8 +50,7 @@ def build_and_send_ddo_with_compute_service(
         )
     elif asset_type == "allow_all_published_and_one_bogus":
         dataset_ddo_w_compute_service = get_registered_asset(
-            publisher_wallet,
-            custom_services="allow_all_published_and_one_bogus",
+            publisher_wallet, custom_services="allow_all_published_and_one_bogus"
         )
     else:
         dataset_ddo_w_compute_service = get_registered_asset(
@@ -63,8 +59,13 @@ def build_and_send_ddo_with_compute_service(
             custom_services_args=[
                 {
                     "did": alg_ddo.did,
-                    "filesChecksum": "TODO",
-                    "containerSectionChecksum": "TODO",
+                    "filesChecksum": msg_hash(service.encrypted_files),
+                    "containerSectionChecksum": msg_hash(
+                        json.dumps(
+                            alg_ddo.metadata["algorithm"]["container"],
+                            separators=(",", ":"),
+                        )
+                    ),
                 }
             ],
         )

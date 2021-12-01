@@ -5,10 +5,7 @@
 import json
 import logging
 
-from web3.logs import DISCARD
-
 from ocean_provider.constants import BaseURLs
-from ocean_provider.myapp import app
 from ocean_provider.serializers import StageAlgoSerializer
 from ocean_provider.utils.basics import get_asset_from_metadatastore, get_config
 from ocean_provider.utils.datatoken import get_datatoken_contract, get_tx_receipt
@@ -25,6 +22,7 @@ from ocean_provider.utils.util import (
     validate_order,
     validate_transfer_not_used_for_other_service,
 )
+from web3.logs import DISCARD
 
 logger = logging.getLogger(__name__)
 
@@ -296,10 +294,7 @@ class InputItemValidator:
             return False
 
         # TODO: add files to compute service (encryptedFiles)
-        asset_urls = get_service_files_list(
-            self.service,
-            self.provider_wallet,
-        )
+        asset_urls = get_service_files_list(self.service, self.provider_wallet)
 
         if self.service.type == "compute" and not asset_urls:
             self.error = "Services in input with compute type must be in the same provider you are calling."
@@ -362,14 +357,10 @@ class InputItemValidator:
         algo_ddo = get_asset_from_metadatastore(
             get_metadata_url(), trusted_algo_dict["did"]
         )
-        #  TODO: reinstate
-        return True
-        service = algo_ddo.get_service("metadata")
 
-        files_checksum = msg_hash(
-            service.attributes["encryptedFiles"]
-            + json.dumps(service.main["files"], separators=(",", ":"))
-        )
+        service = algo_ddo.get_service_by_type("access")
+
+        files_checksum = msg_hash(service.encrypted_files)
         if allowed_files_checksum and files_checksum != allowed_files_checksum:
             self.error = (
                 f"filesChecksum for algorithm with did {algo_ddo.did} does not match"
@@ -377,7 +368,9 @@ class InputItemValidator:
             return False
 
         container_section_checksum = msg_hash(
-            json.dumps(service.main["algorithm"]["container"], separators=(",", ":"))
+            json.dumps(
+                algo_ddo.metadata["algorithm"]["container"], separators=(",", ":")
+            )
         )
         if (
             allowed_container_checksum
@@ -428,11 +421,7 @@ class InputItemValidator:
                 self.service,
             )
             validate_transfer_not_used_for_other_service(
-                self.did,
-                self.service.id,
-                tx_id,
-                self.consumer_address,
-                token_address,
+                self.did, self.service.id, tx_id, self.consumer_address, token_address
             )
             record_consume_request(
                 self.did,
