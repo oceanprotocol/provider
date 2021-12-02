@@ -9,6 +9,7 @@ import pytest
 from ocean_provider.constants import BaseURLs
 from ocean_provider.exceptions import RequestNotFound
 from ocean_provider.utils.accounts import generate_auth_token
+from ocean_provider.utils.basics import get_provider_wallet
 from ocean_provider.utils.datatoken import get_dt_contract
 from ocean_provider.validation.algo import build_stage_output_dict
 from ocean_provider.validation.provider_requests import RBACValidator
@@ -49,6 +50,7 @@ def test_encrypt_request_payload(consumer_wallet, publisher_wallet):
     assert validator.request == req
     assert payload["eventType"] == "encryptUrl"
     assert payload["component"] == "provider"
+    assert payload["providerAddress"] == get_provider_wallet().address
     assert payload["credentials"] == {
         "type": "address",
         "value": publisher_wallet.address,
@@ -75,6 +77,7 @@ def test_initialize_request_payload(
     payload = validator.build_payload()
     assert validator.request == req
     assert payload["eventType"] == "initialize"
+    assert payload["providerAddress"] == get_provider_wallet().address
     assert payload["component"] == "provider"
     assert payload["credentials"] == {
         "type": "address",
@@ -112,6 +115,7 @@ def test_access_request_payload(
     assert validator.request == req
     assert payload["eventType"] == "access"
     assert payload["component"] == "provider"
+    assert payload["providerAddress"] == get_provider_wallet().address
     assert payload["credentials"] == {
         "type": "address",
         "value": consumer_wallet.address,
@@ -152,6 +156,7 @@ def test_compute_payload_without_additional_inputs(
     assert validator.request == req
     assert payload["eventType"] == "compute"
     assert payload["component"] == "provider"
+    assert payload["providerAddress"] == get_provider_wallet().address
     assert payload["credentials"] == {
         "type": "address",
         "value": consumer_wallet.address,
@@ -200,6 +205,7 @@ def test_compute_request_payload(
     assert validator.request == req
     assert payload["eventType"] == "compute"
     assert payload["component"] == "provider"
+    assert payload["providerAddress"] == get_provider_wallet().address
     assert payload["credentials"] == {
         "type": "address",
         "value": consumer_wallet.address,
