@@ -325,16 +325,11 @@ def test_compute_additional_input(client, publisher_wallet, consumer_wallet):
     sa_compute = alg_ddo.get_service_by_type(ServiceType.ACCESS)
     sa = ddo.get_service_by_type(ServiceType.COMPUTE)
 
+    # same trusted algo
     ddo2 = get_registered_asset(
         publisher_wallet,
         custom_services="vanilla_compute",
-        custom_services_args=[
-            {
-                "did": alg_ddo.did,
-                "filesChecksum": "TODO",
-                "containerSectionChecksum": "TODO",
-            }
-        ],
+        custom_services_args=ddo.services[0].compute_dict["publisherTrustedAlgorithms"]
     )
 
     web3 = get_web3()

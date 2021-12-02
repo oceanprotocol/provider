@@ -355,7 +355,7 @@ class InputItemValidator:
             get_metadata_url(), trusted_algo_dict["did"]
         )
 
-        service = algo_ddo.get_service_by_type("access")
+        service = algo_ddo.get_service_by_id(self.data.get("algorithmServiceId"))
 
         files_checksum = msg_hash(service.encrypted_files)
         if allowed_files_checksum and files_checksum != allowed_files_checksum:
