@@ -130,6 +130,7 @@ class WorkflowValidator:
         if algorithm_did and not algo_data.get("algorithmMeta"):
             algorithm_token_address = algo_data.get("algorithmDataToken")
             algorithm_tx_id = algo_data.get("algorithmTransferTxId")
+            algorithm_service_id = algo_data.get("algorithmServiceId")
 
             algo = get_asset_from_metadatastore(get_metadata_url(), algorithm_did)
 
@@ -142,16 +143,12 @@ class WorkflowValidator:
                 self.error = f"DID {algorithm_did} is not a valid algorithm"
                 return False
 
-            try:
-                dt = get_datatoken_contract(self.web3, self.consumer_address)
-                tx_receipt = get_tx_receipt(self.web3, algorithm_tx_id)
-                event_logs = dt.events.OrderStarted().processReceipt(
-                    tx_receipt, errors=DISCARD
-                )
+            if not algorithm_service_id:
+                self.error = "No algorithmServiceId in input item."
+                return False
 
-                order_log = event_logs[0] if event_logs else None
-                algo_service_index = order_log.args.serviceIndex
-                self.algo_service = algo.get_service_by_index(algo_service_index)
+            try:
+                self.algo_service = algo.get_service_by_id(algorithm_service_id)
 
                 if self.algo_service.type == "compute":
                     asset_urls = get_service_files_list(
