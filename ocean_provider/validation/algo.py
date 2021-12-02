@@ -290,7 +290,6 @@ class InputItemValidator:
             self.error = "Service for main asset must be compute."
             return False
 
-        # TODO: add files to compute service (encryptedFiles)
         asset_urls = get_service_files_list(self.service, self.provider_wallet)
 
         if self.service.type == "compute" and not asset_urls:

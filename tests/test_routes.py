@@ -6,7 +6,7 @@ from ocean_provider.constants import BaseURLs
 from ocean_provider.run import get_provider_address, get_services_endpoints
 from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.basics import get_provider_wallet
-from tests.test_helpers import get_dataset_asset_with_access_service, get_nonce
+from tests.test_helpers import get_registered_asset, get_nonce
 
 
 def test_get_provider_address(client):
@@ -47,7 +47,7 @@ def test_empty_payload_encryption(client):
 
 
 def test_encrypt_endpoint(client, provider_wallet, publisher_wallet):
-    asset = get_dataset_asset_with_access_service(client, publisher_wallet)
+    asset = get_registered_asset(publisher_wallet)
     files_list_str = '["https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt"]'
 
     nonce = get_nonce(client, provider_wallet.address)
