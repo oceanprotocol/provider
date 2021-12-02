@@ -329,7 +329,7 @@ def test_compute_additional_input(client, publisher_wallet, consumer_wallet):
     ddo2 = get_registered_asset(
         publisher_wallet,
         custom_services="vanilla_compute",
-        custom_services_args=ddo.services[0].compute_dict["publisherTrustedAlgorithms"]
+        custom_services_args=ddo.services[0].compute_dict["publisherTrustedAlgorithms"],
     )
 
     web3 = get_web3()
