@@ -26,18 +26,17 @@ def increment_nonce(address):
     :param: address
     """
     nonce_object = models.UserNonce.query.filter_by(address=address).first()
-
-    if not nonce_object:
-        nonce_object = models.UserNonce(
-            address=address, nonce=models.UserNonce.FIRST_NONCE
-        )
-        db.add(nonce_object)
-
-    nonce_value = nonce_object.nonce
-    incremented_nonce = int(nonce_value) + 1
+    if nonce_object:
+        nonce_value = nonce_object.nonce
+    else:
+        nonce_object = models.UserNonce(address=address)
+        nonce_value = models.UserNonce.FIRST_NONCE
 
     logger.debug(
-        f"increment_nonce: {address}, {nonce_value}, " f"new nonce {incremented_nonce}"
+        f"increment_nonce: {address}, {nonce_value}, "
+        "new nonce {int(nonce_value) + 1}"
     )
 
+    nonce_object.nonce = int(nonce_value) + 1
+    db.add(nonce_object)
     db.commit()
