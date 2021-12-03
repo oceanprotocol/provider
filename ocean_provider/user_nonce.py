@@ -28,6 +28,7 @@ def increment_nonce(address):
     nonce_object = get_or_create_user_nonce_object(address)
     nonce_value = nonce_object.nonce
     incremented_nonce = int(nonce_value) + 1
+    nonce_object.nonce = incremented_nonce
 
     logger.debug(
         f"increment_nonce: {address}, {nonce_value}, new nonce {incremented_nonce}"
