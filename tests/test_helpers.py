@@ -8,15 +8,12 @@ import time
 from hashlib import sha256
 from typing import Tuple
 
+from jsonsempai import magic  # noqa: F401
+from artifacts import ERC721Template
 from eth_account.signers.local import LocalAccount
 from eth_typing.encoding import HexStr
 from eth_typing.evm import HexAddress
 from flask.testing import FlaskClient
-from jsonsempai import magic  # noqa: F401
-from web3.main import Web3
-from web3.types import TxParams, TxReceipt
-
-from artifacts import ERC721Template
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.address import get_contract_address
 from ocean_provider.utils.basics import (
@@ -36,10 +33,13 @@ from tests.helpers.ddo_dict_builders import (
     build_ddo_dict,
     build_metadata_dict_type_dataset,
     build_service_dict_type_access,
-    get_compute_service,
     get_bogus_service,
+    get_compute_service,
     get_compute_service_no_rawalgo,
 )
+from web3.logs import DISCARD
+from web3.main import Web3
+from web3.types import TxParams, TxReceipt
 
 BLACK_HOLE_ADDRESS = "0x0000000000000000000000000000000000000000"
 
@@ -116,7 +116,7 @@ def deploy_data_nft(
     )
     data_nft_address = (
         data_nft_factory.events.NFTCreated()
-        .processReceipt(deploy_data_nft_receipt)[0]
+        .processReceipt(deploy_data_nft_receipt, errors=DISCARD)[0]
         .args.newTokenAddress
     )
     return data_nft_address
@@ -150,7 +150,7 @@ def deploy_datatoken(
     )
     datatoken_address = (
         data_nft_contract.events.TokenCreated()
-        .processReceipt(deploy_datatoken_receipt)[0]
+        .processReceipt(deploy_datatoken_receipt, errors=DISCARD)[0]
         .args.newTokenAddress
     )
     return datatoken_address
@@ -477,10 +477,7 @@ def build_custom_services(
     if services_type == "allow_all_published_and_one_bogus":
         return [
             get_compute_service(
-                from_wallet.address,
-                10,
-                datatoken_address,
-                trusted_algos=[],
+                from_wallet.address, 10, datatoken_address, trusted_algos=[]
             ),
             get_bogus_service(datatoken_address),
         ]
@@ -491,15 +488,11 @@ def build_custom_services(
                 10,
                 datatoken_address,
                 trusted_publishers=custom_services_args,
-            ),
+            )
         ]
     if services_type == "norawalgo":
         return [
-            get_compute_service_no_rawalgo(
-                from_wallet.address,
-                10,
-                datatoken_address,
-            )
+            get_compute_service_no_rawalgo(from_wallet.address, 10, datatoken_address)
         ]
 
     return []
