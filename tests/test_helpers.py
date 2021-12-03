@@ -255,7 +255,6 @@ def get_registered_asset(
 
     ddo_string = json.dumps(ddo)
     ddo_bytes = ddo_string.encode("utf-8")
-    # TODO: Compress and encrypt DDO
     encrypted_ddo = ddo_bytes
     ddo_hash = sha256(ddo_bytes).hexdigest()
 
@@ -296,11 +295,6 @@ def set_metadata(
         state, provider_url, provider_address, flags, encrypted_ddo, ddo_hash
     ).buildTransaction({"from": from_wallet.address})
     return sign_send_and_wait_for_receipt(web3, transaction, from_wallet)
-
-
-def get_dataset_asset_with_access_service(client, wallet):
-    # TODO: remove this layer, use get_registered_asset directly
-    return get_registered_asset(wallet)
 
 
 def get_dataset_ddo_with_multiple_files(client, wallet):

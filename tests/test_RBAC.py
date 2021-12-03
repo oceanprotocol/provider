@@ -20,7 +20,7 @@ from tests.helpers.compute_helpers import (
 )
 from tests.test_helpers import (
     BLACK_HOLE_ADDRESS,
-    get_dataset_asset_with_access_service,
+    get_registered_asset,
     mint_100_datatokens,
     start_order,
 )
@@ -64,7 +64,7 @@ def test_encrypt_request_payload(consumer_wallet, publisher_wallet):
 def test_initialize_request_payload(
     client, publisher_wallet, consumer_wallet, provider_address, web3
 ):
-    asset = get_dataset_asset_with_access_service(client, publisher_wallet)
+    asset = get_registered_asset(publisher_wallet)
     service = asset.get_service_by_type(ServiceType.ACCESS)
     mint_100_datatokens(
         web3, service.datatoken_address, consumer_wallet.address, publisher_wallet
@@ -94,7 +94,7 @@ def test_initialize_request_payload(
 def test_access_request_payload(
     client, publisher_wallet, consumer_wallet, provider_address, web3
 ):
-    asset = get_dataset_asset_with_access_service(client, publisher_wallet)
+    asset = get_registered_asset(publisher_wallet)
     service = asset.get_service_by_type(ServiceType.ACCESS)
     mint_100_datatokens(
         web3, service.datatoken_address, consumer_wallet.address, publisher_wallet
@@ -189,13 +189,7 @@ def test_compute_request_payload(
     ddo2 = get_registered_asset(
         publisher_wallet,
         custom_services="vanilla_compute",
-        custom_services_args=[
-            {
-                "did": alg_ddo.did,
-                "filesChecksum": "TODO",
-                "containerSectionChecksum": "TODO",
-            }
-        ],
+        custom_services_args=ddo.services[0].compute_dict["publisherTrustedAlgorithms"],
     )
 
     web3 = get_web3()

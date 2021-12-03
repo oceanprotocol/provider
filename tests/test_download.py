@@ -10,13 +10,13 @@ from ocean_provider.utils.currency import to_wei
 from ocean_provider.utils.services import ServiceType
 from tests.test_helpers import (
     BLACK_HOLE_ADDRESS,
-    get_dataset_asset_with_access_service,
     get_dataset_ddo_disabled,
     get_dataset_ddo_with_denied_consumer,
     get_dataset_ddo_with_multiple_files,
     get_dataset_with_invalid_url_ddo,
     get_dataset_with_ipfs_url_ddo,
     get_nonce,
+    get_registered_asset,
     initialize_service,
     mint_100_datatokens,
     start_order,
@@ -25,7 +25,7 @@ from tests.test_helpers import (
 
 @pytest.mark.parametrize("userdata", [False, "valid", "invalid"])
 def test_download_service(client, publisher_wallet, consumer_wallet, web3, userdata):
-    asset = get_dataset_asset_with_access_service(client, publisher_wallet)
+    asset = get_registered_asset(publisher_wallet)
     service = asset.get_service_by_type(ServiceType.ACCESS)
     mint_100_datatokens(
         web3, service.datatoken_address, consumer_wallet.address, publisher_wallet

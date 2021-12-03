@@ -6,15 +6,15 @@
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.services import ServiceType
 from tests.test_helpers import (
-    get_dataset_asset_with_access_service,
     get_dataset_with_invalid_url_ddo,
+    get_registered_asset,
 )
 
 fileinfo_url = BaseURLs.SERVICES_URL + "/fileinfo"
 
 
 def test_asset_info(client, publisher_wallet):
-    asset = get_dataset_asset_with_access_service(client, publisher_wallet)
+    asset = get_registered_asset(publisher_wallet)
     service = asset.get_service_by_type(ServiceType.ACCESS)
     response = client.post(
         fileinfo_url,
