@@ -33,9 +33,7 @@ def test_update_nonce_exception(publisher_address):
     with patch.object(
         user_nonce,
         "get_or_create_user_nonce_object",
-        return_value=models.UserNonce(
-            address=publisher_address, nonce="0"
-        ),
+        return_value=models.UserNonce(address=publisher_address, nonce="0"),
     ):
         with pytest.raises(sqlalchemy.exc.IntegrityError):
             update_nonce(publisher_address, datetime.now().timestamp())

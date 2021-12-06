@@ -32,9 +32,7 @@ def update_nonce(address, nonce_value):
     nonce_object = get_or_create_user_nonce_object(address, nonce_value)
     nonce_object.nonce = nonce_value
 
-    logger.debug(
-        f"update_nonce: {address}, new nonce {nonce_object.nonce}"
-    )
+    logger.debug(f"update_nonce: {address}, new nonce {nonce_object.nonce}")
 
     try:
         db.add(nonce_object)
@@ -48,7 +46,5 @@ def update_nonce(address, nonce_value):
 def get_or_create_user_nonce_object(address, nonce_value):
     nonce_object = models.UserNonce.query.filter_by(address=address).first()
     if nonce_object is None:
-        nonce_object = models.UserNonce(
-            address=address, nonce=nonce_value
-        )
+        nonce_object = models.UserNonce(address=address, nonce=nonce_value)
     return nonce_object
