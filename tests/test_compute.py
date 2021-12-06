@@ -10,7 +10,6 @@ from ocean_provider.utils.currency import to_wei
 from ocean_provider.utils.services import ServiceType
 from ocean_provider.validation.algo import build_stage_output_dict
 from tests.helpers.compute_helpers import (
-    BLACK_HOLE_ADDRESS,
     build_and_send_ddo_with_compute_service,
     get_compute_job_info,
     get_compute_result,
@@ -51,9 +50,6 @@ def test_compute_norawalgo_allowed(
         consumer_wallet.address,
         to_wei(1),
         sa.index,
-        BLACK_HOLE_ADDRESS,
-        BLACK_HOLE_ADDRESS,
-        0,
         consumer_wallet,
     )
     signature = get_compute_signature(
@@ -343,9 +339,6 @@ def test_compute_additional_input(client, publisher_wallet, consumer_wallet):
         consumer_wallet.address,
         to_wei(1),
         sa2.index,
-        BLACK_HOLE_ADDRESS,
-        BLACK_HOLE_ADDRESS,
-        0,
         consumer_wallet,
     )
 

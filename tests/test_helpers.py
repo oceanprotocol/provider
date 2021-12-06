@@ -424,9 +424,6 @@ def start_order(
     consumer: HexAddress,
     amount: int,
     service_index: int,
-    consumeFeeAddress: HexAddress,
-    consumeFeeToken: HexAddress,
-    consumeFeeAmount: int,
     from_wallet: LocalAccount,
 ) -> Tuple[HexStr, TxReceipt]:
     datatoken_contract = get_datatoken_contract(web3, datatoken_address)
@@ -434,9 +431,6 @@ def start_order(
         consumer,
         amount,
         service_index,
-        consumeFeeAddress,
-        consumeFeeToken,
-        consumeFeeAmount,
     ).buildTransaction({"from": from_wallet.address})
     return sign_send_and_wait_for_receipt(web3, start_order_tx, from_wallet)
 

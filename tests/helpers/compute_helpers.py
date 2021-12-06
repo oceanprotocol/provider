@@ -7,7 +7,6 @@ from ocean_provider.utils.services import ServiceType
 from ocean_provider.utils.util import msg_hash
 from tests.helpers.ddo_dict_builders import build_metadata_dict_type_algorithm
 from tests.test_helpers import (
-    BLACK_HOLE_ADDRESS,
     get_nonce,
     get_registered_asset,
     get_web3,
@@ -80,9 +79,6 @@ def build_and_send_ddo_with_compute_service(
         consumer_wallet.address,
         to_wei(1),
         service.index,
-        BLACK_HOLE_ADDRESS,
-        BLACK_HOLE_ADDRESS,
-        0,
         consumer_wallet,
     )
 
@@ -93,9 +89,6 @@ def build_and_send_ddo_with_compute_service(
         consumer_wallet.address,
         to_wei(1),
         alg_service.index,
-        BLACK_HOLE_ADDRESS,
-        BLACK_HOLE_ADDRESS,
-        0,
         consumer_wallet,
     )
 

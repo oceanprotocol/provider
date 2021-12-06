@@ -19,7 +19,6 @@ from tests.helpers.compute_helpers import (
     get_web3,
 )
 from tests.test_helpers import (
-    BLACK_HOLE_ADDRESS,
     get_registered_asset,
     mint_100_datatokens,
     start_order,
@@ -106,9 +105,6 @@ def test_access_request_payload(
         consumer_wallet.address,
         to_wei(1),
         service.index,
-        BLACK_HOLE_ADDRESS,
-        BLACK_HOLE_ADDRESS,
-        0,
         consumer_wallet,
     )
 
@@ -203,9 +199,6 @@ def test_compute_request_payload(
         consumer_wallet.address,
         to_wei(1),
         sa2.index,
-        BLACK_HOLE_ADDRESS,
-        BLACK_HOLE_ADDRESS,
-        0,
         consumer_wallet,
     )
 
