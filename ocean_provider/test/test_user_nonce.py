@@ -31,7 +31,9 @@ def test_get_and_increment_nonce(monkeypatch, publisher_address, consumer_addres
     assert int(get_nonce(publisher_address)) == publisher_nonce_int + 2
 
 
-def test_get_and_increment_nonce_redis(monkeypatch, publisher_address, consumer_address):
+def test_get_and_increment_nonce_redis(
+    monkeypatch, publisher_address, consumer_address
+):
     # get_nonce can be used on addresses that are not in the user_nonce table
     assert get_nonce("0x0000000000000000000000000000000000000000") == "0"
 

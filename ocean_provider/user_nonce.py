@@ -12,11 +12,14 @@ from ocean_provider.myapp import app
 logger = logging.getLogger(__name__)
 db = app.session
 
-cache = Cache(app, config={
-    "CACHE_TYPE": "redis",
-    "CACHE_KEY_PREFIX": "ocean_provider",
-    "CACHE_REDIS_URL": os.getenv("REDIS_CONNECTION")
-})
+cache = Cache(
+    app,
+    config={
+        "CACHE_TYPE": "redis",
+        "CACHE_KEY_PREFIX": "ocean_provider",
+        "CACHE_REDIS_URL": os.getenv("REDIS_CONNECTION"),
+    },
+)
 
 
 def get_nonce(address):
