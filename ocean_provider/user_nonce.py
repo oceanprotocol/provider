@@ -26,6 +26,9 @@ def update_nonce(address, nonce_value):
     :param: address
     :param: nonce_value
     """
+    if nonce_value is None:
+        return
+
     nonce_object = get_or_create_user_nonce_object(address, nonce_value)
     nonce_object.nonce = nonce_value
 
