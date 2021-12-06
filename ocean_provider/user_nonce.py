@@ -13,7 +13,7 @@ db = app.session
 
 def get_nonce(address):
     """
-    :return: `nonce`
+    :return: `nonce` for the given address stored in the database
     """
     result = models.UserNonce.query.filter_by(address=address).first()
 
@@ -22,21 +22,31 @@ def get_nonce(address):
 
 def increment_nonce(address):
     """
-    Increatements the value of `nonce`
+    Increments the value of `nonce` in the database
     :param: address
     """
-    nonce_object = models.UserNonce.query.filter_by(address=address).first()
-    if nonce_object:
-        nonce_value = nonce_object.nonce
-    else:
-        nonce_object = models.UserNonce(address=address)
-        nonce_value = models.UserNonce.FIRST_NONCE
+    nonce_object = get_or_create_user_nonce_object(address)
+    nonce_value = nonce_object.nonce
+    incremented_nonce = int(nonce_value) + 1
+    nonce_object.nonce = incremented_nonce
 
     logger.debug(
-        f"increment_nonce: {address}, {nonce_value}, "
-        "new nonce {int(nonce_value) + 1}"
+        f"increment_nonce: {address}, {nonce_value}, new nonce {incremented_nonce}"
     )
 
-    nonce_object.nonce = int(nonce_value) + 1
-    db.add(nonce_object)
-    db.commit()
+    try:
+        db.add(nonce_object)
+        db.commit()
+    except Exception:
+        db.rollback()
+        logger.exception(f"Database update failed.")
+        raise
+
+
+def get_or_create_user_nonce_object(address):
+    nonce_object = models.UserNonce.query.filter_by(address=address).first()
+    if nonce_object is None:
+        nonce_object = models.UserNonce(
+            address=address, nonce=models.UserNonce.FIRST_NONCE
+        )
+    return nonce_object
