@@ -7,7 +7,6 @@ import logging
 
 from flask import Response, jsonify, request
 from flask_sieve import validate
-
 from ocean_provider.log import setup_logging
 from ocean_provider.myapp import app
 from ocean_provider.requests_session import get_requests_session
@@ -247,12 +246,7 @@ def download():
             get_web3(), consumer_address, token_address, 1, tx_id, did, service
         )
 
-        # TODO: validate transfer not used for other service?
-
         file_index = int(data.get("fileIndex"))
-
-        # TODO: get content type
-        content_type = None
 
         url = get_service_files_list(service, provider_wallet)[file_index]
         if not url:
@@ -265,6 +259,9 @@ def download():
 
         download_url = get_download_url(url, app.config["PROVIDER_CONFIG_FILE"])
         download_url = append_userdata(download_url, data)
+
+        valid, details = check_url_details(url)
+        content_type = details["contentType"] if valid else None
 
         logger.info(
             f"Done processing consume request for asset {did}, " f" url {download_url}"

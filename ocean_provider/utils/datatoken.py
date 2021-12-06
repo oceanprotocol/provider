@@ -1,16 +1,15 @@
 from typing import Optional
 
+from jsonsempai import magic  # noqa: F401
+from artifacts import ERC20Template
 from eth_typing.encoding import HexStr
 from eth_typing.evm import HexAddress
 from hexbytes import HexBytes
-from jsonsempai import magic  # noqa: F401
+from ocean_provider.utils.services import Service
 from web3.contract import Contract
 from web3.logs import DISCARD
 from web3.main import Web3
 from websockets import ConnectionClosed
-
-from artifacts import ERC20Template
-from ocean_provider.utils.services import Service
 
 
 def get_datatoken_contract(web3: Web3, address: Optional[str] = None) -> Contract:
@@ -59,9 +58,10 @@ def verify_order_tx(
         raise AssertionError(
             f"Cannot find the event for the order transaction with tx id {tx_id}."
         )
-    assert (
-        len(event_logs) == 1
-    ), f"Multiple order events in the same transaction !!! {event_logs}"
+    if len(event_logs) > 1:
+        raise AssertionError(
+            f"Multiple order events in the same transaction !!! {event_logs}"
+        )
 
     if order_log.args.serviceIndex != service.index:
         raise AssertionError(
