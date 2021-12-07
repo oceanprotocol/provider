@@ -2,13 +2,14 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
+from datetime import datetime
 import json
 
 import pytest
 
 from ocean_provider.constants import BaseURLs
 from ocean_provider.exceptions import RequestNotFound
-from ocean_provider.utils.accounts import generate_auth_token
+from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.currency import to_wei
 from ocean_provider.utils.services import ServiceType
 from ocean_provider.validation.algo import build_stage_output_dict
@@ -18,9 +19,9 @@ from tests.helpers.compute_helpers import (
     get_registered_asset,
     get_web3,
 )
+from tests.helpers.compute_helpers import get_compute_signature
 from tests.test_helpers import (
     BLACK_HOLE_ADDRESS,
-    get_registered_asset,
     mint_100_datatokens,
     start_order,
 )
@@ -118,10 +119,14 @@ def test_access_request_payload(
         "serviceType": service.type,
         "dataToken": service.datatoken_address,
         "consumerAddress": consumer_wallet.address,
-        "signature": generate_auth_token(consumer_wallet),
         "transferTxId": tx_id,
         "fileIndex": 0,
     }
+
+    nonce = str(datetime.now().timestamp())
+    _msg = f"{asset.did}{nonce}"
+    req["signature"] = sign_message(_msg, consumer_wallet)
+    req["nonce"] = nonce
 
     validator = RBACValidator(request_name="DownloadRequest", request=req)
     payload = validator.build_payload()
@@ -145,8 +150,12 @@ def test_compute_payload_without_additional_inputs(
     sa = alg_ddo.get_service_by_type(ServiceType.ACCESS)
     sa_compute = ddo.get_service_by_type(ServiceType.COMPUTE)
 
+    nonce, signature = get_compute_signature(
+        client, consumer_wallet, ddo.did
+    )
     req = {
-        "signature": generate_auth_token(consumer_wallet),
+        "signature": signature,
+        "nonce": nonce,
         "documentId": ddo.did,
         "serviceId": sa.id,
         "algorithmServiceId": sa_compute.id,
@@ -209,8 +218,13 @@ def test_compute_request_payload(
         consumer_wallet,
     )
 
+    nonce, signature = get_compute_signature(
+        client, consumer_wallet, ddo.did
+    )
+
     req = {
-        "signature": generate_auth_token(consumer_wallet),
+        "signature": signature,
+        "nonce": nonce,
         "documentId": ddo.did,
         "serviceId": sa.id,
         "algorithmServiceId": sa_compute.id,
@@ -261,8 +275,13 @@ def test_fails(
     sa = alg_ddo.get_service_by_type(ServiceType.ACCESS)
     sa_compute = ddo.get_service_by_type(ServiceType.COMPUTE)
 
+    nonce, signature = get_compute_signature(
+        client, consumer_wallet, ddo.did
+    )
+
     req = {
-        "signature": generate_auth_token(consumer_wallet),
+        "signature": signature,
+        "nonce": nonce,
         "documentId": ddo.did,
         "serviceId": sa.id,
         "algorithmServiceId": sa_compute.id,
