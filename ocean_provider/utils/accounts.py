@@ -52,52 +52,6 @@ def get_private_key(wallet):
     return eth_keys.KeyAPI.PrivateKey(pk)
 
 
-def is_auth_token_valid(token):
-    """
-    :param token: str
-    :return: `True` if token is valid else `False`
-    """
-    return (
-        isinstance(token, str) and token.startswith("0x") and len(token.split("-")) == 2
-    )
-
-
-def check_auth_token(token):
-    """
-    :param token: str
-    :return: String
-    """
-    parts = token.split("-")
-    if len(parts) < 2:
-        return "0x0"
-    # :HACK: alert, this should be part of ocean-lib-py
-    sig, timestamp = parts
-    auth_token_message = (
-        get_config().auth_token_message or "Ocean Protocol Authentication"
-    )
-    default_exp = 24 * 60 * 60
-    expiration = int(get_config().auth_token_expiration or default_exp)
-    if int(datetime.now().timestamp()) > (int(timestamp) + expiration):
-        return "0x0"
-
-    message = f"{auth_token_message}\n{timestamp}"
-    address = Account.recover_message(encode_defunct(text=message), signature=sig)
-    return Web3.toChecksumAddress(address)
-
-
-def generate_auth_token(wallet):
-    """
-    :param wallet: Wallet instance
-    :return: `str`
-    """
-    raw_msg = get_config().auth_token_message or "Ocean Protocol Authentication"
-    _time = int(datetime.now().timestamp())
-    _message = f"{raw_msg}\n{_time}"
-    signed = sign_message(_message, wallet)
-
-    return f"{signed}-{_time}"
-
-
 def sign_message(message, wallet):
     """
     :param message: str
