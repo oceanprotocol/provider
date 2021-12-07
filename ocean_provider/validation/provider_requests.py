@@ -228,7 +228,10 @@ class ComputeRequest(CustomJsonRequest):
         return {
             "consumerAddress": ["bail", "required"],
             "nonce": ["bail", "required"],
-            "signature": ["required", "signature:consumerAddress,documentId,jobId,nonce"],
+            "signature": [
+                "required",
+                "signature:consumerAddress,documentId,jobId,nonce",
+            ],
         }
 
 
@@ -251,7 +254,10 @@ class ComputeStartRequest(CustomJsonRequest):
                 "required_with_all:algorithmDataToken,algorithmTransferTxId",
             ],
             "nonce": ["bail", "required"],
-            "signature": ["required", "signature:consumerAddress,documentId,jobId,nonce"],
+            "signature": [
+                "required",
+                "signature:consumerAddress,documentId,jobId,nonce",
+            ],
         }
 
 
@@ -262,7 +268,11 @@ class ComputeGetResult(CustomJsonRequest):
             "index": ["bail", "required"],
             "consumerAddress": ["bail", "required"],
             "nonce": ["bail", "required"],
-            "signature": ["bail", "required", "signature:consumerAddress,index,jobId,nonce"],
+            "signature": [
+                "bail",
+                "required",
+                "signature:consumerAddress,index,jobId,nonce",
+            ],
         }
 
 
@@ -276,7 +286,10 @@ class DownloadRequest(CustomJsonRequest):
             "transferTxId": ["bail", "required"],
             "fileIndex": ["required"],
             "nonce": ["bail", "required"],
-            "signature": ["required", "download_signature:consumerAddress,documentId,nonce"],
+            "signature": [
+                "required",
+                "download_signature:consumerAddress,documentId,nonce",
+            ],
         }
 
 

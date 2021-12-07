@@ -8,4 +8,3 @@ def test_get_private_key(publisher_wallet):
         str(get_private_key(publisher_wallet)).lower()
         == os.getenv("TEST_PRIVATE_KEY1").lower()
     )
-

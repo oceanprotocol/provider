@@ -150,9 +150,7 @@ def test_compute_payload_without_additional_inputs(
     sa = alg_ddo.get_service_by_type(ServiceType.ACCESS)
     sa_compute = ddo.get_service_by_type(ServiceType.COMPUTE)
 
-    nonce, signature = get_compute_signature(
-        client, consumer_wallet, ddo.did
-    )
+    nonce, signature = get_compute_signature(client, consumer_wallet, ddo.did)
     req = {
         "signature": signature,
         "nonce": nonce,
@@ -218,9 +216,7 @@ def test_compute_request_payload(
         consumer_wallet,
     )
 
-    nonce, signature = get_compute_signature(
-        client, consumer_wallet, ddo.did
-    )
+    nonce, signature = get_compute_signature(client, consumer_wallet, ddo.did)
 
     req = {
         "signature": signature,
@@ -275,9 +271,7 @@ def test_fails(
     sa = alg_ddo.get_service_by_type(ServiceType.ACCESS)
     sa_compute = ddo.get_service_by_type(ServiceType.COMPUTE)
 
-    nonce, signature = get_compute_signature(
-        client, consumer_wallet, ddo.did
-    )
+    nonce, signature = get_compute_signature(client, consumer_wallet, ddo.did)
 
     req = {
         "signature": signature,

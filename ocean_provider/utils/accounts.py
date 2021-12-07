@@ -28,9 +28,7 @@ def verify_signature(signer_address, signature, original_msg, nonce):
         raise InvalidSignatureError("Invalid signature expected nonce > current nonce.")
 
     message = f"{original_msg}{str(nonce)}"
-    address = Account.recover_message(
-        encode_defunct(text=message), signature=signature
-    )
+    address = Account.recover_message(encode_defunct(text=message), signature=signature)
 
     if address.lower() == signer_address.lower():
         return True

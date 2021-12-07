@@ -219,9 +219,7 @@ def computeStatus():
             original_msg = f"{owner}{jobId}{did}"
             nonce = data.get("nonce")
             try:
-                verify_signature(
-                    owner, data.get("signature"), original_msg, nonce
-                )
+                verify_signature(owner, data.get("signature"), original_msg, nonce)
             except InvalidSignatureError:
                 signed_request = False
             update_nonce(body["owner"], data.get("nonce"))

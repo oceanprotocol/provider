@@ -208,7 +208,7 @@ def test_download_multiple_files(client, publisher_wallet, consumer_wallet, web3
         "signature": sign_message(_msg, consumer_wallet),
         "transferTxId": tx_id,
         "fileIndex": 0,
-        "nonce": nonce
+        "nonce": nonce,
     }
     download_endpoint = BaseURLs.SERVICES_URL + "/download"
     response = client.get(download_endpoint, query_string=payload)

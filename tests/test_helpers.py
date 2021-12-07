@@ -350,8 +350,9 @@ def get_dataset_with_ipfs_url_ddo(client, wallet):
         ],
     )
 
+
 # TODO: separate test
-#def get_nonce(client, address):
+# def get_nonce(client, address):
 #    endpoint = BaseURLs.SERVICES_URL + "/nonce"
 #    response = client.get(
 #        endpoint + "?" + f"&userAddress={address}", content_type="application/json"
