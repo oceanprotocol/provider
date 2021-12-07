@@ -1,3 +1,4 @@
+from datetime import datetime
 import hashlib
 import json
 import lzma
@@ -328,8 +329,7 @@ def decrypt_ddo_using_transaction_id(
     set_metadata_tx_id: HexStr,
     chain_id: int,
 ):
-    previous_nonce = int(get_nonce(client, decrypter_wallet.address))
-    nonce = previous_nonce + 1
+    nonce = str(datetime.now().timestamp())
     message_to_be_signed = (
         f"{set_metadata_tx_id}{decrypter_wallet.address}{chain_id}{nonce}"
     )
@@ -355,7 +355,7 @@ def decrypt_ddo_using_decrypt_args(
     flags: int,
     ddo_hash_hexstr: HexStr,
 ):
-    nonce = get_next_nonce(client, decrypter_wallet)
+    nonce = str(datetime.now().timestamp())
     message_to_be_signed = (
         f"{data_nft_address}{decrypter_wallet.address}{chain_id}{nonce}"
     )
@@ -373,8 +373,3 @@ def decrypt_ddo_using_decrypt_args(
             "signature": signature,
         },
     )
-
-
-def get_next_nonce(client, wallet):
-    previous_nonce = int(get_nonce(client, wallet.address))
-    return previous_nonce + 1
