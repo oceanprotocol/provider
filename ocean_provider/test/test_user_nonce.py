@@ -12,17 +12,20 @@ from ocean_provider.user_nonce import get_nonce, update_nonce
 
 
 def test_get_and_update_nonce(publisher_address, consumer_address):
-
     # get_nonce can be used on addresses that are not in the user_nonce table
     assert get_nonce("0x0000000000000000000000000000000000000000") is None
+
+    # update two times because, if we just pruned, we start from None
+    update_nonce(publisher_address, datetime.now().timestamp())
+    publisher_nonce = get_nonce(publisher_address)
+    update_nonce(publisher_address, datetime.now().timestamp())
+    new_publisher_nonce = get_nonce(publisher_address)
+
+    assert new_publisher_nonce >= publisher_nonce
 
     # get_nonce doesn't affect the value of nonce
     publisher_nonce = get_nonce(publisher_address)
     assert get_nonce(publisher_address) == publisher_nonce
-
-    update_nonce(publisher_address, datetime.now().timestamp())
-    new_publisher_nonce = get_nonce(publisher_address)
-    assert new_publisher_nonce >= publisher_nonce
 
 
 def test_update_nonce_exception(publisher_address):
