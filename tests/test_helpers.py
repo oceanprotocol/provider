@@ -350,18 +350,18 @@ def get_dataset_with_ipfs_url_ddo(client, wallet):
         ],
     )
 
-
-def get_nonce(client, address):
-    endpoint = BaseURLs.SERVICES_URL + "/nonce"
-    response = client.get(
-        endpoint + "?" + f"&userAddress={address}", content_type="application/json"
-    )
-    assert (
-        response.status_code == 200 and response.data
-    ), f"get nonce endpoint failed: response status {response.status}, data {response.data}"
-
-    value = response.json if response.json else json.loads(response.data)
-    return value["nonce"]
+# TODO: separate test
+#def get_nonce(client, address):
+#    endpoint = BaseURLs.SERVICES_URL + "/nonce"
+#    response = client.get(
+#        endpoint + "?" + f"&userAddress={address}", content_type="application/json"
+#    )
+#    assert (
+#        response.status_code == 200 and response.data
+#    ), f"get nonce endpoint failed: response status {response.status}, data {response.data}"
+#
+#    value = response.json if response.json else json.loads(response.data)
+#    return value["nonce"]
 
 
 def get_resource_path(dir_name, file_name):

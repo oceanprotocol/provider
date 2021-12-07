@@ -16,7 +16,6 @@ from tests.ddo.ddo_sample1_v4 import json_dict as ddo_sample1_v4
 from tests.test_helpers import (
     BLACK_HOLE_ADDRESS,
     deploy_data_nft,
-    get_nonce,
     set_metadata,
 )
 

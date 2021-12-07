@@ -9,7 +9,6 @@ from ocean_provider.utils.util import msg_hash
 from tests.helpers.ddo_dict_builders import build_metadata_dict_type_algorithm
 from tests.test_helpers import (
     BLACK_HOLE_ADDRESS,
-    get_nonce,
     get_registered_asset,
     get_web3,
     mint_100_datatokens,

@@ -12,7 +12,7 @@ from requests.models import PreparedRequest
 from ocean_provider.exceptions import InvalidSignatureError
 from ocean_provider.log import setup_logging
 from ocean_provider.requests_session import get_requests_session
-from ocean_provider.user_nonce import get_nonce, update_nonce
+from ocean_provider.user_nonce import update_nonce
 from ocean_provider.utils.accounts import sign_message, verify_signature
 from ocean_provider.utils.basics import LocalFileAdapter, get_provider_wallet, get_web3
 from ocean_provider.utils.error_responses import service_unavailable
@@ -217,9 +217,10 @@ def computeStatus():
             did = data.get("documentId")
             jobId = data.get("jobId")
             original_msg = f"{owner}{jobId}{did}"
+            nonce = data.get("nonce")
             try:
                 verify_signature(
-                    owner, data.get("signature"), original_msg, get_nonce(owner)
+                    owner, data.get("signature"), original_msg, nonce
                 )
             except InvalidSignatureError:
                 signed_request = False

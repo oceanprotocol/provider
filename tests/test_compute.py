@@ -2,6 +2,7 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
+from datetime import datetime
 import time
 
 from ocean_provider.constants import BaseURLs
@@ -241,6 +242,7 @@ def test_compute(client, publisher_wallet, consumer_wallet):
         "jobId": job_id,
     }
 
+    payload["nonce"] = str(datetime.now().timestamp())
     result_without_signature = get_compute_result(
         client, BaseURLs.SERVICES_URL + "/computeResult", payload, raw_response=True
     )
