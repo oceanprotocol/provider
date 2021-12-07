@@ -2,10 +2,11 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
+from datetime import datetime
 import pytest
 
 from ocean_provider.constants import BaseURLs
-from ocean_provider.utils.accounts import generate_auth_token, sign_message
+from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.currency import to_wei
 from ocean_provider.utils.services import ServiceType
 from tests.test_helpers import (
@@ -15,7 +16,6 @@ from tests.test_helpers import (
     get_dataset_ddo_with_multiple_files,
     get_dataset_with_invalid_url_ddo,
     get_dataset_with_ipfs_url_ddo,
-    get_nonce,
     get_registered_asset,
     initialize_service,
     mint_100_datatokens,
@@ -42,15 +42,12 @@ def test_download_service(client, publisher_wallet, consumer_wallet, web3, userd
         consumer_wallet,
     )
 
-    # Consume using url index and auth token
-    # (let the provider do the decryption)
     payload = {
         "documentId": asset.did,
         "serviceId": service.id,
         "serviceType": service.type,
         "dataToken": service.datatoken_address,
         "consumerAddress": consumer_wallet.address,
-        "signature": generate_auth_token(consumer_wallet),
         "transferTxId": tx_id,
         "fileIndex": 0,
     }
@@ -61,20 +58,18 @@ def test_download_service(client, publisher_wallet, consumer_wallet, web3, userd
         )
 
     download_endpoint = BaseURLs.SERVICES_URL + "/download"
-    response = client.get(download_endpoint, query_string=payload)
-    assert response.status_code == 200, f"{response.data}"
-
     # Consume using url index and signature (withOUT nonce), should fail
     payload["signature"] = sign_message(asset.did, consumer_wallet)
-    print(">>>> Expecting InvalidSignatureError from the download endpoint <<<<")
+    print(">>>> Expecting request error from the download endpoint <<<<")
 
     response = client.get(download_endpoint, query_string=payload)
     assert response.status_code == 400, f"{response.data}"
 
     # Consume using url index and signature (with nonce)
-    nonce = get_nonce(client, consumer_wallet.address)
+    nonce = str(datetime.now().timestamp())
     _msg = f"{asset.did}{nonce}"
     payload["signature"] = sign_message(_msg, consumer_wallet)
+    payload["nonce"] = nonce
     response = client.get(download_endpoint, query_string=payload)
     assert response.status_code == 200, f"{response.data}"
 
@@ -199,6 +194,9 @@ def test_download_multiple_files(client, publisher_wallet, consumer_wallet, web3
         consumer_wallet,
     )
 
+    nonce = str(datetime.now().timestamp())
+    _msg = f"{asset.did}{nonce}"
+
     # Consume using url index and auth token
     # (let the provider do the decryption)
     payload = {
@@ -207,22 +205,29 @@ def test_download_multiple_files(client, publisher_wallet, consumer_wallet, web3
         "serviceType": service.type,
         "dataToken": service.datatoken_address,
         "consumerAddress": consumer_wallet.address,
-        "signature": generate_auth_token(consumer_wallet),
+        "signature": sign_message(_msg, consumer_wallet),
         "transferTxId": tx_id,
         "fileIndex": 0,
+        "nonce": nonce
     }
     download_endpoint = BaseURLs.SERVICES_URL + "/download"
     response = client.get(download_endpoint, query_string=payload)
     assert response.status_code == 200, f"{response.data}"
 
-    payload["signature"] = generate_auth_token(consumer_wallet)
+    nonce = str(datetime.now().timestamp())
+    _msg = f"{asset.did}{nonce}"
+    payload["signature"] = sign_message(_msg, consumer_wallet)
     payload["fileIndex"] = 1
+    payload["nonce"] = nonce
     download_endpoint = BaseURLs.SERVICES_URL + "/download"
     response = client.get(download_endpoint, query_string=payload)
     assert response.status_code == 200, f"{response.data}"
 
-    payload["signature"] = generate_auth_token(consumer_wallet)
+    nonce = str(datetime.now().timestamp())
+    _msg = f"{asset.did}{nonce}"
+    payload["signature"] = sign_message(_msg, consumer_wallet)
     payload["fileIndex"] = 2
+    payload["nonce"] = nonce
     download_endpoint = BaseURLs.SERVICES_URL + "/download"
     response = client.get(download_endpoint, query_string=payload)
     assert response.status_code == 200, f"{response.data}"

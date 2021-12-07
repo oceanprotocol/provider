@@ -56,7 +56,7 @@ def test_compute_norawalgo_allowed(
         0,
         consumer_wallet,
     )
-    signature = get_compute_signature(
+    nonce, signature = get_compute_signature(
         client, consumer_wallet, dataset_ddo_w_compute_service.did
     )
 
@@ -64,6 +64,7 @@ def test_compute_norawalgo_allowed(
     payload = dict(
         {
             "signature": signature,
+            "nonce": nonce,
             "documentId": dataset_ddo_w_compute_service.did,
             "serviceId": sa.id,
             "algorithmServiceId": sa.id,
@@ -93,7 +94,7 @@ def test_compute_specific_algo_dids(
         client, publisher_wallet, consumer_wallet
     )
     sa = ddo.get_service_by_type(ServiceType.COMPUTE)
-    signature = get_compute_signature(client, consumer_wallet, ddo.did)
+    nonce, signature = get_compute_signature(client, consumer_wallet, ddo.did)
 
     algo_metadata = build_metadata_dict_type_algorithm()
     another_alg_ddo = get_registered_asset(
@@ -105,6 +106,7 @@ def test_compute_specific_algo_dids(
     payload = dict(
         {
             "signature": signature,
+            "nonce": nonce,
             "documentId": ddo.did,
             "serviceId": sa.id,
             "algorithmServiceId": sa.id,
@@ -137,12 +139,13 @@ def test_compute(client, publisher_wallet, consumer_wallet):
     )
     sa_compute = alg_ddo.get_service_by_type(ServiceType.ACCESS)
     sa = ddo.get_service_by_type(ServiceType.COMPUTE)
-    signature = get_compute_signature(client, consumer_wallet, ddo.did)
+    nonce, signature = get_compute_signature(client, consumer_wallet, ddo.did)
 
     # Start the compute job
     payload = dict(
         {
             "signature": signature,
+            "nonce": nonce,
             "documentId": ddo.did,
             "serviceId": sa.id,
             "algorithmServiceId": sa_compute.id,
@@ -176,10 +179,11 @@ def test_compute(client, publisher_wallet, consumer_wallet):
     job_id = job_info.get("jobId", "")
 
     # get a new signature
-    signature = get_compute_signature(client, consumer_wallet, ddo.did)
+    nonce, signature = get_compute_signature(client, consumer_wallet, ddo.did)
     payload = dict(
         {
             "signature": signature,
+            "nonce": nonce,
             "documentId": ddo.did,
             "consumerAddress": consumer_wallet.address,
             "jobId": job_id,
@@ -246,8 +250,9 @@ def test_compute(client, publisher_wallet, consumer_wallet):
         == "The signature field is required."
     ), "Signature should be required"
 
-    signature = get_compute_signature(client, consumer_wallet, index, job_id)
+    nonce, signature = get_compute_signature(client, consumer_wallet, index, job_id)
     payload["signature"] = signature
+    payload["nonce"] = nonce
     result_data = get_compute_result(
         client, BaseURLs.SERVICES_URL + "/computeResult", payload
     )
@@ -260,12 +265,13 @@ def test_compute_diff_provider(client, publisher_wallet, consumer_wallet):
     )
     sa_compute = alg_ddo.get_service_by_type(ServiceType.ACCESS)
     sa = ddo.get_service_by_type(ServiceType.COMPUTE)
-    signature = get_compute_signature(client, consumer_wallet, ddo.did)
+    nonce, signature = get_compute_signature(client, consumer_wallet, ddo.did)
 
     # Start the compute job
     payload = dict(
         {
             "signature": signature,
+            "nonce": nonce,
             "documentId": ddo.did,
             "serviceId": sa.id,
             "algorithmServiceId": sa_compute.id,
@@ -292,12 +298,13 @@ def test_compute_allow_all_published(client, publisher_wallet, consumer_wallet):
     )
     sa_compute = alg_ddo.get_service_by_type(ServiceType.ACCESS)
     sa = ddo.get_service_by_type(ServiceType.COMPUTE)
-    signature = get_compute_signature(client, consumer_wallet, ddo.did)
+    nonce, signature = get_compute_signature(client, consumer_wallet, ddo.did)
 
     # Start the compute job
     payload = dict(
         {
             "signature": signature,
+            "nonce": nonce,
             "documentId": ddo.did,
             "serviceId": sa.id,
             "algorithmServiceId": sa_compute.id,
@@ -349,12 +356,13 @@ def test_compute_additional_input(client, publisher_wallet, consumer_wallet):
         consumer_wallet,
     )
 
-    signature = get_compute_signature(client, consumer_wallet, ddo.did)
+    nonce, signature = get_compute_signature(client, consumer_wallet, ddo.did)
 
     # Start the compute job
     payload = dict(
         {
             "signature": signature,
+            "nonce": nonce,
             "documentId": ddo.did,
             "serviceId": sa.id,
             "algorithmServiceId": sa_compute.id,
@@ -393,12 +401,13 @@ def test_compute_delete_job(
     )
     sa_compute = alg_ddo.get_service_by_type(ServiceType.ACCESS)
     sa = ddo.get_service_by_type(ServiceType.COMPUTE)
-    signature = get_compute_signature(client, consumer_wallet, ddo.did)
+    nonce, signature = get_compute_signature(client, consumer_wallet, ddo.did)
 
     # Start the compute job
     payload = dict(
         {
             "signature": signature,
+            "nonce": nonce,
             "documentId": ddo.did,
             "serviceId": sa.id,
             "algorithmServiceId": sa_compute.id,
@@ -420,13 +429,14 @@ def test_compute_delete_job(
 
     job_id = response.json[0]["jobId"]
     compute_endpoint = BaseURLs.SERVICES_URL + "/compute"
-    signature = get_compute_signature(client, consumer_wallet, ddo.did, job_id)
+    nonce, signature = get_compute_signature(client, consumer_wallet, ddo.did, job_id)
 
     query_string = {
         "consumerAddress": consumer_address,
         "jobId": job_id,
         "documentId": ddo.did,
         "signature": signature,
+        "nonce": nonce,
     }
 
     # stop job
@@ -436,8 +446,9 @@ def test_compute_delete_job(
     assert response.status == "200 OK", f"delete compute job failed: {response.data}"
 
     # delete job
-    signature = get_compute_signature(client, consumer_wallet, ddo.did, job_id)
+    nonce, signature = get_compute_signature(client, consumer_wallet, ddo.did, job_id)
     query_string["signature"] = signature
+    query_string["nonce"] = nonce
 
     response = client.delete(
         compute_endpoint, query_string=query_string, content_type="application/json"

@@ -12,24 +12,25 @@ from web3 import Web3
 
 from ocean_provider.exceptions import InvalidSignatureError
 from ocean_provider.log import setup_logging
+from ocean_provider.user_nonce import get_nonce
 from ocean_provider.utils.basics import get_config, get_web3
 
 setup_logging()
 logger = logging.getLogger(__name__)
 
 
-def verify_signature(signer_address, signature, original_msg, nonce: int = None):
+def verify_signature(signer_address, signature, original_msg, nonce):
     """
     :return: True if signature is valid
     """
-    if is_auth_token_valid(signature):
-        address = check_auth_token(signature)
-    else:
-        assert nonce is not None, "nonce is required when not using user auth token."
-        message = f"{original_msg}{str(nonce)}"
-        address = Account.recover_message(
-            encode_defunct(text=message), signature=signature
-        )
+    db_nonce = get_nonce(signer_address)
+    if db_nonce and float(nonce) < float(db_nonce):
+        raise InvalidSignatureError("Invalid signature expected nonce > current nonce.")
+
+    message = f"{original_msg}{str(nonce)}"
+    address = Account.recover_message(
+        encode_defunct(text=message), signature=signature
+    )
 
     if address.lower() == signer_address.lower():
         return True

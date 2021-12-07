@@ -11,7 +11,6 @@ from flask_sieve.rules_processor import RulesProcessor
 from flask_sieve.validator import Validator
 
 from ocean_provider.exceptions import InvalidSignatureError
-from ocean_provider.user_nonce import get_nonce
 from ocean_provider.utils.accounts import verify_signature
 from ocean_provider.utils.util import get_request_data
 from ocean_provider.validation.RBAC import RBACValidator
@@ -94,10 +93,11 @@ class CustomRulesProcessor(RulesProcessor):
         owner = self._attribute_value(params[0]) or ""
         did = self._attribute_value(params[1]) or ""
         job_id = self._attribute_value(params[2]) or ""
+        nonce = self._attribute_value(params[3]) or ""
 
         original_msg = f"{owner}{job_id}{did}"
         try:
-            verify_signature(owner, value, original_msg, get_nonce(owner))
+            verify_signature(owner, value, original_msg, nonce)
             return True
         except InvalidSignatureError:
             pass
@@ -117,12 +117,14 @@ class CustomRulesProcessor(RulesProcessor):
             description: The list of parameters defined for the rule,
                          i.e. names of other fields inside the request.
         """
-        self._assert_params_size(size=2, params=params, rule="signature")
+        self._assert_params_size(size=3, params=params, rule="signature")
         owner = self._attribute_value(params[0])
         did = self._attribute_value(params[1])
+        nonce = self._attribute_value(params[2])
+
         original_msg = f"{did}"
         try:
-            verify_signature(owner, value, original_msg, get_nonce(owner))
+            verify_signature(owner, value, original_msg, nonce)
             return True
         except InvalidSignatureError:
             pass
@@ -225,7 +227,8 @@ class ComputeRequest(CustomJsonRequest):
     def rules(self):
         return {
             "consumerAddress": ["bail", "required"],
-            "signature": ["required", "signature:consumerAddress,documentId,jobId"],
+            "nonce": ["bail", "required"],
+            "signature": ["required", "signature:consumerAddress,documentId,jobId,nonce"],
         }
 
 
@@ -247,7 +250,8 @@ class ComputeStartRequest(CustomJsonRequest):
                 "required_without:algorithmMeta",
                 "required_with_all:algorithmDataToken,algorithmTransferTxId",
             ],
-            "signature": ["required", "signature:consumerAddress,documentId,jobId"],
+            "nonce": ["bail", "required"],
+            "signature": ["required", "signature:consumerAddress,documentId,jobId,nonce"],
         }
 
 
@@ -257,7 +261,8 @@ class ComputeGetResult(CustomJsonRequest):
             "jobId": ["bail", "required"],
             "index": ["bail", "required"],
             "consumerAddress": ["bail", "required"],
-            "signature": ["bail", "required", "signature:consumerAddress,index,jobId"],
+            "nonce": ["bail", "required"],
+            "signature": ["bail", "required", "signature:consumerAddress,index,jobId,nonce"],
         }
 
 
@@ -270,7 +275,8 @@ class DownloadRequest(CustomJsonRequest):
             "consumerAddress": ["bail", "required"],
             "transferTxId": ["bail", "required"],
             "fileIndex": ["required"],
-            "signature": ["required", "download_signature:consumerAddress,documentId"],
+            "nonce": ["bail", "required"],
+            "signature": ["required", "download_signature:consumerAddress,documentId,nonce"],
         }
 
 
