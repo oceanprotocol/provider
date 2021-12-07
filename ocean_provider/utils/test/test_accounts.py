@@ -5,7 +5,6 @@ from ocean_provider.utils.accounts import (
     generate_auth_token,
     get_private_key,
     is_auth_token_valid,
-    verify_signature,
 )
 
 
@@ -29,7 +28,6 @@ def test_auth_token():
         "76fbde8ca2e41b4eb1b3565047ecd9acf300-1568372035"
     )
     pub_address = "0xe2DD09d719Da89e5a3D0F2549c7E24566e947260"
-    doc_id = "663516d306904651bbcf9fe45a00477c215c7303d8a24c5bad6005dd2f95e68e"
     assert is_auth_token_valid(token), f"cannot recognize auth-token {token}"
     address = check_auth_token(token)
 
@@ -37,8 +35,6 @@ def test_auth_token():
         f"address mismatch, got {address}, " f"" f"" f"expected {pub_address}"
     )
     assert address and address.lower() == pub_address.lower(), match_address
-
-    assert verify_signature(pub_address, token, doc_id)
 
 
 def test_generate_auth_token(consumer_wallet):
