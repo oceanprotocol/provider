@@ -346,7 +346,7 @@ def decode_from_data(data, key, dec_type="list"):
 
 
 def service_unavailable(error, context, custom_logger=None):
-    error = strip_infura_id(str(error))
+    error = strip_infura_project_id(str(error))
 
     text_items = []
     for key, value in context.items():
@@ -369,7 +369,7 @@ INFURA_ENDPOINT_WSS = ".infura.io/ws/v3/"
 STRIPPED_INFURA_ID_MSG = "<infura project id stripped for security reasons>"
 
 
-def strip_infura_id(error: str) -> str:
+def strip_infura_project_id(error: str) -> str:
     if INFURA_ENDPOINT_HTTPS in error:
         error = re.sub(
             rf"{INFURA_ENDPOINT_HTTPS}\S+",
