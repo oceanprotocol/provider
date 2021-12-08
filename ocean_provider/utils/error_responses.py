@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 INFURA_ENDPOINT_HTTPS = ".infura.io/v3/"
 INFURA_ENDPOINT_WSS = ".infura.io/ws/v3/"
-STRIPPED_INFURA_ID_MSG = "<infura project id stripped for security reasons>"
+STRIPPED_INFURA_PROJECT_ID_MSG = "<infura project id stripped for security reasons>"
 
 
 def service_unavailable(error, context, custom_logger=None):
@@ -38,13 +38,13 @@ def strip_infura_project_id(error: str) -> str:
     if INFURA_ENDPOINT_HTTPS in error:
         error = re.sub(
             rf"{INFURA_ENDPOINT_HTTPS}\S+",
-            f"{INFURA_ENDPOINT_HTTPS}{STRIPPED_INFURA_ID_MSG}",
+            f"{INFURA_ENDPOINT_HTTPS}{STRIPPED_INFURA_PROJECT_ID_MSG}",
             error,
         )
     if INFURA_ENDPOINT_WSS in error:
         error = re.sub(
             rf"{INFURA_ENDPOINT_WSS}\S+",
-            f"{INFURA_ENDPOINT_WSS}{STRIPPED_INFURA_ID_MSG}",
+            f"{INFURA_ENDPOINT_WSS}{STRIPPED_INFURA_PROJECT_ID_MSG}",
             error,
         )
     return error
