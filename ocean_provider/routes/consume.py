@@ -20,6 +20,7 @@ from ocean_provider.utils.basics import (
     get_provider_wallet,
     get_web3,
 )
+from ocean_provider.utils.datatoken import get_dt_contract
 from ocean_provider.utils.did import did_to_id
 from ocean_provider.utils.encryption import do_encrypt
 from ocean_provider.utils.url import append_userdata, check_url_details
@@ -27,6 +28,7 @@ from ocean_provider.utils.util import (
     build_download_response,
     check_asset_consumable,
     get_asset_download_urls,
+    get_asset_urls,
     get_asset_url_at_index,
     get_compute_info,
     get_download_url,
@@ -408,9 +410,9 @@ def asset_urls():
       - name: nonce
         in: string
         description: User nonce.
-      - name: consumerAddress
+      - name: publisherAddress
         in: query
-        description: The consumer address.
+        description: The publisher address.
         required: true
         type: string
     responses:
@@ -424,6 +426,7 @@ def asset_urls():
     data = get_request_data(request)
     did = data.get("documentId")
     service_id = int(data.get("serviceId"))
+    publisher_address = data.get("publisherAddress")
 
     logger.info(f"asset urls endpoint called. {data}")
     try:
@@ -431,10 +434,23 @@ def asset_urls():
         service = asset.get_service_by_index(service_id)
         assert service.type == "access"
 
-        import pdb; pdb.set_trace()
-        # secure to minter
-        # get_asset_files_list
-        # increment_nonce
+        dt_token = get_dt_contract(get_web3(), asset.data_token_address)
+
+        if dt_token.caller.minter().lower() != publisher_address.lower():
+            return Response(
+                json.dumps({"error": "Publisher address does not match minter."}),
+                400,
+                headers={"content-type": "application/json"},
+            )
+
+        urls = get_asset_urls(asset, provider_wallet)
+
+        logger.info(f"Retrieved unencrypted urls for for asset {did}")
+        increment_nonce(publisher_address)
+
+        return Response(
+            json.dumps(urls), 200, headers={"content-type": "application/json"}
+        )
 
     except Exception as e:
         return service_unavailable(

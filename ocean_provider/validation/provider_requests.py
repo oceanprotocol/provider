@@ -209,8 +209,8 @@ class AssetUrlsRequest(CustomJsonRequest):
         return {
             "documentId": ["bail", "required"],
             "serviceId": ["required"],
-            "consumerAddress": ["bail", "required"],
-            "signature": ["required", "download_signature:consumerAddress,documentId"],
+            "publisherAddress": ["bail", "required"],
+            "signature": ["required", "download_signature:publisherAddress,documentId"],
         }
 
 
