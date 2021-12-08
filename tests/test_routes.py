@@ -9,6 +9,7 @@ from ocean_provider.constants import BaseURLs
 from ocean_provider.run import get_provider_address, get_services_endpoints
 from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.basics import get_provider_wallet
+from ocean_provider.user_nonce import update_nonce, get_nonce
 from tests.test_helpers import get_registered_asset
 
 
@@ -74,3 +75,21 @@ def test_encrypt_endpoint(client, provider_wallet, publisher_wallet):
     assert response.content_type == "text/plain"
     assert response.data
     assert response.status_code == 201
+
+
+@pytest.mark.unit
+def test_get_nonce(client, publisher_wallet):
+    address = publisher_wallet.address
+    # Ensure address exists in database
+    update_nonce(address, datetime.now().timestamp())
+
+    endpoint = BaseURLs.SERVICES_URL + "/nonce"
+    response = client.get(
+        endpoint + "?" + f"&userAddress={address}", content_type="application/json"
+    )
+    assert (
+        response.status_code == 200 and response.data
+    ), f"get nonce endpoint failed: response status {response.status}, data {response.data}"
+
+    value = response.json if response.json else json.loads(response.data)
+    assert value["nonce"] == get_nonce(address)

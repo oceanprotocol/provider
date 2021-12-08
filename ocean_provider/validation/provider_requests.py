@@ -205,7 +205,7 @@ class DecryptRequest(CustomJsonRequest):
                 "required_without:transactionId",
                 "required_with:encryptedDocument,flags",
             ],
-            "nonce": ["required"],
+            "nonce": ["required", "numeric"],
             "signature": [
                 "bail",
                 "required",
@@ -227,7 +227,7 @@ class ComputeRequest(CustomJsonRequest):
     def rules(self):
         return {
             "consumerAddress": ["bail", "required"],
-            "nonce": ["bail", "required"],
+            "nonce": ["bail", "required", "numeric"],
             "signature": [
                 "required",
                 "signature:consumerAddress,documentId,jobId,nonce",
@@ -253,7 +253,7 @@ class ComputeStartRequest(CustomJsonRequest):
                 "required_without:algorithmMeta",
                 "required_with_all:algorithmDataToken,algorithmTransferTxId",
             ],
-            "nonce": ["bail", "required"],
+            "nonce": ["bail", "required", "numeric"],
             "signature": [
                 "required",
                 "signature:consumerAddress,documentId,jobId,nonce",
@@ -267,7 +267,7 @@ class ComputeGetResult(CustomJsonRequest):
             "jobId": ["bail", "required"],
             "index": ["bail", "required"],
             "consumerAddress": ["bail", "required"],
-            "nonce": ["bail", "required"],
+            "nonce": ["bail", "required", "numeric"],
             "signature": [
                 "bail",
                 "required",
@@ -285,7 +285,7 @@ class DownloadRequest(CustomJsonRequest):
             "consumerAddress": ["bail", "required"],
             "transferTxId": ["bail", "required"],
             "fileIndex": ["required"],
-            "nonce": ["bail", "required"],
+            "nonce": ["bail", "required", "numeric"],
             "signature": [
                 "required",
                 "download_signature:consumerAddress,documentId,nonce",
