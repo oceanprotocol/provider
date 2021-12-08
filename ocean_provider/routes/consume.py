@@ -39,6 +39,7 @@ from ocean_provider.utils.util import (
     validate_transfer_not_used_for_other_service,
 )
 from ocean_provider.validation.provider_requests import (
+    AssetUrlsRequest,
     DownloadRequest,
     EncryptRequest,
     FileInfoRequest,
@@ -377,6 +378,71 @@ def download():
                 "consumerAddress": data.get("consumerAddress"),
                 "serviceId": data.get("serviceId"),
                 "serviceType": data.get("serviceType"),
+            },
+            logger,
+        )
+
+
+@services.route("/assetUrls", methods=["GET"])
+@validate(AssetUrlsRequest)
+def asset_urls():
+    """Lists files from an asset
+
+    ---
+    tags:
+      - services
+    consumes:
+      - application/json
+    parameters:
+      - name: documentId
+        in: query
+        description: The ID of the asset/document (the DID).
+        required: true
+        type: string
+      - name: signature
+        in: query
+        description: Signature of the documentId to verify that the consumer has rights to download the asset.
+      - name: serviceId
+        in: string
+        description: ServiceId for the asset access service.
+      - name: nonce
+        in: string
+        description: User nonce.
+      - name: consumerAddress
+        in: query
+        description: The consumer address.
+        required: true
+        type: string
+    responses:
+      200:
+        description: lists asset files
+      400:
+        description: One of the required attributes is missing.
+      503:
+        description: Service Unavailable
+    """
+    data = get_request_data(request)
+    did = data.get("documentId")
+    service_id = int(data.get("serviceId"))
+
+    logger.info(f"asset urls endpoint called. {data}")
+    try:
+        asset = get_asset_from_metadatastore(get_metadata_url(), did)
+        service = asset.get_service_by_index(service_id)
+        assert service.type == "access"
+
+        import pdb; pdb.set_trace()
+        # secure to minter
+        # get_asset_files_list
+        # increment_nonce
+
+    except Exception as e:
+        return service_unavailable(
+            e,
+            {
+                "documentId": data.get("did"),
+                "serviceId": data.get("serviceId"),
+                "consumerAddress": data.get("consumerAddress"),
             },
             logger,
         )

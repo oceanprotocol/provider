@@ -152,3 +152,28 @@ def test_download_multiple_files(client, publisher_wallet, consumer_wallet, web3
     download_endpoint = BaseURLs.ASSETS_URL + "/download"
     response = client.get(download_endpoint, query_string=payload)
     assert response.status_code == 200, f"{response.data}"
+
+
+def test_asset_urls(client, publisher_wallet, consumer_wallet, web3):
+    ddo = get_dataset_ddo_with_multiple_files(client, publisher_wallet)
+    dt_token = get_dt_contract(web3, ddo.data_token_address)
+
+    mint_tokens_and_wait(dt_token, consumer_wallet, publisher_wallet)
+
+    sa = ddo.get_service("access")
+    tx_id = send_order(client, ddo, dt_token, sa, consumer_wallet)
+
+    payload = {
+        "documentId": ddo.did,
+        "serviceId": sa.index,
+        "consumerAddress": consumer_wallet.address,
+    }
+
+    download_endpoint = BaseURLs.ASSETS_URL + "/assetUrls"
+
+    # Consume using url index and signature (with nonce)
+    nonce = get_nonce(client, consumer_wallet.address)
+    _msg = f"{ddo.did}{nonce}"
+    payload["signature"] = sign_message(_msg, consumer_wallet)
+    response = client.get(download_endpoint, query_string=payload)
+    assert response.status_code == 200, f"{response.data}"

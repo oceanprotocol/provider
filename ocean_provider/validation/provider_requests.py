@@ -204,6 +204,16 @@ class DownloadRequest(CustomJsonRequest):
         }
 
 
+class AssetUrlsRequest(CustomJsonRequest):
+    def rules(self):
+        return {
+            "documentId": ["bail", "required"],
+            "serviceId": ["required"],
+            "consumerAddress": ["bail", "required"],
+            "signature": ["required", "download_signature:consumerAddress,documentId"],
+        }
+
+
 class InitializeRequest(CustomJsonRequest):
     def rules(self):
         return {
