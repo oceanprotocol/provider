@@ -45,7 +45,7 @@ def test_service_unavailable(caplog):
     assert caplog.records[0].msg == "Payload was: item1=test1,item2=test2"
 
 
-def test_service_unavailable_strip_infura_key():
+def test_service_unavailable_strip_infura_project_id():
     """Test that service_unavilable strips out infura project IDs."""
 
     context = {"item1": "test1", "item2": "test2"}
