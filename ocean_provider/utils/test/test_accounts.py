@@ -3,7 +3,11 @@ import os
 import pytest
 
 from ocean_provider.exceptions import InvalidSignatureError
-from ocean_provider.utils.accounts import sign_message, verify_signature, get_private_key
+from ocean_provider.utils.accounts import (
+    sign_message,
+    verify_signature,
+    get_private_key,
+)
 from ocean_provider.user_nonce import update_nonce
 
 
