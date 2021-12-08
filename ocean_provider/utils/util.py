@@ -352,7 +352,7 @@ def service_unavailable(error, context, custom_logger=None):
 
     logger_message = "Payload was: " + ",".join(text_items)
     custom_logger = custom_logger if custom_logger else logger
-    custom_logger.error(logger_message, exc_info=1)
+    custom_logger.error(f"error = {error}, input data = {logger_message}", exc_info=1)
 
     return Response(
         json.dumps({"error": str(error), "context": context}),
