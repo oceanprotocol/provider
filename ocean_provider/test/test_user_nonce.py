@@ -16,7 +16,10 @@ from ocean_provider.user_nonce import (
 
 
 @pytest.mark.unit
-def test_get_and_update_nonce(publisher_address, consumer_address):
+def test_get_and_update_nonce(monkeypatch, publisher_address, consumer_address):
+    # pass through sqlite
+    monkeypatch.delenv("REDIS_CONNECTION")
+
     # get_nonce can be used on addresses that are not in the user_nonce table
     assert get_nonce("0x0000000000000000000000000000000000000000") is None
     assert get_or_create_user_nonce_object(
@@ -37,7 +40,31 @@ def test_get_and_update_nonce(publisher_address, consumer_address):
 
 
 @pytest.mark.unit
-def test_update_nonce_exception(publisher_address):
+def test_get_and_update_nonce_redis(publisher_address, consumer_address):
+    # get_nonce can be used on addresses that are not in the user_nonce table
+    assert get_nonce("0x0000000000000000000000000000000000000000") is None
+    assert get_or_create_user_nonce_object(
+        "0x0000000000000000000000000000000000000000", datetime.now().timestamp()
+    )
+
+    # update two times because, if we just pruned, we start from None
+    update_nonce(publisher_address, datetime.now().timestamp())
+    publisher_nonce = get_nonce(publisher_address)
+    update_nonce(publisher_address, datetime.now().timestamp())
+    new_publisher_nonce = get_nonce(publisher_address)
+
+    assert new_publisher_nonce >= publisher_nonce
+
+    # get_nonce doesn't affect the value of nonce
+    publisher_nonce = get_nonce(publisher_address)
+    assert get_nonce(publisher_address) == publisher_nonce
+
+
+@pytest.mark.unit
+def test_update_nonce_exception(monkeypatch, publisher_address):
+    # pass through sqlite
+    monkeypatch.delenv("REDIS_CONNECTION")
+
     # Ensure address exists in database
     update_nonce(publisher_address, datetime.now().timestamp())
 
