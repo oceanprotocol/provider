@@ -11,6 +11,7 @@ from ocean_provider import models, user_nonce
 from ocean_provider.user_nonce import get_nonce, update_nonce
 
 
+@pytest.mark.unit
 def test_get_and_update_nonce(publisher_address, consumer_address):
     # get_nonce can be used on addresses that are not in the user_nonce table
     assert get_nonce("0x0000000000000000000000000000000000000000") is None
@@ -28,6 +29,7 @@ def test_get_and_update_nonce(publisher_address, consumer_address):
     assert get_nonce(publisher_address) == publisher_nonce
 
 
+@pytest.mark.unit
 def test_update_nonce_exception(publisher_address):
     # Ensure address exists in database
     update_nonce(publisher_address, datetime.now().timestamp())

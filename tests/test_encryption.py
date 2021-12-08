@@ -2,6 +2,7 @@ from datetime import datetime
 import hashlib
 import json
 import lzma
+import pytest
 
 from eth_account.signers.local import LocalAccount
 from eth_typing.encoding import HexStr
@@ -20,6 +21,7 @@ from tests.test_helpers import (
 )
 
 
+@pytest.mark.integration
 def test_decrypt_with_plain_input(
     client: FlaskClient,
     web3: Web3,
@@ -87,6 +89,7 @@ def test_decrypt_with_plain_input(
     assert decrypt_response.get_json() is None
 
 
+@pytest.mark.integration
 def test_decrypt_with_compressed_input(
     client: FlaskClient,
     web3: Web3,
@@ -158,6 +161,7 @@ def test_decrypt_with_compressed_input(
     assert decrypt_response.get_json() is None
 
 
+@pytest.mark.integration
 def test_encrypt_and_decrypt_with_only_encryption(
     client: FlaskClient,
     web3: Web3,

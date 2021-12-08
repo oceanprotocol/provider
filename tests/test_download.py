@@ -23,6 +23,7 @@ from tests.test_helpers import (
 )
 
 
+@pytest.mark.integration
 @pytest.mark.parametrize("userdata", [False, "valid", "invalid"])
 def test_download_service(client, publisher_wallet, consumer_wallet, web3, userdata):
     asset = get_registered_asset(publisher_wallet)
@@ -74,6 +75,7 @@ def test_download_service(client, publisher_wallet, consumer_wallet, web3, userd
     assert response.status_code == 200, f"{response.data}"
 
 
+@pytest.mark.unit
 def test_empty_payload(client):
     consume = client.get(
         BaseURLs.SERVICES_URL + "/download", data=None, content_type="application/json"
@@ -81,6 +83,7 @@ def test_empty_payload(client):
     assert consume.status_code == 400
 
 
+@pytest.mark.integration
 def test_initialize_on_bad_url(client, publisher_wallet, consumer_wallet, web3):
     asset = get_dataset_with_invalid_url_ddo(client, publisher_wallet)
     service = asset.get_service_by_type(ServiceType.ACCESS)
@@ -102,6 +105,7 @@ def test_initialize_on_bad_url(client, publisher_wallet, consumer_wallet, web3):
     assert response.json["error"] == "Asset URL not found or not available."
 
 
+@pytest.mark.integration
 def test_initialize_on_ipfs_url(client, publisher_wallet, consumer_wallet, web3):
     asset = get_dataset_with_ipfs_url_ddo(client, publisher_wallet)
     service = asset.get_service_by_type(ServiceType.ACCESS)
@@ -123,6 +127,7 @@ def test_initialize_on_ipfs_url(client, publisher_wallet, consumer_wallet, web3)
     assert datatoken == service.datatoken_address
 
 
+@pytest.mark.integration
 def test_initialize_on_disabled_asset(client, publisher_wallet, consumer_wallet, web3):
     asset, real_asset = get_dataset_ddo_disabled(client, publisher_wallet)
     assert real_asset
@@ -145,6 +150,7 @@ def test_initialize_on_disabled_asset(client, publisher_wallet, consumer_wallet,
     assert response.json["error"] == "Asset is not consumable."
 
 
+@pytest.mark.integration
 def test_initialize_on_asset_with_custom_credentials(
     client, publisher_wallet, consumer_wallet, web3
 ):
@@ -174,6 +180,7 @@ def test_initialize_on_asset_with_custom_credentials(
     )
 
 
+@pytest.mark.integration
 def test_download_multiple_files(client, publisher_wallet, consumer_wallet, web3):
     asset = get_dataset_ddo_with_multiple_files(client, publisher_wallet)
     service = asset.get_service_by_type(ServiceType.ACCESS)

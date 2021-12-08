@@ -27,6 +27,7 @@ from tests.test_helpers import (
 )
 
 
+@pytest.mark.unit
 def test_invalid_request_name():
     req = dict()
     with pytest.raises(RequestNotFound) as err:
@@ -37,6 +38,7 @@ def test_invalid_request_name():
 encrypt_endpoint = BaseURLs.SERVICES_URL + "/encrypt"
 
 
+@pytest.mark.unit
 def test_encrypt_request_payload(consumer_wallet, publisher_wallet):
     document = {
         "url": "http://localhost:8030" + encrypt_endpoint,
@@ -62,6 +64,7 @@ def test_encrypt_request_payload(consumer_wallet, publisher_wallet):
     }
 
 
+@pytest.mark.integration
 def test_initialize_request_payload(
     client, publisher_wallet, consumer_wallet, provider_address, web3
 ):
@@ -92,6 +95,7 @@ def test_initialize_request_payload(
     assert payload["dids"][0]["serviceId"] == service.id
 
 
+@pytest.mark.integration
 def test_access_request_payload(
     client, publisher_wallet, consumer_wallet, provider_address, web3
 ):
@@ -141,6 +145,7 @@ def test_access_request_payload(
     assert payload["dids"][0]["serviceId"] == service.id
 
 
+@pytest.mark.integration
 def test_compute_payload_without_additional_inputs(
     client, publisher_wallet, consumer_wallet, provider_address
 ):
@@ -184,6 +189,7 @@ def test_compute_payload_without_additional_inputs(
     assert payload["algos"][0]["serviceId"] == sa_compute.id
 
 
+@pytest.mark.integration
 def test_compute_request_payload(
     client, publisher_wallet, consumer_wallet, provider_address
 ):
@@ -255,6 +261,7 @@ def test_compute_request_payload(
     assert payload["additionalDids"][0]["serviceId"] == sa2.id
 
 
+@pytest.mark.integration
 def test_fails(
     monkeypatch,
     client,

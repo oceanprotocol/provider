@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 from datetime import datetime
+import pytest
 import time
 
 from ocean_provider.constants import BaseURLs
@@ -26,6 +27,7 @@ from tests.helpers.compute_helpers import (
 from tests.helpers.ddo_dict_builders import build_metadata_dict_type_algorithm
 
 
+@pytest.mark.integration
 def test_compute_norawalgo_allowed(
     client, publisher_wallet, consumer_wallet, consumer_address, web3
 ):
@@ -88,6 +90,7 @@ def test_compute_norawalgo_allowed(
     ), f"start compute job failed: {response.status} , {response.data}"
 
 
+@pytest.mark.integration
 def test_compute_specific_algo_dids(
     client, publisher_wallet, consumer_wallet, consumer_address
 ):
@@ -134,6 +137,7 @@ def test_compute_specific_algo_dids(
     )
 
 
+@pytest.mark.integration
 def test_compute(client, publisher_wallet, consumer_wallet):
     ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
         client, publisher_wallet, consumer_wallet
@@ -261,6 +265,7 @@ def test_compute(client, publisher_wallet, consumer_wallet):
     assert result_data is not None, "We should have a result"
 
 
+@pytest.mark.integration
 def test_compute_diff_provider(client, publisher_wallet, consumer_wallet):
     ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
         client, publisher_wallet, consumer_wallet, alg_diff=True
@@ -294,6 +299,7 @@ def test_compute_diff_provider(client, publisher_wallet, consumer_wallet):
     assert response.status == "200 OK", f"start compute job failed: {response.data}"
 
 
+@pytest.mark.integration
 def test_compute_allow_all_published(client, publisher_wallet, consumer_wallet):
     ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
         client, publisher_wallet, consumer_wallet, asset_type="allow_all_published"
@@ -327,6 +333,7 @@ def test_compute_allow_all_published(client, publisher_wallet, consumer_wallet):
     assert response.status == "200 OK"
 
 
+@pytest.mark.integration
 def test_compute_additional_input(client, publisher_wallet, consumer_wallet):
     ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
         client, publisher_wallet, consumer_wallet
@@ -395,6 +402,7 @@ def test_compute_additional_input(client, publisher_wallet, consumer_wallet):
     assert response.status == "200 OK", f"start compute job failed: {response.data}"
 
 
+@pytest.mark.integration
 def test_compute_delete_job(
     client, publisher_wallet, consumer_wallet, consumer_address
 ):
