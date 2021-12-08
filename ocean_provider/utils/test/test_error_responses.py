@@ -17,7 +17,9 @@ def test_service_unavailable(caplog):
     response = response.json
     assert response["error"] == "test message"
     assert response["context"] == context
-    assert caplog.records[0].msg == "Payload was: item1=test1,item2=test2"
+    assert (
+        caplog.records[0].msg == "error: test message, payload: item1=test1,item2=test2"
+    )
 
 
 def test_service_unavailable_strip_infura_project_id():
