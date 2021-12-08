@@ -45,6 +45,42 @@ def test_service_unavailable(caplog):
     assert caplog.records[0].msg == "Payload was: item1=test1,item2=test2"
 
 
+def test_service_unavailable_strip_infura_key():
+    """Test that service_unavilable strips out infura project IDs."""
+
+    context = {"item1": "test1", "item2": "test2"}
+
+    # HTTP Infura URL (rinkeby)
+    e = Exception(
+        "429 Client Error: Too Many Requests for url: "
+        "https://rinkeby.infura.io/v3/ffffffffffffffffffffffffffffffff"
+    )
+    response = service_unavailable(e, context, test_logger)
+    assert (
+        response.json["error"] == "429 Client Error: Too Many Requests for url: "
+        "https://rinkeby.infura.io/v3/<infura project id stripped for security reasons>"
+    )
+
+    # Websocket Infura URL (ropsten)
+    e = Exception(
+        "429 Client Error: Too Many Requests for url: "
+        "https://ropsten.infura.io/ws/v3/ffffffffffffffffffffffffffffffff"
+    )
+    response = service_unavailable(e, context, test_logger)
+    assert (
+        response.json["error"] == "429 Client Error: Too Many Requests for url: "
+        "https://ropsten.infura.io/ws/v3/<infura project id stripped for security reasons>"
+    )
+
+    # Other
+    e = Exception("anything .infura.io/v3/<any_non_whitespace_string>")
+    response = service_unavailable(e, context, test_logger)
+    assert (
+        response.json["error"]
+        == "anything .infura.io/v3/<infura project id stripped for security reasons>"
+    )
+
+
 def test_build_download_response():
     request = Mock()
     request.range = None
