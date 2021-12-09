@@ -23,7 +23,7 @@ def test_service_unavailable(caplog):
 
 
 def test_service_unavailable_strip_infura_project_id():
-    """Test that service_unavilable strips out infura project IDs."""
+    """Test that service_unavilable strips out URLs."""
 
     context = {"item1": "test1", "item2": "test2"}
 
@@ -35,24 +35,30 @@ def test_service_unavailable_strip_infura_project_id():
     response = service_unavailable(e, context, test_logger)
     assert (
         response.json["error"] == "429 Client Error: Too Many Requests for url: "
-        "https://rinkeby.infura.io/v3/<infura project id stripped for security reasons>"
+        "<URL stripped for security reasons>"
     )
 
     # Websocket Infura URL (ropsten)
     e = Exception(
         "429 Client Error: Too Many Requests for url: "
-        "https://ropsten.infura.io/ws/v3/ffffffffffffffffffffffffffffffff"
+        "wss://ropsten.infura.io/ws/v3/ffffffffffffffffffffffffffffffff"
     )
     response = service_unavailable(e, context, test_logger)
     assert (
         response.json["error"] == "429 Client Error: Too Many Requests for url: "
-        "https://ropsten.infura.io/ws/v3/<infura project id stripped for security reasons>"
+        "<URL stripped for security reasons>"
     )
 
-    # Other
-    e = Exception("anything .infura.io/v3/<any_non_whitespace_string>")
+    # No URL
+    e = Exception("string without a URL in it")
+    response = service_unavailable(e, context, test_logger)
+    assert response.json["error"] == "string without a URL in it"
+
+    # Two URLs
+    e = Exception("Two URLs: wss://google.com https://google.com")
     response = service_unavailable(e, context, test_logger)
     assert (
-        response.json["error"]
-        == "anything .infura.io/v3/<infura project id stripped for security reasons>"
+        response.json["error"] == "Two URLs: "
+        "<URL stripped for security reasons> "
+        "<URL stripped for security reasons>"
     )

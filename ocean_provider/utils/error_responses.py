@@ -4,15 +4,13 @@
 #
 import json
 import logging
-import re
 
 from flask.wrappers import Response
+from ocean_provider.utils.url import is_url
 
 logger = logging.getLogger(__name__)
 
-INFURA_ENDPOINT_HTTPS = ".infura.io/v3/"
-INFURA_ENDPOINT_WSS = ".infura.io/ws/v3/"
-STRIPPED_INFURA_PROJECT_ID_MSG = "<infura project id stripped for security reasons>"
+STRIPPED_URL_MSG = "<URL stripped for security reasons>"
 
 
 def error_response(err_str: str, status: int) -> Response:
@@ -23,7 +21,7 @@ def error_response(err_str: str, status: int) -> Response:
 
 
 def service_unavailable(error, context, custom_logger=None):
-    error = strip_infura_project_id(str(error))
+    error = strip_and_replace_urls(str(error))
 
     text_items = []
     for key, value in context.items():
@@ -41,17 +39,8 @@ def service_unavailable(error, context, custom_logger=None):
     )
 
 
-def strip_infura_project_id(error: str) -> str:
-    if INFURA_ENDPOINT_HTTPS in error:
-        error = re.sub(
-            rf"{INFURA_ENDPOINT_HTTPS}\S+",
-            f"{INFURA_ENDPOINT_HTTPS}{STRIPPED_INFURA_PROJECT_ID_MSG}",
-            error,
-        )
-    if INFURA_ENDPOINT_WSS in error:
-        error = re.sub(
-            rf"{INFURA_ENDPOINT_WSS}\S+",
-            f"{INFURA_ENDPOINT_WSS}{STRIPPED_INFURA_PROJECT_ID_MSG}",
-            error,
-        )
-    return error
+def strip_and_replace_urls(err_str: str) -> str:
+    tokens = []
+    for token in err_str.split():
+        tokens += [STRIPPED_URL_MSG] if is_url(token) else [token]
+    return " ".join(tokens)
