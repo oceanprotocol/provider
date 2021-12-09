@@ -7,21 +7,19 @@ import logging
 
 from flask import Response, jsonify, request
 from flask_sieve import validate
-from requests.models import PreparedRequest
-
 from ocean_provider.exceptions import InvalidSignatureError
 from ocean_provider.log import setup_logging
 from ocean_provider.requests_session import get_requests_session
 from ocean_provider.user_nonce import get_nonce, increment_nonce
 from ocean_provider.utils.accounts import sign_message, verify_signature
 from ocean_provider.utils.basics import LocalFileAdapter, get_provider_wallet, get_web3
+from ocean_provider.utils.error_responses import service_unavailable
 from ocean_provider.utils.util import (
     build_download_response,
     get_compute_endpoint,
     get_compute_result_endpoint,
     get_request_data,
     process_compute_request,
-    service_unavailable,
 )
 from ocean_provider.validation.algo import WorkflowValidator
 from ocean_provider.validation.provider_requests import (
@@ -30,6 +28,7 @@ from ocean_provider.validation.provider_requests import (
     ComputeStartRequest,
     UnsignedComputeRequest,
 )
+from requests.models import PreparedRequest
 
 from . import services
 
@@ -87,15 +86,11 @@ def computeDelete():
     try:
         body = process_compute_request(data)
         response = requests_session.delete(
-            get_compute_endpoint(),
-            params=body,
-            headers=standard_headers,
+            get_compute_endpoint(), params=body, headers=standard_headers
         )
         increment_nonce(body["owner"])
         return Response(
-            response.content,
-            response.status_code,
-            headers=standard_headers,
+            response.content, response.status_code, headers=standard_headers
         )
     except (ValueError, Exception) as e:
         return service_unavailable(e, data, logger)
@@ -149,15 +144,11 @@ def computeStop():
     try:
         body = process_compute_request(data)
         response = requests_session.put(
-            get_compute_endpoint(),
-            params=body,
-            headers=standard_headers,
+            get_compute_endpoint(), params=body, headers=standard_headers
         )
         increment_nonce(body["owner"])
         return Response(
-            response.content,
-            response.status_code,
-            headers=standard_headers,
+            response.content, response.status_code, headers=standard_headers
         )
     except (ValueError, Exception) as e:
         return service_unavailable(e, data, logger)
@@ -213,9 +204,7 @@ def computeStatus():
         body = process_compute_request(data)
 
         response = requests_session.get(
-            get_compute_endpoint(),
-            params=body,
-            headers=standard_headers,
+            get_compute_endpoint(), params=body, headers=standard_headers
         )
 
         _response = response.content
@@ -241,11 +230,7 @@ def computeStatus():
             if not isinstance(resp_content, list):
                 resp_content = [resp_content]
             _response = []
-            keys_to_filter = [
-                "resultsUrl",
-                "algorithmLogUrl",
-                "resultsDid",
-            ]
+            keys_to_filter = ["resultsUrl", "algorithmLogUrl", "resultsDid"]
             for job_info in resp_content:
                 for k in keys_to_filter:
                     job_info.pop(k, None)
@@ -253,11 +238,7 @@ def computeStatus():
 
             _response = json.dumps(_response)
 
-        return Response(
-            _response,
-            response.status_code,
-            headers=standard_headers,
-        )
+        return Response(_response, response.status_code, headers=standard_headers)
 
     except (ValueError, Exception) as e:
         return service_unavailable(e, data, logger)
@@ -342,15 +323,11 @@ def computeStart():
             "providerAddress": provider_wallet.address,
         }
         response = requests_session.post(
-            get_compute_endpoint(),
-            data=json.dumps(payload),
-            headers=standard_headers,
+            get_compute_endpoint(), data=json.dumps(payload), headers=standard_headers
         )
         increment_nonce(consumer_address)
         return Response(
-            response.content,
-            response.status_code,
-            headers=standard_headers,
+            response.content, response.status_code, headers=standard_headers
         )
     except (ValueError, KeyError, Exception) as e:
         return service_unavailable(e, data, logger)
