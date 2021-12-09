@@ -14,6 +14,7 @@ STRIPPED_URL_MSG = "<URL stripped for security reasons>"
 
 
 def error_response(err_str: str, status: int) -> Response:
+    err_str = strip_and_replace_urls(str(err_str))
     logger.error(err_str, exc_info=1)
     return Response(
         err_str, status, headers={"Content-type": "text/plain", "Connection": "close"}
