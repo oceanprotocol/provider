@@ -2,11 +2,9 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
-import json
 from copy import deepcopy
 
 import pytest
-
 from ocean_provider.utils.asset import Asset
 from ocean_provider.utils.consumable import ConsumableCodes, MalformedCredential
 from ocean_provider.utils.credentials import AddressCredential
@@ -66,6 +64,7 @@ def test_asset_credentials_addresses_only_deny():
         address_credential.validate_access(credential)
 
 
+@pytest.mark.unit
 def test_asset_credentials_addresses_no_access_list():
     """Tests asset credentials when neither deny, nor allow lists exist on the asset."""
     sample_asset_path = get_resource_path("ddo", "ddo_sa_sample_with_credentials.json")

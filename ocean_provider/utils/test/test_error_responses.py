@@ -24,6 +24,7 @@ def test_service_unavailable(caplog):
     )
 
 
+@pytest.mark.unit
 def test_service_unavailable_strip_infura_project_id():
     """Test that service_unavilable strips out URLs."""
 
