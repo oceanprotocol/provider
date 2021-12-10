@@ -3,8 +3,8 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 from datetime import datetime
-import pytest
 
+import pytest
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.currency import to_wei
@@ -240,6 +240,7 @@ def test_download_multiple_files(client, publisher_wallet, consumer_wallet, web3
     assert response.status_code == 200, f"{response.data}"
 
 
+@pytest.mark.integration
 def test_asset_urls(client, publisher_wallet, consumer_wallet, web3):
     ddo = get_dataset_ddo_with_multiple_files(client, publisher_wallet)
     service = ddo.get_service_by_type(ServiceType.ACCESS)

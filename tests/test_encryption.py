@@ -1,24 +1,19 @@
-from datetime import datetime
 import hashlib
 import json
 import lzma
-import pytest
+from datetime import datetime
 
+import pytest
 from eth_account.signers.local import LocalAccount
 from eth_typing.encoding import HexStr
 from eth_typing.evm import HexAddress
 from flask.testing import FlaskClient
-from web3.main import Web3
-
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.data_nft import Flags, MetadataState
 from tests.ddo.ddo_sample1_v4 import json_dict as ddo_sample1_v4
-from tests.test_helpers import (
-    BLACK_HOLE_ADDRESS,
-    deploy_data_nft,
-    set_metadata,
-)
+from tests.test_helpers import BLACK_HOLE_ADDRESS, deploy_data_nft, set_metadata
+from web3.main import Web3
 
 
 @pytest.mark.integration
@@ -243,6 +238,7 @@ def test_encrypt_and_decrypt_with_only_encryption(
     assert decrypt_response.get_json() is None
 
 
+@pytest.mark.integration
 def test_encrypt_and_decrypt_with_compression_and_encryption(
     client: FlaskClient,
     web3: Web3,
