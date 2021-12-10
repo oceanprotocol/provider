@@ -90,7 +90,6 @@ def fileinfo():
     logger.info(f"fileinfo endpoint called. {data}")
     did = data.get("did")
     service_id = data.get("serviceId")
-    url = data.get("url")
 
     if did:
         asset = get_asset_from_metadatastore(get_metadata_url(), did)
@@ -101,7 +100,27 @@ def fileinfo():
             for file_item in files_list
         ]
     else:
-        url_list = [get_download_url(url, app.config["PROVIDER_CONFIG_FILE"])]
+        url_object = data
+
+        if url_object["type"] not in ["ipfs", "url"]:
+            return (
+                jsonify(
+                    error=f"Invalid file type, must be ipfs or url."
+                ),
+                400,
+            )
+
+        if (url_object["type"] == "ipfs" and "hash" not in url_object) or (
+            url_object["type"] == "url" and "url" not in url_object
+        ):
+            return (
+                jsonify(
+                    error=f"Malformed file, missing required keys."
+                ),
+                400,
+            )
+
+        url_list = [get_download_url(url_object, app.config["PROVIDER_CONFIG_FILE"])]
 
     with_checksum = data.get("checksum", False)
 
