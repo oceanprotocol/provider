@@ -8,7 +8,7 @@ from flask import Response, jsonify, request
 from flask_sieve import validate
 from jsonsempai import magic  # noqa: F401
 
-from artifacts import ERC20Template
+from artifacts import ERC721Template
 from ocean_provider.log import setup_logging
 from ocean_provider.myapp import app
 from ocean_provider.requests_session import get_requests_session
@@ -336,10 +336,10 @@ def asset_urls():
         assert service.type == "access"
 
         dt_token = get_web3().eth.contract(
-            abi=ERC20Template.abi, address=service.datatoken_address
+            abi=ERC721Template.abi, address=asset.nft["address"]
         )
 
-        if not dt_token.caller.isMinter(publisher_address):
+        if not dt_token.caller.ownerOf(1).lower() == publisher_address.lower():
             return Response(
                 json.dumps({"error": "Publisher address does not match minter."}),
                 400,
