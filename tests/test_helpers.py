@@ -304,11 +304,13 @@ def set_metadata(
 def get_dataset_ddo_with_multiple_files(client, wallet):
     ufl = []
     for _ in range(3):
-        ufl.append({
-            "type": "url",
-            "method": "GET",
-            "url": "https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt",
-        })
+        ufl.append(
+            {
+                "type": "url",
+                "method": "GET",
+                "url": "https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt",
+            }
+        )
 
     return get_registered_asset(
         wallet,
@@ -346,21 +348,19 @@ def get_dataset_ddo_with_denied_consumer(client, wallet, consumer_addr):
 
 def get_dataset_with_invalid_url_ddo(client, wallet):
     return get_registered_asset(
-        wallet, unencrypted_files_list=[{
-            "url": "http://localhost/not_valid_url",
-            "type": "url",
-            "method": "GET"
-        }]
+        wallet,
+        unencrypted_files_list=[
+            {"url": "http://localhost/not_valid_url", "type": "url", "method": "GET"}
+        ],
     )
 
 
 def get_dataset_with_ipfs_url_ddo(client, wallet):
     return get_registered_asset(
         wallet,
-        unencrypted_files_list=[{
-            "type": "ipfs",
-            "hash": "QmXtkGkWCG47tVpiBr8f5FdHuCMPq8h2jhck4jgjSXKiWZ"
-        }],
+        unencrypted_files_list=[
+            {"type": "ipfs", "hash": "QmXtkGkWCG47tVpiBr8f5FdHuCMPq8h2jhck4jgjSXKiWZ"}
+        ],
     )
 
 

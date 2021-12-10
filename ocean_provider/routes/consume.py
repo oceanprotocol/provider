@@ -268,7 +268,9 @@ def download():
                 400,
             )
 
-        if (url_object["type"] == "ipfs" and "hash" not in url_object) or (url_object["type"] == "url" and "url" not in url_object):
+        if (url_object["type"] == "ipfs" and "hash" not in url_object) or (
+            url_object["type"] == "url" and "url" not in url_object
+        ):
             return (
                 jsonify(
                     error=f"Malformed service files, missing required keys. id={service_id}"
@@ -287,7 +289,12 @@ def download():
         )
         update_nonce(consumer_address, data.get("nonce"))
         return build_download_response(
-            request, requests_session, url_object["url"], download_url, content_type, method=url_object.get("method", "GET")
+            request,
+            requests_session,
+            url_object["url"],
+            download_url,
+            content_type,
+            method=url_object.get("method", "GET"),
         )
 
     except Exception as e:
