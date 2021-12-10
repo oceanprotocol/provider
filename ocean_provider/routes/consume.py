@@ -95,7 +95,11 @@ def fileinfo():
     if did:
         asset = get_asset_from_metadatastore(get_metadata_url(), did)
         service = asset.get_service_by_id(service_id)
-        url_list = get_service_files_list(service, provider_wallet)
+        files_list = get_service_files_list(service, provider_wallet)
+        url_list = [
+            get_download_url(file_item, app.config["PROVIDER_CONFIG_FILE"])
+            for file_item in files_list
+        ]
     else:
         url_list = [get_download_url(url, app.config["PROVIDER_CONFIG_FILE"])]
 

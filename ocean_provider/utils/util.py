@@ -131,11 +131,14 @@ def get_service_files_list(service: Service, provider_wallet: LocalAccount) -> l
         return None
 
 
-def get_download_url(url_object, config_file):
-    if url_object["type"] != "ipfs":
-        return url_object["url"]
+def get_download_url(url_object, config_file, plain=False):
+    if plain:
+        url = url_object
+    else:
+        if url_object["type"] != "ipfs":
+            return url_object["url"]
 
-    url = "ipfs://" + url_object["hash"]
+        url = "ipfs://" + url_object["hash"]
 
     try:
         logger.info("Connecting through Osmosis to generate the signed url.")
