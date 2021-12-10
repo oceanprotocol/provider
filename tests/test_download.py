@@ -238,3 +238,44 @@ def test_download_multiple_files(client, publisher_wallet, consumer_wallet, web3
     download_endpoint = BaseURLs.SERVICES_URL + "/download"
     response = client.get(download_endpoint, query_string=payload)
     assert response.status_code == 200, f"{response.data}"
+
+
+def test_asset_urls(client, publisher_wallet, consumer_wallet, web3):
+    ddo = get_dataset_ddo_with_multiple_files(client, publisher_wallet)
+    service = ddo.get_service_by_type(ServiceType.ACCESS)
+
+    mint_100_datatokens(
+        web3, service.datatoken_address, consumer_wallet.address, publisher_wallet
+    )
+
+    payload = {
+        "documentId": ddo.did,
+        "serviceId": service.id,
+        "publisherAddress": publisher_wallet.address,
+    }
+
+    download_endpoint = BaseURLs.SERVICES_URL + "/assetUrls"
+
+    # Consume using url index and signature (with nonce)
+    nonce = str(datetime.now().timestamp())
+    _msg = f"{ddo.did}{nonce}"
+    payload["signature"] = sign_message(_msg, publisher_wallet)
+    payload["nonce"] = nonce
+    payload["publisherAddress"] = publisher_wallet.address
+    response = client.get(download_endpoint, query_string=payload)
+    assert response.status_code == 200, f"{response.data}"
+    assert len(response.json) == 3
+    assert (
+        "https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt"
+        in response.json
+    )
+
+    # use a different wallet, not the minter
+    nonce = str(datetime.now().timestamp())
+    _msg = f"{ddo.did}{nonce}"
+    payload["signature"] = sign_message(_msg, consumer_wallet)
+    payload["nonce"] = nonce
+    payload["publisherAddress"] = consumer_wallet.address
+    response = client.get(download_endpoint, query_string=payload)
+    assert response.status_code == 400, f"{response.data}"
+    assert response.json["error"] == "Publisher address does not match minter."
