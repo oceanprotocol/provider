@@ -299,7 +299,10 @@ class AssetUrlsRequest(CustomJsonRequest):
             "documentId": ["bail", "required"],
             "serviceId": ["required"],
             "publisherAddress": ["bail", "required"],
-            "signature": ["required", "download_signature:publisherAddress,documentId,nonce"],
+            "signature": [
+                "required",
+                "download_signature:publisherAddress,documentId,nonce",
+            ],
         }
 
 
