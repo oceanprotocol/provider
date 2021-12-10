@@ -15,7 +15,7 @@ from web3.main import Web3
 
 from ocean_provider.log import setup_logging
 from ocean_provider.requests_session import get_requests_session
-from ocean_provider.user_nonce import increment_nonce
+from ocean_provider.user_nonce import update_nonce
 from ocean_provider.utils.basics import (
     LocalFileAdapter,
     get_config,
@@ -57,6 +57,7 @@ def decrypt():
             encrypted_document=data.get("encryptedDocument"),
             flags=data.get("flags"),
             document_hash=data.get("documentHash"),
+            nonce=data.get("nonce"),
         )
     except Exception as e:
         return service_unavailable(e, data, logger)
@@ -70,8 +71,9 @@ def _decrypt(
     encrypted_document: Optional[HexStr],
     flags: Optional[int],
     document_hash: Optional[HexStr],
+    nonce: str,
 ) -> Response:
-    increment_nonce(decrypter_address)
+    update_nonce(decrypter_address, nonce)
 
     # Check if given chain_id matches Provider's chain_id
     web3 = get_web3()

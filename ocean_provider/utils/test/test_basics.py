@@ -12,6 +12,7 @@ from ocean_provider.utils.basics import (
 from ocean_provider.utils.currency import to_wei
 
 
+@pytest.mark.unit
 def test_get_web3_connection_provider(monkeypatch):
     # typical http uri "http://foo.com"
     provider = get_web3_connection_provider("http://foo.com")
@@ -30,6 +31,7 @@ def test_get_web3_connection_provider(monkeypatch):
     assert provider.endpoint_uri == "wss://bah.com"
 
 
+@pytest.mark.unit
 def test_send_ether(publisher_wallet, consumer_address):
     assert send_ether(
         get_web3(), publisher_wallet, consumer_address, to_wei(1)

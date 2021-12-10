@@ -16,6 +16,7 @@ from ocean_provider.utils.currency import (
 )
 
 
+@pytest.mark.unit
 def test_to_wei():
     """Test the to_wei function"""
     assert to_wei(Decimal("0")) == 0, "Zero ether (Decimal) should equal zero wei"

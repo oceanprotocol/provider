@@ -3,12 +3,14 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import json
+import pytest
 
 from ocean_provider.utils.services import ServiceType
 from ocean_provider.validation.algo import WorkflowValidator, build_stage_output_dict
 from tests.helpers.compute_helpers import build_and_send_ddo_with_compute_service
 
 
+@pytest.mark.integration
 def test_passes(
     client, provider_wallet, consumer_wallet, consumer_address, publisher_wallet, web3
 ):
@@ -56,6 +58,7 @@ def test_passes(
     assert validator.validate() is True
 
 
+@pytest.mark.integration
 def test_fails(
     client, provider_wallet, consumer_wallet, consumer_address, publisher_wallet, web3
 ):
