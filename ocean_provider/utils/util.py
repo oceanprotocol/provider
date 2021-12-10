@@ -53,7 +53,7 @@ def checksum(seed) -> str:
 
 
 def build_download_response(
-    request, requests_session, url, download_url, content_type=None
+    request, requests_session, url, download_url, content_type=None, method="GET"
 ):
     try:
         if not is_safe_url(url):
@@ -66,7 +66,8 @@ def build_download_response(
             download_request_headers = {"Range": request.headers.get("range")}
             download_response_headers = download_request_headers
 
-        response = requests_session.get(
+        method = getattr(requests_session, method.lower())
+        response = method(
             download_url, headers=download_request_headers, stream=True, timeout=3
         )
         if not is_range_request:
@@ -130,7 +131,12 @@ def get_service_files_list(service: Service, provider_wallet: LocalAccount) -> l
         return None
 
 
-def get_download_url(url, config_file):
+def get_download_url(url_object, config_file):
+    if url_object["type"] != "ipfs":
+        return url_object["url"]
+
+    url = "ipfs://" + url_object["hash"]
+
     try:
         logger.info("Connecting through Osmosis to generate the signed url.")
         osm = Osmosis(url, config_file)

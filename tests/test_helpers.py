@@ -208,7 +208,11 @@ def get_registered_asset(
 
     if not unencrypted_files_list:
         unencrypted_files_list = [
-            "https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt"
+            {
+                "url": "https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt",
+                "type": "url",
+                "method": "GET",
+            }
         ]
 
     encrypted_files_str = json.dumps(unencrypted_files_list, separators=(",", ":"))
@@ -298,13 +302,17 @@ def set_metadata(
 
 
 def get_dataset_ddo_with_multiple_files(client, wallet):
+    ufl = []
+    for _ in range(3):
+        ufl.append({
+            "type": "url",
+            "method": "GET",
+            "url": "https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt",
+        })
+
     return get_registered_asset(
         wallet,
-        unencrypted_files_list=[
-            "https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt",
-            "https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt",
-            "https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt",
-        ],
+        unencrypted_files_list=ufl,
     )
 
 
@@ -338,16 +346,21 @@ def get_dataset_ddo_with_denied_consumer(client, wallet, consumer_addr):
 
 def get_dataset_with_invalid_url_ddo(client, wallet):
     return get_registered_asset(
-        wallet, unencrypted_files_list=["http://localhost/not_valid_url"]
+        wallet, unencrypted_files_list=[{
+            "url": "http://localhost/not_valid_url",
+            "type": "url",
+            "method": "GET"
+        }]
     )
 
 
 def get_dataset_with_ipfs_url_ddo(client, wallet):
     return get_registered_asset(
         wallet,
-        unencrypted_files_list=[
-            "ipfs://QmXtkGkWCG47tVpiBr8f5FdHuCMPq8h2jhck4jgjSXKiWZ"
-        ],
+        unencrypted_files_list=[{
+            "type": "ipfs",
+            "hash": "QmXtkGkWCG47tVpiBr8f5FdHuCMPq8h2jhck4jgjSXKiWZ"
+        }],
     )
 
 
