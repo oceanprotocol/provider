@@ -100,23 +100,7 @@ def fileinfo():
             for file_item in files_list
         ]
     else:
-        url_object = data
-
-        if url_object["type"] not in ["ipfs", "url"]:
-            return (
-                jsonify(error=f"Invalid file type, must be ipfs or url."),
-                400,
-            )
-
-        if (url_object["type"] == "ipfs" and "hash" not in url_object) or (
-            url_object["type"] == "url" and "url" not in url_object
-        ):
-            return (
-                jsonify(error=f"Malformed file, missing required keys."),
-                400,
-            )
-
-        url_list = [get_download_url(url_object, app.config["PROVIDER_CONFIG_FILE"])]
+        url_list = [get_download_url(data, app.config["PROVIDER_CONFIG_FILE"])]
 
     with_checksum = data.get("checksum", False)
 

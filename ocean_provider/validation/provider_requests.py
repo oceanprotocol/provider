@@ -217,8 +217,10 @@ class DecryptRequest(CustomJsonRequest):
 class FileInfoRequest(CustomJsonRequest):
     def rules(self):
         return {
-            "type": ["required_without:did"],
+            "type": ["required_without:did", "in:ipfs,url"],
             "did": ["required_without:type", "regex:^did:op"],
+            "hash": ["required_if:type,ipfs"],
+            "url": ["required_if:type,url"],
             "serviceId": ["required_without:type"],
         }
 

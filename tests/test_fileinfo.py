@@ -80,20 +80,17 @@ def test_check_url_bad(client):
     for file_info in result:
         assert file_info["valid"] is False
 
-    data = {"type": "no_type"}
+    data = {"type": "invalid_type"}
     response = client.post(fileinfo_url, json=data)
     result = response.get_json()
     assert response.status == "400 BAD REQUEST"
-    assert result["error"] == "Invalid file type, must be ipfs or url."
 
     data = {"type": "ipfs"}  # no hash
     response = client.post(fileinfo_url, json=data)
     result = response.get_json()
     assert response.status == "400 BAD REQUEST"
-    assert result["error"] == "Malformed file, missing required keys."
 
     data = {"type": "url"}  # no url
     response = client.post(fileinfo_url, json=data)
     result = response.get_json()
     assert response.status == "400 BAD REQUEST"
-    assert result["error"] == "Malformed file, missing required keys."
