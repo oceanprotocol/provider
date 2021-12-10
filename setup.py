@@ -23,6 +23,7 @@ install_requirements = [
     "web3==5.25.0",
     "Flask==1.1.2",
     "Flask-Cors==3.0.9",
+    "flask_caching==1.10.1",
     "Flask-RESTful==0.3.8",
     "flask-swagger==0.2.14",
     "flask-swagger-ui==3.25.0",
@@ -42,6 +43,7 @@ install_requirements = [
     "flask-sieve==1.3.1",
     "SQLAlchemy==1.3.23",
     "json-sempai==0.4.0",
+    "redis==4.0.2",
 ]
 
 # Required to run setup.py:

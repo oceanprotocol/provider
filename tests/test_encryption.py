@@ -1,25 +1,22 @@
 import hashlib
 import json
 import lzma
+from datetime import datetime
 
+import pytest
 from eth_account.signers.local import LocalAccount
 from eth_typing.encoding import HexStr
 from eth_typing.evm import HexAddress
 from flask.testing import FlaskClient
-from web3.main import Web3
-
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.data_nft import Flags, MetadataState
 from tests.ddo.ddo_sample1_v4 import json_dict as ddo_sample1_v4
-from tests.test_helpers import (
-    BLACK_HOLE_ADDRESS,
-    deploy_data_nft,
-    get_nonce,
-    set_metadata,
-)
+from tests.test_helpers import BLACK_HOLE_ADDRESS, deploy_data_nft, set_metadata
+from web3.main import Web3
 
 
+@pytest.mark.integration
 def test_decrypt_with_plain_input(
     client: FlaskClient,
     web3: Web3,
@@ -87,6 +84,7 @@ def test_decrypt_with_plain_input(
     assert decrypt_response.get_json() is None
 
 
+@pytest.mark.integration
 def test_decrypt_with_compressed_input(
     client: FlaskClient,
     web3: Web3,
@@ -158,6 +156,7 @@ def test_decrypt_with_compressed_input(
     assert decrypt_response.get_json() is None
 
 
+@pytest.mark.integration
 def test_encrypt_and_decrypt_with_only_encryption(
     client: FlaskClient,
     web3: Web3,
@@ -239,6 +238,7 @@ def test_encrypt_and_decrypt_with_only_encryption(
     assert decrypt_response.get_json() is None
 
 
+@pytest.mark.integration
 def test_encrypt_and_decrypt_with_compression_and_encryption(
     client: FlaskClient,
     web3: Web3,
@@ -328,8 +328,7 @@ def decrypt_ddo_using_transaction_id(
     set_metadata_tx_id: HexStr,
     chain_id: int,
 ):
-    previous_nonce = int(get_nonce(client, decrypter_wallet.address))
-    nonce = previous_nonce + 1
+    nonce = str(datetime.now().timestamp())
     message_to_be_signed = (
         f"{set_metadata_tx_id}{decrypter_wallet.address}{chain_id}{nonce}"
     )
@@ -355,7 +354,7 @@ def decrypt_ddo_using_decrypt_args(
     flags: int,
     ddo_hash_hexstr: HexStr,
 ):
-    nonce = get_next_nonce(client, decrypter_wallet)
+    nonce = str(datetime.now().timestamp())
     message_to_be_signed = (
         f"{data_nft_address}{decrypter_wallet.address}{chain_id}{nonce}"
     )
@@ -373,8 +372,3 @@ def decrypt_ddo_using_decrypt_args(
             "signature": signature,
         },
     )
-
-
-def get_next_nonce(client, wallet):
-    previous_nonce = int(get_nonce(client, wallet.address))
-    return previous_nonce + 1

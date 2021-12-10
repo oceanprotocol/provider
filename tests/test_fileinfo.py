@@ -2,6 +2,7 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
+import pytest
 
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.services import ServiceType
@@ -13,6 +14,7 @@ from tests.test_helpers import (
 fileinfo_url = BaseURLs.SERVICES_URL + "/fileinfo"
 
 
+@pytest.mark.integration
 def test_asset_info(client, publisher_wallet):
     asset = get_registered_asset(publisher_wallet)
     service = asset.get_service_by_type(ServiceType.ACCESS)
@@ -51,6 +53,7 @@ def test_asset_info(client, publisher_wallet):
         assert file_info["valid"] is False
 
 
+@pytest.mark.unit
 def test_check_url_good(client):
     response = client.post(
         fileinfo_url,
@@ -66,6 +69,7 @@ def test_check_url_good(client):
         assert file_info["valid"] is True
 
 
+@pytest.mark.unit
 def test_check_url_bad(client):
     data = {"url": "http://127.0.0.1/not_valid"}
     response = client.post(fileinfo_url, json=data)

@@ -1,3 +1,4 @@
+from datetime import datetime
 import json
 
 from ocean_provider.constants import BaseURLs
@@ -8,7 +9,6 @@ from ocean_provider.utils.util import msg_hash
 from tests.helpers.ddo_dict_builders import build_metadata_dict_type_algorithm
 from tests.test_helpers import (
     BLACK_HOLE_ADDRESS,
-    get_nonce,
     get_registered_asset,
     get_web3,
     mint_100_datatokens,
@@ -103,7 +103,7 @@ def build_and_send_ddo_with_compute_service(
 
 
 def get_compute_signature(client, consumer_wallet, did, job_id=None):
-    nonce = get_nonce(client, consumer_wallet.address)
+    nonce = datetime.now().timestamp()
 
     # prepare consumer signature on did
     if job_id:
@@ -112,7 +112,7 @@ def get_compute_signature(client, consumer_wallet, did, job_id=None):
         msg = f"{consumer_wallet.address}{did}{nonce}"
     signature = sign_message(msg, consumer_wallet)
 
-    return signature
+    return nonce, signature
 
 
 def post_to_compute(client, payload):
