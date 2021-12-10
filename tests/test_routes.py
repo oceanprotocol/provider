@@ -2,13 +2,18 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
+from datetime import datetime
+import pytest
+
 from ocean_provider.constants import BaseURLs
 from ocean_provider.run import get_provider_address, get_services_endpoints
 from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.basics import get_provider_wallet
-from tests.test_helpers import get_registered_asset, get_nonce
+from ocean_provider.user_nonce import update_nonce, get_nonce
+from tests.test_helpers import get_registered_asset
 
 
+@pytest.mark.unit
 def test_get_provider_address(client):
     get_response = client.get("/")
     result = get_response.get_json()
@@ -19,6 +24,7 @@ def test_get_provider_address(client):
     assert get_response.status == "200 OK"
 
 
+@pytest.mark.unit
 def test_expose_endpoints(client):
     get_response = client.get("/")
     result = get_response.get_json()
@@ -33,6 +39,7 @@ def test_expose_endpoints(client):
     assert len(result["serviceEndpoints"]) == len(services_endpoints)
 
 
+@pytest.mark.unit
 def test_spec(client):
     response = client.get("/spec")
     assert response.status == "200 OK"
@@ -41,16 +48,18 @@ def test_spec(client):
 encrypt_endpoint = BaseURLs.SERVICES_URL + "/encrypt"
 
 
+@pytest.mark.unit
 def test_empty_payload_encryption(client):
     publish = client.post(encrypt_endpoint, data=None, content_type="application/json")
     assert publish.status_code == 400
 
 
+@pytest.mark.integration
 def test_encrypt_endpoint(client, provider_wallet, publisher_wallet):
     asset = get_registered_asset(publisher_wallet)
     files_list_str = '["https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt"]'
 
-    nonce = get_nonce(client, provider_wallet.address)
+    nonce = datetime.now().timestamp()
     msg = f"{asset.did}{nonce}"
     signature = sign_message(msg, provider_wallet)
 
@@ -66,3 +75,21 @@ def test_encrypt_endpoint(client, provider_wallet, publisher_wallet):
     assert response.content_type == "text/plain"
     assert response.data
     assert response.status_code == 201
+
+
+@pytest.mark.unit
+def test_get_nonce(client, publisher_wallet):
+    address = publisher_wallet.address
+    # Ensure address exists in database
+    update_nonce(address, datetime.now().timestamp())
+
+    endpoint = BaseURLs.SERVICES_URL + "/nonce"
+    response = client.get(
+        endpoint + "?" + f"&userAddress={address}", content_type="application/json"
+    )
+    assert (
+        response.status_code == 200 and response.data
+    ), f"get nonce endpoint failed: response status {response.status}, data {response.data}"
+
+    value = response.json if response.json else json.loads(response.data)
+    assert value["nonce"] == get_nonce(address)

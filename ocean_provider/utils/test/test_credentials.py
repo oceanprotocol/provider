@@ -14,6 +14,7 @@ from tests.ddo.ddo_sa_sample_with_credentials_v4 import json_dict
 from tests.test_helpers import get_resource_path
 
 
+@pytest.mark.unit
 def test_asset_credentials_addresses_both():
     """Tests asset credentials when both deny and allow lists exist on the asset."""
     sample_asset_path = get_resource_path("ddo", "ddo_sa_sample_with_credentials.json")
@@ -36,6 +37,7 @@ def test_asset_credentials_addresses_both():
     # if "allow" exists, "deny" is not checked anymore
 
 
+@pytest.mark.unit
 def test_asset_credentials_addresses_only_deny():
     """Tests asset credentials when only the deny list exists on the asset."""
     sample_asset_path = get_resource_path("ddo", "ddo_sa_sample_with_credentials.json")

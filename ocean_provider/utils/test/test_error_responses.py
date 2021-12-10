@@ -1,10 +1,12 @@
 import logging
+import pytest
 
 from ocean_provider.utils.error_responses import service_unavailable
 
 test_logger = logging.getLogger(__name__)
 
 
+@pytest.mark.unit
 def test_service_unavailable(caplog):
     e = Exception("test message")
     context = {"item1": "test1", "item2": "test2"}

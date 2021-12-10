@@ -2,10 +2,11 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
+from copy import deepcopy
 import json
 import logging
 import mimetypes
-from copy import deepcopy
+import pytest
 from unittest.mock import MagicMock, Mock
 
 import ipfshttpclient
@@ -25,6 +26,7 @@ from ocean_provider.utils.util import (
 test_logger = logging.getLogger(__name__)
 
 
+@pytest.mark.unit
 def test_msg_hash():
     msg = "Hello World!"
     hashed = msg_hash(msg)
@@ -32,6 +34,7 @@ def test_msg_hash():
     assert hashed == expected
 
 
+@pytest.mark.unit
 def test_build_download_response():
     request = Mock()
     request.range = None
@@ -124,6 +127,7 @@ def test_build_download_response():
     )
 
 
+@pytest.mark.unit
 def test_download_ipfs_file():
     client = ipfshttpclient.connect("/dns/172.15.0.16/tcp/5001/http")
     cid = client.add("./tests/resources/ddo_sample_file.txt")["Hash"]
@@ -142,6 +146,7 @@ def test_download_ipfs_file():
     assert response.data, f"got no data {response.data}"
 
 
+@pytest.mark.unit
 def test_get_service_files_list(provider_wallet):
     service = Mock(template=Service)
     encrypted_files_str = json.dumps(["test1", "test2"], separators=(",", ":"))

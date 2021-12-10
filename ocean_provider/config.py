@@ -15,8 +15,6 @@ from pathlib import Path
 
 NAME_NETWORK_URL = "network"
 NAME_ADDRESS_FILE = "address.file"
-NAME_AUTH_TOKEN_MESSAGE = "auth_token_message"
-NAME_AUTH_TOKEN_EXPIRATION = "auth_token_expiration"
 
 NAME_AQUARIUS_URL = "aquarius.url"
 NAME_PROVIDER_ADDRESS = "provider.address"
@@ -36,16 +34,6 @@ environ_names = {
         "ADDRESS_FILE",
         "Path to json file of deployed contracts addresses",
         "eth-network",
-    ],
-    NAME_AUTH_TOKEN_MESSAGE: [
-        "AUTH_TOKEN_MESSAGE",
-        "Message to use for generating user auth token",
-        "resources",
-    ],
-    NAME_AUTH_TOKEN_EXPIRATION: [
-        "AUTH_TOKEN_EXPIRATION",
-        "Auth token expiration time expressed in seconds",
-        "resources",
     ],
     NAME_AQUARIUS_URL: ["AQUARIUS_URL", "Aquarius url (metadata store)", "resources"],
     NAME_OPERATOR_SERVICE_URL: [
@@ -148,14 +136,6 @@ class Config(configparser.ConfigParser):
     @property
     def allow_non_public_ip(self):
         return self.get("resources", NAME_ALLOW_NON_PUBLIC_IP, fallback=None)
-
-    @property
-    def auth_token_message(self):
-        return self.get("resources", NAME_AUTH_TOKEN_MESSAGE, fallback=None)
-
-    @property
-    def auth_token_expiration(self):
-        return self.get("resources", NAME_AUTH_TOKEN_EXPIRATION, fallback=None)
 
     @property
     def storage_path(self):

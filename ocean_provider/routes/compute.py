@@ -12,7 +12,7 @@ from requests.models import PreparedRequest
 from ocean_provider.exceptions import InvalidSignatureError
 from ocean_provider.log import setup_logging
 from ocean_provider.requests_session import get_requests_session
-from ocean_provider.user_nonce import get_nonce, increment_nonce
+from ocean_provider.user_nonce import update_nonce
 from ocean_provider.utils.accounts import sign_message, verify_signature
 from ocean_provider.utils.basics import LocalFileAdapter, get_provider_wallet, get_web3
 from ocean_provider.utils.error_responses import service_unavailable
@@ -89,7 +89,7 @@ def computeDelete():
         response = requests_session.delete(
             get_compute_endpoint(), params=body, headers=standard_headers
         )
-        increment_nonce(body["owner"])
+        update_nonce(body["owner"], data.get("nonce"))
         return Response(
             response.content, response.status_code, headers=standard_headers
         )
@@ -147,7 +147,7 @@ def computeStop():
         response = requests_session.put(
             get_compute_endpoint(), params=body, headers=standard_headers
         )
-        increment_nonce(body["owner"])
+        update_nonce(body["owner"], data.get("nonce"))
         return Response(
             response.content, response.status_code, headers=standard_headers
         )
@@ -217,13 +217,12 @@ def computeStatus():
             did = data.get("documentId")
             jobId = data.get("jobId")
             original_msg = f"{owner}{jobId}{did}"
+            nonce = data.get("nonce")
             try:
-                verify_signature(
-                    owner, data.get("signature"), original_msg, get_nonce(owner)
-                )
+                verify_signature(owner, data.get("signature"), original_msg, nonce)
             except InvalidSignatureError:
                 signed_request = False
-            increment_nonce(owner)
+            update_nonce(body["owner"], data.get("nonce"))
 
         # Filter status info if signature is not given or failed validation
         if not signed_request:
@@ -331,7 +330,7 @@ def computeStart():
         response = requests_session.post(
             get_compute_endpoint(), data=json.dumps(payload), headers=standard_headers
         )
-        increment_nonce(consumer_address)
+        update_nonce(consumer_address, data.get("nonce"))
         return Response(
             response.content, response.status_code, headers=standard_headers
         )
@@ -394,7 +393,7 @@ def computeResult():
     req.prepare_url(url, params)
     result_url = req.url
     logger.debug(f"Done processing computeResult, url: {result_url}")
-    increment_nonce(data.get("consumerAddress"))
+    update_nonce(data.get("consumerAddress"), data.get("nonce"))
     try:
         return build_download_response(
             request, requests_session, result_url, result_url, None
