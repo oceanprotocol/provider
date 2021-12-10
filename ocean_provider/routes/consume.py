@@ -104,9 +104,7 @@ def fileinfo():
 
         if url_object["type"] not in ["ipfs", "url"]:
             return (
-                jsonify(
-                    error=f"Invalid file type, must be ipfs or url."
-                ),
+                jsonify(error=f"Invalid file type, must be ipfs or url."),
                 400,
             )
 
@@ -114,9 +112,7 @@ def fileinfo():
             url_object["type"] == "url" and "url" not in url_object
         ):
             return (
-                jsonify(
-                    error=f"Malformed file, missing required keys."
-                ),
+                jsonify(error=f"Malformed file, missing required keys."),
                 400,
             )
 

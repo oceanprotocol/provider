@@ -60,7 +60,7 @@ def test_check_url_good(client):
         json={
             "url": "https://s3.amazonaws.com/testfiles.oceanprotocol.com/info.0.json",
             "type": "url",
-            "method": "GET"
+            "method": "GET",
         },
     )
     result = response.get_json()
@@ -73,11 +73,7 @@ def test_check_url_good(client):
 
 @pytest.mark.unit
 def test_check_url_bad(client):
-    data = {
-        "url": "http://127.0.0.1/not_valid",
-        "type": "url",
-        "method": "GET"
-    }
+    data = {"url": "http://127.0.0.1/not_valid", "type": "url", "method": "GET"}
     response = client.post(fileinfo_url, json=data)
     result = response.get_json()
     assert response.status == "200 OK"
