@@ -2,44 +2,82 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
+from datetime import datetime
 from unittest.mock import patch
 
 import pytest
 import sqlalchemy
 from ocean_provider import models, user_nonce
-from ocean_provider.user_nonce import get_nonce, increment_nonce
+from ocean_provider.user_nonce import (
+    get_nonce,
+    update_nonce,
+    get_or_create_user_nonce_object,
+)
 
 
-def test_get_and_increment_nonce(publisher_address, consumer_address):
+@pytest.mark.unit
+def test_get_and_update_nonce(monkeypatch, publisher_address, consumer_address):
+    # pass through sqlite
+    monkeypatch.delenv("REDIS_CONNECTION")
 
     # get_nonce can be used on addresses that are not in the user_nonce table
-    assert get_nonce("0x0000000000000000000000000000000000000000") == "0"
+    assert get_nonce("0x0000000000000000000000000000000000000000") is None
+    assert get_or_create_user_nonce_object(
+        "0x0000000000000000000000000000000000000000", datetime.now().timestamp()
+    )
+
+    # update two times because, if we just pruned, we start from None
+    update_nonce(publisher_address, datetime.now().timestamp())
+    publisher_nonce = get_nonce(publisher_address)
+    update_nonce(publisher_address, datetime.now().timestamp())
+    new_publisher_nonce = get_nonce(publisher_address)
+
+    assert new_publisher_nonce >= publisher_nonce
 
     # get_nonce doesn't affect the value of nonce
     publisher_nonce = get_nonce(publisher_address)
-    publisher_nonce_int = int(publisher_nonce)
     assert get_nonce(publisher_address) == publisher_nonce
 
-    # increment_nonce increases the nonce by 1
-    increment_nonce(publisher_address)
-    assert int(get_nonce(publisher_address)) == publisher_nonce_int + 1
 
-    # increment_nonce can be used twice in a row
-    increment_nonce(publisher_address)
-    assert int(get_nonce(publisher_address)) == publisher_nonce_int + 2
+@pytest.mark.unit
+def test_get_and_update_nonce_redis(publisher_address, consumer_address):
+    # get_nonce can be used on addresses that are not in the user_nonce table
+    assert get_nonce("0x0000000000000000000000000000000000000000") is None
+    assert get_or_create_user_nonce_object(
+        "0x0000000000000000000000000000000000000000", datetime.now().timestamp()
+    )
+
+    # update two times because, if we just pruned, we start from None
+    update_nonce(publisher_address, datetime.now().timestamp())
+    publisher_nonce = get_nonce(publisher_address)
+    update_nonce(publisher_address, datetime.now().timestamp())
+    new_publisher_nonce = get_nonce(publisher_address)
+
+    assert new_publisher_nonce >= publisher_nonce
+
+    # get_nonce doesn't affect the value of nonce
+    publisher_nonce = get_nonce(publisher_address)
+    assert get_nonce(publisher_address) == publisher_nonce
 
 
-def test_increment_nonce_exception(publisher_address):
+@pytest.mark.unit
+def test_update_nonce_exception(monkeypatch, publisher_address):
+    # pass through sqlite
+    monkeypatch.delenv("REDIS_CONNECTION")
+
     # Ensure address exists in database
-    increment_nonce(publisher_address)
+    update_nonce(publisher_address, datetime.now().timestamp())
 
     # Create duplicate nonce_object
     with patch.object(
         user_nonce,
         "get_or_create_user_nonce_object",
-        return_value=models.UserNonce(
-            address=publisher_address, nonce=models.UserNonce.FIRST_NONCE
-        ),
+        return_value=models.UserNonce(address=publisher_address, nonce="0"),
     ):
         with pytest.raises(sqlalchemy.exc.IntegrityError):
-            increment_nonce(publisher_address)
+            update_nonce(publisher_address, datetime.now().timestamp())
+
+    publisher_nonce = get_nonce(publisher_address)
+    update_nonce(publisher_address, None)
+    # no effect
+    assert publisher_nonce == get_nonce(publisher_address)

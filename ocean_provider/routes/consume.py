@@ -12,7 +12,7 @@ from artifacts import ERC721Template
 from ocean_provider.log import setup_logging
 from ocean_provider.myapp import app
 from ocean_provider.requests_session import get_requests_session
-from ocean_provider.user_nonce import get_nonce, increment_nonce
+from ocean_provider.user_nonce import get_nonce, update_nonce
 from ocean_provider.utils.basics import (
     LocalFileAdapter,
     get_asset_from_metadatastore,
@@ -269,7 +269,7 @@ def download():
         logger.info(
             f"Done processing consume request for asset {did}, " f" url {download_url}"
         )
-        increment_nonce(consumer_address)
+        update_nonce(consumer_address, data.get("nonce"))
         return build_download_response(
             request, requests_session, url, download_url, content_type
         )
@@ -349,7 +349,7 @@ def asset_urls():
         urls = get_service_files_list(service, provider_wallet)
 
         logger.info(f"Retrieved unencrypted urls for for asset {did}")
-        increment_nonce(publisher_address)
+        update_nonce(publisher_address, data.get("nonce"))
 
         return Response(
             json.dumps(urls), 200, headers={"content-type": "application/json"}
