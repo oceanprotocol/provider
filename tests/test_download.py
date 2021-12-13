@@ -267,9 +267,11 @@ def test_asset_urls(client, publisher_wallet, consumer_wallet, web3):
     assert response.status_code == 200, f"{response.data}"
     assert len(response.json) == 3
     assert (
-        "https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt"
-        in response.json
+        response.json[0]["url"]
+        == "https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt"
     )
+    assert response.json[0]["method"] == "GET"
+    assert response.json[0]["type"] == "url"
 
     # use a different wallet, not the minter
     nonce = str(datetime.now().timestamp())

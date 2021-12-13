@@ -195,7 +195,11 @@ def get_compute_service(
     }
 
     unencrypted_files_list = [
-        "https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt"
+        {
+            "type": "url",
+            "method": "GET",
+            "url": "https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt",
+        }
     ]
 
     encrypted_files_str = json.dumps(unencrypted_files_list, separators=(",", ":"))
@@ -218,7 +222,11 @@ def get_compute_service(
 
 def get_bogus_service(datatoken_address):
     unencrypted_files_list = [
-        "https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt"
+        {
+            "type": "url",
+            "method": "GET",
+            "url": "https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt",
+        }
     ]
 
     encrypted_files_str = json.dumps(unencrypted_files_list, separators=(",", ":"))
@@ -248,7 +256,11 @@ def get_compute_service_no_rawalgo(address, price, datatoken_address):
     }
 
     unencrypted_files_list = [
-        "https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt"
+        {
+            "type": "url",
+            "method": "GET",
+            "url": "https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt",
+        }
     ]
 
     encrypted_files_str = json.dumps(unencrypted_files_list, separators=(",", ":"))

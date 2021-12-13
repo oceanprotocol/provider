@@ -131,8 +131,8 @@ def test_build_download_response():
 def test_download_ipfs_file():
     client = ipfshttpclient.connect("/dns/172.15.0.16/tcp/5001/http")
     cid = client.add("./tests/resources/ddo_sample_file.txt")["Hash"]
-    url = f"ipfs://{cid}"
-    download_url = get_download_url(url, None)
+    url_object = {"type": "ipfs", "hash": cid}
+    download_url = get_download_url(url_object, None)
     requests_session = get_requests_session()
 
     request = Mock()

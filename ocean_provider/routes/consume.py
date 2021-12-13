@@ -90,14 +90,17 @@ def fileinfo():
     logger.info(f"fileinfo endpoint called. {data}")
     did = data.get("did")
     service_id = data.get("serviceId")
-    url = data.get("url")
 
     if did:
         asset = get_asset_from_metadatastore(get_metadata_url(), did)
         service = asset.get_service_by_id(service_id)
-        url_list = get_service_files_list(service, provider_wallet)
+        files_list = get_service_files_list(service, provider_wallet)
+        url_list = [
+            get_download_url(file_item, app.config["PROVIDER_CONFIG_FILE"])
+            for file_item in files_list
+        ]
     else:
-        url_list = [get_download_url(url, app.config["PROVIDER_CONFIG_FILE"])]
+        url_list = [get_download_url(data, app.config["PROVIDER_CONFIG_FILE"])]
 
     with_checksum = data.get("checksum", False)
 
@@ -152,8 +155,8 @@ def initialize():
         service = asset.get_service_by_id(service_id)
         token_address = data.get("dataToken")
 
-        url = get_service_files_list(service, provider_wallet)[0]
-        download_url = get_download_url(url, app.config["PROVIDER_CONFIG_FILE"])
+        url_object = get_service_files_list(service, provider_wallet)[0]
+        download_url = get_download_url(url_object, app.config["PROVIDER_CONFIG_FILE"])
         download_url = append_userdata(download_url, data)
         valid, _ = check_url_details(download_url)
 
@@ -251,8 +254,8 @@ def download():
 
         file_index = int(data.get("fileIndex"))
 
-        url = get_service_files_list(service, provider_wallet)[file_index]
-        if not url:
+        url_object = get_service_files_list(service, provider_wallet)[file_index]
+        if not url_object:
             return (
                 jsonify(
                     error=f"Cannot decrypt files for this service. id={service_id}"
@@ -260,10 +263,28 @@ def download():
                 400,
             )
 
-        download_url = get_download_url(url, app.config["PROVIDER_CONFIG_FILE"])
+        if "type" not in url_object or url_object["type"] not in ["ipfs", "url"]:
+            return (
+                jsonify(
+                    error=f"Malformed or unsupported type for service files. id={service_id}"
+                ),
+                400,
+            )
+
+        if (url_object["type"] == "ipfs" and "hash" not in url_object) or (
+            url_object["type"] == "url" and "url" not in url_object
+        ):
+            return (
+                jsonify(
+                    error=f"Malformed service files, missing required keys. id={service_id}"
+                ),
+                400,
+            )
+
+        download_url = get_download_url(url_object, app.config["PROVIDER_CONFIG_FILE"])
         download_url = append_userdata(download_url, data)
 
-        valid, details = check_url_details(url)
+        valid, details = check_url_details(url_object["url"])
         content_type = details["contentType"] if valid else None
 
         logger.info(
@@ -271,7 +292,12 @@ def download():
         )
         update_nonce(consumer_address, data.get("nonce"))
         return build_download_response(
-            request, requests_session, url, download_url, content_type
+            request,
+            requests_session,
+            url_object["url"],
+            download_url,
+            content_type,
+            method=url_object.get("method", "GET"),
         )
 
     except Exception as e:
