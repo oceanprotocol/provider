@@ -70,9 +70,10 @@ def deploy_contract(w3, _json, private_key, *args):
     :param *args: arguments to be passed to be constructor of the contract
     :return: address of deployed contract
     """
+    account = w3.eth.account.from_key(private_key)
     _contract = w3.eth.contract(abi=_json["abi"], bytecode=_json["bytecode"])
     built_tx = _contract.constructor(*args).buildTransaction(
-        {"gasPrice": get_gas_price(w3)}
+        {"from": account.address, "gasPrice": get_gas_price(w3)}
     )
     if "gas" not in built_tx:
         built_tx["gas"] = w3.eth.estimate_gas(built_tx)
@@ -113,7 +114,7 @@ def deploy_data_nft(
     data_nft_factory = get_data_nft_factory_contract(web3)
     deploy_data_nft_tx = data_nft_factory.functions.deployERC721Contract(
         name, symbol, template_index, additional_erc20_deployer, base_uri
-    ).buildTransaction({"gasPrice": get_gas_price(web3)})
+    ).buildTransaction({"from": from_wallet.address, "gasPrice": get_gas_price(web3)})
     _, deploy_data_nft_receipt = sign_send_and_wait_for_receipt(
         web3, deploy_data_nft_tx, from_wallet
     )
@@ -147,7 +148,7 @@ def deploy_datatoken(
         [minter, fee_manager, publishing_market, publishing_market_fee_token],
         [cap, publishing_market_fee_amount],
         [unused_bytes],
-    ).buildTransaction({"gasPrice": get_gas_price(web3)})
+    ).buildTransaction({"from": from_wallet.address, "gasPrice": get_gas_price(web3)})
     _, deploy_datatoken_receipt = sign_send_and_wait_for_receipt(
         web3, deploy_datatoken_tx, from_wallet
     )
@@ -169,7 +170,7 @@ def mint_100_datatokens(
     datatoken_contract = get_datatoken_contract(web3, datatoken_address)
     mint_datatoken_tx = datatoken_contract.functions.mint(
         receiver_address, to_wei(100)
-    ).buildTransaction({"gasPrice": get_gas_price(web3)})
+    ).buildTransaction({"from": from_wallet.address, "gasPrice": get_gas_price(web3)})
     sign_send_and_wait_for_receipt(web3, mint_datatoken_tx, from_wallet)
     return datatoken_contract.caller.totalSupply()
 
@@ -296,7 +297,7 @@ def set_metadata(
     data_nft_contract = get_data_nft_contract(web3, data_nft_address)
     transaction = data_nft_contract.functions.setMetaData(
         state, provider_url, provider_address, flags, encrypted_ddo, ddo_hash
-    ).buildTransaction({"gasPrice": get_gas_price(web3)})
+    ).buildTransaction({"from": from_wallet.address, "gasPrice": get_gas_price(web3)})
     return sign_send_and_wait_for_receipt(web3, transaction, from_wallet)
 
 
@@ -427,7 +428,7 @@ def start_order(
         consumeFeeAddress,
         consumeFeeToken,
         consumeFeeAmount,
-    ).buildTransaction({"gasPrice": get_gas_price(web3)})
+    ).buildTransaction({"from": from_wallet.address, "gasPrice": get_gas_price(web3)})
     return sign_send_and_wait_for_receipt(web3, start_order_tx, from_wallet)
 
 
