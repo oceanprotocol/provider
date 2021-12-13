@@ -12,10 +12,11 @@ from datetime import datetime
 from pathlib import Path
 
 import ipfshttpclient
+from jsonsempai import magic  # noqa: F401
 from artifacts import DataTokenTemplate, Metadata
 from eth_account import Account
 from eth_utils import add_0x_prefix, remove_0x_prefix
-from jsonsempai import magic  # noqa: F401
+from web3.main import Web3
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.basics import (
     get_asset_from_metadatastore,
@@ -28,6 +29,10 @@ from ocean_provider.utils.encryption import do_encrypt
 from ocean_provider.utils.services import Service
 from ocean_provider.utils.util import checksum
 from tests.helpers.service_definitions import get_access_service
+
+
+def get_gas_price(web3: Web3) -> int:
+    return int(web3.eth.gas_price * 1.1)
 
 
 def sign_tx(web3, tx, private_key):
@@ -56,7 +61,9 @@ def deploy_contract(w3, _json, private_key, *args):
     """
     account = w3.eth.account.from_key(private_key)
     _contract = w3.eth.contract(abi=_json["abi"], bytecode=_json["bytecode"])
-    built_tx = _contract.constructor(*args).buildTransaction({"from": account.address})
+    built_tx = _contract.constructor(*args).buildTransaction(
+        {"from": account.address, "gasPrice": get_gas_price(w3)}
+    )
     if "gas" not in built_tx:
         built_tx["gas"] = w3.eth.estimate_gas(built_tx)
     raw_tx = sign_tx(w3, built_tx, private_key)
@@ -439,6 +446,7 @@ def send_order(client, ddo, datatoken, service, cons_wallet, expect_failure=Fals
         "from": cons_wallet.address,
         "account_key": str(cons_wallet.key),
         "chainId": web3.eth.chain_id,
+        "gasPrice": get_gas_price(web3),
     }
     tx_id = contract_fn.transact(_transact).hex()
 
