@@ -3,8 +3,8 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import copy
-from datetime import datetime
 import json
+from datetime import datetime
 
 import pytest
 
@@ -12,24 +12,16 @@ from ocean_provider.constants import BaseURLs
 from ocean_provider.exceptions import RequestNotFound
 from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.asset import Asset
-from ocean_provider.utils.currency import to_wei
-from ocean_provider.utils.services import ServiceType, Service
+from ocean_provider.utils.services import Service, ServiceType
 from ocean_provider.validation.algo import build_stage_output_dict
 from ocean_provider.validation.provider_requests import RBACValidator
 from tests.ddo.ddo_sample1_v4 import json_dict as ddo_sample1_v4
 from tests.ddo.ddo_sample_algorithm_v4 import algorithm_ddo_sample
 from tests.helpers.compute_helpers import (
     build_and_send_ddo_with_compute_service,
-    get_registered_asset,
-    get_web3,
+    get_compute_signature,
 )
 from tests.helpers.ddo_dict_builders import get_compute_service
-from tests.helpers.compute_helpers import get_compute_signature
-from tests.test_helpers import (
-    BLACK_HOLE_ADDRESS,
-    mint_100_datatokens,
-    start_order,
-)
 
 
 @pytest.mark.unit
