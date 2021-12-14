@@ -8,7 +8,6 @@ import logging
 from eth_utils import add_0x_prefix
 from flask import Response, jsonify, request
 from flask_sieve import validate
-
 from ocean_provider.log import setup_logging
 from ocean_provider.myapp import app
 from ocean_provider.requests_session import get_requests_session
@@ -20,13 +19,16 @@ from ocean_provider.utils.basics import (
     get_provider_wallet,
     get_web3,
 )
+from ocean_provider.utils.datatoken import get_dt_contract
 from ocean_provider.utils.did import did_to_id
 from ocean_provider.utils.encryption import do_encrypt
+from ocean_provider.utils.error_responses import service_unavailable
 from ocean_provider.utils.url import append_userdata, check_url_details
 from ocean_provider.utils.util import (
     build_download_response,
     check_asset_consumable,
     get_asset_download_urls,
+    get_asset_urls,
     get_asset_url_at_index,
     get_compute_info,
     get_download_url,
@@ -34,11 +36,11 @@ from ocean_provider.utils.util import (
     get_request_data,
     process_consume_request,
     record_consume_request,
-    service_unavailable,
     validate_order,
     validate_transfer_not_used_for_other_service,
 )
 from ocean_provider.validation.provider_requests import (
+    AssetUrlsRequest,
     DownloadRequest,
     EncryptRequest,
     FileInfoRequest,
@@ -377,6 +379,85 @@ def download():
                 "consumerAddress": data.get("consumerAddress"),
                 "serviceId": data.get("serviceId"),
                 "serviceType": data.get("serviceType"),
+            },
+            logger,
+        )
+
+
+@services.route("/assetUrls", methods=["GET"])
+@validate(AssetUrlsRequest)
+def asset_urls():
+    """Lists files from an asset
+
+    ---
+    tags:
+      - services
+    consumes:
+      - application/json
+    parameters:
+      - name: documentId
+        in: query
+        description: The ID of the asset/document (the DID).
+        required: true
+        type: string
+      - name: signature
+        in: query
+        description: Signature of the documentId to verify that the consumer has rights to download the asset.
+      - name: serviceId
+        in: string
+        description: ServiceId for the asset access service.
+      - name: nonce
+        in: string
+        description: User nonce.
+      - name: publisherAddress
+        in: query
+        description: The publisher address.
+        required: true
+        type: string
+    responses:
+      200:
+        description: lists asset files
+      400:
+        description: One of the required attributes is missing.
+      503:
+        description: Service Unavailable
+    """
+    data = get_request_data(request)
+    did = data.get("documentId")
+    service_id = int(data.get("serviceId"))
+    publisher_address = data.get("publisherAddress")
+
+    logger.info(f"asset urls endpoint called. {data}")
+    try:
+        asset = get_asset_from_metadatastore(get_metadata_url(), did)
+        service = asset.get_service_by_index(service_id)
+        assert service.type == "access"
+
+        dt_token = get_dt_contract(get_web3(), asset.data_token_address)
+
+        if dt_token.caller.minter().lower() != publisher_address.lower():
+            return Response(
+                json.dumps({"error": "Publisher address does not match minter."}),
+                400,
+                headers={"content-type": "application/json"},
+            )
+
+        urls = get_asset_urls(asset, provider_wallet)
+
+        logger.info(f"Retrieved unencrypted urls for for asset {did}")
+        increment_nonce(publisher_address)
+
+        return Response(
+            json.dumps(urls), 200, headers={"content-type": "application/json"}
+        )
+
+    except Exception as e:
+        return service_unavailable(
+            e,
+            {
+                "documentId": data.get("did"),
+                "serviceId": data.get("serviceId"),
+                "consumerAddress": data.get("consumerAddress"),
             },
             logger,
         )

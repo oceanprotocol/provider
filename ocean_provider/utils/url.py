@@ -7,19 +7,18 @@ import ipaddress
 import json
 import logging
 import os
-import requests
 from urllib.parse import urlparse
 
 import dns.resolver
-from requests.models import PreparedRequest
-
+import requests
 from ocean_provider.utils.basics import get_config, get_provider_wallet
+from requests.models import PreparedRequest
 
 logger = logging.getLogger(__name__)
 
 
 def is_safe_url(url):
-    if not is_safe_schema(url):
+    if not is_url(url):
         return False
 
     result = urlparse(url)
@@ -27,7 +26,7 @@ def is_safe_url(url):
     return is_safe_domain(result.netloc)
 
 
-def is_safe_schema(url):
+def is_url(url):
     try:
         result = urlparse(url)
         return all([result.scheme, result.netloc])
