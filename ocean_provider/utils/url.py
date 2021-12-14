@@ -6,6 +6,7 @@ import hashlib
 import ipaddress
 import json
 import logging
+import os
 from urllib.parse import urlparse
 
 import dns.resolver
@@ -127,7 +128,10 @@ def check_url_details(url, with_checksum=False):
         if not is_safe_url(url):
             return False, {}
 
-        result, extra_data = _get_result_from_url(url, with_checksum=with_checksum)
+        for _ in range(int(os.getenv("REQUEST_RETRIES", 1))):
+            result, extra_data = _get_result_from_url(url, with_checksum=with_checksum)
+            if result and result.status_code == 200:
+                break
 
         if result.status_code == 200:
             content_type = result.headers.get("Content-Type")
