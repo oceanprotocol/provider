@@ -27,19 +27,14 @@ def mint(web3, contract, receiver_address, amount, minter_wallet):
         "from": minter_wallet.address,
         "account_key": str(minter_wallet.key),
         "chainId": web3.eth.chain_id,
+        "gasPrice": int(web3.eth.gas_price * 1.1),
     }
 
     return contract_fn.transact(_transact).hex()
 
 
 def verify_order_tx(
-    web3,
-    contract,
-    tx_id: str,
-    did: str,
-    service_id,
-    amount,
-    sender: str,
+    web3, contract, tx_id: str, did: str, service_id, amount, sender: str
 ):
     try:
         tx_receipt = get_tx_receipt(web3, tx_id)
