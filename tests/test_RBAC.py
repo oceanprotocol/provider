@@ -2,29 +2,26 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
-from datetime import datetime
+import copy
 import json
+from datetime import datetime
 
 import pytest
 
 from ocean_provider.constants import BaseURLs
 from ocean_provider.exceptions import RequestNotFound
 from ocean_provider.utils.accounts import sign_message
-from ocean_provider.utils.currency import to_wei
-from ocean_provider.utils.services import ServiceType
+from ocean_provider.utils.asset import Asset
+from ocean_provider.utils.services import Service, ServiceType
 from ocean_provider.validation.algo import build_stage_output_dict
 from ocean_provider.validation.provider_requests import RBACValidator
+from tests.ddo.ddo_sample1_v4 import json_dict as ddo_sample1_v4
+from tests.ddo.ddo_sample_algorithm_v4 import algorithm_ddo_sample
 from tests.helpers.compute_helpers import (
     build_and_send_ddo_with_compute_service,
-    get_registered_asset,
-    get_web3,
+    get_compute_signature,
 )
-from tests.helpers.compute_helpers import get_compute_signature
-from tests.test_helpers import (
-    BLACK_HOLE_ADDRESS,
-    mint_100_datatokens,
-    start_order,
-)
+from tests.helpers.ddo_dict_builders import get_compute_service
 
 
 @pytest.mark.unit
@@ -64,15 +61,12 @@ def test_encrypt_request_payload(consumer_wallet, publisher_wallet):
     }
 
 
-@pytest.mark.integration
+@pytest.mark.unit
 def test_initialize_request_payload(
     client, publisher_wallet, consumer_wallet, provider_address, web3
 ):
-    asset = get_registered_asset(publisher_wallet)
+    asset = Asset(ddo_sample1_v4)
     service = asset.get_service_by_type(ServiceType.ACCESS)
-    mint_100_datatokens(
-        web3, service.datatoken_address, consumer_wallet.address, publisher_wallet
-    )
 
     req = {
         "documentId": asset.did,
@@ -95,27 +89,12 @@ def test_initialize_request_payload(
     assert payload["dids"][0]["serviceId"] == service.id
 
 
-@pytest.mark.integration
+@pytest.mark.unit
 def test_access_request_payload(
     client, publisher_wallet, consumer_wallet, provider_address, web3
 ):
-    asset = get_registered_asset(publisher_wallet)
+    asset = Asset(ddo_sample1_v4)
     service = asset.get_service_by_type(ServiceType.ACCESS)
-    mint_100_datatokens(
-        web3, service.datatoken_address, consumer_wallet.address, publisher_wallet
-    )
-
-    tx_id, _ = start_order(
-        web3,
-        service.datatoken_address,
-        consumer_wallet.address,
-        to_wei(1),
-        service.index,
-        BLACK_HOLE_ADDRESS,
-        BLACK_HOLE_ADDRESS,
-        0,
-        consumer_wallet,
-    )
 
     req = {
         "documentId": asset.did,
@@ -123,7 +102,7 @@ def test_access_request_payload(
         "serviceType": service.type,
         "dataToken": service.datatoken_address,
         "consumerAddress": consumer_wallet.address,
-        "transferTxId": tx_id,
+        "transferTxId": "0xsometx",
         "fileIndex": 0,
     }
 
@@ -145,14 +124,16 @@ def test_access_request_payload(
     assert payload["dids"][0]["serviceId"] == service.id
 
 
-@pytest.mark.integration
+@pytest.mark.unit
 def test_compute_payload_without_additional_inputs(
     client, publisher_wallet, consumer_wallet, provider_address
 ):
-    ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
-        client, publisher_wallet, consumer_wallet
-    )
-    sa = alg_ddo.get_service_by_type(ServiceType.ACCESS)
+    ddo_sample1 = copy.deepcopy(ddo_sample1_v4)
+    ddo = Asset(ddo_sample1)
+    ddo.services.append(Service.from_json(1, get_compute_service(None, None, "0x0")))
+
+    alg_ddo = Asset(algorithm_ddo_sample)
+    sa = alg_ddo.get_service_by_type(ServiceType.COMPUTE)
     sa_compute = ddo.get_service_by_type(ServiceType.COMPUTE)
 
     nonce, signature = get_compute_signature(client, consumer_wallet, ddo.did)
@@ -164,14 +145,14 @@ def test_compute_payload_without_additional_inputs(
         "algorithmServiceId": sa_compute.id,
         "serviceType": sa.type,
         "consumerAddress": consumer_wallet.address,
-        "transferTxId": tx_id,
+        "transferTxId": "0xsometx",
         "dataToken": sa.datatoken_address,
         "output": build_stage_output_dict(
             dict(), sa.service_endpoint, consumer_wallet.address, publisher_wallet
         ),
         "algorithmDid": alg_ddo.did,
         "algorithmDataToken": sa_compute.datatoken_address,
-        "algorithmTransferTxId": alg_tx_id,
+        "algorithmTransferTxId": "0xsomeothertx",
     }
 
     validator = RBACValidator(request_name="ComputeStartRequest", request=req)
@@ -189,38 +170,22 @@ def test_compute_payload_without_additional_inputs(
     assert payload["algos"][0]["serviceId"] == sa_compute.id
 
 
-@pytest.mark.integration
+@pytest.mark.unit
 def test_compute_request_payload(
     client, publisher_wallet, consumer_wallet, provider_address
 ):
-    ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
-        client, publisher_wallet, consumer_wallet
-    )
-    sa = alg_ddo.get_service_by_type(ServiceType.ACCESS)
+    ddo_sample1 = copy.deepcopy(ddo_sample1_v4)
+    ddo = Asset(ddo_sample1)
+    ddo.services.append(Service.from_json(1, get_compute_service(None, None, "0x0")))
+
+    alg_ddo = Asset(algorithm_ddo_sample)
+    sa = alg_ddo.get_service_by_type(ServiceType.COMPUTE)
     sa_compute = ddo.get_service_by_type(ServiceType.COMPUTE)
 
-    ddo2 = get_registered_asset(
-        publisher_wallet,
-        custom_services="vanilla_compute",
-        custom_services_args=ddo.services[0].compute_dict["publisherTrustedAlgorithms"],
-    )
-
-    web3 = get_web3()
-    sa2 = ddo2.get_service_by_type(ServiceType.COMPUTE)
-    mint_100_datatokens(
-        web3, sa2.datatoken_address, consumer_wallet.address, publisher_wallet
-    )
-    tx_id2, _ = start_order(
-        web3,
-        sa2.datatoken_address,
-        consumer_wallet.address,
-        to_wei(1),
-        sa2.index,
-        BLACK_HOLE_ADDRESS,
-        BLACK_HOLE_ADDRESS,
-        0,
-        consumer_wallet,
-    )
+    ddo_sample2 = copy.deepcopy(ddo_sample1_v4)
+    ddo_sample2["did"] = "0xsomeotherdid"
+    ddo2 = Asset(ddo_sample2)
+    sa2 = ddo2.get_service_by_type(ServiceType.ACCESS)
 
     nonce, signature = get_compute_signature(client, consumer_wallet, ddo.did)
 
@@ -232,16 +197,20 @@ def test_compute_request_payload(
         "algorithmServiceId": sa_compute.id,
         "serviceType": sa.type,
         "consumerAddress": consumer_wallet.address,
-        "transferTxId": tx_id,
+        "transferTxId": "0xsometx",
         "dataToken": sa.datatoken_address,
         "output": build_stage_output_dict(
             dict(), sa.service_endpoint, consumer_wallet.address, publisher_wallet
         ),
         "algorithmDid": alg_ddo.did,
         "algorithmDataToken": sa_compute.datatoken_address,
-        "algorithmTransferTxId": alg_tx_id,
+        "algorithmTransferTxId": "0xsomeothertx",
         "additionalInputs": [
-            {"documentId": ddo2.did, "transferTxId": tx_id2, "serviceId": sa2.id}
+            {
+                "documentId": ddo2.did,
+                "transferTxId": "0xsomeevenothertx",
+                "serviceId": sa2.id,
+            }
         ],
     }
     validator = RBACValidator(request_name="ComputeRequest", request=req)
