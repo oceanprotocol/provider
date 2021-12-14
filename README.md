@@ -88,6 +88,8 @@ You might also want to set `FLASK_ENV=development`. Then run ```flask run --port
 
 Refer to the [API.md](API.md) file for endpoints and payloads.
 
+To setup the number of times file downloads are tried, accounting for network glitches and connectivity issues, you may set the custom variable REQUEST_RETRIES. This defaults to 1 (one trial, meaning no retries).
+
 #### Before you commit
 If you are a contributor, make sure you install the pre-commit hooks using the command `pre-commit install`. This will make sure your imports are sorted and your code is properly formatted before committing. We use `black`, `isort` and `flake8` to keep code clean.
 
