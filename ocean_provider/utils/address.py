@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any, Dict, Union
 
 from eth_typing.evm import HexAddress
+from web3.main import Web3
 
 
 def get_address_json(address_path: Union[str, Path]) -> Dict[str, Any]:
@@ -28,3 +29,9 @@ def get_contract_address(
         for chain_addresses in address_json.values()
         if chain_addresses["chainId"] == chain_id
     )
+
+
+def isAddressMatch(address1: str, address2: str) -> bool:
+    if Web3.toChecksumAddress(address1) == Web3.toChecksumAddress(address2):
+        return True
+    return False

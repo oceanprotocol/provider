@@ -19,6 +19,7 @@ from ocean_provider.utils.basics import (
     get_provider_wallet,
     get_web3,
 )
+from ocean_provider.utils.address import isAddressMatch
 from ocean_provider.utils.error_responses import service_unavailable
 from ocean_provider.utils.services import ServiceType
 from ocean_provider.utils.url import append_userdata, check_url_details
@@ -242,11 +243,15 @@ def download():
         asset = get_asset_from_metadatastore(get_metadata_url(), did)
         service = asset.get_service_by_id(service_id)
 
-        if service.type != ServiceType.ACCESS:
+        compute_address, compute_limits = get_compute_info()
+
+        # allow our C2D to download a compute asset
+        if service.type != ServiceType.ACCESS and not isAddressMatch(
+            consumer_address, compute_address
+        ):
             return jsonify(
                 error=f"Service with index={service_id} is not an access service."
             )
-
         logger.info("validate_order called from download endpoint.")
         _tx, _order_log, _transfer_log = validate_order(
             get_web3(), consumer_address, token_address, 1, tx_id, did, service
