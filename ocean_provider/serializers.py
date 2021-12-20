@@ -50,14 +50,12 @@ class StageAlgoSerializer:
         dict_template["rawcode"] = ""
         dict_template["container"] = algo_asset.metadata["algorithm"]["container"]
         dict_template["remote"] = {
-                "serviceEndpoint": self.algo_service.service_endpoint,
-                "txId": algorithm_tx_id,
-                "serviceId": self.algo_service.id,
-            }
+            "serviceEndpoint": self.algo_service.service_endpoint,
+            "txId": algorithm_tx_id,
+            "serviceId": self.algo_service.id,
+        }
         # userdata = self.algo_data.get("algouserdata")
         # if userdata:
         #    dict_template["remote"]["algouserdata"] = userdata
-
-        
 
         return dict(dict_template)
