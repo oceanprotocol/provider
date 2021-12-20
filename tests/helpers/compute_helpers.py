@@ -7,6 +7,7 @@ from ocean_provider.utils.currency import to_wei
 from ocean_provider.utils.services import ServiceType
 from ocean_provider.utils.util import msg_hash
 from tests.helpers.ddo_dict_builders import build_metadata_dict_type_algorithm
+from ocean_provider.utils.provider_fees import get_provider_fees
 from tests.test_helpers import (
     BLACK_HOLE_ADDRESS,
     get_registered_asset,
@@ -78,11 +79,10 @@ def build_and_send_ddo_with_compute_service(
         web3,
         datatoken,
         consumer_wallet.address,
-        to_wei(1),
         service.index,
-        BLACK_HOLE_ADDRESS,
-        BLACK_HOLE_ADDRESS,
-        0,
+        get_provider_fees(
+            dataset_ddo_w_compute_service.did, service, consumer_wallet.address
+        ),
         consumer_wallet,
     )
 
@@ -91,11 +91,8 @@ def build_and_send_ddo_with_compute_service(
         web3,
         alg_service.datatoken_address,
         consumer_wallet.address,
-        to_wei(1),
         alg_service.index,
-        BLACK_HOLE_ADDRESS,
-        BLACK_HOLE_ADDRESS,
-        0,
+        get_provider_fees(alg_ddo.did, alg_service, consumer_wallet.address),
         consumer_wallet,
     )
 

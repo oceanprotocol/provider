@@ -21,6 +21,7 @@ from ocean_provider.utils.basics import (
 )
 from ocean_provider.utils.error_responses import service_unavailable
 from ocean_provider.utils.services import ServiceType
+from ocean_provider.utils.provider_fees import get_provider_fees
 from ocean_provider.utils.url import append_userdata, check_url_details
 from ocean_provider.utils.util import (
     build_download_response,
@@ -158,7 +159,7 @@ def initialize():
         url_object = get_service_files_list(service, provider_wallet)[0]
         download_url = get_download_url(url_object, app.config["PROVIDER_CONFIG_FILE"])
         download_url = append_userdata(download_url, data)
-        valid, _ = check_url_details(download_url)
+        valid, url_details = check_url_details(download_url)
 
         if not valid:
             logger.error(
@@ -178,6 +179,7 @@ def initialize():
             "dataToken": token_address,
             "nonce": get_nonce(consumer_address),
             "computeAddress": compute_address,
+            "providerFee": get_provider_fees(did, service, consumer_address),
         }
         return Response(json.dumps(approve_params), 200, headers=standard_headers)
 
