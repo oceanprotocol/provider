@@ -23,7 +23,12 @@ class StageAlgoSerializer:
         algorithm_did = self.algo_data.get("algorithmDid")
         algorithm_tx_id = self.algo_data.get("algorithmTransferTxId")
 
-        dict_template = {"id": None, "rawcode": None, "container": None}
+        dict_template = {
+            "id": None,
+            "rawcode": None,
+            "container": None,
+            "algouserdata": None,
+        }
 
         if algorithm_meta and isinstance(algorithm_meta, str):
             algorithm_meta = json.loads(algorithm_meta)
@@ -43,23 +48,16 @@ class StageAlgoSerializer:
 
         dict_template["id"] = algorithm_did
         dict_template["rawcode"] = ""
-
-        asset_urls = get_service_files_list(sa, self.provider_wallet)
-        asset_url = asset_urls[0] if asset_urls else None
-        if asset_url:
-            asset_url = append_userdata(asset_url, self.algo_data, "algouserdata")
-            dict_template["url"] = asset_url
-        else:
-            dict_template["remote"] = {
+        dict_template["container"] = algo_asset.metadata["algorithm"]["container"]
+        dict_template["remote"] = {
                 "serviceEndpoint": self.algo_service.service_endpoint,
                 "txId": algorithm_tx_id,
                 "serviceId": self.algo_service.id,
             }
+        # userdata = self.algo_data.get("algouserdata")
+        # if userdata:
+        #    dict_template["remote"]["algouserdata"] = userdata
 
-            userdata = self.algo_data.get("algouserdata")
-            if userdata:
-                dict_template["remote"]["algouserdata"] = userdata
-
-        dict_template["container"] = algo_asset.metadata["algorithm"]["container"]
+        
 
         return dict(dict_template)
