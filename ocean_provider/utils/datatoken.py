@@ -10,7 +10,7 @@ from web3.contract import Contract
 from web3.logs import DISCARD
 from web3.main import Web3
 from websockets import ConnectionClosed
-
+from ocean_provider.utils.basics import get_provider_wallet
 from ocean_provider.utils.address import isAddressMatch
 
 
@@ -57,19 +57,18 @@ def verify_order_tx(
     provider_fee_event_logs = datatoken_contract.events.ProviderFees().processReceipt(
         tx_receipt, errors=DISCARD
     )
-    provider_fee_order_log = provider_fee_event_logs[0] if event_logs else None
+
+    provider_fee_order_log = provider_fee_event_logs[0] if provider_fee_event_logs else None
     if not provider_fee_order_log:
         raise AssertionError(
             f"Cannot find the event for the provider fee in tx id {tx_id}."
         )
-    if len(provider_fee_order_log) > 1:
+    if len(provider_fee_event_logs) > 1:
         raise AssertionError(
             f"Multiple order events in the same transaction !!! {provider_fee_order_log}"
         )
 
-    if not isAddressMatch(
-        provider_fee_order_log.args.providerFeeAddress, provider_wallet.address
-    ):
+    if not isAddressMatch(provider_fee_order_log.args.providerFeeAddress, provider_wallet.address):
         raise AssertionError(
             f"The providerFeeAddress {provider_fee_order_log.args.providerFeeAddress} in the event does "
             f"not match the provider address {provider_wallet.address}\n"

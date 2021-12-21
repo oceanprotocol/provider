@@ -19,7 +19,7 @@ from artifacts import ERC721Template
 from ocean_provider.config import Config
 from ocean_provider.http_provider import CustomHTTPProvider
 from ocean_provider.utils.asset import Asset
-from ocean_provider.utils.datatoken import get_datatoken_contract
+
 
 
 def get_config(config_file: Optional[str] = None) -> Config:
