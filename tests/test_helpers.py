@@ -419,10 +419,10 @@ def initialize_service(
         return response
 
     return (
-        response.json.get("numTokens"),
         response.json.get("dataToken"),
         response.json.get("nonce"),
         response.json.get("computeAddress"),
+        response.json.get("providerFees"),
     )
 
 

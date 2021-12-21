@@ -121,7 +121,7 @@ def test_initialize_on_ipfs_url(client, publisher_wallet, consumer_wallet, web3)
         consumer_wallet,
     )
 
-    assert response['datatoken'] == service.datatoken_address
+    assert response["datatoken"] == service.datatoken_address
 
 
 @pytest.mark.integration

@@ -132,11 +132,10 @@ def initialize():
         json object as follows:
         ```JSON
         {
-            "from": <consumer-address>,
-            "to": <receiver-address>,
-            "numTokens": <tokens-amount-in-base>
             "dataToken": <data-token-contract-address>,
-            "nonce": <nonce-used-in-consumer-signature>
+            "nonce": <nonce-used-in-consumer-signature>,
+            "providerFee": <object containing provider fees
+            "computeAddress": <compute address>
         }
         ```
     """
