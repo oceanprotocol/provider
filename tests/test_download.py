@@ -111,7 +111,7 @@ def test_initialize_on_ipfs_url(client, publisher_wallet, consumer_wallet, web3)
     mint_100_datatokens(
         web3, service.datatoken_address, consumer_wallet.address, publisher_wallet
     )
-    _
+
     datatoken, nonce, computeAddress, providerFees = initialize_service(
         client,
         asset.did,
