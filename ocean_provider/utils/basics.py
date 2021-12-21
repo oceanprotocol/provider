@@ -21,7 +21,6 @@ from ocean_provider.http_provider import CustomHTTPProvider
 from ocean_provider.utils.asset import Asset
 
 
-
 def get_config(config_file: Optional[str] = None) -> Config:
     """
     :return: Config instance

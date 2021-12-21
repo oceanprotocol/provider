@@ -58,7 +58,9 @@ def verify_order_tx(
         tx_receipt, errors=DISCARD
     )
 
-    provider_fee_order_log = provider_fee_event_logs[0] if provider_fee_event_logs else None
+    provider_fee_order_log = (
+        provider_fee_event_logs[0] if provider_fee_event_logs else None
+    )
     if not provider_fee_order_log:
         raise AssertionError(
             f"Cannot find the event for the provider fee in tx id {tx_id}."
@@ -68,7 +70,9 @@ def verify_order_tx(
             f"Multiple order events in the same transaction !!! {provider_fee_order_log}"
         )
 
-    if not isAddressMatch(provider_fee_order_log.args.providerFeeAddress, provider_wallet.address):
+    if not isAddressMatch(
+        provider_fee_order_log.args.providerFeeAddress, provider_wallet.address
+    ):
         raise AssertionError(
             f"The providerFeeAddress {provider_fee_order_log.args.providerFeeAddress} in the event does "
             f"not match the provider address {provider_wallet.address}\n"
