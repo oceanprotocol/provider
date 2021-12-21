@@ -175,7 +175,6 @@ def initialize():
         # able to consume the service
         compute_address, compute_limits = get_compute_info()
         approve_params = {
-            "numTokens": 1,
             "dataToken": token_address,
             "nonce": get_nonce(consumer_address),
             "computeAddress": compute_address,
