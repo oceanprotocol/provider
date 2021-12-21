@@ -112,7 +112,7 @@ def test_initialize_on_ipfs_url(client, publisher_wallet, consumer_wallet, web3)
         web3, service.datatoken_address, consumer_wallet.address, publisher_wallet
     )
 
-    numTokens, datatoken, _, _ = initialize_service(
+    response = initialize_service(
         client,
         asset.did,
         service.id,
@@ -121,8 +121,7 @@ def test_initialize_on_ipfs_url(client, publisher_wallet, consumer_wallet, web3)
         consumer_wallet,
     )
 
-    assert numTokens == 1
-    assert datatoken == service.datatoken_address
+    assert response['datatoken'] == service.datatoken_address
 
 
 @pytest.mark.integration
