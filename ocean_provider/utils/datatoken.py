@@ -11,7 +11,6 @@ from web3.logs import DISCARD
 from web3.main import Web3
 from websockets import ConnectionClosed
 from ocean_provider.utils.basics import get_provider_wallet
-from ocean_provider.utils.address import isAddressMatch
 
 
 def get_datatoken_contract(web3: Web3, address: Optional[str] = None) -> Contract:
@@ -70,9 +69,9 @@ def verify_order_tx(
             f"Multiple order events in the same transaction !!! {provider_fee_order_log}"
         )
 
-    if not isAddressMatch(
-        provider_fee_order_log.args.providerFeeAddress, provider_wallet.address
-    ):
+    if Web3.toChecksumAddress(
+        provider_fee_order_log.args.providerFeeAddress
+    ) == Web3.toChecksumAddress(provider_wallet.address):
         raise AssertionError(
             f"The providerFeeAddress {provider_fee_order_log.args.providerFeeAddress} in the event does "
             f"not match the provider address {provider_wallet.address}\n"

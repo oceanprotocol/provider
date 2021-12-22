@@ -38,7 +38,6 @@ def get_provider_fees(
             provider_fee_amount,
         ],
     )
-    provider_wallet = get_provider_wallet()
 
     pk = keys.PrivateKey(provider_wallet.key)
     signed = keys.ecdsa_sign(message_hash=message, private_key=pk)
