@@ -246,9 +246,9 @@ def download():
         compute_address, compute_limits = get_compute_info()
 
         # allow our C2D to download a compute asset
-        if service.type != ServiceType.ACCESS and not isAddressMatch(
-            consumer_address, compute_address
-        ):
+        if service.type != ServiceType.ACCESS and Web3.toChecksumAddress(
+            consumer_address
+        ) != Web3.toChecksumAddress(compute_address):
             return jsonify(
                 error=f"Service with index={service_id} is not an access service."
             )

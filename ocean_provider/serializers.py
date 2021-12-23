@@ -54,8 +54,8 @@ class StageAlgoSerializer:
             "txId": algorithm_tx_id,
             "serviceId": self.algo_service.id,
         }
-        # userdata = self.algo_data.get("algouserdata")
-        # if userdata:
-        #    dict_template["remote"]["algouserdata"] = userdata
+        userdata = self.algo_data.get("algouserdata")
+        if userdata:
+            dict_template["algouserdata"] = userdata
 
         return dict(dict_template)
