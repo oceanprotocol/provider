@@ -1,17 +1,19 @@
-from web3.main import Web3
-from typing import Any, Dict
-import os
 import json
-from ocean_provider.utils.basics import get_provider_wallet, get_web3
-from ocean_provider.utils.accounts import sign_message
-from ocean_provider.utils.services import Service
+import logging
+import os
+from typing import Any, Dict
+
 import eth_keys
 from eth_account.account import Account
 from eth_account.messages import encode_defunct
-import logging
-from ocean_provider.log import setup_logging
 from eth_keys import KeyAPI
 from eth_keys.backends import NativeECCBackend
+from ocean_provider.log import setup_logging
+from ocean_provider.utils.accounts import sign_message
+from ocean_provider.utils.basics import get_provider_wallet, get_web3
+from ocean_provider.utils.services import Service
+from web3.main import Web3
+
 
 
 setup_logging()
