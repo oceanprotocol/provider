@@ -5,7 +5,6 @@
 import json
 from pathlib import Path
 from typing import Any, Dict, Union
-from web3.main import Web3
 from eth_typing.evm import HexAddress
 
 

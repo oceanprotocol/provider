@@ -7,8 +7,8 @@ from eth_typing.evm import HexAddress
 from eth_keys import KeyAPI
 from eth_keys.backends import NativeECCBackend
 from hexbytes import HexBytes
-from ocean_provider.utils.basics import get_provider_wallet
 from ocean_provider.log import setup_logging
+from ocean_provider.utils.basics import get_provider_wallet
 from ocean_provider.utils.services import Service
 from web3.contract import Contract
 from web3.logs import DISCARD
@@ -51,7 +51,6 @@ def verify_order_tx(
     except ConnectionClosed:
         # try again in this case
         tx_receipt = get_tx_receipt(web3, tx_id)
-    logger.error(tx_receipt)
     if tx_receipt is None:
         raise AssertionError(
             "Failed to get tx receipt for the `startOrder` transaction.."
@@ -86,7 +85,6 @@ def verify_order_tx(
             f"not match the provider address {provider_wallet.address}\n"
         )
 
-    # TO DO  - check signature
     bts = b"".join(
         [
             provider_fee_order_log.args.r,
