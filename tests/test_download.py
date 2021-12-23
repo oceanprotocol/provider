@@ -9,6 +9,7 @@ from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.currency import to_wei
 from ocean_provider.utils.services import ServiceType
+from ocean_provider.utils.provider_fees import get_provider_fees
 from tests.test_helpers import (
     BLACK_HOLE_ADDRESS,
     get_dataset_ddo_disabled,
@@ -35,11 +36,8 @@ def test_download_service(client, publisher_wallet, consumer_wallet, web3, userd
         web3,
         service.datatoken_address,
         consumer_wallet.address,
-        to_wei(1),
         service.index,
-        BLACK_HOLE_ADDRESS,
-        BLACK_HOLE_ADDRESS,
-        0,
+        get_provider_fees(asset.did, service, consumer_wallet.address),
         consumer_wallet,
     )
 
@@ -114,7 +112,7 @@ def test_initialize_on_ipfs_url(client, publisher_wallet, consumer_wallet, web3)
         web3, service.datatoken_address, consumer_wallet.address, publisher_wallet
     )
 
-    numTokens, datatoken, _, _ = initialize_service(
+    datatoken, nonce, computeAddress, providerFees = initialize_service(
         client,
         asset.did,
         service.id,
@@ -123,7 +121,6 @@ def test_initialize_on_ipfs_url(client, publisher_wallet, consumer_wallet, web3)
         consumer_wallet,
     )
 
-    assert numTokens == 1
     assert datatoken == service.datatoken_address
 
 
@@ -193,11 +190,8 @@ def test_download_multiple_files(client, publisher_wallet, consumer_wallet, web3
         web3,
         service.datatoken_address,
         consumer_wallet.address,
-        to_wei(1),
         service.index,
-        BLACK_HOLE_ADDRESS,
-        BLACK_HOLE_ADDRESS,
-        0,
+        get_provider_fees(asset.did, service, consumer_wallet.address),
         consumer_wallet,
     )
 

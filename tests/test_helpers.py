@@ -6,7 +6,7 @@ import os
 import pathlib
 import time
 from hashlib import sha256
-from typing import Tuple
+from typing import Tuple, Dict
 
 from jsonsempai import magic  # noqa: F401
 from artifacts import ERC721Template
@@ -40,7 +40,11 @@ from tests.helpers.ddo_dict_builders import (
 from web3.logs import DISCARD
 from web3.main import Web3
 from web3.types import TxParams, TxReceipt
+import logging
+from ocean_provider.log import setup_logging
 
+setup_logging()
+logger = logging.getLogger(__name__)
 BLACK_HOLE_ADDRESS = "0x0000000000000000000000000000000000000000"
 
 
@@ -415,10 +419,10 @@ def initialize_service(
         return response
 
     return (
-        response.json.get("numTokens"),
         response.json.get("dataToken"),
         response.json.get("nonce"),
         response.json.get("computeAddress"),
+        response.json.get("providerFees"),
     )
 
 
@@ -426,23 +430,25 @@ def start_order(
     web3: Web3,
     datatoken_address: HexAddress,
     consumer: HexAddress,
-    amount: int,
     service_index: int,
-    consumeFeeAddress: HexAddress,
-    consumeFeeToken: HexAddress,
-    consumeFeeAmount: int,
+    provider_fees: Dict,
     from_wallet: LocalAccount,
 ) -> Tuple[HexStr, TxReceipt]:
     datatoken_contract = get_datatoken_contract(web3, datatoken_address)
     start_order_tx = datatoken_contract.functions.startOrder(
         consumer,
-        amount,
         service_index,
-        consumeFeeAddress,
-        consumeFeeToken,
-        consumeFeeAmount,
+        provider_fees["providerFeeAddress"],
+        provider_fees["providerFeeToken"],
+        provider_fees["providerFeeAmount"],
+        provider_fees["v"],
+        provider_fees["r"],
+        provider_fees["s"],
+        provider_fees["providerData"],
     ).buildTransaction({"from": from_wallet.address, "gasPrice": get_gas_price(web3)})
-    return sign_send_and_wait_for_receipt(web3, start_order_tx, from_wallet)
+    txid, receipt = sign_send_and_wait_for_receipt(web3, start_order_tx, from_wallet)
+    # if needed, we can log the tx here
+    return (txid, receipt)
 
 
 def build_custom_services(
