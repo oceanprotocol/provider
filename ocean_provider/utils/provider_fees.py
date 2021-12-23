@@ -15,7 +15,6 @@ from ocean_provider.utils.services import Service
 from web3.main import Web3
 
 
-
 setup_logging()
 logger = logging.getLogger(__name__)
 keys = KeyAPI(NativeECCBackend)
