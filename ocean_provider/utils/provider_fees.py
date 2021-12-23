@@ -10,7 +10,7 @@ from eth_account.account import Account
 from eth_account.messages import encode_defunct
 import logging
 from ocean_provider.log import setup_logging
-from eth_keys import KeyAPI, keys
+from eth_keys import KeyAPI
 from eth_keys.backends import NativeECCBackend
 
 
@@ -47,8 +47,8 @@ def get_provider_fees(
         "providerFeeToken": provider_fee_token,
         "providerFeeAmount": provider_fee_amount,
         "providerData": Web3.toHex(Web3.toBytes(text=provider_data)),
-        "v": signed.v
-        + 27,  # make it compatible with last openzepellin https://github.com/OpenZeppelin/openzeppelin-contracts/pull/1622
+        # make it compatible with last openzepellin https://github.com/OpenZeppelin/openzeppelin-contracts/pull/1622
+        "v": signed.v + 27,  
         "r": Web3.toHex(Web3.toBytes(signed.r).rjust(32, b"\0")),
         "s": Web3.toHex(Web3.toBytes(signed.s).rjust(32, b"\0")),
     }

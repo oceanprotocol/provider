@@ -4,13 +4,22 @@ from jsonsempai import magic  # noqa: F401
 from artifacts import ERC20Template
 from eth_typing.encoding import HexStr
 from eth_typing.evm import HexAddress
+from eth_keys import KeyAPI
+from eth_keys.backends import NativeECCBackend
 from hexbytes import HexBytes
+from ocean_provider.utils.basics import get_provider_wallet
+from ocean_provider.log import setup_logging
 from ocean_provider.utils.services import Service
 from web3.contract import Contract
 from web3.logs import DISCARD
 from web3.main import Web3
 from websockets import ConnectionClosed
-from ocean_provider.utils.basics import get_provider_wallet
+
+import logging
+
+setup_logging()
+logger = logging.getLogger(__name__)
+keys = KeyAPI(NativeECCBackend)
 
 
 def get_datatoken_contract(web3: Web3, address: Optional[str] = None) -> Contract:
@@ -42,7 +51,7 @@ def verify_order_tx(
     except ConnectionClosed:
         # try again in this case
         tx_receipt = get_tx_receipt(web3, tx_id)
-
+    logger.error(tx_receipt)
     if tx_receipt is None:
         raise AssertionError(
             "Failed to get tx receipt for the `startOrder` transaction.."
@@ -69,13 +78,31 @@ def verify_order_tx(
             f"Multiple order events in the same transaction !!! {provider_fee_order_log}"
         )
 
-    if Web3.toChecksumAddress(
-        provider_fee_order_log.args.providerFeeAddress
-    ) == Web3.toChecksumAddress(provider_wallet.address):
+    if Web3.toChecksumAddress(provider_fee_order_log.args.providerFeeAddress) != Web3.toChecksumAddress(provider_wallet.address):
         raise AssertionError(
             f"The providerFeeAddress {provider_fee_order_log.args.providerFeeAddress} in the event does "
             f"not match the provider address {provider_wallet.address}\n"
         )
+
+    #TO DO  - check signature
+    bts = b"".join([provider_fee_order_log.args.r,provider_fee_order_log.args.s,Web3.toBytes(provider_fee_order_log.args.v-27)])
+    signature = keys.Signature(signature_bytes=bts)
+    message = Web3.solidityKeccak(
+        ["bytes", "address", "address", "uint256"],
+        [
+            provider_fee_order_log.args.providerData,
+            provider_fee_order_log.args.providerFeeAddress,
+            provider_fee_order_log.args.providerFeeToken,
+            provider_fee_order_log.args.providerFeeAmount,
+        ],
+    )
+    pk = keys.PrivateKey(provider_wallet.key)
+    if not keys.ecdsa_verify(message, signature, pk.public_key):
+        raise AssertionError(f"Provider was not able to check the signed message in ProviderFees event\n")
+
+    #TO DO - check transfer of providerFeeAmount providerFeeToken to providerFeeAddress
+    
+    
     # end check provider fees
 
     datatoken_contract = get_datatoken_contract(web3, datatoken_address)
