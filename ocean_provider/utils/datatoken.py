@@ -78,14 +78,22 @@ def verify_order_tx(
             f"Multiple order events in the same transaction !!! {provider_fee_order_log}"
         )
 
-    if Web3.toChecksumAddress(provider_fee_order_log.args.providerFeeAddress) != Web3.toChecksumAddress(provider_wallet.address):
+    if Web3.toChecksumAddress(
+        provider_fee_order_log.args.providerFeeAddress
+    ) != Web3.toChecksumAddress(provider_wallet.address):
         raise AssertionError(
             f"The providerFeeAddress {provider_fee_order_log.args.providerFeeAddress} in the event does "
             f"not match the provider address {provider_wallet.address}\n"
         )
 
-    #TO DO  - check signature
-    bts = b"".join([provider_fee_order_log.args.r,provider_fee_order_log.args.s,Web3.toBytes(provider_fee_order_log.args.v-27)])
+    # TO DO  - check signature
+    bts = b"".join(
+        [
+            provider_fee_order_log.args.r,
+            provider_fee_order_log.args.s,
+            Web3.toBytes(provider_fee_order_log.args.v - 27),
+        ]
+    )
     signature = keys.Signature(signature_bytes=bts)
     message = Web3.solidityKeccak(
         ["bytes", "address", "address", "uint256"],
@@ -98,11 +106,12 @@ def verify_order_tx(
     )
     pk = keys.PrivateKey(provider_wallet.key)
     if not keys.ecdsa_verify(message, signature, pk.public_key):
-        raise AssertionError(f"Provider was not able to check the signed message in ProviderFees event\n")
+        raise AssertionError(
+            f"Provider was not able to check the signed message in ProviderFees event\n"
+        )
 
-    #TO DO - check transfer of providerFeeAmount providerFeeToken to providerFeeAddress
-    
-    
+    # TO DO - check transfer of providerFeeAmount providerFeeToken to providerFeeAddress
+
     # end check provider fees
 
     datatoken_contract = get_datatoken_contract(web3, datatoken_address)

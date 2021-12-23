@@ -48,7 +48,7 @@ def get_provider_fees(
         "providerFeeAmount": provider_fee_amount,
         "providerData": Web3.toHex(Web3.toBytes(text=provider_data)),
         # make it compatible with last openzepellin https://github.com/OpenZeppelin/openzeppelin-contracts/pull/1622
-        "v": signed.v + 27,  
+        "v": signed.v + 27,
         "r": Web3.toHex(Web3.toBytes(signed.r).rjust(32, b"\0")),
         "s": Web3.toHex(Web3.toBytes(signed.s).rjust(32, b"\0")),
     }
