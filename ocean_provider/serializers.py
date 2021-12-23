@@ -53,9 +53,9 @@ class StageAlgoSerializer:
             "serviceEndpoint": self.algo_service.service_endpoint,
             "txId": algorithm_tx_id,
             "serviceId": self.algo_service.id,
+            "userData": self.algo_data.get("algouserdata", None),
         }
-        userdata = self.algo_data.get("algouserdata")
-        if userdata:
-            dict_template["algouserdata"] = userdata
-
+        dict_template["algoCustomData"] = self.algo_data.get(
+            "algoCustomParameters", None
+        )
         return dict(dict_template)
