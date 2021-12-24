@@ -296,7 +296,7 @@ def computeStart():
       503:
         description: Service unavailable
     """
-    data = get_request_data(request)
+    data = request.json
     logger.info(f"computeStart called. {data}")
 
     try:

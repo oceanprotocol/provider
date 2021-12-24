@@ -64,29 +64,26 @@ def test_compute_norawalgo_allowed(
     )
 
     # Start the compute job
-    payload = dict(
-        {
-            "signature": signature,
-            "nonce": nonce,
+    payload = {
+        "dataset": {
             "documentId": dataset_ddo_w_compute_service.did,
             "serviceId": sa.id,
-            "algorithmServiceId": sa.id,
-            "consumerAddress": consumer_address,
             "transferTxId": tx_id,
-            "dataToken": sa.datatoken_address,
-            "output": build_stage_output_dict(
-                dict(), sa.service_endpoint, consumer_address, publisher_wallet
-            ),
-            "algorithmMeta": algorithm_meta,
-            "algorithmDataToken": "",
-        }
-    )
+        },
+        "algorithm": {
+            "meta": algorithm_meta
+        },
+        "signature": signature,
+        "nonce": nonce,
+        "consumerAddress": consumer_address,
+    }
 
     response = post_to_compute(client, payload)
 
     assert (
         response.status == "400 BAD REQUEST"
     ), f"start compute job failed: {response.status} , {response.data}"
+    assert "cannot run raw algorithm on this did" in response.json["error"]
 
 
 @pytest.mark.integration
