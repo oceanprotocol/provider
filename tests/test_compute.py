@@ -103,23 +103,20 @@ def test_compute_specific_algo_dids(
     not_sa_compute = another_alg_ddo.get_service_by_type(ServiceType.ACCESS)
 
     # Start the compute job
-    payload = dict(
-        {
-            "signature": signature,
-            "nonce": nonce,
+    payload = {
+        "dataset": {
             "documentId": ddo.did,
             "serviceId": sa.id,
-            "algorithmServiceId": sa.id,
-            "consumerAddress": consumer_address,
             "transferTxId": tx_id,
-            "dataToken": sa.datatoken_address,
-            "output": build_stage_output_dict(
-                dict(), sa.service_endpoint, consumer_address, publisher_wallet
-            ),
-            "algorithmDid": another_alg_ddo.did,
-            "algorithmDataToken": not_sa_compute.datatoken_address,
-        }
-    )
+        },
+        "algorithm": {
+            "serviceId": not_sa_compute.id,
+            "documentId": another_alg_ddo.did,
+        },
+        "signature": signature,
+        "nonce": nonce,
+        "consumerAddress": consumer_address,
+    }
 
     response = post_to_compute(client, payload)
 
@@ -142,24 +139,21 @@ def test_compute(client, publisher_wallet, consumer_wallet):
     nonce, signature = get_compute_signature(client, consumer_wallet, ddo.did)
 
     # Start the compute job
-    payload = dict(
-        {
-            "signature": signature,
-            "nonce": nonce,
+    payload = {
+        "dataset": {
             "documentId": ddo.did,
             "serviceId": sa.id,
-            "algorithmServiceId": sa_compute.id,
-            "consumerAddress": consumer_wallet.address,
             "transferTxId": tx_id,
-            "dataToken": sa.datatoken_address,
-            "output": build_stage_output_dict(
-                dict(), sa.service_endpoint, consumer_wallet.address, publisher_wallet
-            ),
-            "algorithmDid": alg_ddo.did,
-            "algorithmDataToken": sa_compute.datatoken_address,
-            "algorithmTransferTxId": alg_tx_id,
-        }
-    )
+        },
+        "algorithm": {
+            "serviceId": sa_compute.id,
+            "documentId": alg_ddo.did,
+            "transferTxId": alg_tx_id,
+        },
+        "signature": signature,
+        "nonce": nonce,
+        "consumerAddress": consumer_wallet.address,
+    }
 
     # Start compute using invalid signature (withOUT nonce), should fail
     msg = f"{consumer_wallet.address}{ddo.did}"
