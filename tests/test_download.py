@@ -44,7 +44,6 @@ def test_download_service(client, publisher_wallet, consumer_wallet, web3, userd
     payload = {
         "documentId": asset.did,
         "serviceId": service.id,
-        "serviceType": service.type,
         "dataToken": service.datatoken_address,
         "consumerAddress": consumer_wallet.address,
         "transferTxId": tx_id,
@@ -203,7 +202,6 @@ def test_download_multiple_files(client, publisher_wallet, consumer_wallet, web3
     payload = {
         "documentId": asset.did,
         "serviceId": service.id,
-        "serviceType": service.type,
         "dataToken": service.datatoken_address,
         "consumerAddress": consumer_wallet.address,
         "signature": sign_message(_msg, consumer_wallet),

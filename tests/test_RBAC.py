@@ -71,7 +71,6 @@ def test_initialize_request_payload(
     req = {
         "documentId": asset.did,
         "serviceId": service.id,
-        "serviceType": service.type,
         "dataToken": service.datatoken_address,
         "consumerAddress": consumer_wallet.address,
     }
@@ -99,7 +98,6 @@ def test_access_request_payload(
     req = {
         "documentId": asset.did,
         "serviceId": service.id,
-        "serviceType": service.type,
         "dataToken": service.datatoken_address,
         "consumerAddress": consumer_wallet.address,
         "transferTxId": "0xsometx",
@@ -143,7 +141,6 @@ def test_compute_payload_without_additional_inputs(
         "documentId": ddo.did,
         "serviceId": sa.id,
         "algorithmServiceId": sa_compute.id,
-        "serviceType": sa.type,
         "consumerAddress": consumer_wallet.address,
         "transferTxId": "0xsometx",
         "dataToken": sa.datatoken_address,
@@ -195,7 +192,6 @@ def test_compute_request_payload(
         "documentId": ddo.did,
         "serviceId": sa.id,
         "algorithmServiceId": sa_compute.id,
-        "serviceType": sa.type,
         "consumerAddress": consumer_wallet.address,
         "transferTxId": "0xsometx",
         "dataToken": sa.datatoken_address,
@@ -255,7 +251,6 @@ def test_fails(
         "documentId": ddo.did,
         "serviceId": sa.id,
         "algorithmServiceId": sa_compute.id,
-        "serviceType": sa.type,
         "consumerAddress": consumer_wallet.address,
         "transferTxId": tx_id,
         "output": build_stage_output_dict(

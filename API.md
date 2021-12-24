@@ -4,15 +4,15 @@ SPDX-License-Identifier: Apache-2.0
 -->
 # Ocean Provider Endpoints Specification
 
-This document specifies the endpoints for Ocean Provider to be implemented by the core 
-developers. The final implementation and its documentation happens in Swagger 
-inline code comments and the latest implemented API documentation can be 
+This document specifies the endpoints for Ocean Provider to be implemented by the core
+developers. The final implementation and its documentation happens in Swagger
+inline code comments and the latest implemented API documentation can be
 accessed via:
 
 - [Docs: Provider API Reference](https://docs.oceanprotocol.com/references/ocean_provider/)
 
 
-## nonce endpoint 
+## nonce endpoint
 ### GET /api/services/nonce
 Parameters
 ```
@@ -79,7 +79,6 @@ Parameters
 ```
     documentId: String object containing document id (e.g. a DID)
     serviceId: String, representing the list of `file` objects that describe each file in the dataset
-    serviceType: String such as "access" or "compute"
     consumerAddress: String object containing publisher's ethereum address
 ```
 
@@ -94,7 +93,6 @@ payload:
 {
     "documentId":"0x1111",
     "serviceId": 0,
-    "serviceType": "access",
     "dataToken": "",
     "consumerAddress":"0x990922334",
 ```
@@ -118,11 +116,10 @@ Parameters
 ```
     documentId: String object containing document id (e.g. a DID)
     serviceId: String, representing the list of `file` objects that describe each file in the dataset
-    serviceType: String such as "access" or "compute"
     fileIndex: integer, the index of the file from the files list in the dataset
     signature: String object containg user signature (signed message)
     consumerAddress: String object containing publisher's ethereum address
-    transactionId: Hex string -- the id of on-chain transaction for approval of DataTokens transfer 
+    transactionId: Hex string -- the id of on-chain transaction for approval of DataTokens transfer
         given to the provider's account
 ```
 
@@ -137,7 +134,6 @@ payload:
 {
     "documentId":"0x1111",
     "serviceId": 0,
-    "serviceType": "access",
     "fileIndex": 0,
     "dataToken": "",
     "consumerAddress":"0x990922334",
@@ -154,8 +150,8 @@ Response:
 ```
 
 ## Compute endpoints
-All compute endpoints respond with an Array of status objects, each object 
-describing a compute job info. 
+All compute endpoints respond with an Array of status objects, each object
+describing a compute job info.
 
 Each status object will contain:
 ```
@@ -215,8 +211,8 @@ Parameters
     algorithmDid: hex str the did of the algorithm to be executed
     algorithmMeta: json object that define the algorithm attributes and url or raw code
     jobId: String object containing workflowID (optional)
-    transferTxId: hex str the transaction id (hash) of the token transfer, must match the 
-        amount of data tokens expressed in the `initialize` endpoint  
+    transferTxId: hex str the transaction id (hash) of the token transfer, must match the
+        amount of data tokens expressed in the `initialize` endpoint
     serviceId: integer identifies a service in the list of services in the DDO document
     serviceType: type of service that serviceId refers to, must be `compute` in this case
     dataToken: hex str the ERC20 contract address of the DataToken attached to the documentId (did)
@@ -248,11 +244,11 @@ Response:
 
 
 ## Status and Result
-  
-  
+
+
 ### GET /api/services/compute
-   
-   
+
+
 Get all jobs and corresponding stats
 
 Parameters
@@ -311,10 +307,10 @@ Response:
        }
  ]
  ```
-       
+
 ## Stop
-  
-  
+
+
 ### PUT /api/services/compute
 
 Stop a running compute job.

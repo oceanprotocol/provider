@@ -313,7 +313,6 @@ class InitializeRequest(CustomJsonRequest):
         return {
             "documentId": ["required"],
             "serviceId": ["required"],
-            "serviceType": ["required"],
             "dataToken": ["required"],
             "consumerAddress": ["required"],
         }

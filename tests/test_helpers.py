@@ -409,7 +409,6 @@ def initialize_service(
         json={
             "documentId": did,
             "serviceId": service_id,
-            "serviceType": service_type,
             "dataToken": datatoken_address,
             "consumerAddress": from_wallet.address,
         },

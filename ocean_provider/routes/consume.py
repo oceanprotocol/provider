@@ -307,7 +307,6 @@ def download():
                 "documentId": data.get("did"),
                 "consumerAddress": data.get("consumerAddress"),
                 "serviceId": data.get("serviceId"),
-                "serviceType": data.get("serviceType"),
             },
             logger,
         )
