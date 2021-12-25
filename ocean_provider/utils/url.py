@@ -200,8 +200,8 @@ def _get_result_from_url(url, with_checksum=False):
     return r, {"checksum": sha.hexdigest(), "checksumType": "sha256"}
 
 
-def append_userdata(url, data, key="userdata"):
-    userdata = data.get(key)
+def append_userdata(url, data):
+    userdata = data.get("userdata")
 
     if not userdata:
         return url

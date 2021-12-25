@@ -144,7 +144,7 @@ class WorkflowValidator:
 
             try:
                 self.algo_service = algo.get_service_by_id(algorithm_service_id)
-                algorithm_token_address = self.algo_service.sa.datatoken_address
+                algorithm_token_address = self.algo_service.datatoken_address
 
                 if self.algo_service.type == "compute":
                     asset_urls = get_service_files_list(
