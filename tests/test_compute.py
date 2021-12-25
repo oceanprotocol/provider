@@ -390,24 +390,21 @@ def test_compute_delete_job(
     nonce, signature = get_compute_signature(client, consumer_wallet, ddo.did)
 
     # Start the compute job
-    payload = dict(
-        {
-            "signature": signature,
-            "nonce": nonce,
+    payload = {
+        "dataset": {
             "documentId": ddo.did,
             "serviceId": sa.id,
-            "algorithmServiceId": sa_compute.id,
-            "consumerAddress": consumer_wallet.address,
             "transferTxId": tx_id,
-            "dataToken": sa.datatoken_address,
-            "output": build_stage_output_dict(
-                dict(), sa.service_endpoint, consumer_wallet.address, publisher_wallet
-            ),
-            "algorithmDid": alg_ddo.did,
-            "algorithmDataToken": sa_compute.datatoken_address,
-            "algorithmTransferTxId": alg_tx_id,
-        }
-    )
+        },
+        "algorithm": {
+            "documentId": alg_ddo.did,
+            "serviceId": sa_compute.id,
+            "transferTxId": alg_tx_id,
+        },
+        "signature": signature,
+        "nonce": nonce,
+        "consumerAddress": consumer_wallet.address,
+    }
 
     response = post_to_compute(client, payload)
     assert response.status == "200 OK", f"start compute job failed: {response.data}"
