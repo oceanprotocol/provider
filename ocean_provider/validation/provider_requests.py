@@ -257,7 +257,7 @@ class ComputeStartRequest(CustomJsonRequest):
             "nonce": ["bail", "required", "numeric"],
             "signature": [
                 "required",
-                #TODO"signature:consumerAddress,dataset.documentId,jobId,nonce",
+                # TODO"signature:consumerAddress,dataset.documentId,jobId,nonce",
             ],
         }
 

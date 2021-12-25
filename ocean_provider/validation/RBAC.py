@@ -50,11 +50,11 @@ class RBACValidator:
         return not response.json()
 
     def get_dids(self):
-        main_key = self.request["dataset"] if "dataset" in self.request else self.request
+        main_key = (
+            self.request["dataset"] if "dataset" in self.request else self.request
+        )
 
-        return [
-            {"did": main_key["documentId"], "serviceId": main_key["serviceId"]}
-        ]
+        return [{"did": main_key["documentId"], "serviceId": main_key["serviceId"]}]
 
     def get_algos(self):
         return [
