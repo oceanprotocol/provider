@@ -65,6 +65,9 @@ class WorkflowValidator:
         main_input = self.data["dataset"]
         additional_inputs = self.data.get("additionalDatasets", list())
 
+        if not additional_inputs:
+            additional_inputs = []
+
         if not isinstance(additional_inputs, list):
             self.error = "Additional input is invalid or can not be decoded."
             return False

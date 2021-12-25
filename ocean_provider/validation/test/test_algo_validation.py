@@ -22,37 +22,36 @@ def test_passes(
     sa = ddo.get_service_by_type(ServiceType.COMPUTE)
 
     data = {
-        "documentId": ddo.did,
-        "serviceId": sa.id,
-        "algorithmServiceId": sa_compute.id,
-        "transferTxId": tx_id,
-        "output": build_stage_output_dict(
-            dict(), sa.service_endpoint, consumer_address, publisher_wallet
-        ),
-        "algorithmDid": alg_ddo.did,
-        "algorithmDataToken": sa_compute.datatoken_address,
-        "algorithmTransferTxId": alg_tx_id,
+        "dataset": {
+            "documentId": ddo.did,
+            "serviceId": sa.id,
+            "transferTxId": tx_id,
+        },
+        "algorithm": {
+            "documentId": alg_ddo.did,
+            "serviceId": sa_compute.id,
+            "transferTxId": alg_tx_id,
+        },
     }
 
     validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
     assert validator.validate() is True
 
     data = {
-        "documentId": ddo.did,
-        "serviceId": sa.id,
-        "algorithmServiceId": sa_compute.id,
-        "transferTxId": tx_id,
-        "output": build_stage_output_dict(
-            dict(), sa.service_endpoint, consumer_address, publisher_wallet
-        ),
-        "algorithmMeta": json.dumps(
-            {
+        "dataset": {
+            "documentId": ddo.did,
+            "serviceId": sa.id,
+            "transferTxId": tx_id,
+        },
+        "algorithm": {
+            "serviceId": sa_compute.id,
+            "meta": {
                 "rawcode": "console.log('Hello world'!)",
                 "format": "docker-image",
                 "version": "0.1",
                 "container": {"entrypoint": "node $ALGO", "image": "node", "tag": "10"},
-            }
-        ),
+            },
+        },
     }
     validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
     assert validator.validate() is True
@@ -74,34 +73,18 @@ def test_fails(
     sa = ddo.get_service_by_type(ServiceType.COMPUTE)
     alg_data_token = sa_compute.datatoken_address
 
-    # output key is invalid
-    data = {
-        "documentId": did,
-        "transferTxId": tx_id,
-        "serviceId": sa.id,
-        "algorithmServiceId": sa_compute.id,
-        "output": "this can not be decoded",
-        "algorithmDid": alg_ddo.did,
-        "algorithmDataToken": alg_data_token,
-        "algorithmTransferTxId": alg_tx_id,
-    }
-
-    validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
-    assert validator.validate() is False
-    assert validator.error == "Output is invalid or can not be decoded."
-
     # algorithmDid is not actually an algorithm
     data = {
-        "documentId": did,
-        "transferTxId": tx_id,
-        "serviceId": sa.id,
-        "algorithmServiceId": sa_compute.id,
-        "output": build_stage_output_dict(
-            dict(), sa.service_endpoint, consumer_address, publisher_wallet
-        ),
-        "algorithmDid": did,
-        "algorithmDataToken": alg_data_token,
-        "algorithmTransferTxId": alg_tx_id,
+        "dataset": {
+            "documentId": did,
+            "transferTxId": tx_id,
+            "serviceId": sa.id,
+        },
+        "algorithm": {
+            "documentId": did,
+            "serviceId": sa_compute.id,
+            "transferTxId": alg_tx_id,
+        },
     }
 
     validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
@@ -114,12 +97,15 @@ def test_fails(
 
     # algorithmMeta doesn't contain 'url' or 'rawcode'
     data = {
-        "documentId": did,
-        "transferTxId": tx_id,
-        "serviceId": sa.id,
-        "algorithmServiceId": sa_compute.id,
-        "output": valid_output,
-        "algorithmMeta": {},
+        "dataset": {
+            "documentId": did,
+            "transferTxId": tx_id,
+            "serviceId": sa.id,
+        },
+        "algorithm": {
+            "serviceId": sa_compute.id,
+            "meta": {},
+        },
     }
 
     validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
@@ -131,16 +117,19 @@ def test_fails(
 
     # algorithmMeta container is empty
     data = {
-        "documentId": did,
-        "transferTxId": tx_id,
-        "serviceId": sa.id,
-        "algorithmServiceId": sa_compute.id,
-        "output": valid_output,
-        "algorithmMeta": {
-            "rawcode": "console.log('Hello world'!)",
-            "format": "docker-image",
-            "version": "0.1",
-            "container": {},
+        "dataset": {
+            "documentId": did,
+            "transferTxId": tx_id,
+            "serviceId": sa.id,
+        },
+        "algorithm": {
+            "serviceId": sa_compute.id,
+            "meta": {
+                "rawcode": "console.log('Hello world'!)",
+                "format": "docker-image",
+                "version": "0.1",
+                "container": {},
+            },
         },
     }
 
@@ -153,16 +142,19 @@ def test_fails(
 
     # algorithmMeta container is missing image
     data = {
-        "documentId": did,
-        "transferTxId": tx_id,
-        "serviceId": sa.id,
-        "output": valid_output,
-        "algorithmServiceId": sa_compute.id,
-        "algorithmMeta": {
-            "rawcode": "console.log('Hello world'!)",
-            "format": "docker-image",
-            "version": "0.1",
-            "container": {"entrypoint": "node $ALGO", "tag": "10"},
+        "dataset": {
+            "documentId": did,
+            "transferTxId": tx_id,
+            "serviceId": sa.id,
+        },
+        "algorithm": {
+            "serviceId": sa_compute.id,
+            "meta": {
+                "rawcode": "console.log('Hello world'!)",
+                "format": "docker-image",
+                "version": "0.1",
+                "container": {"entrypoint": "node $ALGO", "tag": "10"},
+            },
         },
     }
 
@@ -175,15 +167,17 @@ def test_fails(
 
     # Additional Input validations ###
     data = {
-        "documentId": did,
-        "transferTxId": tx_id,
-        "serviceId": sa.id,
-        "algorithmServiceId": sa_compute.id,
-        "output": valid_output,
-        "algorithmDid": alg_ddo.did,
-        "algorithmDataToken": alg_data_token,
-        "algorithmTransferTxId": alg_tx_id,
-        "additionalInputs": "",
+        "dataset": {
+            "documentId": did,
+            "transferTxId": tx_id,
+            "serviceId": sa.id,
+        },
+        "algorithm": {
+            "serviceId": sa_compute.id,
+            "documentId": alg_ddo.did,
+            "transferTxId": alg_tx_id,
+        },
+        "additionalDatasets": "",
     }
 
     validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
@@ -191,15 +185,17 @@ def test_fails(
 
     # additional input is invalid
     data = {
-        "documentId": did,
-        "transferTxId": tx_id,
-        "serviceId": sa.id,
-        "algorithmServiceId": sa_compute.id,
-        "output": valid_output,
-        "algorithmDid": alg_ddo.did,
-        "algorithmDataToken": alg_data_token,
-        "algorithmTransferTxId": alg_tx_id,
-        "additionalInputs": "i can not be decoded in json!",
+        "dataset": {
+            "documentId": did,
+            "transferTxId": tx_id,
+            "serviceId": sa.id,
+        },
+        "algorithm": {
+            "serviceId": sa_compute.id,
+            "documentId": alg_ddo.did,
+            "transferTxId": alg_tx_id,
+        },
+        "additionalDatasets": "i can not be decoded in json!",
     }
 
     validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
@@ -208,15 +204,17 @@ def test_fails(
 
     # Missing did in additional input
     data = {
-        "documentId": did,
-        "transferTxId": tx_id,
-        "serviceId": sa.id,
-        "algorithmServiceId": sa_compute.id,
-        "output": valid_output,
-        "algorithmDid": alg_ddo.did,
-        "algorithmDataToken": alg_data_token,
-        "algorithmTransferTxId": alg_tx_id,
-        "additionalInputs": [{"transferTxId": tx_id, "serviceId": sa.id}],
+        "dataset": {
+            "documentId": did,
+            "transferTxId": tx_id,
+            "serviceId": sa.id,
+        },
+        "algorithm": {
+            "serviceId": sa_compute.id,
+            "documentId": alg_ddo.did,
+            "transferTxId": alg_tx_id,
+        },
+        "additionalDatasets": [{"transferTxId": tx_id, "serviceId": sa.id}],
     }
 
     validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
@@ -225,15 +223,17 @@ def test_fails(
 
     # Did is not valid
     data = {
-        "documentId": did,
-        "transferTxId": tx_id,
-        "serviceId": sa.id,
-        "algorithmServiceId": sa_compute.id,
-        "output": valid_output,
-        "algorithmDid": alg_ddo.did,
-        "algorithmDataToken": alg_data_token,
-        "algorithmTransferTxId": alg_tx_id,
-        "additionalInputs": [
+        "dataset": {
+            "documentId": did,
+            "transferTxId": tx_id,
+            "serviceId": sa.id,
+        },
+        "algorithm": {
+            "serviceId": sa_compute.id,
+            "documentId": alg_ddo.did,
+            "transferTxId": alg_tx_id,
+        },
+        "additionalDatasets": [
             {
                 "documentId": "i am not a did",
                 "transferTxId": tx_id,
@@ -252,15 +252,17 @@ def test_fails(
     # Service is not compute, nor access
     other_service = [s for s in ddo.services if s.type not in ["compute", "access"]][0]
     data = {
-        "documentId": did,
-        "transferTxId": tx_id,
-        "serviceId": sa.id,
-        "algorithmServiceId": sa_compute.id,
-        "output": valid_output,
-        "algorithmDid": alg_ddo.did,
-        "algorithmDataToken": alg_data_token,
-        "algorithmTransferTxId": alg_tx_id,
-        "additionalInputs": [
+        "dataset": {
+            "documentId": did,
+            "transferTxId": tx_id,
+            "serviceId": sa.id,
+        },
+        "algorithm": {
+            "serviceId": sa_compute.id,
+            "documentId": alg_ddo.did,
+            "transferTxId": alg_tx_id,
+        },
+        "additionalDatasets": [
             {"documentId": did, "transferTxId": tx_id, "serviceId": other_service.id}
         ],
     }
@@ -279,15 +281,17 @@ def test_fails(
     trust_sa = trust_ddo.get_service_by_type(ServiceType.COMPUTE)
 
     data = {
-        "documentId": did,
-        "transferTxId": tx_id,
-        "serviceId": sa.id,
-        "algorithmServiceId": sa_compute.id,
-        "output": valid_output,
-        "algorithmDid": alg_ddo.did,
-        "algorithmDataToken": alg_data_token,
-        "algorithmTransferTxId": alg_tx_id,
-        "additionalInputs": [
+        "dataset": {
+            "documentId": did,
+            "transferTxId": tx_id,
+            "serviceId": sa.id,
+        },
+        "algorithm": {
+            "serviceId": sa_compute.id,
+            "documentId": alg_ddo.did,
+            "transferTxId": alg_tx_id,
+        },
+        "additionalDatasets": [
             {
                 "documentId": trust_ddo.did,
                 "transferTxId": trust_tx_id,
@@ -316,22 +320,19 @@ def test_fails(
     trust_sa = trust_ddo.get_service_by_type(ServiceType.COMPUTE)
     sa_compute = alg_ddo.get_service_by_type(ServiceType.ACCESS)
     sa = trust_ddo.get_service_by_type(ServiceType.COMPUTE)
-    alg_data_token = sa_compute.datatoken_address
-
-    valid_output = build_stage_output_dict(
-        dict(), sa.service_endpoint, consumer_address, publisher_wallet
-    )
 
     data = {
-        "documentId": did,
-        "transferTxId": trust_tx_id,
-        "serviceId": sa.id,
-        "algorithmServiceId": sa_compute.id,
-        "output": valid_output,
-        "algorithmDid": alg_ddo.did,
-        "algorithmDataToken": alg_data_token,
-        "algorithmTransferTxId": alg_tx_id,
-        "additionalInputs": [
+        "dataset": {
+            "documentId": did,
+            "transferTxId": trust_tx_id,
+            "serviceId": sa.id,
+        },
+        "algorithm": {
+            "documentId": alg_ddo.did,
+            "serviceId": sa_compute.id,
+            "transferTxId": alg_tx_id,
+        },
+        "additionalDatasets": [
             {
                 "documentId": trust_ddo.did,
                 "transferTxId": trust_tx_id,
@@ -343,46 +344,3 @@ def test_fails(
     validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
     assert validator.validate() is False
     assert validator.error == "this algorithm is not from a trusted publisher"
-
-    # Missing algorithmServiceId param ###
-    sa_compute = alg_ddo.get_service_by_type(ServiceType.ACCESS)
-    sa = ddo.get_service_by_type(ServiceType.COMPUTE)
-
-    data = {
-        "documentId": ddo.did,
-        "serviceId": sa.id,
-        "transferTxId": tx_id,
-        "output": build_stage_output_dict(
-            dict(), sa.service_endpoint, consumer_address, publisher_wallet
-        ),
-        "algorithmDid": alg_ddo.did,
-        "algorithmDataToken": sa_compute.datatoken_address,
-        "algorithmTransferTxId": alg_tx_id,
-    }
-
-    validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
-    assert validator.validate() is False
-    assert validator.error == "No algorithmServiceId in input item."
-
-    # AlgorithmServiceId and algorithmTransferTxId are not matching ###
-    sa_compute = alg_ddo.get_service_by_type(ServiceType.ACCESS)
-    sa = ddo.get_service_by_type(ServiceType.COMPUTE)
-
-    data = {
-        "documentId": ddo.did,
-        "serviceId": sa.id,
-        "algorithmServiceId": sa_compute.id,
-        "transferTxId": tx_id,
-        "output": build_stage_output_dict(
-            dict(), sa.service_endpoint, consumer_address, publisher_wallet
-        ),
-        "algorithmDid": alg_ddo.did,
-        "algorithmDataToken": sa_compute.datatoken_address,
-        "algorithmTransferTxId": "0x12345",
-    }
-
-    validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
-    assert validator.validate() is False
-    assert (
-        validator.error == "Algorithm is already in use or can not be found on chain."
-    )
