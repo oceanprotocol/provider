@@ -282,7 +282,6 @@ class DownloadRequest(CustomJsonRequest):
         return {
             "documentId": ["bail", "required"],
             "serviceId": ["required"],
-            "dataToken": ["required"],
             "consumerAddress": ["bail", "required"],
             "transferTxId": ["bail", "required"],
             "fileIndex": ["required"],
@@ -312,6 +311,6 @@ class InitializeRequest(CustomJsonRequest):
         return {
             "documentId": ["required"],
             "serviceId": ["required"],
-            "dataToken": ["required"],
             "consumerAddress": ["required"],
+            # TODO: more validations after adding userdata and env
         }

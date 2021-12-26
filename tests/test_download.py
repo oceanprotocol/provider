@@ -7,11 +7,9 @@ from datetime import datetime
 import pytest
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
-from ocean_provider.utils.currency import to_wei
 from ocean_provider.utils.services import ServiceType
 from ocean_provider.utils.provider_fees import get_provider_fees
 from tests.test_helpers import (
-    BLACK_HOLE_ADDRESS,
     get_dataset_ddo_disabled,
     get_dataset_ddo_with_denied_consumer,
     get_dataset_ddo_with_multiple_files,
@@ -44,7 +42,6 @@ def test_download_service(client, publisher_wallet, consumer_wallet, web3, userd
     payload = {
         "documentId": asset.did,
         "serviceId": service.id,
-        "dataToken": service.datatoken_address,
         "consumerAddress": consumer_wallet.address,
         "transferTxId": tx_id,
         "fileIndex": 0,
@@ -92,9 +89,7 @@ def test_initialize_on_bad_url(client, publisher_wallet, consumer_wallet, web3):
     response = initialize_service(
         client,
         asset.did,
-        service.id,
-        service.type,
-        service.datatoken_address,
+        service,
         consumer_wallet,
         raw_response=True,
     )
@@ -114,9 +109,7 @@ def test_initialize_on_ipfs_url(client, publisher_wallet, consumer_wallet, web3)
     datatoken, nonce, computeAddress, providerFees = initialize_service(
         client,
         asset.did,
-        service.id,
-        service.type,
-        service.datatoken_address,
+        service,
         consumer_wallet,
     )
 
@@ -136,9 +129,7 @@ def test_initialize_on_disabled_asset(client, publisher_wallet, consumer_wallet,
     response = initialize_service(
         client,
         asset.did,
-        service.id,
-        service.type,
-        service.datatoken_address,
+        service,
         consumer_wallet,
         raw_response=True,
     )
@@ -163,9 +154,7 @@ def test_initialize_on_asset_with_custom_credentials(
     response = initialize_service(
         client,
         asset.did,
-        service.id,
-        service.type,
-        service.datatoken_address,
+        service,
         consumer_wallet,
         raw_response=True,
     )
@@ -202,7 +191,6 @@ def test_download_multiple_files(client, publisher_wallet, consumer_wallet, web3
     payload = {
         "documentId": asset.did,
         "serviceId": service.id,
-        "dataToken": service.datatoken_address,
         "consumerAddress": consumer_wallet.address,
         "signature": sign_message(_msg, consumer_wallet),
         "transferTxId": tx_id,

@@ -398,19 +398,19 @@ def wait_for_asset(metadata_cache_url, did, timeout=30):
 def initialize_service(
     client: FlaskClient,
     did: str,
-    service_id: str,
-    service_type: str,
-    datatoken_address: HexAddress,
+    service,
     from_wallet: LocalAccount,
     raw_response=False,
 ):
+    service_id = service.id
+
     response = client.get(
         BaseURLs.SERVICES_URL + "/initialize",
         json={
             "documentId": did,
             "serviceId": service_id,
-            "dataToken": datatoken_address,
             "consumerAddress": from_wallet.address,
+            # TODO: userdata, compute env
         },
     )
 

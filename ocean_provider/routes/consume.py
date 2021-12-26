@@ -153,7 +153,7 @@ def initialize():
 
         service_id = data.get("serviceId")
         service = asset.get_service_by_id(service_id)
-        token_address = data.get("dataToken")
+        token_address = service.datatoken_address
 
         url_object = get_service_files_list(service, provider_wallet)[0]
         download_url = get_download_url(url_object, app.config["PROVIDER_CONFIG_FILE"])
@@ -232,7 +232,6 @@ def download():
     logger.info(f"download endpoint called. {data}")
     try:
         did = data.get("documentId")
-        token_address = data.get("dataToken")
         consumer_address = data.get("consumerAddress")
         service_id = data.get("serviceId")
         tx_id = data.get("transferTxId")
@@ -241,6 +240,7 @@ def download():
         # the Data Token address
         asset = get_asset_from_metadatastore(get_metadata_url(), did)
         service = asset.get_service_by_id(service_id)
+        token_address = service.datatoken_address
 
         if service.type != ServiceType.ACCESS:
             return jsonify(
