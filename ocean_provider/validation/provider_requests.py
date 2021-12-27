@@ -256,8 +256,9 @@ class ComputeStartRequest(CustomJsonRequest):
             "consumerAddress": ["bail", "required"],
             "nonce": ["bail", "required", "numeric"],
             "signature": [
+                "bail",
                 "required",
-                # TODO"signature:consumerAddress,dataset.documentId,jobId,nonce",
+                "signature:consumerAddress,dataset.documentId,jobId,nonce",
             ],
         }
 
@@ -312,5 +313,5 @@ class InitializeRequest(CustomJsonRequest):
             "documentId": ["required"],
             "serviceId": ["required"],
             "consumerAddress": ["required"],
-            # TODO: more validations after adding userdata and env
+            "fileIndex": ["required"],
         }

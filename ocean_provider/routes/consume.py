@@ -32,6 +32,7 @@ from ocean_provider.utils.util import (
     get_request_data,
     get_service_files_list,
     validate_order,
+    validate_url_object,
 )
 from ocean_provider.validation.provider_requests import (
     AssetUrlsRequest,
@@ -145,6 +146,7 @@ def initialize():
     try:
         did = data.get("documentId")
         consumer_address = data.get("consumerAddress")
+        compute_env = data.get("computeEnv")
 
         asset = get_asset_from_metadatastore(get_metadata_url(), did)
         consumable, message = check_asset_consumable(asset, consumer_address, logger)
@@ -153,9 +155,25 @@ def initialize():
 
         service_id = data.get("serviceId")
         service = asset.get_service_by_id(service_id)
+
+        if service.type == "compute" and not compute_env:
+            return (
+                jsonify(
+                    error="The computeEnv is mandatory when initializing a compute service."
+                ),
+                400,
+            )
+
         token_address = service.datatoken_address
 
-        url_object = get_service_files_list(service, provider_wallet)[0]
+        file_index = int(data.get("fileIndex"))
+        url_object = get_service_files_list(service, provider_wallet)[file_index]
+
+        url_valid, message = validate_url_object(url_object, service_id)
+
+        if not url_valid:
+            return (jsonify(error=message), 400)
+
         download_url = get_download_url(url_object, app.config["PROVIDER_CONFIG_FILE"])
         download_url = append_userdata(download_url, data)
         valid, url_details = check_url_details(download_url)
@@ -255,31 +273,10 @@ def download():
         file_index = int(data.get("fileIndex"))
 
         url_object = get_service_files_list(service, provider_wallet)[file_index]
-        if not url_object:
-            return (
-                jsonify(
-                    error=f"Cannot decrypt files for this service. id={service_id}"
-                ),
-                400,
-            )
+        url_valid, message = validate_url_object(url_object, service_id)
 
-        if "type" not in url_object or url_object["type"] not in ["ipfs", "url"]:
-            return (
-                jsonify(
-                    error=f"Malformed or unsupported type for service files. id={service_id}"
-                ),
-                400,
-            )
-
-        if (url_object["type"] == "ipfs" and "hash" not in url_object) or (
-            url_object["type"] == "url" and "url" not in url_object
-        ):
-            return (
-                jsonify(
-                    error=f"Malformed service files, missing required keys. id={service_id}"
-                ),
-                400,
-            )
+        if not url_valid:
+            return (jsonify(error=message), 400)
 
         download_url = get_download_url(url_object, app.config["PROVIDER_CONFIG_FILE"])
         download_url = append_userdata(download_url, data)

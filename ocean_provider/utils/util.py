@@ -131,6 +131,24 @@ def get_service_files_list(service: Service, provider_wallet: LocalAccount) -> l
         return None
 
 
+def validate_url_object(url_object, service_id):
+    if not url_object:
+        return False, f"cannot decrypt files for this service. id={service_id}"
+
+    if "type" not in url_object or url_object["type"] not in ["ipfs", "url"]:
+        return (
+            False,
+            f"malformed or unsupported type for service files. id={service_id}",
+        )
+
+    if (url_object["type"] == "ipfs" and "hash" not in url_object) or (
+        url_object["type"] == "url" and "url" not in url_object
+    ):
+        return False, f"malformed service files, missing required keys. id={service_id}"
+
+    return True, ""
+
+
 def get_download_url(url_object, config_file):
     if url_object["type"] != "ipfs":
         return url_object["url"]

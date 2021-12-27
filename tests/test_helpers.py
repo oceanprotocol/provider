@@ -410,7 +410,8 @@ def initialize_service(
             "documentId": did,
             "serviceId": service_id,
             "consumerAddress": from_wallet.address,
-            # TODO: userdata, compute env
+            "fileIndex": 0,
+            "userdata": '{"dummy_userdata":"XXX", "age":12}',
         },
     )
 
