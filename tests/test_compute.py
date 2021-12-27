@@ -153,13 +153,12 @@ def test_compute(client, publisher_wallet, consumer_wallet):
         "consumerAddress": consumer_wallet.address,
     }
 
-    # TODO
     # Start compute using invalid signature (withOUT nonce), should fail
-    # msg = f"{consumer_wallet.address}{ddo.did}"
-    # payload["signature"] = sign_message(msg, consumer_wallet)
+    msg = f"{consumer_wallet.address}{ddo.did}"
+    payload["signature"] = sign_message(msg, consumer_wallet)
 
-    # response = post_to_compute(client, payload)
-    # assert response.status_code == 400, f"{response.data}"
+    response = post_to_compute(client, payload)
+    assert response.status_code == 400, f"{response.data}"
 
     # Start compute with valid signature
     payload["signature"] = signature
