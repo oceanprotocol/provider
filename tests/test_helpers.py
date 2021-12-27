@@ -304,7 +304,7 @@ def set_metadata(
     contract function"""
     data_nft_contract = get_data_nft_contract(web3, data_nft_address)
     transaction = data_nft_contract.functions.setMetaData(
-        state, provider_url, provider_address, flags, encrypted_ddo, ddo_hash
+        state, provider_url, provider_address, flags, encrypted_ddo, ddo_hash, []
     ).buildTransaction({"from": from_wallet.address, "gasPrice": get_gas_price(web3)})
     return sign_send_and_wait_for_receipt(web3, transaction, from_wallet)
 
