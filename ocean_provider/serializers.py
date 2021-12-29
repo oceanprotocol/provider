@@ -52,7 +52,5 @@ class StageAlgoSerializer:
             "serviceId": self.algo_service.id,
             "userData": self.algo_data.get("algouserdata", None),
         }
-        dict_template["algoCustomData"] = self.algo_data.get(
-            "algocustomdata", None
-        )
+        dict_template["algoCustomData"] = self.algo_data.get("algocustomdata", None)
         return dict(dict_template)
