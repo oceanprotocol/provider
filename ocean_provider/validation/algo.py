@@ -125,6 +125,7 @@ class WorkflowValidator:
         """Returns False if invalid, otherwise sets the validated_algo_dict attribute."""
         algorithm_did = algo_data.get("documentId")
         self.algo_service = None
+        algo = None
 
         if algorithm_did and not algo_data.get("meta"):
             algorithm_tx_id = algo_data.get("transferTxId")
@@ -194,7 +195,11 @@ class WorkflowValidator:
                 return False
 
         algorithm_dict = StageAlgoSerializer(
-            self.consumer_address, self.provider_wallet, algo_data, self.algo_service
+            self.consumer_address,
+            self.provider_wallet,
+            algo_data,
+            self.algo_service,
+            algo,
         ).serialize()
 
         valid, error_msg = validate_formatted_algorithm_dict(

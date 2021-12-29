@@ -53,12 +53,8 @@ def test_passes_algo_ddo(
         "ocean_provider.validation.algo.get_asset_from_metadatastore",
         side_effect=side_effect,
     ):
-        with patch(
-            "ocean_provider.serializers.get_asset_from_metadatastore",
-            return_value=alg_ddo,
-        ):
-            validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
-            assert validator.validate() is True
+        validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
+        assert validator.validate() is True
 
 
 @pytest.mark.unit
@@ -74,7 +70,6 @@ def test_passes_raw(
     """Tests happy flow of validator with raw algo."""
     ddo = Asset(ddo_dict)
     sa = ddo.get_service_by_type(ServiceType.COMPUTE)
-    """Tests happy flow of validator with algo ddo and raw algo."""
     data = {
         "dataset": {
             "documentId": ddo.did,
@@ -240,6 +235,129 @@ def test_fails_meta_issues(
         )
 
 
+@pytest.mark.unit
+@patch("ocean_provider.validation.algo.check_asset_consumable", return_value=(True, ""))
+@patch("ocean_provider.validation.algo.validate_order", return_value=(None, None, None))
+@patch(
+    "ocean_provider.validation.algo.get_service_files_list",
+    return_value=[{"url": "dummy"}],
+)
+def test_additional_datasets(
+    client, provider_wallet, consumer_wallet, consumer_address, publisher_wallet, web3
+):
+    ddo = Asset(ddo_dict)
+    alg_ddo = Asset(alg_ddo_dict)
+    sa_compute = alg_ddo.get_service_by_type(ServiceType.ACCESS)
+    sa = ddo.get_service_by_type(ServiceType.COMPUTE)
+
+    data = {
+        "dataset": {
+            "documentId": ddo.did,
+            "serviceId": sa.id,
+            "transferTxId": "tx_id",
+        },
+        "algorithm": {
+            "documentId": alg_ddo.did,
+            "serviceId": sa_compute.id,
+            "transferTxId": "alg_tx_id",
+        },
+        "additionalDatasets": "",
+    }
+
+    def side_effect(*args, **kwargs):
+        nonlocal ddo, alg_ddo
+        if ddo.did == args[1]:
+            return ddo
+        if alg_ddo.did == args[1]:
+            return alg_ddo
+
+    with patch(
+        "ocean_provider.validation.algo.get_asset_from_metadatastore",
+        side_effect=side_effect,
+    ):
+        validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
+        # basically the same test as test_passes_algo_ddo, additionalDatasets is empty
+        assert validator.validate() is True
+
+    # additional input is invalid
+    data = {
+        "dataset": {
+            "documentId": ddo.did,
+            "transferTxId": "tx_id",
+            "serviceId": sa.id,
+        },
+        "algorithm": {
+            "serviceId": sa_compute.id,
+            "documentId": alg_ddo.did,
+            "transferTxId": "alg_tx_id",
+        },
+        "additionalDatasets": "i can not be decoded in json!",
+    }
+
+    validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
+    assert validator.validate() is False
+    assert validator.error == "Additional input is invalid or can not be decoded."
+
+    did = ddo.did
+
+    # Missing did in additional input
+    data = {
+        "dataset": {
+            "documentId": did,
+            "transferTxId": "tx_id",
+            "serviceId": sa.id,
+        },
+        "algorithm": {
+            "serviceId": sa_compute.id,
+            "documentId": alg_ddo.did,
+            "transferTxId": "alg_tx_id",
+        },
+        "additionalDatasets": [{"transferTxId": "tx_id", "serviceId": sa.id}],
+    }
+
+    with patch(
+        "ocean_provider.validation.algo.get_asset_from_metadatastore",
+        side_effect=side_effect,
+    ):
+        validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
+        assert validator.validate() is False
+        assert (
+            validator.error == "Error in input at index 1: No documentId in input item."
+        )
+
+    # Did is not valid
+    data = {
+        "dataset": {
+            "documentId": did,
+            "transferTxId": "tx_id",
+            "serviceId": sa.id,
+        },
+        "algorithm": {
+            "serviceId": sa_compute.id,
+            "documentId": alg_ddo.did,
+            "transferTxId": "alg_tx_id",
+        },
+        "additionalDatasets": [
+            {
+                "documentId": "i am not a did",
+                "transferTxId": "tx_id",
+                "serviceId": sa.id,
+            }
+        ],
+    }
+
+    with patch(
+        "ocean_provider.validation.algo.get_asset_from_metadatastore",
+        side_effect=side_effect,
+    ):
+        validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
+        assert validator.validate() is False
+        assert (
+            validator.error
+            == "Error in input at index 1: Asset for did i am not a did not found."
+        )
+
+
 @pytest.mark.integration
 def test_fails(
     client, provider_wallet, consumer_wallet, consumer_address, publisher_wallet, web3
@@ -254,90 +372,6 @@ def test_fails(
     did = ddo.did
     sa_compute = alg_ddo.get_service_by_type(ServiceType.ACCESS)
     sa = ddo.get_service_by_type(ServiceType.COMPUTE)
-
-    # Additional Input validations ###
-    data = {
-        "dataset": {
-            "documentId": did,
-            "transferTxId": tx_id,
-            "serviceId": sa.id,
-        },
-        "algorithm": {
-            "serviceId": sa_compute.id,
-            "documentId": alg_ddo.did,
-            "transferTxId": alg_tx_id,
-        },
-        "additionalDatasets": "",
-    }
-
-    validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
-    assert validator.validate() is True
-
-    # additional input is invalid
-    data = {
-        "dataset": {
-            "documentId": did,
-            "transferTxId": tx_id,
-            "serviceId": sa.id,
-        },
-        "algorithm": {
-            "serviceId": sa_compute.id,
-            "documentId": alg_ddo.did,
-            "transferTxId": alg_tx_id,
-        },
-        "additionalDatasets": "i can not be decoded in json!",
-    }
-
-    validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
-    assert validator.validate() is False
-    assert validator.error == "Additional input is invalid or can not be decoded."
-
-    # Missing did in additional input
-    data = {
-        "dataset": {
-            "documentId": did,
-            "transferTxId": tx_id,
-            "serviceId": sa.id,
-        },
-        "algorithm": {
-            "serviceId": sa_compute.id,
-            "documentId": alg_ddo.did,
-            "transferTxId": alg_tx_id,
-        },
-        "additionalDatasets": [{"transferTxId": tx_id, "serviceId": sa.id}],
-    }
-
-    validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
-    assert validator.validate() is False
-    assert validator.error == "Error in input at index 1: No documentId in input item."
-
-    # Did is not valid
-    data = {
-        "dataset": {
-            "documentId": did,
-            "transferTxId": tx_id,
-            "serviceId": sa.id,
-        },
-        "algorithm": {
-            "serviceId": sa_compute.id,
-            "documentId": alg_ddo.did,
-            "transferTxId": alg_tx_id,
-        },
-        "additionalDatasets": [
-            {
-                "documentId": "i am not a did",
-                "transferTxId": tx_id,
-                "serviceId": sa.id,
-            }
-        ],
-    }
-
-    validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
-    assert validator.validate() is False
-    assert (
-        validator.error
-        == "Error in input at index 1: Asset for did i am not a did not found."
-    )
 
     # Service is not compute, nor access
     other_service = [s for s in ddo.services if s.type not in ["compute", "access"]][0]
