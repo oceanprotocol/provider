@@ -2,22 +2,29 @@
 ## Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
-import json
 import pytest
 
+from ocean_provider.utils.asset import Asset
 from ocean_provider.utils.services import ServiceType
 from ocean_provider.validation.algo import WorkflowValidator, build_stage_output_dict
+from tests.ddo.ddo_sample1_compute import ddo_dict, alg_ddo_dict
 from tests.helpers.compute_helpers import build_and_send_ddo_with_compute_service
+from unittest.mock import patch
 
 
-@pytest.mark.integration
+@pytest.mark.unit
+@patch("ocean_provider.validation.algo.check_asset_consumable", return_value=(True, ""))
+@patch("ocean_provider.validation.algo.validate_order", return_value=(None, None, None))
+@patch(
+    "ocean_provider.validation.algo.get_service_files_list",
+    return_value=[{"url": "dummy"}],
+)
 def test_passes(
     client, provider_wallet, consumer_wallet, consumer_address, publisher_wallet, web3
 ):
     """Tests happy flow of validator with algo ddo and raw algo."""
-    ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
-        client, publisher_wallet, consumer_wallet
-    )
+    ddo = Asset(ddo_dict)
+    alg_ddo = Asset(alg_ddo_dict)
     sa_compute = alg_ddo.get_service_by_type(ServiceType.ACCESS)
     sa = ddo.get_service_by_type(ServiceType.COMPUTE)
 
@@ -25,23 +32,31 @@ def test_passes(
         "dataset": {
             "documentId": ddo.did,
             "serviceId": sa.id,
-            "transferTxId": tx_id,
+            "transferTxId": "tx_id",
         },
         "algorithm": {
             "documentId": alg_ddo.did,
             "serviceId": sa_compute.id,
-            "transferTxId": alg_tx_id,
+            "transferTxId": "alg_tx_id",
         },
     }
 
-    validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
-    assert validator.validate() is True
+    with patch(
+        "ocean_provider.validation.algo.get_asset_from_metadatastore",
+        side_effect=[ddo, alg_ddo, alg_ddo],
+    ):
+        with patch(
+            "ocean_provider.serializers.get_asset_from_metadatastore",
+            return_value=alg_ddo,
+        ):
+            validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
+            assert validator.validate() is True
 
     data = {
         "dataset": {
             "documentId": ddo.did,
             "serviceId": sa.id,
-            "transferTxId": tx_id,
+            "transferTxId": "tx_id",
         },
         "algorithm": {
             "serviceId": sa_compute.id,
@@ -53,8 +68,16 @@ def test_passes(
             },
         },
     }
-    validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
-    assert validator.validate() is True
+
+    with patch(
+        "ocean_provider.validation.algo.get_asset_from_metadatastore", side_effect=[ddo]
+    ):
+        with patch(
+            "ocean_provider.serializers.get_asset_from_metadatastore",
+            return_value=alg_ddo,
+        ):
+            validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
+            assert validator.validate() is True
 
 
 @pytest.mark.integration
