@@ -444,90 +444,108 @@ def test_service_not_compute(
             )
 
 
-@pytest.mark.integration
-def test_fails(
+@pytest.mark.unit
+@patch("ocean_provider.validation.algo.check_asset_consumable", return_value=(True, ""))
+@patch("ocean_provider.validation.algo.validate_order", return_value=(None, None, None))
+@patch(
+    "ocean_provider.validation.algo.get_service_files_list",
+    return_value=[{"url": "dummy"}],
+)
+def test_fails_trusted(
     client, provider_wallet, consumer_wallet, consumer_address, publisher_wallet, web3
 ):
     """Tests possible failures of the algo validation."""
-    ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
-        client,
-        publisher_wallet,
-        consumer_wallet,
-        asset_type="allow_all_published_and_one_bogus",
-    )
-    did = ddo.did
+    ddo = Asset(ddo_dict)
+    alg_ddo = Asset(alg_ddo_dict)
     sa_compute = alg_ddo.get_service_by_type(ServiceType.ACCESS)
     sa = ddo.get_service_by_type(ServiceType.COMPUTE)
 
-    # Service is not compute, nor access
-
     # Additional input has other trusted algs
-    trust_ddo, trust_tx_id, _, _ = build_and_send_ddo_with_compute_service(
-        client, publisher_wallet, consumer_wallet
-    )
+    _copy = copy.deepcopy(ddo_dict)
+    _copy["id"] = "0xtrust"
+    _copy["services"][0]["compute"]["publisherTrustedAlgorithms"] = [{
+        "did": "0xother",
+        "filesChecksum": "mock",
+        "containerSectionChecksum": "mock"
+    }]
+    trust_ddo = Asset(_copy)
     trust_sa = trust_ddo.get_service_by_type(ServiceType.COMPUTE)
+
+    def side_effect(*args, **kwargs):
+        nonlocal ddo, alg_ddo, trust_ddo
+        if ddo.did == args[1]:
+            return ddo
+        if alg_ddo.did == args[1]:
+            return alg_ddo
+        if trust_ddo.did == args[1]:
+            return trust_ddo
 
     data = {
         "dataset": {
-            "documentId": did,
-            "transferTxId": tx_id,
+            "documentId": ddo.did,
+            "transferTxId": "tx_id",
             "serviceId": sa.id,
         },
         "algorithm": {
             "serviceId": sa_compute.id,
             "documentId": alg_ddo.did,
-            "transferTxId": alg_tx_id,
+            "transferTxId": "alg_tx_id",
         },
         "additionalDatasets": [
             {
                 "documentId": trust_ddo.did,
-                "transferTxId": trust_tx_id,
+                "transferTxId": "trust_tx_id",
                 "serviceId": trust_sa.id,
             }
         ],
     }
 
-    validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
-    assert validator.validate() is False
-    assert (
-        validator.error
-        == f"Error in input at index 1: this algorithm did {alg_ddo.did} is not trusted."
-    )
+    with patch(
+        "ocean_provider.validation.algo.get_asset_from_metadatastore",
+        side_effect=side_effect,
+    ):
+        pass
+        validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
+        assert validator.validate() is False
+        assert (
+            validator.error
+            == f"Error in input at index 1: this algorithm did {alg_ddo.did} is not trusted."
+        )
 
     # Additional input has other trusted publishers
-    (
-        trust_ddo,
-        trust_tx_id,
-        alg_ddo,
-        alg_tx_id,
-    ) = build_and_send_ddo_with_compute_service(
-        client, publisher_wallet, consumer_wallet, asset_type="specific_algo_publishers"
-    )
-    did = trust_ddo.did
+    _copy = copy.deepcopy(ddo_dict)
+    _copy["id"] = "0xtrust"
+    _copy["services"][0]["compute"]["publisherTrustedAlgorithmPublishers"] = [
+        "0xabc",
+    ]
+    _copy["services"][0]["id"] = "compute_2"
+    trust_ddo = Asset(_copy)
     trust_sa = trust_ddo.get_service_by_type(ServiceType.COMPUTE)
-    sa_compute = alg_ddo.get_service_by_type(ServiceType.ACCESS)
-    sa = trust_ddo.get_service_by_type(ServiceType.COMPUTE)
 
     data = {
         "dataset": {
-            "documentId": did,
-            "transferTxId": trust_tx_id,
+            "documentId": ddo.did,
+            "transferTxId": "trust_tx_id",
             "serviceId": sa.id,
         },
         "algorithm": {
             "documentId": alg_ddo.did,
             "serviceId": sa_compute.id,
-            "transferTxId": alg_tx_id,
+            "transferTxId": "alg_tx_id",
         },
         "additionalDatasets": [
             {
                 "documentId": trust_ddo.did,
-                "transferTxId": trust_tx_id,
+                "transferTxId": "trust_tx_id",
                 "serviceId": trust_sa.id,
             }
         ],
     }
 
-    validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
-    assert validator.validate() is False
-    assert validator.error == "this algorithm is not from a trusted publisher"
+    with patch(
+        "ocean_provider.validation.algo.get_asset_from_metadatastore",
+        side_effect=side_effect,
+    ):
+        validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
+        assert validator.validate() is False
+        assert validator.error == "Error in input at index 1: this algorithm is not from a trusted publisher"
