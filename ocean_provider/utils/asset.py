@@ -40,7 +40,9 @@ class Asset:
     def get_service_by_id(self, service_id: str) -> Service:
         """Return the Service with the matching id"""
         try:
-            return next((service for service in self.services if service.id == service_id))
+            return next(
+                (service for service in self.services if service.id == service_id)
+            )
         except StopIteration:
             return None
 

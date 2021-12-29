@@ -8,13 +8,10 @@ import logging
 from ocean_provider.constants import BaseURLs
 from ocean_provider.serializers import StageAlgoSerializer
 from ocean_provider.utils.basics import get_asset_from_metadatastore, get_config
-from ocean_provider.utils.datatoken import get_datatoken_contract, get_tx_receipt
 from ocean_provider.utils.url import append_userdata
 from ocean_provider.utils.util import (
     check_asset_consumable,
     decode_from_data,
-    filter_dictionary,
-    filter_dictionary_starts_with,
     get_metadata_url,
     get_service_files_list,
     msg_hash,
@@ -22,7 +19,6 @@ from ocean_provider.utils.util import (
     validate_order,
     validate_transfer_not_used_for_other_service,
 )
-from web3.logs import DISCARD
 
 logger = logging.getLogger(__name__)
 

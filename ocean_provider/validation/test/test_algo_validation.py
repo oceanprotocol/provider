@@ -4,13 +4,12 @@
 #
 import copy
 import pytest
+from unittest.mock import patch
 
 from ocean_provider.utils.asset import Asset
 from ocean_provider.utils.services import ServiceType, Service
 from ocean_provider.validation.algo import WorkflowValidator
 from tests.ddo.ddo_sample1_compute import ddo_dict, alg_ddo_dict
-from tests.helpers.compute_helpers import build_and_send_ddo_with_compute_service
-from unittest.mock import patch
 
 
 @pytest.mark.unit
@@ -369,7 +368,11 @@ def test_additional_datasets(
             "transferTxId": "alg_tx_id",
         },
         "additionalDatasets": [
-            {"documentId": did, "transferTxId": "tx_id", "serviceId": "some other service id"}
+            {
+                "documentId": did,
+                "transferTxId": "tx_id",
+                "serviceId": "some other service id",
+            }
         ],
     }
 
@@ -435,13 +438,13 @@ def test_service_not_compute(
         "ocean_provider.validation.algo.get_asset_from_metadatastore",
         side_effect=side_effect,
     ):
-        with patch('ocean_provider.utils.asset.Asset.get_service_by_id', side_effect=other_service):
+        with patch(
+            "ocean_provider.utils.asset.Asset.get_service_by_id",
+            side_effect=other_service,
+        ):
             validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
             assert validator.validate() is False
-            assert (
-                validator.error
-                == "Services in input can only be access or compute."
-            )
+            assert validator.error == "Services in input can only be access or compute."
 
 
 @pytest.mark.unit
@@ -463,11 +466,9 @@ def test_fails_trusted(
     # Additional input has other trusted algs
     _copy = copy.deepcopy(ddo_dict)
     _copy["id"] = "0xtrust"
-    _copy["services"][0]["compute"]["publisherTrustedAlgorithms"] = [{
-        "did": "0xother",
-        "filesChecksum": "mock",
-        "containerSectionChecksum": "mock"
-    }]
+    _copy["services"][0]["compute"]["publisherTrustedAlgorithms"] = [
+        {"did": "0xother", "filesChecksum": "mock", "containerSectionChecksum": "mock"}
+    ]
     trust_ddo = Asset(_copy)
     trust_sa = trust_ddo.get_service_by_type(ServiceType.COMPUTE)
 
@@ -548,4 +549,7 @@ def test_fails_trusted(
     ):
         validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
         assert validator.validate() is False
-        assert validator.error == "Error in input at index 1: this algorithm is not from a trusted publisher"
+        assert (
+            validator.error
+            == "Error in input at index 1: this algorithm is not from a trusted publisher"
+        )
