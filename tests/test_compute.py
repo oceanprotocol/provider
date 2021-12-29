@@ -10,6 +10,7 @@ from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.services import ServiceType
 from ocean_provider.utils.provider_fees import get_provider_fees
+from ocean_provider.validation.provider_requests import RBACValidator
 from tests.helpers.compute_helpers import (
     build_and_send_ddo_with_compute_service,
     get_compute_job_info,
@@ -309,7 +310,9 @@ def test_compute_allow_all_published(client, publisher_wallet, consumer_wallet):
 
 
 @pytest.mark.integration
-def test_compute_additional_input(client, publisher_wallet, consumer_wallet):
+def test_compute_additional_input(
+    client, publisher_wallet, consumer_wallet, monkeypatch
+):
     ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
         client, publisher_wallet, consumer_wallet
     )
@@ -366,6 +369,10 @@ def test_compute_additional_input(client, publisher_wallet, consumer_wallet):
             }
         ],
     }
+
+    monkeypatch.setenv("RBAC_SERVER_URL", "http://172.15.0.8:3000")
+    validator = RBACValidator(request_name="ComputeRequest", request=payload)
+    assert validator.fails() is False
 
     response = post_to_compute(client, payload)
     assert response.status == "200 OK", f"start compute job failed: {response.data}"

@@ -479,22 +479,6 @@ def build_custom_services(
                 trusted_algos=custom_services_args,
             )
         ]
-    if services_type == "allow_all_published_and_one_bogus":
-        return [
-            get_compute_service(
-                from_wallet.address, 10, datatoken_address, trusted_algos=[]
-            ),
-            get_bogus_service(datatoken_address),
-        ]
-    if services_type == "specific_algo_publishers":
-        return [
-            get_compute_service(
-                from_wallet.address,
-                10,
-                datatoken_address,
-                trusted_publishers=custom_services_args,
-            )
-        ]
     if services_type == "norawalgo":
         return [
             get_compute_service_no_rawalgo(from_wallet.address, 10, datatoken_address)

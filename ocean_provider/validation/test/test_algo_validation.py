@@ -19,9 +19,7 @@ from tests.ddo.ddo_sample1_compute import ddo_dict, alg_ddo_dict
     "ocean_provider.validation.algo.get_service_files_list",
     return_value=[{"url": "dummy"}],
 )
-def test_passes_algo_ddo(
-    client, provider_wallet, consumer_wallet, consumer_address, publisher_wallet, web3
-):
+def test_passes_algo_ddo(provider_wallet, consumer_address, web3):
     """Tests happy flow of validator with algo ddo."""
     ddo = Asset(ddo_dict)
     alg_ddo = Asset(alg_ddo_dict)
@@ -63,9 +61,7 @@ def test_passes_algo_ddo(
     "ocean_provider.validation.algo.get_service_files_list",
     return_value=[{"url": "dummy"}],
 )
-def test_passes_raw(
-    client, provider_wallet, consumer_wallet, consumer_address, publisher_wallet, web3
-):
+def test_passes_raw(provider_wallet, consumer_address, web3):
     """Tests happy flow of validator with raw algo."""
     ddo = Asset(ddo_dict)
     sa = ddo.get_service_by_type(ServiceType.COMPUTE)
@@ -100,9 +96,7 @@ def test_passes_raw(
     "ocean_provider.validation.algo.get_service_files_list",
     return_value=[{"url": "dummy"}],
 )
-def test_fails_not_an_algo(
-    client, provider_wallet, consumer_wallet, consumer_address, publisher_wallet, web3
-):
+def test_fails_not_an_algo(provider_wallet, consumer_address, web3):
     """Tests happy flow of validator with algo ddo."""
     _copy = copy.deepcopy(ddo_dict)
     _copy["services"][0]["compute"]["publisherTrustedAlgorithms"] = []
@@ -148,9 +142,7 @@ def test_fails_not_an_algo(
     "ocean_provider.validation.algo.get_service_files_list",
     return_value=[{"url": "dummy"}],
 )
-def test_fails_meta_issues(
-    client, provider_wallet, consumer_wallet, consumer_address, publisher_wallet, web3
-):
+def test_fails_meta_issues(provider_wallet, consumer_address, web3):
     """Tests happy flow of validator with raw algo."""
     ddo = Asset(ddo_dict)
     sa = ddo.get_service_by_type(ServiceType.COMPUTE)
@@ -241,9 +233,7 @@ def test_fails_meta_issues(
     "ocean_provider.validation.algo.get_service_files_list",
     return_value=[{"url": "dummy"}],
 )
-def test_additional_datasets(
-    client, provider_wallet, consumer_wallet, consumer_address, publisher_wallet, web3
-):
+def test_additional_datasets(provider_wallet, consumer_address, web3):
     ddo = Asset(ddo_dict)
     alg_ddo = Asset(alg_ddo_dict)
     sa_compute = alg_ddo.get_service_by_type(ServiceType.ACCESS)
@@ -395,9 +385,7 @@ def test_additional_datasets(
     "ocean_provider.validation.algo.get_service_files_list",
     return_value=[{"url": "dummy"}],
 )
-def test_service_not_compute(
-    client, provider_wallet, consumer_wallet, consumer_address, publisher_wallet, web3
-):
+def test_service_not_compute(provider_wallet, consumer_address, web3):
     ddo = Asset(ddo_dict)
     alg_ddo = Asset(alg_ddo_dict)
     sa_compute = alg_ddo.get_service_by_type(ServiceType.ACCESS)
@@ -454,9 +442,7 @@ def test_service_not_compute(
     "ocean_provider.validation.algo.get_service_files_list",
     return_value=[{"url": "dummy"}],
 )
-def test_fails_trusted(
-    client, provider_wallet, consumer_wallet, consumer_address, publisher_wallet, web3
-):
+def test_fails_trusted(provider_wallet, consumer_address, web3):
     """Tests possible failures of the algo validation."""
     ddo = Asset(ddo_dict)
     alg_ddo = Asset(alg_ddo_dict)
@@ -505,7 +491,6 @@ def test_fails_trusted(
         "ocean_provider.validation.algo.get_asset_from_metadatastore",
         side_effect=side_effect,
     ):
-        pass
         validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
         assert validator.validate() is False
         assert (
