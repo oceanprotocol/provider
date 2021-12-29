@@ -64,30 +64,24 @@ def test_compute_norawalgo_allowed(
     )
 
     # Start the compute job
-    payload = dict(
-        {
-            "signature": signature,
-            "nonce": nonce,
+    payload = {
+        "dataset": {
             "documentId": dataset_ddo_w_compute_service.did,
             "serviceId": sa.id,
-            "algorithmServiceId": sa.id,
-            "serviceType": sa.type,
-            "consumerAddress": consumer_address,
             "transferTxId": tx_id,
-            "dataToken": sa.datatoken_address,
-            "output": build_stage_output_dict(
-                dict(), sa.service_endpoint, consumer_address, publisher_wallet
-            ),
-            "algorithmMeta": algorithm_meta,
-            "algorithmDataToken": "",
-        }
-    )
+        },
+        "algorithm": {"meta": algorithm_meta},
+        "signature": signature,
+        "nonce": nonce,
+        "consumerAddress": consumer_address,
+    }
 
     response = post_to_compute(client, payload)
 
     assert (
         response.status == "400 BAD REQUEST"
     ), f"start compute job failed: {response.status} , {response.data}"
+    assert "cannot run raw algorithm on this did" in response.json["error"]
 
 
 @pytest.mark.integration
@@ -107,24 +101,20 @@ def test_compute_specific_algo_dids(
     not_sa_compute = another_alg_ddo.get_service_by_type(ServiceType.ACCESS)
 
     # Start the compute job
-    payload = dict(
-        {
-            "signature": signature,
-            "nonce": nonce,
+    payload = {
+        "dataset": {
             "documentId": ddo.did,
             "serviceId": sa.id,
-            "algorithmServiceId": sa.id,
-            "serviceType": sa.type,
-            "consumerAddress": consumer_address,
             "transferTxId": tx_id,
-            "dataToken": sa.datatoken_address,
-            "output": build_stage_output_dict(
-                dict(), sa.service_endpoint, consumer_address, publisher_wallet
-            ),
-            "algorithmDid": another_alg_ddo.did,
-            "algorithmDataToken": not_sa_compute.datatoken_address,
-        }
-    )
+        },
+        "algorithm": {
+            "serviceId": not_sa_compute.id,
+            "documentId": another_alg_ddo.did,
+        },
+        "signature": signature,
+        "nonce": nonce,
+        "consumerAddress": consumer_address,
+    }
 
     response = post_to_compute(client, payload)
 
@@ -147,25 +137,21 @@ def test_compute(client, publisher_wallet, consumer_wallet):
     nonce, signature = get_compute_signature(client, consumer_wallet, ddo.did)
 
     # Start the compute job
-    payload = dict(
-        {
-            "signature": signature,
-            "nonce": nonce,
+    payload = {
+        "dataset": {
             "documentId": ddo.did,
             "serviceId": sa.id,
-            "algorithmServiceId": sa_compute.id,
-            "serviceType": sa.type,
-            "consumerAddress": consumer_wallet.address,
             "transferTxId": tx_id,
-            "dataToken": sa.datatoken_address,
-            "output": build_stage_output_dict(
-                dict(), sa.service_endpoint, consumer_wallet.address, publisher_wallet
-            ),
-            "algorithmDid": alg_ddo.did,
-            "algorithmDataToken": sa_compute.datatoken_address,
-            "algorithmTransferTxId": alg_tx_id,
-        }
-    )
+        },
+        "algorithm": {
+            "serviceId": sa_compute.id,
+            "documentId": alg_ddo.did,
+            "transferTxId": alg_tx_id,
+        },
+        "signature": signature,
+        "nonce": nonce,
+        "consumerAddress": consumer_wallet.address,
+    }
 
     # Start compute using invalid signature (withOUT nonce), should fail
     msg = f"{consumer_wallet.address}{ddo.did}"
@@ -275,25 +261,21 @@ def test_compute_diff_provider(client, publisher_wallet, consumer_wallet):
     nonce, signature = get_compute_signature(client, consumer_wallet, ddo.did)
 
     # Start the compute job
-    payload = dict(
-        {
-            "signature": signature,
-            "nonce": nonce,
+    payload = {
+        "dataset": {
             "documentId": ddo.did,
             "serviceId": sa.id,
-            "algorithmServiceId": sa_compute.id,
-            "serviceType": sa.type,
-            "consumerAddress": consumer_wallet.address,
             "transferTxId": tx_id,
-            "dataToken": sa.datatoken_address,
-            "output": build_stage_output_dict(
-                dict(), sa.service_endpoint, consumer_wallet.address, publisher_wallet
-            ),
-            "algorithmDid": alg_ddo.did,
-            "algorithmDataToken": sa_compute.datatoken_address,
-            "algorithmTransferTxId": alg_tx_id,
-        }
-    )
+        },
+        "algorithm": {
+            "documentId": alg_ddo.did,
+            "serviceId": sa_compute.id,
+            "transferTxId": alg_tx_id,
+        },
+        "signature": signature,
+        "nonce": nonce,
+        "consumerAddress": consumer_wallet.address,
+    }
 
     response = post_to_compute(client, payload)
     assert response.status == "200 OK", f"start compute job failed: {response.data}"
@@ -309,25 +291,21 @@ def test_compute_allow_all_published(client, publisher_wallet, consumer_wallet):
     nonce, signature = get_compute_signature(client, consumer_wallet, ddo.did)
 
     # Start the compute job
-    payload = dict(
-        {
-            "signature": signature,
-            "nonce": nonce,
+    payload = {
+        "dataset": {
             "documentId": ddo.did,
             "serviceId": sa.id,
-            "algorithmServiceId": sa_compute.id,
-            "serviceType": sa.type,
-            "consumerAddress": consumer_wallet.address,
             "transferTxId": tx_id,
-            "dataToken": sa.datatoken_address,
-            "output": build_stage_output_dict(
-                dict(), sa.service_endpoint, consumer_wallet.address, publisher_wallet
-            ),
-            "algorithmDid": alg_ddo.did,
-            "algorithmDataToken": sa_compute.datatoken_address,
-            "algorithmTransferTxId": alg_tx_id,
-        }
-    )
+        },
+        "algorithm": {
+            "serviceId": sa_compute.id,
+            "documentId": alg_ddo.did,
+            "transferTxId": alg_tx_id,
+        },
+        "signature": signature,
+        "nonce": nonce,
+        "consumerAddress": consumer_wallet.address,
+    }
 
     response = post_to_compute(client, payload)
     assert response.status == "200 OK"
@@ -365,35 +343,33 @@ def test_compute_additional_input(client, publisher_wallet, consumer_wallet):
     nonce, signature = get_compute_signature(client, consumer_wallet, ddo.did)
 
     # Start the compute job
-    payload = dict(
-        {
-            "signature": signature,
-            "nonce": nonce,
+    payload = {
+        "dataset": {
             "documentId": ddo.did,
             "serviceId": sa.id,
-            "algorithmServiceId": sa_compute.id,
-            "serviceType": sa.type,
-            "consumerAddress": consumer_wallet.address,
             "transferTxId": tx_id,
-            "dataToken": sa.datatoken_address,
-            "output": build_stage_output_dict(
-                dict(), sa.service_endpoint, consumer_wallet.address, publisher_wallet
-            ),
-            "algorithmDid": alg_ddo.did,
-            "algorithmDataToken": sa_compute.datatoken_address,
-            "algorithmTransferTxId": alg_tx_id,
-            "additionalInputs": [
-                {
-                    "documentId": ddo2.did,
-                    "transferTxId": tx_id2,
-                    "serviceId": sa2.id,
-                    "userdata": {"test_key": "test_value"},
-                }
-            ],
             "userdata": '{"surname":"XXX", "age":12}',
-            "algouserdata": '{"surname":"YYY", "age":21}',
-        }
-    )
+        },
+        "algorithm": {
+            "documentId": alg_ddo.did,
+            "serviceId": sa_compute.id,
+            "transferTxId": alg_tx_id,
+            "userdata": '{"surname":"YYY", "age":21}',
+        },
+        "signature": signature,
+        "nonce": nonce,
+        "consumerAddress": consumer_wallet.address,
+        "additionalDatasets": [
+            {
+                "documentId": ddo2.did,
+                "transferTxId": tx_id2,
+                "serviceId": sa2.id,
+                "userdata": {"test_key": "test_value"},
+            }
+        ],
+    }
+
+    # TODO: algo custom data
 
     response = post_to_compute(client, payload)
     assert response.status == "200 OK", f"start compute job failed: {response.data}"
@@ -411,25 +387,21 @@ def test_compute_delete_job(
     nonce, signature = get_compute_signature(client, consumer_wallet, ddo.did)
 
     # Start the compute job
-    payload = dict(
-        {
-            "signature": signature,
-            "nonce": nonce,
+    payload = {
+        "dataset": {
             "documentId": ddo.did,
             "serviceId": sa.id,
-            "algorithmServiceId": sa_compute.id,
-            "serviceType": sa.type,
-            "consumerAddress": consumer_wallet.address,
             "transferTxId": tx_id,
-            "dataToken": sa.datatoken_address,
-            "output": build_stage_output_dict(
-                dict(), sa.service_endpoint, consumer_wallet.address, publisher_wallet
-            ),
-            "algorithmDid": alg_ddo.did,
-            "algorithmDataToken": sa_compute.datatoken_address,
-            "algorithmTransferTxId": alg_tx_id,
-        }
-    )
+        },
+        "algorithm": {
+            "documentId": alg_ddo.did,
+            "serviceId": sa_compute.id,
+            "transferTxId": alg_tx_id,
+        },
+        "signature": signature,
+        "nonce": nonce,
+        "consumerAddress": consumer_wallet.address,
+    }
 
     response = post_to_compute(client, payload)
     assert response.status == "200 OK", f"start compute job failed: {response.data}"

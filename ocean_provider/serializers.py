@@ -19,9 +19,9 @@ class StageAlgoSerializer:
         self.algo_service = algo_service
 
     def serialize(self):
-        algorithm_meta = self.algo_data.get("algorithmMeta")
-        algorithm_did = self.algo_data.get("algorithmDid")
-        algorithm_tx_id = self.algo_data.get("algorithmTransferTxId")
+        algorithm_meta = self.algo_data.get("meta")
+        algorithm_did = self.algo_data.get("documentId")
+        algorithm_tx_id = self.algo_data.get("transferTxId")
 
         dict_template = {"id": None, "rawcode": None, "container": None}
 
@@ -47,7 +47,7 @@ class StageAlgoSerializer:
         asset_urls = get_service_files_list(sa, self.provider_wallet)
         asset_url = asset_urls[0] if asset_urls else None
         if asset_url:
-            asset_url = append_userdata(asset_url, self.algo_data, "algouserdata")
+            asset_url = append_userdata(asset_url, self.algo_data)
             dict_template["url"] = asset_url
         else:
             dict_template["remote"] = {
@@ -56,9 +56,9 @@ class StageAlgoSerializer:
                 "serviceId": self.algo_service.id,
             }
 
-            userdata = self.algo_data.get("algouserdata")
+            userdata = self.algo_data.get("userdata")
             if userdata:
-                dict_template["remote"]["algouserdata"] = userdata
+                dict_template["remote"]["userdata"] = userdata
 
         dict_template["container"] = algo_asset.metadata["algorithm"]["container"]
 

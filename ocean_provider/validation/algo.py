@@ -62,24 +62,23 @@ class WorkflowValidator:
 
     def validate_input(self, index=0):
         """Validates input dictionary."""
-        main_input = [
-            filter_dictionary(self.data, ["documentId", "transferTxId", "serviceId"])
-        ]
-        additional_inputs = decode_from_data(self.data, "additionalInputs")
+        main_input = self.data["dataset"]
+        additional_inputs = self.data.get("additionalDatasets", list())
 
-        if additional_inputs == -1:
+        if not additional_inputs:
+            additional_inputs = []
+
+        if not isinstance(additional_inputs, list):
             self.error = "Additional input is invalid or can not be decoded."
             return False
 
-        all_data = main_input + additional_inputs
-        algo_data = filter_dictionary_starts_with(self.data, "algorithm")
-        if self.data.get("algouserdata"):
-            algo_data["algouserdata"] = self.data["algouserdata"]
+        all_data = [main_input] + additional_inputs
+        algo_data = self.data["algorithm"]
 
         self.validated_inputs = []
 
         for index, input_item in enumerate(all_data):
-            input_item.update(algo_data)
+            input_item["algorithm"] = algo_data
             input_item_validator = InputItemValidator(
                 self.web3,
                 self.consumer_address,
@@ -124,13 +123,12 @@ class WorkflowValidator:
 
     def _build_and_validate_algo(self, algo_data):
         """Returns False if invalid, otherwise sets the validated_algo_dict attribute."""
-        algorithm_did = algo_data.get("algorithmDid")
+        algorithm_did = algo_data.get("documentId")
         self.algo_service = None
 
-        if algorithm_did and not algo_data.get("algorithmMeta"):
-            algorithm_token_address = algo_data.get("algorithmDataToken")
-            algorithm_tx_id = algo_data.get("algorithmTransferTxId")
-            algorithm_service_id = algo_data.get("algorithmServiceId")
+        if algorithm_did and not algo_data.get("meta"):
+            algorithm_tx_id = algo_data.get("transferTxId")
+            algorithm_service_id = algo_data.get("serviceId")
 
             algo = get_asset_from_metadatastore(get_metadata_url(), algorithm_did)
 
@@ -144,11 +142,12 @@ class WorkflowValidator:
                 return False
 
             if not algorithm_service_id:
-                self.error = "No algorithmServiceId in input item."
+                self.error = "No serviceId in algorithm input item."
                 return False
 
             try:
                 self.algo_service = algo.get_service_by_id(algorithm_service_id)
+                algorithm_token_address = self.algo_service.datatoken_address
 
                 if self.algo_service.type == "compute":
                     asset_urls = get_service_files_list(
@@ -354,7 +353,7 @@ class InputItemValidator:
             get_metadata_url(), trusted_algo_dict["did"]
         )
 
-        service = algo_ddo.get_service_by_id(self.data.get("algorithmServiceId"))
+        service = algo_ddo.get_service_by_id(self.data["algorithm"].get("serviceId"))
 
         files_checksum = msg_hash(service.encrypted_files)
         if allowed_files_checksum and files_checksum != allowed_files_checksum:
@@ -379,10 +378,11 @@ class InputItemValidator:
 
     def validate_algo(self):
         """Validates algorithm details that allow the algo dict to be built."""
-        algorithm_meta = self.data.get("algorithmMeta")
-        algorithm_did = self.data.get("algorithmDid")
+        algo_data = self.data["algorithm"]
+        algorithm_meta = algo_data.get("meta")
+        algorithm_did = algo_data.get("documentId")
         if algorithm_did is None and algorithm_meta is None:
-            self.error = "both algorithmMeta and algorithmDid are missing, at least one of these is required."
+            self.error = "both meta and documentId are missing from algorithm input, at least one of these is required."
             return False
 
         privacy_options = self.service.compute_dict

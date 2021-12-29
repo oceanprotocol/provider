@@ -71,7 +71,6 @@ def test_initialize_request_payload(
     req = {
         "documentId": asset.did,
         "serviceId": service.id,
-        "serviceType": service.type,
         "dataToken": service.datatoken_address,
         "consumerAddress": consumer_wallet.address,
     }
@@ -99,7 +98,6 @@ def test_access_request_payload(
     req = {
         "documentId": asset.did,
         "serviceId": service.id,
-        "serviceType": service.type,
         "dataToken": service.datatoken_address,
         "consumerAddress": consumer_wallet.address,
         "transferTxId": "0xsometx",
@@ -138,21 +136,19 @@ def test_compute_payload_without_additional_inputs(
 
     nonce, signature = get_compute_signature(client, consumer_wallet, ddo.did)
     req = {
+        "dataset": {
+            "documentId": ddo.did,
+            "serviceId": sa.id,
+            "transferTxId": "0xsometx",
+        },
+        "algorithm": {
+            "serviceId": sa_compute.id,
+            "documentId": alg_ddo.did,
+            "transferTxId": "0xsomeothertx",
+        },
         "signature": signature,
         "nonce": nonce,
-        "documentId": ddo.did,
-        "serviceId": sa.id,
-        "algorithmServiceId": sa_compute.id,
-        "serviceType": sa.type,
         "consumerAddress": consumer_wallet.address,
-        "transferTxId": "0xsometx",
-        "dataToken": sa.datatoken_address,
-        "output": build_stage_output_dict(
-            dict(), sa.service_endpoint, consumer_wallet.address, publisher_wallet
-        ),
-        "algorithmDid": alg_ddo.did,
-        "algorithmDataToken": sa_compute.datatoken_address,
-        "algorithmTransferTxId": "0xsomeothertx",
     }
 
     validator = RBACValidator(request_name="ComputeStartRequest", request=req)
@@ -190,22 +186,20 @@ def test_compute_request_payload(
     nonce, signature = get_compute_signature(client, consumer_wallet, ddo.did)
 
     req = {
+        "dataset": {
+            "documentId": ddo.did,
+            "serviceId": sa.id,
+            "transferTxId": "0xsometx",
+        },
+        "algorithm": {
+            "documentId": alg_ddo.did,
+            "transferTxId": "0xsomeothertx",
+            "serviceId": sa_compute.id,
+        },
         "signature": signature,
         "nonce": nonce,
-        "documentId": ddo.did,
-        "serviceId": sa.id,
-        "algorithmServiceId": sa_compute.id,
-        "serviceType": sa.type,
         "consumerAddress": consumer_wallet.address,
-        "transferTxId": "0xsometx",
-        "dataToken": sa.datatoken_address,
-        "output": build_stage_output_dict(
-            dict(), sa.service_endpoint, consumer_wallet.address, publisher_wallet
-        ),
-        "algorithmDid": alg_ddo.did,
-        "algorithmDataToken": sa_compute.datatoken_address,
-        "algorithmTransferTxId": "0xsomeothertx",
-        "additionalInputs": [
+        "additionalDatasets": [
             {
                 "documentId": ddo2.did,
                 "transferTxId": "0xsomeevenothertx",
@@ -250,20 +244,19 @@ def test_fails(
     nonce, signature = get_compute_signature(client, consumer_wallet, ddo.did)
 
     req = {
+        "dataset": {
+            "documentId": ddo.did,
+            "serviceId": sa.id,
+            "transferTxId": tx_id,
+        },
+        "algorithm": {
+            "documentId": alg_ddo.did,
+            "serviceId": sa_compute.id,
+            "transferTxId": alg_tx_id,
+        },
         "signature": signature,
         "nonce": nonce,
-        "documentId": ddo.did,
-        "serviceId": sa.id,
-        "algorithmServiceId": sa_compute.id,
-        "serviceType": sa.type,
         "consumerAddress": consumer_wallet.address,
-        "transferTxId": tx_id,
-        "output": build_stage_output_dict(
-            dict(), sa.service_endpoint, consumer_wallet.address, publisher_wallet
-        ),
-        "algorithmDid": alg_ddo.did,
-        "algorithmDataToken": sa_compute.datatoken_address,
-        "algorithmTransferTxId": alg_tx_id,
     }
 
     validator = RBACValidator(request_name="ComputeRequest", request=req)

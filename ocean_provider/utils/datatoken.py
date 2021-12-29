@@ -112,7 +112,6 @@ def verify_order_tx(
 
     # end check provider fees
 
-    datatoken_contract = get_datatoken_contract(web3, datatoken_address)
     event_logs = datatoken_contract.events.OrderStarted().processReceipt(
         tx_receipt, errors=DISCARD
     )
