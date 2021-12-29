@@ -2,6 +2,7 @@
 ## Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
+import copy
 import pytest
 
 from ocean_provider.utils.asset import Asset
@@ -19,10 +20,10 @@ from unittest.mock import patch
     "ocean_provider.validation.algo.get_service_files_list",
     return_value=[{"url": "dummy"}],
 )
-def test_passes(
+def test_passes_algo_ddo(
     client, provider_wallet, consumer_wallet, consumer_address, publisher_wallet, web3
 ):
-    """Tests happy flow of validator with algo ddo and raw algo."""
+    """Tests happy flow of validator with algo ddo."""
     ddo = Asset(ddo_dict)
     alg_ddo = Asset(alg_ddo_dict)
     sa_compute = alg_ddo.get_service_by_type(ServiceType.ACCESS)
@@ -41,9 +42,16 @@ def test_passes(
         },
     }
 
+    def side_effect(*args, **kwargs):
+        nonlocal ddo, alg_ddo
+        if ddo.did == args[1]:
+            return ddo
+        if alg_ddo.did == args[1]:
+            return alg_ddo
+
     with patch(
         "ocean_provider.validation.algo.get_asset_from_metadatastore",
-        side_effect=[ddo, alg_ddo, alg_ddo],
+        side_effect=side_effect
     ):
         with patch(
             "ocean_provider.serializers.get_asset_from_metadatastore",
@@ -52,6 +60,21 @@ def test_passes(
             validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
             assert validator.validate() is True
 
+
+@pytest.mark.unit
+@patch("ocean_provider.validation.algo.check_asset_consumable", return_value=(True, ""))
+@patch("ocean_provider.validation.algo.validate_order", return_value=(None, None, None))
+@patch(
+    "ocean_provider.validation.algo.get_service_files_list",
+    return_value=[{"url": "dummy"}],
+)
+def test_passes_raw(
+    client, provider_wallet, consumer_wallet, consumer_address, publisher_wallet, web3
+):
+    """Tests happy flow of validator with raw algo."""
+    ddo = Asset(ddo_dict)
+    sa = ddo.get_service_by_type(ServiceType.COMPUTE)
+    """Tests happy flow of validator with algo ddo and raw algo."""
     data = {
         "dataset": {
             "documentId": ddo.did,
@@ -59,7 +82,7 @@ def test_passes(
             "transferTxId": "tx_id",
         },
         "algorithm": {
-            "serviceId": sa_compute.id,
+            "serviceId": sa.id,
             "meta": {
                 "rawcode": "console.log('Hello world'!)",
                 "format": "docker-image",
@@ -72,12 +95,149 @@ def test_passes(
     with patch(
         "ocean_provider.validation.algo.get_asset_from_metadatastore", side_effect=[ddo]
     ):
-        with patch(
-            "ocean_provider.serializers.get_asset_from_metadatastore",
-            return_value=alg_ddo,
-        ):
-            validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
-            assert validator.validate() is True
+        validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
+        assert validator.validate() is True
+
+
+@pytest.mark.unit
+@patch("ocean_provider.validation.algo.check_asset_consumable", return_value=(True, ""))
+@patch("ocean_provider.validation.algo.validate_order", return_value=(None, None, None))
+@patch(
+    "ocean_provider.validation.algo.get_service_files_list",
+    return_value=[{"url": "dummy"}],
+)
+def test_fails_not_an_algo(
+    client, provider_wallet, consumer_wallet, consumer_address, publisher_wallet, web3
+):
+    """Tests happy flow of validator with algo ddo."""
+    _copy = copy.deepcopy(ddo_dict)
+    _copy["services"][0]["compute"]["publisherTrustedAlgorithms"] = []
+    ddo = Asset(_copy)
+    did = ddo.did
+    alg_ddo = Asset(alg_ddo_dict)
+    sa_compute = alg_ddo.get_service_by_type(ServiceType.ACCESS)
+    sa = ddo.get_service_by_type(ServiceType.COMPUTE)
+
+    data = {
+        "dataset": {
+            "documentId": did,
+            "transferTxId": "tx_id",
+            "serviceId": sa.id,
+        },
+        "algorithm": {
+            "documentId": did,
+            "serviceId": sa_compute.id,
+            "transferTxId": "alg_tx_id",
+        },
+    }
+
+    def side_effect(*args, **kwargs):
+        nonlocal ddo, alg_ddo
+        if ddo.did == args[1]:
+            return ddo
+        if alg_ddo.did == args[1]:
+            return alg_ddo
+
+    with patch(
+        "ocean_provider.validation.algo.get_asset_from_metadatastore",
+        side_effect=side_effect,
+    ):
+        validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
+        assert validator.validate() is False
+        assert validator.error == f"DID {did} is not a valid algorithm"
+
+
+@pytest.mark.unit
+@patch("ocean_provider.validation.algo.check_asset_consumable", return_value=(True, ""))
+@patch("ocean_provider.validation.algo.validate_order", return_value=(None, None, None))
+@patch(
+    "ocean_provider.validation.algo.get_service_files_list",
+    return_value=[{"url": "dummy"}],
+)
+def test_fails_meta_issues(
+    client, provider_wallet, consumer_wallet, consumer_address, publisher_wallet, web3
+):
+    """Tests happy flow of validator with raw algo."""
+    ddo = Asset(ddo_dict)
+    sa = ddo.get_service_by_type(ServiceType.COMPUTE)
+    """Tests happy flow of validator with algo ddo and raw algo."""
+    data = {
+        "dataset": {
+            "documentId": ddo.did,
+            "serviceId": sa.id,
+            "transferTxId": "tx_id",
+        },
+        "algorithm": {
+            "serviceId": sa.id,
+            "meta": {},
+        },
+    }
+
+    with patch(
+        "ocean_provider.validation.algo.get_asset_from_metadatastore", side_effect=[ddo]
+    ):
+        validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
+        assert validator.validate() is False
+        assert (
+            validator.error
+            == "algorithmMeta must define one of `url` or `rawcode` or `remote`, but all seem missing."
+        )
+
+    # algorithmMeta container is empty
+    data = {
+        "dataset": {
+            "documentId": ddo.did,
+            "transferTxId": "tx_id",
+            "serviceId": sa.id,
+        },
+        "algorithm": {
+            "serviceId": sa.id,
+            "meta": {
+                "rawcode": "console.log('Hello world'!)",
+                "format": "docker-image",
+                "version": "0.1",
+                "container": {},
+            },
+        },
+    }
+
+    with patch(
+        "ocean_provider.validation.algo.get_asset_from_metadatastore", side_effect=[ddo]
+    ):
+        validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
+        assert validator.validate() is False
+        assert (
+            validator.error
+            == "algorithm `container` must specify values for all of entrypoint, image and tag."
+        )
+
+    # algorithmMeta container is missing image
+    data = {
+        "dataset": {
+            "documentId": ddo.did,
+            "transferTxId": "tx_id",
+            "serviceId": sa.id,
+        },
+        "algorithm": {
+            "serviceId": sa.id,
+            "meta": {
+                "rawcode": "console.log('Hello world'!)",
+                "format": "docker-image",
+                "version": "0.1",
+                "container": {"entrypoint": "node $ALGO", "tag": "10"},
+            },
+        },
+    }
+
+    with patch(
+        "ocean_provider.validation.algo.get_asset_from_metadatastore", side_effect=[ddo]
+    ):
+        validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
+        assert validator.validate() is False
+        assert (
+            validator.error
+            == "algorithm `container` must specify values for all of entrypoint, image and tag."
+        )
 
 
 @pytest.mark.integration
@@ -94,99 +254,6 @@ def test_fails(
     did = ddo.did
     sa_compute = alg_ddo.get_service_by_type(ServiceType.ACCESS)
     sa = ddo.get_service_by_type(ServiceType.COMPUTE)
-    alg_data_token = sa_compute.datatoken_address
-
-    # algorithmDid is not actually an algorithm
-    data = {
-        "dataset": {
-            "documentId": did,
-            "transferTxId": tx_id,
-            "serviceId": sa.id,
-        },
-        "algorithm": {
-            "documentId": did,
-            "serviceId": sa_compute.id,
-            "transferTxId": alg_tx_id,
-        },
-    }
-
-    validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
-    assert validator.validate() is False
-    assert validator.error == f"DID {did} is not a valid algorithm"
-
-    valid_output = build_stage_output_dict(
-        dict(), sa.service_endpoint, consumer_address, publisher_wallet
-    )
-
-    # algorithmMeta doesn't contain 'url' or 'rawcode'
-    data = {
-        "dataset": {
-            "documentId": did,
-            "transferTxId": tx_id,
-            "serviceId": sa.id,
-        },
-        "algorithm": {
-            "serviceId": sa_compute.id,
-            "meta": {},
-        },
-    }
-
-    validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
-    assert validator.validate() is False
-    assert (
-        validator.error
-        == "algorithmMeta must define one of `url` or `rawcode` or `remote`, but all seem missing."
-    )
-
-    # algorithmMeta container is empty
-    data = {
-        "dataset": {
-            "documentId": did,
-            "transferTxId": tx_id,
-            "serviceId": sa.id,
-        },
-        "algorithm": {
-            "serviceId": sa_compute.id,
-            "meta": {
-                "rawcode": "console.log('Hello world'!)",
-                "format": "docker-image",
-                "version": "0.1",
-                "container": {},
-            },
-        },
-    }
-
-    validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
-    assert validator.validate() is False
-    assert (
-        validator.error
-        == "algorithm `container` must specify values for all of entrypoint, image and tag."
-    )
-
-    # algorithmMeta container is missing image
-    data = {
-        "dataset": {
-            "documentId": did,
-            "transferTxId": tx_id,
-            "serviceId": sa.id,
-        },
-        "algorithm": {
-            "serviceId": sa_compute.id,
-            "meta": {
-                "rawcode": "console.log('Hello world'!)",
-                "format": "docker-image",
-                "version": "0.1",
-                "container": {"entrypoint": "node $ALGO", "tag": "10"},
-            },
-        },
-    }
-
-    validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
-    assert validator.validate() is False
-    assert (
-        validator.error
-        == "algorithm `container` must specify values for all of entrypoint, image and tag."
-    )
 
     # Additional Input validations ###
     data = {
