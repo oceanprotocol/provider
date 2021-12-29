@@ -259,6 +259,7 @@ def get_registered_asset(
 
     ddo = build_ddo_dict(
         did=did,
+        nft_address=data_nft_address,
         chain_id=chain_id,
         metadata=metadata,
         services=services,

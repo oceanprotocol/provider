@@ -5,9 +5,7 @@
 import json
 
 from ocean_provider.utils.basics import get_asset_from_metadatastore
-from ocean_provider.utils.services import ServiceType
-from ocean_provider.utils.url import append_userdata
-from ocean_provider.utils.util import get_metadata_url, get_service_files_list
+from ocean_provider.utils.util import get_metadata_url
 
 
 class StageAlgoSerializer:
@@ -23,7 +21,12 @@ class StageAlgoSerializer:
         algorithm_did = self.algo_data.get("documentId")
         algorithm_tx_id = self.algo_data.get("transferTxId")
 
-        dict_template = {"id": None, "rawcode": None, "container": None}
+        dict_template = {
+            "id": None,
+            "rawcode": None,
+            "container": None,
+            "algouserdata": None,
+        }
 
         if algorithm_meta and isinstance(algorithm_meta, str):
             algorithm_meta = json.loads(algorithm_meta)
@@ -39,27 +42,17 @@ class StageAlgoSerializer:
             )
 
         algo_asset = get_asset_from_metadatastore(get_metadata_url(), algorithm_did)
-        sa = algo_asset.get_service_by_type(ServiceType.ACCESS)
 
         dict_template["id"] = algorithm_did
         dict_template["rawcode"] = ""
-
-        asset_urls = get_service_files_list(sa, self.provider_wallet)
-        asset_url = asset_urls[0] if asset_urls else None
-        if asset_url:
-            asset_url = append_userdata(asset_url, self.algo_data)
-            dict_template["url"] = asset_url
-        else:
-            dict_template["remote"] = {
-                "serviceEndpoint": self.algo_service.service_endpoint,
-                "txId": algorithm_tx_id,
-                "serviceId": self.algo_service.id,
-            }
-
-            userdata = self.algo_data.get("userdata")
-            if userdata:
-                dict_template["remote"]["userdata"] = userdata
-
         dict_template["container"] = algo_asset.metadata["algorithm"]["container"]
-
+        dict_template["remote"] = {
+            "serviceEndpoint": self.algo_service.service_endpoint,
+            "txId": algorithm_tx_id,
+            "serviceId": self.algo_service.id,
+            "userData": self.algo_data.get("algouserdata", None),
+        }
+        dict_template["algoCustomData"] = self.algo_data.get(
+            "algocustomdata", None
+        )
         return dict(dict_template)

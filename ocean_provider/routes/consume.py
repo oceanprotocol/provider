@@ -7,6 +7,7 @@ import logging
 from flask import Response, jsonify, request
 from flask_sieve import validate
 from jsonsempai import magic  # noqa: F401
+from web3.main import Web3
 
 from artifacts import ERC721Template
 from ocean_provider.log import setup_logging
@@ -260,11 +261,15 @@ def download():
         service = asset.get_service_by_id(service_id)
         token_address = service.datatoken_address
 
-        if service.type != ServiceType.ACCESS:
+        compute_address, compute_limits = get_compute_info()
+
+        # allow our C2D to download a compute asset
+        if service.type != ServiceType.ACCESS and Web3.toChecksumAddress(
+            consumer_address
+        ) != Web3.toChecksumAddress(compute_address):
             return jsonify(
                 error=f"Service with index={service_id} is not an access service."
             )
-
         logger.info("validate_order called from download endpoint.")
         _tx, _order_log, _transfer_log = validate_order(
             get_web3(), consumer_address, token_address, 1, tx_id, did, service
