@@ -1,5 +1,5 @@
 #
-## Copyright 2021 Ocean Protocol Foundation
+# Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
 import copy
@@ -7,7 +7,7 @@ import pytest
 
 from ocean_provider.utils.asset import Asset
 from ocean_provider.utils.services import ServiceType
-from ocean_provider.validation.algo import WorkflowValidator, build_stage_output_dict
+from ocean_provider.validation.algo import WorkflowValidator
 from tests.ddo.ddo_sample1_compute import ddo_dict, alg_ddo_dict
 from tests.helpers.compute_helpers import build_and_send_ddo_with_compute_service
 from unittest.mock import patch
@@ -51,7 +51,7 @@ def test_passes_algo_ddo(
 
     with patch(
         "ocean_provider.validation.algo.get_asset_from_metadatastore",
-        side_effect=side_effect
+        side_effect=side_effect,
     ):
         with patch(
             "ocean_provider.serializers.get_asset_from_metadatastore",
