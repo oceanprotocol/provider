@@ -6,7 +6,7 @@ import copy
 import pytest
 
 from ocean_provider.utils.asset import Asset
-from ocean_provider.utils.services import ServiceType
+from ocean_provider.utils.services import ServiceType, Service
 from ocean_provider.validation.algo import WorkflowValidator
 from tests.ddo.ddo_sample1_compute import ddo_dict, alg_ddo_dict
 from tests.helpers.compute_helpers import build_and_send_ddo_with_compute_service
@@ -357,6 +357,92 @@ def test_additional_datasets(
             == "Error in input at index 1: Asset for did i am not a did not found."
         )
 
+    data = {
+        "dataset": {
+            "documentId": did,
+            "transferTxId": "tx_id",
+            "serviceId": sa.id,
+        },
+        "algorithm": {
+            "serviceId": sa_compute.id,
+            "documentId": alg_ddo.did,
+            "transferTxId": "alg_tx_id",
+        },
+        "additionalDatasets": [
+            {"documentId": did, "transferTxId": "tx_id", "serviceId": "some other service id"}
+        ],
+    }
+
+    with patch(
+        "ocean_provider.validation.algo.get_asset_from_metadatastore",
+        side_effect=side_effect,
+    ):
+        validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
+        assert validator.validate() is False
+        assert (
+            validator.error
+            == "Error in input at index 1: Service id some other service id not found."
+        )
+
+
+@pytest.mark.unit
+@patch("ocean_provider.validation.algo.check_asset_consumable", return_value=(True, ""))
+@patch("ocean_provider.validation.algo.validate_order", return_value=(None, None, None))
+@patch(
+    "ocean_provider.validation.algo.get_service_files_list",
+    return_value=[{"url": "dummy"}],
+)
+def test_service_not_compute(
+    client, provider_wallet, consumer_wallet, consumer_address, publisher_wallet, web3
+):
+    ddo = Asset(ddo_dict)
+    alg_ddo = Asset(alg_ddo_dict)
+    sa_compute = alg_ddo.get_service_by_type(ServiceType.ACCESS)
+    sa = ddo.get_service_by_type(ServiceType.COMPUTE)
+
+    data = {
+        "dataset": {
+            "documentId": ddo.did,
+            "transferTxId": "tx_id",
+            "serviceId": sa.id,
+        },
+        "algorithm": {
+            "serviceId": sa_compute.id,
+            "documentId": alg_ddo.did,
+            "transferTxId": "alg_tx_id",
+        },
+    }
+
+    def side_effect(*args, **kwargs):
+        nonlocal ddo, alg_ddo
+        if ddo.did == args[1]:
+            return ddo
+        if alg_ddo.did == args[1]:
+            return alg_ddo
+
+    def other_service(*args, **kwargs):
+        return Service(
+            index=0,
+            service_id="smth_else",
+            service_type="something else",
+            datatoken_address="0xa",
+            service_endpoint="test",
+            encrypted_files="",
+            timeout=0,
+        )
+
+    with patch(
+        "ocean_provider.validation.algo.get_asset_from_metadatastore",
+        side_effect=side_effect,
+    ):
+        with patch('ocean_provider.utils.asset.Asset.get_service_by_id', side_effect=other_service):
+            validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
+            assert validator.validate() is False
+            assert (
+                validator.error
+                == "Services in input can only be access or compute."
+            )
+
 
 @pytest.mark.integration
 def test_fails(
@@ -374,29 +460,6 @@ def test_fails(
     sa = ddo.get_service_by_type(ServiceType.COMPUTE)
 
     # Service is not compute, nor access
-    other_service = [s for s in ddo.services if s.type not in ["compute", "access"]][0]
-    data = {
-        "dataset": {
-            "documentId": did,
-            "transferTxId": tx_id,
-            "serviceId": sa.id,
-        },
-        "algorithm": {
-            "serviceId": sa_compute.id,
-            "documentId": alg_ddo.did,
-            "transferTxId": alg_tx_id,
-        },
-        "additionalDatasets": [
-            {"documentId": did, "transferTxId": tx_id, "serviceId": other_service.id}
-        ],
-    }
-
-    validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
-    assert validator.validate() is False
-    assert (
-        validator.error
-        == "Error in input at index 1: Services in input can only be access or compute."
-    )
 
     # Additional input has other trusted algs
     trust_ddo, trust_tx_id, _, _ = build_and_send_ddo_with_compute_service(

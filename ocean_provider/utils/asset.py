@@ -38,8 +38,11 @@ class Asset:
         return next((service for service in self.services if service.index == index))
 
     def get_service_by_id(self, service_id: str) -> Service:
-        """Return the Service with teh matching id"""
-        return next((service for service in self.services if service.id == service_id))
+        """Return the Service with the matching id"""
+        try:
+            return next((service for service in self.services if service.id == service_id))
+        except StopIteration:
+            return None
 
     @property
     def requires_address_credential(self) -> bool:

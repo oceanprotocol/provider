@@ -274,16 +274,16 @@ class InputItemValidator:
 
         self.service = self.asset.get_service_by_id(self.data["serviceId"])
 
+        if not self.service:
+            self.error = f"Service id {self.data['serviceId']} not found."
+            return False
+
         consumable, message = check_asset_consumable(
             self.asset, self.consumer_address, logger, self.service.service_endpoint
         )
 
         if not consumable:
             self.error = message
-            return False
-
-        if not self.service:
-            self.error = f"Service id {self.data['serviceId']} not found."
             return False
 
         if self.service.type not in ["access", "compute"]:
