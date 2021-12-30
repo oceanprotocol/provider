@@ -79,6 +79,8 @@ class WorkflowValidator:
         algo_data = filter_dictionary_starts_with(self.data, "algorithm")
         if self.data.get("algouserdata"):
             algo_data["algouserdata"] = self.data["algouserdata"]
+        if self.data.get("algocustomdata"):
+            algo_data["algocustomdata"] = self.data["algocustomdata"]
 
         self.validated_inputs = []
 

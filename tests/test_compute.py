@@ -349,6 +349,7 @@ def test_compute_additional_input(client, publisher_wallet, consumer_wallet):
             ],
             "userdata": '{"surname":"XXX", "age":12}',
             "algouserdata": '{"surname":"YYY", "age":21}',
+            "algocustomdata": '{"cpus":"1 billion", "memory":"none"}',
         }
     )
 
