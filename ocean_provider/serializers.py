@@ -26,7 +26,7 @@ class StageAlgoSerializer:
             "id": None,
             "rawcode": None,
             "container": None,
-            "algouserdata": None,
+            "algocustomdata": None,
         }
 
         if algorithm_meta and isinstance(algorithm_meta, str):
@@ -57,7 +57,7 @@ class StageAlgoSerializer:
                 "txId": algorithm_tx_id,
                 "serviceIndex": self.algo_service.index,
             }
-        dict_template["algouserdata"] = self.algo_data.get("algouserdata", None)
+        dict_template["algocustomdata"] = self.algo_data.get("algocustomdata", None)
         dict_template["container"] = algo_asset.metadata["main"]["algorithm"][
             "container"
         ]
