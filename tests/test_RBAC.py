@@ -13,15 +13,11 @@ from ocean_provider.exceptions import RequestNotFound
 from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.asset import Asset
 from ocean_provider.utils.services import Service, ServiceType
-from ocean_provider.validation.algo import build_stage_output_dict
 from ocean_provider.validation.provider_requests import RBACValidator
 from tests.ddo.ddo_sample1_v4 import json_dict as ddo_sample1_v4
 from tests.ddo.ddo_sample_algorithm_v4 import algorithm_ddo_sample
-from tests.helpers.compute_helpers import (
-    build_and_send_ddo_with_compute_service,
-    get_compute_signature,
-)
 from tests.helpers.ddo_dict_builders import get_compute_service
+from tests.helpers.compute_helpers import get_compute_signature
 
 
 @pytest.mark.unit
@@ -222,42 +218,3 @@ def test_compute_request_payload(
     assert payload["algos"][0]["serviceId"] == sa_compute.id
     assert payload["additionalDids"][0]["did"] == ddo2.did
     assert payload["additionalDids"][0]["serviceId"] == sa2.id
-
-
-@pytest.mark.integration
-def test_fails(
-    monkeypatch,
-    client,
-    provider_wallet,
-    consumer_wallet,
-    consumer_address,
-    publisher_wallet,
-):
-    """Tests possible failures of the compute request."""
-    monkeypatch.setenv("RBAC_SERVER_URL", "http://172.15.0.8:3000")
-    ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
-        client, publisher_wallet, consumer_wallet
-    )
-    sa = alg_ddo.get_service_by_type(ServiceType.ACCESS)
-    sa_compute = ddo.get_service_by_type(ServiceType.COMPUTE)
-
-    nonce, signature = get_compute_signature(client, consumer_wallet, ddo.did)
-
-    req = {
-        "dataset": {
-            "documentId": ddo.did,
-            "serviceId": sa.id,
-            "transferTxId": tx_id,
-        },
-        "algorithm": {
-            "documentId": alg_ddo.did,
-            "serviceId": sa_compute.id,
-            "transferTxId": alg_tx_id,
-        },
-        "signature": signature,
-        "nonce": nonce,
-        "consumerAddress": consumer_wallet.address,
-    }
-
-    validator = RBACValidator(request_name="ComputeRequest", request=req)
-    assert validator.fails() is False

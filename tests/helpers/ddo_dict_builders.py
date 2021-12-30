@@ -280,29 +280,3 @@ def get_compute_service_no_rawalgo(address, price, datatoken_address):
         "files": encrypted_files,
         "compute": compute_service_attributes,
     }
-
-
-def get_compute_service_specific_algo_publishers(address, price, metadata, publishers):
-    compute_service_attributes = {
-        "main": {
-            "name": "dataAssetComputeServiceAgreement",
-            "creator": address,
-            "cost": price,
-            "privacy": {
-                "allowRawAlgorithm": False,
-                "allowAllPublishedAlgorithms": False,
-                "publisherTrustedAlgorithms": [],
-                "publisherTrustedAlgorithmPublishers": publishers,
-                "allowNetworkAccess": True,
-            },
-            "timeout": 3600,
-            "datePublished": metadata["main"]["dateCreated"],
-        }
-    }
-
-    return Service(
-        service_endpoint=f"http://localhost:8030{BaseURLs.SERVICES_URL}/compute",
-        service_type="compute",
-        index=4,
-        attributes=compute_service_attributes,
-    )

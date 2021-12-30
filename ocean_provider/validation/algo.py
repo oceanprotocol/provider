@@ -8,13 +8,10 @@ import logging
 from ocean_provider.constants import BaseURLs
 from ocean_provider.serializers import StageAlgoSerializer
 from ocean_provider.utils.basics import get_asset_from_metadatastore, get_config
-from ocean_provider.utils.datatoken import get_datatoken_contract, get_tx_receipt
 from ocean_provider.utils.url import append_userdata
 from ocean_provider.utils.util import (
     check_asset_consumable,
     decode_from_data,
-    filter_dictionary,
-    filter_dictionary_starts_with,
     get_metadata_url,
     get_service_files_list,
     msg_hash,
@@ -22,7 +19,6 @@ from ocean_provider.utils.util import (
     validate_order,
     validate_transfer_not_used_for_other_service,
 )
-from web3.logs import DISCARD
 
 logger = logging.getLogger(__name__)
 
@@ -125,6 +121,7 @@ class WorkflowValidator:
         """Returns False if invalid, otherwise sets the validated_algo_dict attribute."""
         algorithm_did = algo_data.get("documentId")
         self.algo_service = None
+        algo = None
 
         if algorithm_did and not algo_data.get("meta"):
             algorithm_tx_id = algo_data.get("transferTxId")
@@ -194,7 +191,11 @@ class WorkflowValidator:
                 return False
 
         algorithm_dict = StageAlgoSerializer(
-            self.consumer_address, self.provider_wallet, algo_data, self.algo_service
+            self.consumer_address,
+            self.provider_wallet,
+            algo_data,
+            self.algo_service,
+            algo,
         ).serialize()
 
         valid, error_msg = validate_formatted_algorithm_dict(
@@ -269,16 +270,16 @@ class InputItemValidator:
 
         self.service = self.asset.get_service_by_id(self.data["serviceId"])
 
+        if not self.service:
+            self.error = f"Service id {self.data['serviceId']} not found."
+            return False
+
         consumable, message = check_asset_consumable(
             self.asset, self.consumer_address, logger, self.service.service_endpoint
         )
 
         if not consumable:
             self.error = message
-            return False
-
-        if not self.service:
-            self.error = f"Service id {self.data['serviceId']} not found."
             return False
 
         if self.service.type not in ["access", "compute"]:
