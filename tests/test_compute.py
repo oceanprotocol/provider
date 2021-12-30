@@ -355,6 +355,7 @@ def test_compute_additional_input(client, publisher_wallet, consumer_wallet):
             "serviceId": sa_compute.id,
             "transferTxId": alg_tx_id,
             "userdata": '{"surname":"YYY", "age":21}',
+            "algocustomdata": '{"cpus":"1 billion", "memory":"none"}',
         },
         "signature": signature,
         "nonce": nonce,
@@ -368,8 +369,6 @@ def test_compute_additional_input(client, publisher_wallet, consumer_wallet):
             }
         ],
     }
-
-    # TODO: algo custom data
 
     response = post_to_compute(client, payload)
     assert response.status == "200 OK", f"start compute job failed: {response.data}"

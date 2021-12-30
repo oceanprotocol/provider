@@ -2,7 +2,6 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
-import hashlib
 import json
 import uuid
 from datetime import datetime
@@ -22,6 +21,7 @@ from ocean_provider.utils.services import Service
 
 def build_ddo_dict(
     did: str,
+    nft_address: str,
     chain_id: int,
     metadata: Dict[str, Any],
     services: Dict[str, Any],
@@ -34,6 +34,7 @@ def build_ddo_dict(
         "@context": ["https://w3id.org/did/v1"],
         "id": did,
         "version": "4.0.0",
+        "nftAddress": nft_address,
         "chainId": chain_id,
         "metadata": metadata,
         "services": services,
