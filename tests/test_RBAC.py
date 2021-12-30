@@ -17,6 +17,7 @@ from ocean_provider.validation.provider_requests import RBACValidator
 from tests.ddo.ddo_sample1_v4 import json_dict as ddo_sample1_v4
 from tests.ddo.ddo_sample_algorithm_v4 import algorithm_ddo_sample
 from tests.helpers.ddo_dict_builders import get_compute_service
+from tests.helpers.compute_helpers import get_compute_signature
 
 
 @pytest.mark.unit
