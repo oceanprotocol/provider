@@ -41,7 +41,15 @@ def get_provider_fees(
     )
 
     pk = keys.PrivateKey(provider_wallet.key)
-    signed = keys.ecdsa_sign(message_hash=message, private_key=pk)
+    prefix = "\x19Ethereum Signed Message:\n32"
+    messageHash = Web3.solidityKeccak(
+        ["bytes", "bytes"],
+        [
+            Web3.toBytes(text = prefix),
+            Web3.toBytes(message)
+        ],
+    )
+    signed = keys.ecdsa_sign(message_hash=messageHash, private_key=pk)
 
     provider_fee = {
         "providerFeeAddress": provider_fee_address,
@@ -49,7 +57,7 @@ def get_provider_fees(
         "providerFeeAmount": provider_fee_amount,
         "providerData": Web3.toHex(Web3.toBytes(text=provider_data)),
         # make it compatible with last openzepellin https://github.com/OpenZeppelin/openzeppelin-contracts/pull/1622
-        "v": signed.v + 27,
+        "v": (signed.v + 27) if signed.v <= 1 else signed.v,
         "r": Web3.toHex(Web3.toBytes(signed.r).rjust(32, b"\0")),
         "s": Web3.toHex(Web3.toBytes(signed.s).rjust(32, b"\0")),
     }
