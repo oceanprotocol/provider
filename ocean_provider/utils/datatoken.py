@@ -102,8 +102,13 @@ def verify_order_tx(
             provider_fee_order_log.args.providerFeeAmount,
         ],
     )
+    prefix = "\x19Ethereum Signed Message:\n32"
+    messageHash = Web3.solidityKeccak(
+        ["bytes", "bytes"],
+        [Web3.toBytes(text=prefix), Web3.toBytes(message)],
+    )
     pk = keys.PrivateKey(provider_wallet.key)
-    if not keys.ecdsa_verify(message, signature, pk.public_key):
+    if not keys.ecdsa_verify(messageHash, signature, pk.public_key):
         raise AssertionError(
             f"Provider was not able to check the signed message in ProviderFees event\n"
         )
