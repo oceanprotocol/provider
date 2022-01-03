@@ -44,10 +44,7 @@ def get_provider_fees(
     prefix = "\x19Ethereum Signed Message:\n32"
     messageHash = Web3.solidityKeccak(
         ["bytes", "bytes"],
-        [
-            Web3.toBytes(text = prefix),
-            Web3.toBytes(message)
-        ],
+        [Web3.toBytes(text=prefix), Web3.toBytes(message)],
     )
     signed = keys.ecdsa_sign(message_hash=messageHash, private_key=pk)
 
