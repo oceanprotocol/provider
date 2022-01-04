@@ -268,8 +268,11 @@ def download():
         if service.type != ServiceType.ACCESS and Web3.toChecksumAddress(
             consumer_address
         ) != Web3.toChecksumAddress(compute_address):
-            return jsonify(
-                error=f"Service with index={service_id} is not an access service."
+            return (
+                jsonify(
+                    error=f"Service with index={service_id} is not an access service."
+                ),
+                400,
             )
         logger.info("validate_order called from download endpoint.")
         _tx, _order_log, _transfer_log = validate_order(
