@@ -309,7 +309,7 @@ def download():
         return service_unavailable(
             e,
             {
-                "documentId": data.get("did"),
+                "documentId": data.get("documentId"),
                 "consumerAddress": data.get("consumerAddress"),
                 "serviceId": data.get("serviceId"),
             },
