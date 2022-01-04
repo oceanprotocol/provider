@@ -169,7 +169,7 @@ def initialize():
 
         file_index = int(data.get("fileIndex", "-1"))
         # we check if the file is valid only if we have fileIndex
-        if file_index > 0:
+        if file_index > -1:
             url_object = get_service_files_list(service, provider_wallet)[file_index]
             url_valid, message = validate_url_object(url_object, service_id)
             if not url_valid:
