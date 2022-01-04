@@ -98,6 +98,8 @@ class AddressCredential:
 
     def get_address_entry_of_class(self, access_class: str = "allow") -> Optional[dict]:
         """Get address credentials entry of the specified access class. access_class = "allow" or "deny"."""
+        if not self.asset.credentials:
+            return None
         entries = self.asset.credentials.get(access_class, [])
         address_entries = [entry for entry in entries if entry.get("type") == "address"]
         return address_entries[0] if address_entries else None
