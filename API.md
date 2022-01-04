@@ -79,6 +79,7 @@ Parameters
 ```
     documentId: String object containing document id (e.g. a DID)
     serviceId: String, representing the list of `file` objects that describe each file in the dataset
+    fileIndex: Optional, integer, the index of the file from the files list in the dataset. If set, provider will validate the file access.
     consumerAddress: String object containing publisher's ethereum address
 ```
 
@@ -117,6 +118,7 @@ Parameters
     documentId: String object containing document id (e.g. a DID)
     serviceId: String, representing the list of `file` objects that describe each file in the dataset
     fileIndex: integer, the index of the file from the files list in the dataset
+    nonce: Nonce
     signature: String object containg user signature (signed message)
     consumerAddress: String object containing publisher's ethereum address
     transactionId: Hex string -- the id of on-chain transaction for approval of DataTokens transfer

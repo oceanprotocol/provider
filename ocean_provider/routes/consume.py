@@ -4,12 +4,11 @@
 #
 import json
 import logging
+
+from artifacts import ERC721Template
 from flask import Response, jsonify, request
 from flask_sieve import validate
 from jsonsempai import magic  # noqa: F401
-from web3.main import Web3
-
-from artifacts import ERC721Template
 from ocean_provider.log import setup_logging
 from ocean_provider.myapp import app
 from ocean_provider.requests_session import get_requests_session
@@ -21,8 +20,8 @@ from ocean_provider.utils.basics import (
     get_web3,
 )
 from ocean_provider.utils.error_responses import service_unavailable
-from ocean_provider.utils.services import ServiceType
 from ocean_provider.utils.provider_fees import get_provider_fees
+from ocean_provider.utils.services import ServiceType
 from ocean_provider.utils.url import append_userdata, check_url_details
 from ocean_provider.utils.util import (
     build_download_response,
@@ -42,6 +41,7 @@ from ocean_provider.validation.provider_requests import (
     InitializeRequest,
     NonceRequest,
 )
+from web3.main import Web3
 
 from . import services
 
@@ -167,25 +167,26 @@ def initialize():
 
         token_address = service.datatoken_address
 
-        file_index = int(data.get("fileIndex"))
-        url_object = get_service_files_list(service, provider_wallet)[file_index]
-
-        url_valid, message = validate_url_object(url_object, service_id)
-
-        if not url_valid:
-            return (jsonify(error=message), 400)
-
-        download_url = get_download_url(url_object, app.config["PROVIDER_CONFIG_FILE"])
-        download_url = append_userdata(download_url, data)
-        valid, url_details = check_url_details(download_url)
-
-        if not valid:
-            logger.error(
-                f"Error: Asset URL not found or not available. \n"
-                f"Payload was: {data}",
-                exc_info=1,
+        file_index = int(data.get("fileIndex", "-1"))
+        # we check if the file is valid only if we have fileIndex
+        if file_index > -1:
+            url_object = get_service_files_list(service, provider_wallet)[file_index]
+            url_valid, message = validate_url_object(url_object, service_id)
+            if not url_valid:
+                return (jsonify(error=message), 400)
+            download_url = get_download_url(
+                url_object, app.config["PROVIDER_CONFIG_FILE"]
             )
-            return jsonify(error="Asset URL not found or not available."), 400
+            download_url = append_userdata(download_url, data)
+            valid, url_details = check_url_details(download_url)
+
+            if not valid:
+                logger.error(
+                    f"Error: Asset URL not found or not available. \n"
+                    f"Payload was: {data}",
+                    exc_info=1,
+                )
+                return jsonify(error="Asset URL not found or not available."), 400
 
         # Prepare the `transfer` tokens transaction with the appropriate number
         # of tokens required for this service
@@ -267,8 +268,11 @@ def download():
         if service.type != ServiceType.ACCESS and Web3.toChecksumAddress(
             consumer_address
         ) != Web3.toChecksumAddress(compute_address):
-            return jsonify(
-                error=f"Service with index={service_id} is not an access service."
+            return (
+                jsonify(
+                    error=f"Service with index={service_id} is not an access service."
+                ),
+                400,
             )
         logger.info("validate_order called from download endpoint.")
         _tx, _order_log, _transfer_log = validate_order(
@@ -276,8 +280,10 @@ def download():
         )
 
         file_index = int(data.get("fileIndex"))
-
-        url_object = get_service_files_list(service, provider_wallet)[file_index]
+        files_list = get_service_files_list(service, provider_wallet)
+        if file_index > len(files_list):
+            return jsonify(error=f"No such fileIndex")
+        url_object = files_list[file_index]
         url_valid, message = validate_url_object(url_object, service_id)
 
         if not url_valid:
@@ -306,7 +312,7 @@ def download():
         return service_unavailable(
             e,
             {
-                "documentId": data.get("did"),
+                "documentId": data.get("documentId"),
                 "consumerAddress": data.get("consumerAddress"),
                 "serviceId": data.get("serviceId"),
             },

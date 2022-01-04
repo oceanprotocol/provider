@@ -2,19 +2,21 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import json
+import logging
 import os
 import pathlib
 import time
 from hashlib import sha256
-from typing import Tuple, Dict
+from typing import Dict, Tuple
 
-from jsonsempai import magic  # noqa: F401
 from artifacts import ERC721Template
 from eth_account.signers.local import LocalAccount
 from eth_typing.encoding import HexStr
 from eth_typing.evm import HexAddress
 from flask.testing import FlaskClient
+from jsonsempai import magic  # noqa: F401
 from ocean_provider.constants import BaseURLs
+from ocean_provider.log import setup_logging
 from ocean_provider.utils.address import get_contract_address
 from ocean_provider.utils.basics import (
     get_asset_from_metadatastore,
@@ -33,15 +35,12 @@ from tests.helpers.ddo_dict_builders import (
     build_ddo_dict,
     build_metadata_dict_type_dataset,
     build_service_dict_type_access,
-    get_bogus_service,
     get_compute_service,
     get_compute_service_no_rawalgo,
 )
 from web3.logs import DISCARD
 from web3.main import Web3
 from web3.types import TxParams, TxReceipt
-import logging
-from ocean_provider.log import setup_logging
 
 setup_logging()
 logger = logging.getLogger(__name__)
@@ -321,10 +320,7 @@ def get_dataset_ddo_with_multiple_files(client, wallet):
             }
         )
 
-    return get_registered_asset(
-        wallet,
-        unencrypted_files_list=ufl,
-    )
+    return get_registered_asset(wallet, unencrypted_files_list=ufl)
 
 
 def get_dataset_ddo_disabled(client, wallet):
@@ -402,6 +398,7 @@ def initialize_service(
     service,
     from_wallet: LocalAccount,
     raw_response=False,
+    file_index=0,
 ):
     service_id = service.id
 
@@ -411,7 +408,7 @@ def initialize_service(
             "documentId": did,
             "serviceId": service_id,
             "consumerAddress": from_wallet.address,
-            "fileIndex": 0,
+            "fileIndex": file_index,
             "userdata": '{"dummy_userdata":"XXX", "age":12}',
         },
     )

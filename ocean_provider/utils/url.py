@@ -201,7 +201,7 @@ def _get_result_from_url(url, with_checksum=False):
 
 
 def append_userdata(url, data):
-    userdata = data.get("userdata")
+    userdata = data.get("userdata", None)
 
     if not userdata:
         return url
