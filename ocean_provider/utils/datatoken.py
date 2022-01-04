@@ -1,12 +1,13 @@
+import logging
 from typing import Optional
 
-from jsonsempai import magic  # noqa: F401
 from artifacts import ERC20Template
-from eth_typing.encoding import HexStr
-from eth_typing.evm import HexAddress
 from eth_keys import KeyAPI
 from eth_keys.backends import NativeECCBackend
+from eth_typing.encoding import HexStr
+from eth_typing.evm import HexAddress
 from hexbytes import HexBytes
+from jsonsempai import magic  # noqa: F401
 from ocean_provider.log import setup_logging
 from ocean_provider.utils.basics import get_provider_wallet
 from ocean_provider.utils.services import Service
@@ -14,8 +15,6 @@ from web3.contract import Contract
 from web3.logs import DISCARD
 from web3.main import Web3
 from websockets import ConnectionClosed
-
-import logging
 
 setup_logging()
 logger = logging.getLogger(__name__)
@@ -93,7 +92,7 @@ def verify_order_tx(
         ]
     )
     signature = keys.Signature(signature_bytes=bts)
-    message = Web3.solidityKeccak(
+    message_hash = Web3.solidityKeccak(
         ["bytes", "address", "address", "uint256"],
         [
             provider_fee_order_log.args.providerData,
@@ -103,12 +102,11 @@ def verify_order_tx(
         ],
     )
     prefix = "\x19Ethereum Signed Message:\n32"
-    messageHash = Web3.solidityKeccak(
-        ["bytes", "bytes"],
-        [Web3.toBytes(text=prefix), Web3.toBytes(message)],
+    signable_hash = Web3.solidityKeccak(
+        ["bytes", "bytes"], [Web3.toBytes(text=prefix), Web3.toBytes(message_hash)]
     )
     pk = keys.PrivateKey(provider_wallet.key)
-    if not keys.ecdsa_verify(messageHash, signature, pk.public_key):
+    if not keys.ecdsa_verify(signable_hash, signature, pk.public_key):
         raise AssertionError(
             f"Provider was not able to check the signed message in ProviderFees event\n"
         )
