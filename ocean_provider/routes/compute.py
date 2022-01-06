@@ -7,11 +7,10 @@ import logging
 
 from flask import Response, jsonify, request
 from flask_sieve import validate
-from ocean_provider.exceptions import InvalidSignatureError
 from ocean_provider.log import setup_logging
 from ocean_provider.requests_session import get_requests_session
 from ocean_provider.user_nonce import update_nonce
-from ocean_provider.utils.accounts import sign_message, verify_signature
+from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.basics import LocalFileAdapter, get_provider_wallet, get_web3
 from ocean_provider.utils.error_responses import service_unavailable
 from ocean_provider.utils.util import (
@@ -165,27 +164,21 @@ def computeStatus():
     consumes:
       - application/json
     parameters:
-      - name: signature
+      - name: jobId
         in: query
-        description: Signature of (consumerAddress+jobId+documentId) to verify the consumer of
-            this asset/compute job. The signature uses ethereum based signing method
-            (see https://github.com/ethereum/EIPs/pull/683)
+        description: The ID of the compute job. If not provided, all running compute jobs of
+            the specified consumerAddress/documentId are suspended
         type: string
+        required: true
       - name: documentId
         in: query
         description: The ID of the asset. If not provided, the status of all
             currently running and old compute jobs for the specified consumerAddress will be returned.
-        required: true
         type: string
       - name: consumerAddress
         in: query
         description: The consumer ethereum address.
         required: true
-        type: string
-      - name: jobId
-        in: query
-        description: The ID of the compute job. If not provided, all running compute jobs of
-            the specified consumerAddress/documentId are suspended
         type: string
 
     responses:
@@ -208,35 +201,6 @@ def computeStatus():
         )
 
         _response = response.content
-
-        # The following sections is needed only to ensure back compat. It will be removed soon, make sure you are going to update your C2D backends
-        signed_request = bool(data.get("signature"))
-        if signed_request:
-            owner = data.get("consumerAddress")
-            did = data.get("documentId")
-            jobId = data.get("jobId")
-            original_msg = f"{owner}{jobId}{did}"
-            nonce = data.get("nonce")
-            try:
-                verify_signature(owner, data.get("signature"), original_msg, nonce)
-            except InvalidSignatureError:
-                signed_request = False
-            update_nonce(body["owner"], data.get("nonce"))
-
-        # Filter status info if signature is not given or failed validation
-        if not signed_request:
-            resp_content = json.loads(response.content.decode("utf-8"))
-            if not isinstance(resp_content, list):
-                resp_content = [resp_content]
-            _response = []
-            keys_to_filter = ["resultsUrl", "algorithmLogUrl", "resultsDid"]
-            for job_info in resp_content:
-                for k in keys_to_filter:
-                    job_info.pop(k, None)
-                _response.append(job_info)
-
-            _response = json.dumps(_response)
-
         return Response(_response, response.status_code, headers=standard_headers)
 
     except (ValueError, Exception) as e:
