@@ -67,7 +67,9 @@ class WorkflowValidator:
     def validate_input(self, index=0):
         """Validates input dictionary."""
         main_input = [
-            filter_dictionary(self.data, ["documentId", "transferTxId", "serviceId"])
+            filter_dictionary(
+                self.data, ["documentId", "transferTxId", "serviceId", "userdata"]
+            )
         ]
         additional_inputs = decode_from_data(self.data, "additionalInputs")
 
@@ -78,7 +80,7 @@ class WorkflowValidator:
         all_data = main_input + additional_inputs
         algo_data = filter_dictionary_starts_with(self.data, "algorithm")
 
-        for key in ["algouserdata", "algocustomdata", "userdata"]:
+        for key in ["algouserdata", "algocustomdata"]:
             if self.data.get(key):
                 algo_data[key] = self.data[key]
 
