@@ -313,5 +313,5 @@ class InitializeRequest(CustomJsonRequest):
             "documentId": ["required"],
             "serviceId": ["required"],
             "consumerAddress": ["required"],
-            "fileIndex": ["required"],
+            "fileIndex": ["sometimes", "integer", "min:0"],
         }
