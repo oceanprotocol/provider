@@ -7,8 +7,8 @@ from datetime import datetime
 import pytest
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
-from ocean_provider.utils.services import ServiceType
 from ocean_provider.utils.provider_fees import get_provider_fees
+from ocean_provider.utils.services import ServiceType
 from tests.test_helpers import (
     get_dataset_ddo_disabled,
     get_dataset_ddo_with_denied_consumer,
@@ -35,7 +35,7 @@ def test_download_service(client, publisher_wallet, consumer_wallet, web3, userd
         service.datatoken_address,
         consumer_wallet.address,
         service.index,
-        get_provider_fees(asset.did, service, consumer_wallet.address),
+        get_provider_fees(asset.did, service, consumer_wallet.address, 0),
         consumer_wallet,
     )
 
@@ -87,11 +87,7 @@ def test_initialize_on_bad_url(client, publisher_wallet, consumer_wallet, web3):
     )
 
     response = initialize_service(
-        client,
-        asset.did,
-        service,
-        consumer_wallet,
-        raw_response=True,
+        client, asset.did, service, consumer_wallet, raw_response=True
     )
     assert "error" in response.json
     assert response.json["error"] == "Asset URL not found or not available."
@@ -107,10 +103,7 @@ def test_initialize_on_ipfs_url(client, publisher_wallet, consumer_wallet, web3)
     )
 
     datatoken, nonce, computeAddress, providerFees = initialize_service(
-        client,
-        asset.did,
-        service,
-        consumer_wallet,
+        client, asset.did, service, consumer_wallet
     )
 
     assert datatoken == service.datatoken_address
@@ -127,11 +120,7 @@ def test_initialize_on_disabled_asset(client, publisher_wallet, consumer_wallet,
     )
 
     response = initialize_service(
-        client,
-        asset.did,
-        service,
-        consumer_wallet,
-        raw_response=True,
+        client, asset.did, service, consumer_wallet, raw_response=True
     )
     assert "error" in response.json
     assert response.json["error"] == "Asset is not consumable."
@@ -152,11 +141,7 @@ def test_initialize_on_asset_with_custom_credentials(
     )
 
     response = initialize_service(
-        client,
-        asset.did,
-        service,
-        consumer_wallet,
-        raw_response=True,
+        client, asset.did, service, consumer_wallet, raw_response=True
     )
     assert "error" in response.json
     assert (
@@ -179,7 +164,7 @@ def test_download_multiple_files(client, publisher_wallet, consumer_wallet, web3
         service.datatoken_address,
         consumer_wallet.address,
         service.index,
-        get_provider_fees(asset.did, service, consumer_wallet.address),
+        get_provider_fees(asset.did, service, consumer_wallet.address, 0),
         consumer_wallet,
     )
 
