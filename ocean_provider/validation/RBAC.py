@@ -78,7 +78,9 @@ class RBACValidator:
         ]
 
     def build_payload(self):
-        provider_access = "private" if os.getenv("PRIVATE_PROVIDER", False) else "public"
+        provider_access = (
+            "private" if os.getenv("PRIVATE_PROVIDER", False) else "public"
+        )
         payload = {
             "eventType": self.action,
             "component": self.component,
