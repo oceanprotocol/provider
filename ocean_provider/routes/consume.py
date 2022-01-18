@@ -145,6 +145,7 @@ def initialize():
         did = data.get("documentId")
         consumer_address = data.get("consumerAddress")
         compute_env = data.get("computeEnv")
+        valid_until = data.get("validUntil", 0)
 
         asset = get_asset_from_metadatastore(get_metadata_url(), did)
         consumable, message = check_asset_consumable(asset, consumer_address, logger)
@@ -154,10 +155,10 @@ def initialize():
         service_id = data.get("serviceId")
         service = asset.get_service_by_id(service_id)
 
-        if service.type == "compute" and not compute_env:
+        if service.type == "compute" and (not compute_env or valid_until <= 0):
             return (
                 jsonify(
-                    error="The computeEnv is mandatory when initializing a compute service."
+                    error="The computeEnv and duration are mandatory when initializing a compute service."
                 ),
                 400,
             )
@@ -194,7 +195,9 @@ def initialize():
             "dataToken": token_address,
             "nonce": get_nonce(consumer_address),
             "computeAddress": compute_address,
-            "providerFee": get_provider_fees(did, service, consumer_address),
+            "providerFee": get_provider_fees(
+                did, service, consumer_address, valid_until
+            ),
         }
         return Response(json.dumps(approve_params), 200, headers=standard_headers)
 

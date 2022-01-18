@@ -15,7 +15,7 @@ keys = KeyAPI(NativeECCBackend)
 
 
 def get_provider_fees(
-    did: str, service: Service, consumer_address: str
+    did: str, service: Service, consumer_address: str, duration: int
 ) -> Dict[str, Any]:
     web3 = get_web3()
     provider_wallet = get_provider_wallet()
@@ -26,12 +26,13 @@ def get_provider_fees(
         "PROVIDER_FEE_TOKEN", "0x0000000000000000000000000000000000000000"
     )
     message_hash = web3.solidityKeccak(
-        ["bytes", "address", "address", "uint256"],
+        ["bytes", "address", "address", "uint256", "uint256"],
         [
             web3.toHex(web3.toBytes(text=provider_data)),
             provider_fee_address,
             provider_fee_token,
             provider_fee_amount,
+            duration,
         ],
     )
 
@@ -51,6 +52,7 @@ def get_provider_fees(
         "v": (signed.v + 27) if signed.v <= 1 else signed.v,
         "r": web3.toHex(web3.toBytes(signed.r).rjust(32, b"\0")),
         "s": web3.toHex(web3.toBytes(signed.s).rjust(32, b"\0")),
+        "validUntil": duration,
     }
     logger.debug(f"Returning provider_fees: {provider_fee}")
     return provider_fee
