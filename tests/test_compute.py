@@ -2,20 +2,21 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
-from datetime import datetime
-import pytest
 import time
+from datetime import datetime
 
+import pytest
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
-from ocean_provider.utils.services import ServiceType
 from ocean_provider.utils.provider_fees import get_provider_fees
+from ocean_provider.utils.services import ServiceType
 from ocean_provider.validation.provider_requests import RBACValidator
 from tests.helpers.compute_helpers import (
     build_and_send_ddo_with_compute_service,
     get_compute_job_info,
     get_compute_result,
     get_compute_signature,
+    get_future_valid_until,
     get_possible_compute_job_status_text,
     get_registered_asset,
     get_web3,
@@ -32,8 +33,7 @@ def test_compute_norawalgo_allowed(
 ):
     # publish a dataset asset
     dataset_ddo_w_compute_service = get_registered_asset(
-        publisher_wallet,
-        custom_services="norawalgo",
+        publisher_wallet, custom_services="norawalgo"
     )
 
     sa = dataset_ddo_w_compute_service.get_service_by_type(ServiceType.COMPUTE)
@@ -53,7 +53,10 @@ def test_compute_norawalgo_allowed(
         consumer_wallet.address,
         sa.index,
         get_provider_fees(
-            dataset_ddo_w_compute_service.did, sa, consumer_wallet.address
+            dataset_ddo_w_compute_service.did,
+            sa,
+            consumer_wallet.address,
+            get_future_valid_until(),
         ),
         consumer_wallet,
     )
@@ -100,11 +103,7 @@ def test_compute_specific_algo_dids(
 
     # Start the compute job
     payload = {
-        "dataset": {
-            "documentId": ddo.did,
-            "serviceId": sa.id,
-            "transferTxId": tx_id,
-        },
+        "dataset": {"documentId": ddo.did, "serviceId": sa.id, "transferTxId": tx_id},
         "algorithm": {
             "serviceId": not_sa_compute.id,
             "documentId": another_alg_ddo.did,
@@ -136,11 +135,7 @@ def test_compute(client, publisher_wallet, consumer_wallet):
 
     # Start the compute job
     payload = {
-        "dataset": {
-            "documentId": ddo.did,
-            "serviceId": sa.id,
-            "transferTxId": tx_id,
-        },
+        "dataset": {"documentId": ddo.did, "serviceId": sa.id, "transferTxId": tx_id},
         "algorithm": {
             "serviceId": sa_compute.id,
             "documentId": alg_ddo.did,
@@ -260,11 +255,7 @@ def test_compute_diff_provider(client, publisher_wallet, consumer_wallet):
 
     # Start the compute job
     payload = {
-        "dataset": {
-            "documentId": ddo.did,
-            "serviceId": sa.id,
-            "transferTxId": tx_id,
-        },
+        "dataset": {"documentId": ddo.did, "serviceId": sa.id, "transferTxId": tx_id},
         "algorithm": {
             "documentId": alg_ddo.did,
             "serviceId": sa_compute.id,
@@ -290,11 +281,7 @@ def test_compute_allow_all_published(client, publisher_wallet, consumer_wallet):
 
     # Start the compute job
     payload = {
-        "dataset": {
-            "documentId": ddo.did,
-            "serviceId": sa.id,
-            "transferTxId": tx_id,
-        },
+        "dataset": {"documentId": ddo.did, "serviceId": sa.id, "transferTxId": tx_id},
         "algorithm": {
             "serviceId": sa_compute.id,
             "documentId": alg_ddo.did,
@@ -336,7 +323,9 @@ def test_compute_additional_input(
         sa2.datatoken_address,
         consumer_wallet.address,
         sa2.index,
-        get_provider_fees(ddo2.did, sa2, consumer_wallet.address),
+        get_provider_fees(
+            ddo2.did, sa2, consumer_wallet.address, get_future_valid_until()
+        ),
         consumer_wallet,
     )
 
@@ -391,11 +380,7 @@ def test_compute_delete_job(
 
     # Start the compute job
     payload = {
-        "dataset": {
-            "documentId": ddo.did,
-            "serviceId": sa.id,
-            "transferTxId": tx_id,
-        },
+        "dataset": {"documentId": ddo.did, "serviceId": sa.id, "transferTxId": tx_id},
         "algorithm": {
             "documentId": alg_ddo.did,
             "serviceId": sa_compute.id,

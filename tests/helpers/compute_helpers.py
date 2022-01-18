@@ -1,11 +1,12 @@
-from datetime import datetime
+import datetime
 import json
+from datetime import timezone
 
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
+from ocean_provider.utils.provider_fees import get_provider_fees
 from ocean_provider.utils.services import ServiceType
 from ocean_provider.utils.util import msg_hash
-from ocean_provider.utils.provider_fees import get_provider_fees
 from tests.helpers.ddo_dict_builders import build_metadata_dict_type_algorithm
 from tests.test_helpers import (
     get_registered_asset,
@@ -155,3 +156,11 @@ def get_compute_result(client, endpoint, params, raw_response=False):
     ), f"get compute result failed: status {response.status}, data {response.data}"
 
     return response.data
+
+
+def get_future_valid_until():
+    # return a UTC timestamp for one hour in the future
+    dt = datetime.datetime.now(timezone.utc)
+    utc_time = dt.replace(tzinfo=timezone.utc)
+    utc_timestamp = utc_time.timestamp()
+    return utc_timestamp + 60 * 60
