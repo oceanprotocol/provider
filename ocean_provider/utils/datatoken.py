@@ -103,6 +103,7 @@ def verify_order_tx(
             provider_fee_order_log.args.validUntil,
         ],
     )
+
     prefix = "\x19Ethereum Signed Message:\n32"
     signable_hash = Web3.solidityKeccak(
         ["bytes", "bytes"], [Web3.toBytes(text=prefix), Web3.toBytes(message_hash)]
@@ -115,8 +116,8 @@ def verify_order_tx(
 
     # check duration
     if provider_fee_order_log.args.validUntil > 0:
-        ts = datetime.now().timestamp()
-        if provider_fee_order_log.args.duration < ts:
+        timestamp_now = datetime.now().timestamp()
+        if provider_fee_order_log.args.validUntil < timestamp_now:
             raise AssertionError(
                 f"Validity in transaction exceeds current UTC timestamp"
             )
@@ -127,7 +128,7 @@ def verify_order_tx(
         tx_receipt, errors=DISCARD
     )
     order_log = event_logs[0] if event_logs else None
-    if order_log.args.orderTxId:
+    if order_log and order_log.args.orderTxId:
         try:
             tx_receipt = get_tx_receipt(web3, order_log.args.orderTxId)
         except ConnectionClosed:
