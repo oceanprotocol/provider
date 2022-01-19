@@ -127,7 +127,7 @@ def verify_order_tx(
         tx_receipt, errors=DISCARD
     )
     order_log = event_logs[0] if event_logs else None
-    if order_log.args.orderTxId:
+    if order_log and order_log.args.orderTxId:
         try:
             tx_receipt = get_tx_receipt(web3, order_log.args.orderTxId)
         except ConnectionClosed:
