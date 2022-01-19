@@ -436,7 +436,7 @@ def start_order(
     start_order_tx = datatoken_contract.functions.startOrder(
         consumer,
         service_index,
-        {
+        (
             provider_fees["providerFeeAddress"],
             provider_fees["providerFeeToken"],
             provider_fees["providerFeeAmount"],
@@ -445,7 +445,7 @@ def start_order(
             provider_fees["s"],
             provider_fees["validUntil"],
             provider_fees["providerData"],
-        },
+        ),
     ).buildTransaction({"from": from_wallet.address, "gasPrice": get_gas_price(web3)})
     txid, receipt = sign_send_and_wait_for_receipt(web3, start_order_tx, from_wallet)
     # if needed, we can log the tx here
