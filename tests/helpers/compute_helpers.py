@@ -1,6 +1,5 @@
-import datetime
 import json
-from datetime import timezone
+from datetime import datetime, timezone
 
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
