@@ -94,12 +94,13 @@ def verify_order_tx(
     )
     signature = keys.Signature(signature_bytes=bts)
     message_hash = Web3.solidityKeccak(
-        ["bytes", "address", "address", "uint256"],
+        ["bytes", "address", "address", "uint256", "uint256"],
         [
             provider_fee_order_log.args.providerData,
             provider_fee_order_log.args.providerFeeAddress,
             provider_fee_order_log.args.providerFeeToken,
             provider_fee_order_log.args.providerFeeAmount,
+            provider_fee_order_log.args.validUntil,
         ],
     )
     prefix = "\x19Ethereum Signed Message:\n32"
@@ -113,7 +114,7 @@ def verify_order_tx(
         )
 
     # check duration
-    if provider_fee_order_log.args.duration > 0:
+    if provider_fee_order_log.args.validUntil > 0:
         ts = datetime.now().timestamp()
         if provider_fee_order_log.args.duration < ts:
             raise AssertionError(
