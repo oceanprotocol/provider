@@ -70,7 +70,10 @@ def build_and_send_ddo_with_compute_service(
         consumer_wallet.address,
         service.index,
         get_provider_fees(
-            dataset_ddo_w_compute_service.did, service, consumer_wallet.address
+            dataset_ddo_w_compute_service.did,
+            service,
+            consumer_wallet.address,
+            get_future_valid_until(),
         ),
         consumer_wallet,
     )
@@ -81,7 +84,9 @@ def build_and_send_ddo_with_compute_service(
         alg_service.datatoken_address,
         consumer_wallet.address,
         alg_service.index,
-        get_provider_fees(alg_ddo.did, alg_service, consumer_wallet.address),
+        get_provider_fees(
+            alg_ddo.did, alg_service, consumer_wallet.address, get_future_valid_until()
+        ),
         consumer_wallet,
     )
 
