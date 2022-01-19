@@ -164,5 +164,5 @@ def get_compute_result(client, endpoint, params, raw_response=False):
 
 def get_future_valid_until():
     # return a timestamp for one hour in the future
-    ts = datetime.now().timestamp()
-    return ts + 60 * 60
+    ts = int(datetime.now().timestamp())
+    return int(ts + 60 * 60)
