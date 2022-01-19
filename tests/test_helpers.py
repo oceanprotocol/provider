@@ -417,7 +417,7 @@ def initialize_service(
         return response
 
     return (
-        response.json.get("dataToken"),
+        response.json.get("datatoken"),
         response.json.get("nonce"),
         response.json.get("computeAddress"),
         response.json.get("providerFees"),

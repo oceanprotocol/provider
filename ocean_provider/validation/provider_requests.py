@@ -296,12 +296,12 @@ class DownloadRequest(CustomJsonRequest):
 
 class InitializeRequest(CustomJsonRequest):
     def rules(self):
-        timestamp_now = datetime.now().timestamp()
+        timestamp_now = int(datetime.now().timestamp())
 
         return {
             "documentId": ["required"],
             "serviceId": ["required"],
             "consumerAddress": ["required"],
             "fileIndex": ["sometimes", "integer", "min:0"],
-            "validUntil": ["sometimes", "integer", "min:" + timestamp_now],
+            "validUntil": ["sometimes", "integer", "min:" + str(timestamp_now)],
         }
