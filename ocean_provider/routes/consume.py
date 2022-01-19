@@ -196,7 +196,7 @@ def initialize():
             "nonce": get_nonce(consumer_address),
             "computeAddress": compute_address,
             "providerFee": get_provider_fees(
-                did, service, consumer_address, valid_until
+                did, service, consumer_address, int(valid_until)
             ),
         }
         return Response(json.dumps(approve_params), 200, headers=standard_headers)
