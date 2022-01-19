@@ -1,11 +1,11 @@
-from datetime import datetime
 import json
+from datetime import datetime, timedelta
 
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
+from ocean_provider.utils.provider_fees import get_provider_fees
 from ocean_provider.utils.services import ServiceType
 from ocean_provider.utils.util import msg_hash
-from ocean_provider.utils.provider_fees import get_provider_fees
 from tests.helpers.ddo_dict_builders import build_metadata_dict_type_algorithm
 from tests.test_helpers import (
     get_registered_asset,
@@ -69,7 +69,10 @@ def build_and_send_ddo_with_compute_service(
         consumer_wallet.address,
         service.index,
         get_provider_fees(
-            dataset_ddo_w_compute_service.did, service, consumer_wallet.address
+            dataset_ddo_w_compute_service.did,
+            service,
+            consumer_wallet.address,
+            get_future_valid_until(),
         ),
         consumer_wallet,
     )
@@ -80,7 +83,9 @@ def build_and_send_ddo_with_compute_service(
         alg_service.datatoken_address,
         consumer_wallet.address,
         alg_service.index,
-        get_provider_fees(alg_ddo.did, alg_service, consumer_wallet.address),
+        get_provider_fees(
+            alg_ddo.did, alg_service, consumer_wallet.address, get_future_valid_until()
+        ),
         consumer_wallet,
     )
 
@@ -155,3 +160,8 @@ def get_compute_result(client, endpoint, params, raw_response=False):
     ), f"get compute result failed: status {response.status}, data {response.data}"
 
     return response.data
+
+
+def get_future_valid_until():
+    # return a timestamp for one hour in the future
+    return int((datetime.now() + timedelta(hours=1)).timestamp())

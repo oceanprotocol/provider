@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 from typing import Optional
 
 from artifacts import ERC20Template
@@ -93,14 +94,16 @@ def verify_order_tx(
     )
     signature = keys.Signature(signature_bytes=bts)
     message_hash = Web3.solidityKeccak(
-        ["bytes", "address", "address", "uint256"],
+        ["bytes", "address", "address", "uint256", "uint256"],
         [
             provider_fee_order_log.args.providerData,
             provider_fee_order_log.args.providerFeeAddress,
             provider_fee_order_log.args.providerFeeToken,
             provider_fee_order_log.args.providerFeeAmount,
+            provider_fee_order_log.args.validUntil,
         ],
     )
+
     prefix = "\x19Ethereum Signed Message:\n32"
     signable_hash = Web3.solidityKeccak(
         ["bytes", "bytes"], [Web3.toBytes(text=prefix), Web3.toBytes(message_hash)]
@@ -111,9 +114,30 @@ def verify_order_tx(
             f"Provider was not able to check the signed message in ProviderFees event\n"
         )
 
-    # TO DO - check transfer of providerFeeAmount providerFeeToken to providerFeeAddress
-
+    # check duration
+    if provider_fee_order_log.args.validUntil > 0:
+        timestamp_now = datetime.now().timestamp()
+        if provider_fee_order_log.args.validUntil < timestamp_now:
+            raise AssertionError(
+                f"Validity in transaction exceeds current UTC timestamp"
+            )
     # end check provider fees
+
+    # check if we have an OrderReused event. If so, get orderTxId and switch next checks to use that
+    event_logs = datatoken_contract.events.OrderReused().processReceipt(
+        tx_receipt, errors=DISCARD
+    )
+    order_log = event_logs[0] if event_logs else None
+    if order_log and order_log.args.orderTxId:
+        try:
+            tx_receipt = get_tx_receipt(web3, order_log.args.orderTxId)
+        except ConnectionClosed:
+            # try again in this case
+            tx_receipt = get_tx_receipt(web3, order_log.args.orderTxId)
+        if tx_receipt is None:
+            raise AssertionError("Failed to get tx receipt referenced in OrderReused..")
+        if tx_receipt.status == 0:
+            raise AssertionError("order referenced in OrderReused failed.")
 
     event_logs = datatoken_contract.events.OrderStarted().processReceipt(
         tx_receipt, errors=DISCARD

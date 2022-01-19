@@ -119,10 +119,10 @@ def fileinfo():
 def initialize():
     """Initialize a service request.
     In order to consume a data service the user is required to send
-    a number of data tokens to the provider as defined in the Asset's
+    a number of datatokens to the provider as defined in the Asset's
     service description in the Asset's DDO document.
 
-    The data tokens are transferred via the ethereum blockchain network
+    The datatokens are transferred via the ethereum blockchain network
     by requesting the user to sign an ERC20 `approveAndLock` transaction
     where the approval is given to the provider's ethereum account for
     the number of tokens required by the service.
@@ -131,7 +131,7 @@ def initialize():
         json object as follows:
         ```JSON
         {
-            "dataToken": <data-token-contract-address>,
+            "datatoken": <data-token-contract-address>,
             "nonce": <nonce-used-in-consumer-signature>,
             "providerFee": <object containing provider fees
             "computeAddress": <compute address>
@@ -145,6 +145,7 @@ def initialize():
         did = data.get("documentId")
         consumer_address = data.get("consumerAddress")
         compute_env = data.get("computeEnv")
+        valid_until = data.get("validUntil", 0)
 
         asset = get_asset_from_metadatastore(get_metadata_url(), did)
         consumable, message = check_asset_consumable(asset, consumer_address, logger)
@@ -154,10 +155,10 @@ def initialize():
         service_id = data.get("serviceId")
         service = asset.get_service_by_id(service_id)
 
-        if service.type == "compute" and not compute_env:
+        if service.type == "compute" and not (compute_env and valid_until):
             return (
                 jsonify(
-                    error="The computeEnv is mandatory when initializing a compute service."
+                    error="The computeEnv and validUntil are mandatory when initializing a compute service."
                 ),
                 400,
             )
@@ -191,10 +192,12 @@ def initialize():
         # able to consume the service
         compute_address, compute_limits = get_compute_info()
         approve_params = {
-            "dataToken": token_address,
+            "datatoken": token_address,
             "nonce": get_nonce(consumer_address),
             "computeAddress": compute_address,
-            "providerFee": get_provider_fees(did, service, consumer_address),
+            "providerFee": get_provider_fees(
+                did, service, consumer_address, valid_until
+            ),
         }
         return Response(json.dumps(approve_params), 200, headers=standard_headers)
 
@@ -254,7 +257,7 @@ def download():
         tx_id = data.get("transferTxId")
 
         # grab asset for did from the metadatastore associated with
-        # the Data Token address
+        # the datatoken address
         asset = get_asset_from_metadatastore(get_metadata_url(), did)
         service = asset.get_service_by_id(service_id)
         token_address = service.datatoken_address
@@ -319,12 +322,12 @@ def download():
 
 def process_consume_request(data: dict):
     did = data.get("documentId")
-    token_address = data.get("dataToken")
+    token_address = data.get("datatoken")
     consumer_address = data.get("consumerAddress")
     service_id = int(data.get("serviceId"))
 
     # grab asset for did from the metadatastore associated with
-    # the Data Token address
+    # the datatoken address
     asset = get_asset_from_metadatastore(get_metadata_url(), did)
     service = asset.get_service_by_id(service_id)
 
