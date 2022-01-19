@@ -145,7 +145,7 @@ def initialize():
         did = data.get("documentId")
         consumer_address = data.get("consumerAddress")
         compute_env = data.get("computeEnv")
-        valid_until = data.get("validUntil", 0)
+        valid_until = data.get("validUntil")
 
         asset = get_asset_from_metadatastore(get_metadata_url(), did)
         consumable, message = check_asset_consumable(asset, consumer_address, logger)
@@ -155,10 +155,10 @@ def initialize():
         service_id = data.get("serviceId")
         service = asset.get_service_by_id(service_id)
 
-        if service.type == "compute" and (not compute_env or valid_until <= 0):
+        if service.type == "compute" and not (compute_env and valid_until):
             return (
                 jsonify(
-                    error="The computeEnv and duration are mandatory when initializing a compute service."
+                    error="The computeEnv and validUntil are mandatory when initializing a compute service."
                 ),
                 400,
             )
