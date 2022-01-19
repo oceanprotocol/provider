@@ -1,7 +1,7 @@
+import datetime
 import json
 from datetime import timezone
 
-import _datetime
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.provider_fees import get_provider_fees
@@ -94,7 +94,7 @@ def build_and_send_ddo_with_compute_service(
 
 
 def get_compute_signature(client, consumer_wallet, did, job_id=None):
-    nonce = _datetime.now().timestamp()
+    nonce = datetime.now().timestamp()
 
     # prepare consumer signature on did
     if job_id:
@@ -165,7 +165,7 @@ def get_compute_result(client, endpoint, params, raw_response=False):
 
 def get_future_valid_until():
     # return a UTC timestamp for one hour in the future
-    dt = _datetime.datetime.now(timezone.utc)
+    dt = datetime.now(timezone.utc)
     utc_time = dt.replace(tzinfo=timezone.utc)
     utc_timestamp = utc_time.timestamp()
     return utc_timestamp + 60 * 60
