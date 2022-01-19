@@ -145,7 +145,7 @@ def initialize():
         did = data.get("documentId")
         consumer_address = data.get("consumerAddress")
         compute_env = data.get("computeEnv")
-        valid_until = data.get("validUntil")
+        valid_until = data.get("validUntil", 0)
 
         asset = get_asset_from_metadatastore(get_metadata_url(), did)
         consumable, message = check_asset_consumable(asset, consumer_address, logger)
