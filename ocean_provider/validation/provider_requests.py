@@ -303,5 +303,5 @@ class InitializeRequest(CustomJsonRequest):
             "serviceId": ["required"],
             "consumerAddress": ["required"],
             "fileIndex": ["sometimes", "integer", "min:0"],
-            "validUntil": ["sometimes", "integer", "min:" + timestamp_now]
+            "validUntil": ["sometimes", "integer", "min:" + timestamp_now],
         }
