@@ -1,6 +1,5 @@
-import datetime
 import json
-from datetime import timezone
+from datetime import datetime
 
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
@@ -164,8 +163,6 @@ def get_compute_result(client, endpoint, params, raw_response=False):
 
 
 def get_future_valid_until():
-    # return a UTC timestamp for one hour in the future
-    dt = datetime.now(timezone.utc)
-    utc_time = dt.replace(tzinfo=timezone.utc)
-    utc_timestamp = utc_time.timestamp()
-    return utc_timestamp + 60 * 60
+    # return a timestamp for one hour in the future
+    ts = datetime.now().timestamp()
+    return ts + 60 * 60

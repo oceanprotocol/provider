@@ -1,6 +1,5 @@
-import datetime
 import logging
-from datetime import timezone
+from datetime import datetime
 from typing import Optional
 
 from artifacts import ERC20Template
@@ -115,10 +114,8 @@ def verify_order_tx(
 
     # check duration
     if provider_fee_order_log.args.duration > 0:
-        dt = datetime.datetime.now(timezone.utc)
-        utc_time = dt.replace(tzinfo=timezone.utc)
-        utc_timestamp = utc_time.timestamp()
-        if provider_fee_order_log.args.duration < utc_timestamp:
+        ts = datetime.now().timestamp()
+        if provider_fee_order_log.args.duration < ts:
             raise AssertionError(
                 f"Validity in transaction exceeds current UTC timestamp"
             )
