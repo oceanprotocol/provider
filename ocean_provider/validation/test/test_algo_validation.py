@@ -4,7 +4,7 @@
 #
 import copy
 import pytest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from ocean_provider.utils.asset import Asset
 from ocean_provider.utils.services import ServiceType, Service
@@ -538,3 +538,415 @@ def test_fails_trusted(provider_wallet, consumer_address, web3):
             validator.error
             == "Error in input at index 1: this algorithm is not from a trusted publisher"
         )
+
+
+@pytest.mark.unit
+@patch("ocean_provider.validation.algo.check_asset_consumable", return_value=(True, ""))
+@patch("ocean_provider.validation.algo.validate_order", return_value=(None, None, None))
+@patch(
+    "ocean_provider.validation.algo.get_service_files_list",
+    return_value=None,
+)
+def test_fails_no_asset_url(provider_wallet, consumer_address, web3):
+    ddo = Asset(ddo_dict)
+    sa = ddo.get_service_by_type(ServiceType.COMPUTE)
+    data = {
+        "dataset": {
+            "documentId": ddo.did,
+            "serviceId": sa.id,
+            "transferTxId": "tx_id",
+        },
+        "algorithm": {
+            "serviceId": sa.id,
+            "meta": {},
+        },
+    }
+
+    with patch(
+        "ocean_provider.validation.algo.get_asset_from_metadatastore", side_effect=[ddo]
+    ):
+        validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
+        assert validator.validate() is False
+        assert (
+            validator.error
+            == "Services in input with compute type must be in the same provider you are calling."
+        )
+
+
+@pytest.mark.unit
+@patch("ocean_provider.validation.algo.check_asset_consumable", return_value=(True, ""))
+@patch("ocean_provider.validation.algo.validate_order", side_effect=Exception("mock"))
+@patch(
+    "ocean_provider.validation.algo.get_service_files_list",
+    return_value=[{"url": "dummy"}],
+)
+def test_fails_validate_order(provider_wallet, consumer_address, web3):
+    ddo = Asset(ddo_dict)
+    sa = ddo.get_service_by_type(ServiceType.COMPUTE)
+    data = {
+        "dataset": {
+            "documentId": ddo.did,
+            "serviceId": sa.id,
+            "transferTxId": "tx_id",
+        },
+        "algorithm": {
+            "serviceId": sa.id,
+            "meta": {},
+        },
+    }
+
+    with patch(
+        "ocean_provider.validation.algo.get_asset_from_metadatastore", side_effect=[ddo]
+    ):
+        validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
+        assert validator.validate() is False
+        assert validator.error == f"Order for serviceId {sa.id} is not valid."
+
+
+@pytest.mark.unit
+@patch("ocean_provider.validation.algo.check_asset_consumable", return_value=(True, ""))
+@patch("ocean_provider.validation.algo.validate_order", return_value=(None, None, None))
+@patch(
+    "ocean_provider.validation.algo.get_service_files_list",
+    return_value=[{"url": "dummy"}],
+)
+def test_fails_no_service_id(provider_wallet, consumer_address, web3):
+    ddo = Asset(ddo_dict)
+    sa = ddo.get_service_by_type(ServiceType.COMPUTE)
+    data = {
+        "dataset": {
+            "documentId": ddo.did,
+            "serviceId": None,
+            "transferTxId": "tx_id",
+        },
+        "algorithm": {
+            "serviceId": sa.id,
+            "meta": {},
+        },
+    }
+
+    with patch(
+        "ocean_provider.validation.algo.get_asset_from_metadatastore", side_effect=[ddo]
+    ):
+        validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
+        assert validator.validate() is False
+        assert validator.error == "No serviceId in input item."
+
+
+@pytest.mark.unit
+@patch("ocean_provider.validation.algo.check_asset_consumable", return_value=(True, ""))
+@patch("ocean_provider.validation.algo.validate_order", return_value=(None, None, None))
+@patch(
+    "ocean_provider.validation.algo.get_service_files_list",
+    return_value=[{"url": "dummy"}],
+)
+@patch(
+    "ocean_provider.serializers.StageAlgoSerializer.serialize",
+    new=Mock(return_value={}),
+)
+def test_fails_invalid_algorithm_dict(provider_wallet, consumer_address, web3):
+    ddo = Asset(ddo_dict)
+    alg_ddo = Asset(alg_ddo_dict)
+    sa_compute = alg_ddo.get_service_by_type(ServiceType.ACCESS)
+    sa = ddo.get_service_by_type(ServiceType.COMPUTE)
+
+    data = {
+        "dataset": {
+            "documentId": ddo.did,
+            "serviceId": sa.id,
+            "transferTxId": "tx_id",
+        },
+        "algorithm": {
+            "documentId": alg_ddo.did,
+            "serviceId": sa_compute.id,
+            "transferTxId": "alg_tx_id",
+        },
+    }
+
+    def side_effect(*args, **kwargs):
+        nonlocal ddo, alg_ddo
+        if ddo.did == args[1]:
+            return ddo
+        if alg_ddo.did == args[1]:
+            return alg_ddo
+
+    with patch(
+        "ocean_provider.validation.algo.get_asset_from_metadatastore",
+        side_effect=side_effect,
+    ):
+        validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
+        assert validator.validate() is False
+        assert validator.error == f"cannot get url for the algorithmDid {alg_ddo.did}"
+
+
+@pytest.mark.unit
+@patch("ocean_provider.validation.algo.check_asset_consumable", return_value=(True, ""))
+@patch("ocean_provider.validation.algo.validate_order", return_value=(None, None, None))
+@patch(
+    "ocean_provider.validation.algo.get_service_files_list",
+    return_value=[{"url": "dummy"}],
+)
+def test_fails_algorithm_in_use(provider_wallet, consumer_address, web3):
+    ddo = Asset(ddo_dict)
+    alg_ddo = Asset(alg_ddo_dict)
+    sa_compute = alg_ddo.get_service_by_type(ServiceType.ACCESS)
+    sa = ddo.get_service_by_type(ServiceType.COMPUTE)
+
+    data = {
+        "dataset": {
+            "documentId": ddo.did,
+            "serviceId": sa.id,
+            "transferTxId": "tx_id",
+        },
+        "algorithm": {
+            "documentId": alg_ddo.did,
+            "serviceId": sa_compute.id,
+            "transferTxId": "alg_tx_id",
+        },
+    }
+
+    def side_effect(*args, **kwargs):
+        nonlocal ddo, alg_ddo
+        if ddo.did == args[1]:
+            return ddo
+        if alg_ddo.did == args[1]:
+            return alg_ddo
+
+    def record_consume_request_side_effect(*args, **kwargs):
+        nonlocal ddo, alg_ddo
+        if ddo.did == args[0]:
+            return ddo
+        if alg_ddo.did == args[0]:
+            raise Exception("I know Python!")
+
+    with patch(
+        "ocean_provider.validation.algo.get_asset_from_metadatastore",
+        side_effect=side_effect,
+    ):
+        with patch(
+            "ocean_provider.validation.algo.record_consume_request",
+            side_effect=record_consume_request_side_effect,
+        ):
+            validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
+            assert validator.validate() is False
+            assert (
+                validator.error
+                == "Algorithm is already in use or can not be found on chain."
+            )
+
+
+@pytest.mark.unit
+@patch("ocean_provider.validation.algo.check_asset_consumable", return_value=(True, ""))
+@patch("ocean_provider.validation.algo.validate_order", return_value=(None, None, None))
+@patch(
+    "ocean_provider.validation.algo.get_service_files_list",
+    return_value=[{"url": "dummy"}],
+)
+def test_fail_wrong_algo_type(provider_wallet, consumer_address, web3):
+    ddo = Asset(ddo_dict)
+    alg_ddo = Asset(alg_ddo_dict)
+    sa_compute = alg_ddo.get_service_by_type(ServiceType.ACCESS)
+    sa = ddo.get_service_by_type(ServiceType.COMPUTE)
+
+    data = {
+        "dataset": {
+            "documentId": ddo.did,
+            "transferTxId": "tx_id",
+            "serviceId": sa.id,
+        },
+        "algorithm": {
+            "serviceId": sa_compute.id,
+            "documentId": alg_ddo.did,
+            "transferTxId": "alg_tx_id",
+        },
+    }
+
+    def side_effect(*args, **kwargs):
+        nonlocal ddo, alg_ddo
+        if ddo.did == args[1]:
+            return ddo
+        if alg_ddo.did == args[1]:
+            return alg_ddo
+
+    def other_service(*args, **kwargs):
+        return Service(
+            index=0,
+            service_id=data["algorithm"]["serviceId"],
+            service_type="access",
+            datatoken_address="0xa",
+            service_endpoint="test",
+            encrypted_files="",
+            timeout=0,
+        )
+
+    with patch(
+        "ocean_provider.validation.algo.get_asset_from_metadatastore",
+        side_effect=side_effect,
+    ):
+        with patch(
+            "ocean_provider.utils.asset.Asset.get_service_by_id",
+            side_effect=other_service,
+        ):
+            validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
+            assert validator.validate() is False
+            assert validator.error == "Service for main asset must be compute."
+
+
+@pytest.mark.unit
+@patch("ocean_provider.validation.algo.check_asset_consumable", return_value=(True, ""))
+@patch("ocean_provider.validation.algo.validate_order", return_value=(None, None, None))
+@patch(
+    "ocean_provider.validation.algo.get_service_files_list",
+    return_value=[{"url": "dummy"}],
+)
+def test_fail_allow_raw_false(provider_wallet, consumer_address, web3):
+    ddo = Asset(ddo_dict)
+    alg_ddo = Asset(alg_ddo_dict)
+    sa_compute = alg_ddo.get_service_by_type(ServiceType.ACCESS)
+    sa = ddo.get_service_by_type(ServiceType.COMPUTE)
+    ddo.services[0].compute_dict["allowRawAlgorithm"] = False
+    data = {
+        "dataset": {
+            "documentId": ddo.did,
+            "transferTxId": "tx_id",
+            "serviceId": sa.id,
+        },
+        "algorithm": {
+            "serviceId": sa_compute.id,
+            "meta": {
+                "rawcode": "console.log('Hello world'!)",
+                "format": "docker-image",
+                "version": "0.1",
+                "container": {"entrypoint": "node $ALGO", "image": "node", "tag": "10"},
+            },
+        },
+    }
+
+    def side_effect(*args, **kwargs):
+        nonlocal ddo, alg_ddo
+        if ddo.did == args[1]:
+            return ddo
+        if alg_ddo.did == args[1]:
+            return alg_ddo
+
+    with patch(
+        "ocean_provider.validation.algo.get_asset_from_metadatastore",
+        side_effect=side_effect,
+    ):
+        validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
+        assert validator.validate() is False
+        assert validator.error == f"cannot run raw algorithm on this did {ddo.did}."
+
+
+@pytest.mark.unit
+@patch("ocean_provider.validation.algo.check_asset_consumable", return_value=(True, ""))
+@patch("ocean_provider.validation.algo.validate_order", return_value=(None, None, None))
+def test_success_multiple_services_types(provider_wallet, consumer_address, web3):
+    ddo = Asset(ddo_dict)
+    alg_ddo = Asset(alg_ddo_dict)
+    sa_compute = alg_ddo.get_service_by_type(ServiceType.ACCESS)
+    sa = ddo.get_service_by_type(ServiceType.COMPUTE)
+
+    data = {
+        "dataset": {
+            "documentId": ddo.did,
+            "transferTxId": "tx_id",
+            "serviceId": sa.id,
+        },
+        "algorithm": {
+            "serviceId": sa_compute.id,
+            "meta": {
+                "rawcode": "console.log('Hello world'!)",
+                "format": "docker-image",
+                "version": "0.1",
+                "container": {"entrypoint": "node $ALGO", "image": "node", "tag": "10"},
+            },
+        },
+        "additionalDatasets": [
+            {
+                "documentId": ddo.did,
+                "transferTxId": "ddo.did",
+                "serviceId": "access_1",
+            }
+        ],
+    }
+
+    def side_effect(*args, **kwargs):
+        nonlocal ddo, alg_ddo
+        if ddo.did == args[1]:
+            return ddo
+        if alg_ddo.did == args[1]:
+            return alg_ddo
+
+    def another_side_effect(*args, **kwargs):
+        nonlocal ddo, alg_ddo
+        if args[0].type == "access":
+            return None
+        return [{"url": "dummy"}]
+
+    with patch(
+        "ocean_provider.validation.algo.get_asset_from_metadatastore",
+        side_effect=side_effect,
+    ):
+        with patch(
+            "ocean_provider.validation.algo.get_service_files_list",
+            side_effect=another_side_effect,
+        ):
+            validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
+            assert validator.validate() is True
+
+
+@pytest.mark.unit
+@patch("ocean_provider.validation.algo.check_asset_consumable", return_value=(True, ""))
+@patch("ocean_provider.validation.algo.validate_order", return_value=(None, None, None))
+def test_fail_missing_algo_meta_documentId(provider_wallet, consumer_address, web3):
+    ddo = Asset(ddo_dict)
+    alg_ddo = Asset(alg_ddo_dict)
+    sa = ddo.get_service_by_type(ServiceType.COMPUTE)
+
+    data = {
+        "dataset": {
+            "documentId": ddo.did,
+            "transferTxId": "tx_id",
+            "serviceId": sa.id,
+        },
+        "algorithm": {
+            "serviceId": None,
+            "meta": None,
+        },
+        "additionalDatasets": [
+            {
+                "documentId": ddo.did,
+                "transferTxId": "ddo.did",
+                "serviceId": "access_1",
+            }
+        ],
+    }
+
+    def side_effect(*args, **kwargs):
+        nonlocal ddo, alg_ddo
+        if ddo.did == args[1]:
+            return ddo
+        if alg_ddo.did == args[1]:
+            return alg_ddo
+
+    def another_side_effect(*args, **kwargs):
+        nonlocal ddo, alg_ddo
+        if args[0].type == "access":
+            return None
+        return [{"url": "dummy"}]
+
+    with patch(
+        "ocean_provider.validation.algo.get_asset_from_metadatastore",
+        side_effect=side_effect,
+    ):
+        with patch(
+            "ocean_provider.validation.algo.get_service_files_list",
+            side_effect=another_side_effect,
+        ):
+            validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
+            assert validator.validate() is False
+            assert (
+                validator.error
+                == "both meta and documentId are missing from algorithm input, at least one of these is required."
+            )
