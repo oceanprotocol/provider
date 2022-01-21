@@ -162,10 +162,8 @@ class WorkflowValidator:
                 _tx, _order_log = validate_order(
                     self.web3,
                     self.consumer_address,
-                    algorithm_token_address,
-                    1,
                     algorithm_tx_id,
-                    algorithm_did,
+                    algo,
                     self.algo_service,
                 )
                 validate_transfer_not_used_for_other_service(
@@ -411,10 +409,8 @@ class InputItemValidator:
             _tx, _order_log = validate_order(
                 self.web3,
                 self.consumer_address,
-                token_address,
-                1,
                 tx_id,
-                self.did,
+                self.asset,
                 self.service,
             )
             validate_transfer_not_used_for_other_service(

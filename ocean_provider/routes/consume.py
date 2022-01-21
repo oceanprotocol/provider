@@ -260,7 +260,6 @@ def download():
         # the datatoken address
         asset = get_asset_from_metadatastore(get_metadata_url(), did)
         service = asset.get_service_by_id(service_id)
-        token_address = service.datatoken_address
 
         compute_address, compute_limits = get_compute_info()
 
@@ -276,7 +275,7 @@ def download():
             )
         logger.info("validate_order called from download endpoint.")
         _tx, _order_log = validate_order(
-            get_web3(), consumer_address, token_address, 1, tx_id, did, service
+            get_web3(), consumer_address, tx_id, asset, service
         )
 
         file_index = int(data.get("fileIndex"))
