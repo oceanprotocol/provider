@@ -23,9 +23,14 @@ from tests.test_helpers import (
 
 
 @pytest.mark.integration
-@pytest.mark.parametrize("userdata", [False, "valid", "invalid"])
-def test_download_service(client, publisher_wallet, consumer_wallet, web3, userdata):
-    asset = get_registered_asset(publisher_wallet)
+@pytest.mark.parametrize(
+    "userdata,erc20_enterprise",
+    [(False, False), ("valid", False), ("invalid", False), (False, True)],
+)
+def test_download_service(
+    client, publisher_wallet, consumer_wallet, web3, userdata, erc20_enterprise
+):
+    asset = get_registered_asset(publisher_wallet, erc20_enterprise=erc20_enterprise)
     service = asset.get_service_by_type(ServiceType.ACCESS)
     mint_100_datatokens(
         web3, service.datatoken_address, consumer_wallet.address, publisher_wallet

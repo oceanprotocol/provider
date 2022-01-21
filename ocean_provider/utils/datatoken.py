@@ -170,21 +170,6 @@ def verify_order_tx(
     if sender not in [order_log.args.consumer, order_log.args.payer]:
         raise ValueError("sender of order transaction is not the consumer/payer.")
 
-    transfer_logs = datatoken_contract.events.Transfer().processReceipt(
-        tx_receipt, errors=DISCARD
-    )
-    receiver_to_transfers = {}
-    for tr in transfer_logs:
-        if tr.args.to not in receiver_to_transfers:
-            receiver_to_transfers[tr.args.to] = []
-        receiver_to_transfers[tr.args.to].append(tr)
-    receiver = datatoken_contract.caller.getPaymentCollector()
-    if receiver not in receiver_to_transfers:
-        raise AssertionError(
-            f"receiver {receiver} is not found in the transfer events."
-        )
-    transfers = sorted(receiver_to_transfers[receiver], key=lambda x: x.args.value)
-
     tx = web3.eth.get_transaction(HexBytes(tx_id))
 
-    return tx, order_log, transfers[-1]
+    return tx, order_log

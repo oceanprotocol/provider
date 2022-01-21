@@ -275,14 +275,14 @@ def download():
                 400,
             )
         logger.info("validate_order called from download endpoint.")
-        _tx, _order_log, _transfer_log = validate_order(
+        _tx, _order_log = validate_order(
             get_web3(), consumer_address, token_address, 1, tx_id, did, service
         )
 
         file_index = int(data.get("fileIndex"))
         files_list = get_service_files_list(service, provider_wallet)
         if file_index > len(files_list):
-            return jsonify(error=f"No such fileIndex")
+            return jsonify(error=f"No such fileIndex {file_index}")
         url_object = files_list[file_index]
         url_valid, message = validate_url_object(url_object, service_id)
 

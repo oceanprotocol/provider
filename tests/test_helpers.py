@@ -186,6 +186,7 @@ def get_registered_asset(
     custom_services=None,
     custom_services_args=None,
     custom_service_endpoint=None,
+    erc20_enterprise=False,
 ):
     web3 = get_web3()
     data_nft_address = deploy_data_nft(
@@ -198,10 +199,11 @@ def get_registered_asset(
         from_wallet=from_wallet,
     )
 
+    template_index = 1 if not erc20_enterprise else 2
     datatoken_address = deploy_datatoken(
         web3=web3,
         data_nft_address=data_nft_address,
-        template_index=1,
+        template_index=template_index,
         name="Datatoken 1",
         symbol="DT1",
         minter=from_wallet.address,
