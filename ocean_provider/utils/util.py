@@ -23,6 +23,7 @@ from ocean_provider.utils.basics import get_config, get_provider_wallet, get_web
 from ocean_provider.utils.consumable import ConsumableCodes
 from ocean_provider.utils.currency import to_wei
 from ocean_provider.utils.datatoken import verify_order_tx
+from ocean_provider.utils.data_nft import get_data_nft_contract
 from ocean_provider.utils.encryption import do_decrypt
 from ocean_provider.utils.services import Service
 from ocean_provider.utils.url import is_safe_url
@@ -188,11 +189,18 @@ def get_compute_info():
         return None, None
 
 
-def validate_order(web3, sender, token_address, num_tokens, tx_id, did, service):
+def validate_order(web3, sender, tx_id, asset, service):
+    did = asset.did
+    token_address = service.datatoken_address
+    num_tokens = 1
+
     logger.debug(
         f"validate_order: did={did}, service_id={service.id}, tx_id={tx_id}, "
         f"sender={sender}, num_tokens={num_tokens}, token_address={token_address}"
     )
+
+    nft_contract = get_data_nft_contract(web3, asset.nft["address"])
+    assert nft_contract.caller.isDeployed(token_address)
 
     amount = to_wei(num_tokens)
     num_tries = 3
@@ -201,16 +209,16 @@ def validate_order(web3, sender, token_address, num_tokens, tx_id, did, service)
         logger.debug(f"validate_order is on trial {i + 1} in {num_tries}.")
         i += 1
         try:
-            tx, order_event, transfer_event = verify_order_tx(
+            tx, order_event = verify_order_tx(
                 web3, token_address, tx_id, service, amount, sender
             )
             logger.debug(
                 f"validate_order succeeded for: did={did}, service_id={service.id}, tx_id={tx_id}, "
                 f"sender={sender}, num_tokens={num_tokens}, token_address={token_address}. "
-                f"result is: tx={tx}, order_event={order_event}, transfer_event={transfer_event}"
+                f"result is: tx={tx}, order_event={order_event}."
             )
 
-            return tx, order_event, transfer_event
+            return tx, order_event
         except ConnectionClosed:
             logger.debug("got ConnectionClosed error on validate_order.")
             if i == num_tries:

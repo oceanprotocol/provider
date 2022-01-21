@@ -159,13 +159,11 @@ class WorkflowValidator:
                     self.error = "Failed to retrieve purchased algorithm service id."
                     return False
                 logger.debug("validate_order called for ALGORITHM usage.")
-                _tx, _order_log, _transfer_log = validate_order(
+                _tx, _order_log = validate_order(
                     self.web3,
                     self.consumer_address,
-                    algorithm_token_address,
-                    1,
                     algorithm_tx_id,
-                    algorithm_did,
+                    algo,
                     self.algo_service,
                 )
                 validate_transfer_not_used_for_other_service(
@@ -333,47 +331,50 @@ class InputItemValidator:
                 self.error = "this algorithm is not from a trusted publisher"
                 return False
 
-        try:
-            did_to_trusted_algo_dict = {
-                algo["did"]: algo for algo in trusted_algorithms
-            }
-            if algorithm_did not in did_to_trusted_algo_dict:
-                self.error = f"this algorithm did {algorithm_did} is not trusted."
+        if trusted_algorithms:
+            try:
+                did_to_trusted_algo_dict = {
+                    algo["did"]: algo for algo in trusted_algorithms
+                }
+                if algorithm_did not in did_to_trusted_algo_dict:
+                    self.error = f"this algorithm did {algorithm_did} is not trusted."
+                    return False
+
+            except KeyError:
+                self.error = (
+                    "Some algos in the publisherTrustedAlgorithms don't have a did."
+                )
                 return False
 
-        except KeyError:
-            self.error = (
-                "Some algos in the publisherTrustedAlgorithms don't have a did."
+            trusted_algo_dict = did_to_trusted_algo_dict[algorithm_did]
+            allowed_files_checksum = trusted_algo_dict.get("filesChecksum")
+            allowed_container_checksum = trusted_algo_dict.get(
+                "containerSectionChecksum"
             )
-            return False
-
-        trusted_algo_dict = did_to_trusted_algo_dict[algorithm_did]
-        allowed_files_checksum = trusted_algo_dict.get("filesChecksum")
-        allowed_container_checksum = trusted_algo_dict.get("containerSectionChecksum")
-        algo_ddo = get_asset_from_metadatastore(
-            get_metadata_url(), trusted_algo_dict["did"]
-        )
-
-        service = algo_ddo.get_service_by_id(self.data["algorithm"].get("serviceId"))
-
-        files_checksum = msg_hash(service.encrypted_files)
-        if allowed_files_checksum and files_checksum != allowed_files_checksum:
-            self.error = (
-                f"filesChecksum for algorithm with did {algo_ddo.did} does not match"
+            algo_ddo = get_asset_from_metadatastore(
+                get_metadata_url(), trusted_algo_dict["did"]
             )
-            return False
 
-        container_section_checksum = msg_hash(
-            json.dumps(
-                algo_ddo.metadata["algorithm"]["container"], separators=(",", ":")
+            service = algo_ddo.get_service_by_id(
+                self.data["algorithm"].get("serviceId")
             )
-        )
-        if (
-            allowed_container_checksum
-            and container_section_checksum != allowed_container_checksum
-        ):
-            self.error = f"containerSectionChecksum for algorithm with did {algo_ddo.did} does not match"
-            return False
+
+            files_checksum = msg_hash(service.encrypted_files)
+            if allowed_files_checksum and files_checksum != allowed_files_checksum:
+                self.error = f"filesChecksum for algorithm with did {algo_ddo.did} does not match"
+                return False
+
+            container_section_checksum = msg_hash(
+                json.dumps(
+                    algo_ddo.metadata["algorithm"]["container"], separators=(",", ":")
+                )
+            )
+            if (
+                allowed_container_checksum
+                and container_section_checksum != allowed_container_checksum
+            ):
+                self.error = f"containerSectionChecksum for algorithm with did {algo_ddo.did} does not match"
+                return False
 
         return True
 
@@ -408,13 +409,11 @@ class InputItemValidator:
         token_address = self.service.datatoken_address
         logger.debug("Validating ASSET usage.")
         try:
-            _tx, _order_log, _transfer_log = validate_order(
+            _tx, _order_log = validate_order(
                 self.web3,
                 self.consumer_address,
-                token_address,
-                1,
                 tx_id,
-                self.did,
+                self.asset,
                 self.service,
             )
             validate_transfer_not_used_for_other_service(
