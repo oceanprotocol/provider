@@ -348,18 +348,20 @@ class InputItemValidator:
 
             trusted_algo_dict = did_to_trusted_algo_dict[algorithm_did]
             allowed_files_checksum = trusted_algo_dict.get("filesChecksum")
-            allowed_container_checksum = trusted_algo_dict.get("containerSectionChecksum")
+            allowed_container_checksum = trusted_algo_dict.get(
+                "containerSectionChecksum"
+            )
             algo_ddo = get_asset_from_metadatastore(
                 get_metadata_url(), trusted_algo_dict["did"]
             )
 
-            service = algo_ddo.get_service_by_id(self.data["algorithm"].get("serviceId"))
+            service = algo_ddo.get_service_by_id(
+                self.data["algorithm"].get("serviceId")
+            )
 
             files_checksum = msg_hash(service.encrypted_files)
             if allowed_files_checksum and files_checksum != allowed_files_checksum:
-                self.error = (
-                    f"filesChecksum for algorithm with did {algo_ddo.did} does not match"
-                )
+                self.error = f"filesChecksum for algorithm with did {algo_ddo.did} does not match"
                 return False
 
             container_section_checksum = msg_hash(
