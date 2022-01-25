@@ -290,7 +290,9 @@ def download():
         file_index = int(data.get("fileIndex"))
         files_list = get_service_files_list(service, provider_wallet)
         if file_index > len(files_list):
-            return error_response(jsonify(error=f"No such fileIndex {file_index}"))
+            return error_response(
+                jsonify(error=f"No such fileIndex {file_index}"), 400, logger
+            )
         url_object = files_list[file_index]
         url_valid, message = validate_url_object(url_object, service_id)
 
