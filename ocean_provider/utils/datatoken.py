@@ -2,13 +2,13 @@ import logging
 from datetime import datetime
 from typing import Optional
 
+from jsonsempai import magic  # noqa: F401
 from artifacts import ERC20Template
 from eth_keys import KeyAPI
 from eth_keys.backends import NativeECCBackend
 from eth_typing.encoding import HexStr
 from eth_typing.evm import HexAddress
 from hexbytes import HexBytes
-from jsonsempai import magic  # noqa: F401
 from ocean_provider.utils.basics import get_provider_wallet
 from ocean_provider.utils.services import Service
 from web3.contract import Contract

@@ -6,19 +6,16 @@ import os
 from pathlib import Path
 from typing import Optional, Union
 
+import artifacts
 import requests
 from eth_account import Account
 from hexbytes import HexBytes
-from jsonsempai import magic  # noqa: F401
-from requests_testadapter import Resp
-from web3 import WebsocketProvider
-from web3.main import Web3
-
-import artifacts
-from artifacts import ERC721Template
 from ocean_provider.config import Config
 from ocean_provider.http_provider import CustomHTTPProvider
 from ocean_provider.utils.asset import Asset
+from requests_testadapter import Resp
+from web3 import WebsocketProvider
+from web3.main import Web3
 
 
 def get_config(config_file: Optional[str] = None) -> Config:

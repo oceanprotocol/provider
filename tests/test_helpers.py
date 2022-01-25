@@ -9,12 +9,12 @@ import time
 from hashlib import sha256
 from typing import Dict, Tuple
 
+from jsonsempai import magic  # noqa: F401
 from artifacts import ERC721Template
 from eth_account.signers.local import LocalAccount
 from eth_typing.encoding import HexStr
 from eth_typing.evm import HexAddress
 from flask.testing import FlaskClient
-from jsonsempai import magic  # noqa: F401
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.address import get_contract_address
 from ocean_provider.utils.basics import (
