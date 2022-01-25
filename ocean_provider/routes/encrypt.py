@@ -67,11 +67,13 @@ def encrypt():
     """
     if request.content_type != "application/octet-stream":
         return error_response(
-            "Invalid request content type: should be application/octet-stream", 400
+            "Invalid request content type: should be application/octet-stream",
+            400,
+            logger,
         )
 
     data = request.get_data()
-    logger.info(f"encrypt endpoint called. {data}")
+    logger.info(f"encrypt called. arguments = {data}")
 
     try:
         return _encrypt(data)
@@ -84,10 +86,12 @@ def _encrypt(data: bytes) -> Response:
         encrypted_data = do_encrypt(data, provider_wallet)
         logger.info(f"encrypted_data = {encrypted_data}")
     except Exception:
-        return error_response(f"Failed to encrypt.", 400)
+        return error_response(f"Failed to encrypt.", 400, logger)
 
-    return Response(
+    response = Response(
         encrypted_data,
         201,
         headers={"Content-type": "text/plain", "Connection": "close"},
     )
+    logger.debug(f"encrypt response = {response}")
+    return response

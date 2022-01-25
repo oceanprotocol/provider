@@ -16,7 +16,7 @@ from ocean_provider.utils.basics import (
     get_provider_wallet,
     get_web3,
 )
-from ocean_provider.utils.error_responses import service_unavailable
+from ocean_provider.utils.error_responses import error_response, service_unavailable
 from ocean_provider.utils.provider_fees import get_provider_fees
 from ocean_provider.utils.services import ServiceType
 from ocean_provider.utils.url import append_userdata, check_url_details
@@ -59,7 +59,10 @@ def nonce():
     address = data.get("userAddress")
     nonce = get_nonce(address)
     logger.info(f"nonce for user {address} is {nonce}")
-    return Response(json.dumps({"nonce": nonce}), 200, headers=standard_headers)
+
+    response = Response(json.dumps({"nonce": nonce}), 200, headers=standard_headers)
+    logger.debug(f"nonce response = {response}")
+    return response
 
 
 @services.route("/fileinfo", methods=["POST"])
@@ -85,7 +88,7 @@ def fileinfo():
     return: list of file info (index, valid, contentLength, contentType)
     """
     data = get_request_data(request)
-    logger.info(f"fileinfo endpoint called. {data}")
+    logger.info(f"fileinfo called. arguments = {data}")
     did = data.get("did")
     service_id = data.get("serviceId")
 
@@ -109,7 +112,9 @@ def fileinfo():
         info.update(details)
         files_info.append(info)
 
-    return Response(json.dumps(files_info), 200, headers=standard_headers)
+    response = Response(json.dumps(files_info), 200, headers=standard_headers)
+    logger.debug(f"fileinfo response = {response}")
+    return response
 
 
 @services.route("/initialize", methods=["GET"])
@@ -137,7 +142,7 @@ def initialize():
         ```
     """
     data = get_request_data(request)
-    logger.info(f"initialize endpoint called. {data}")
+    logger.info(f"initialize called. arguments = {data}")
 
     try:
         did = data.get("documentId")
@@ -148,17 +153,18 @@ def initialize():
         asset = get_asset_from_metadatastore(get_metadata_url(), did)
         consumable, message = check_asset_consumable(asset, consumer_address, logger)
         if not consumable:
-            return jsonify(error=message), 400
+            return error_response(jsonify(error=message), 400, logger)
 
         service_id = data.get("serviceId")
         service = asset.get_service_by_id(service_id)
 
         if service.type == "compute" and not (compute_env and valid_until):
-            return (
+            return error_response(
                 jsonify(
                     error="The computeEnv and validUntil are mandatory when initializing a compute service."
                 ),
                 400,
+                logger,
             )
 
         token_address = service.datatoken_address
@@ -169,7 +175,7 @@ def initialize():
             url_object = get_service_files_list(service, provider_wallet)[file_index]
             url_valid, message = validate_url_object(url_object, service_id)
             if not url_valid:
-                return (jsonify(error=message), 400)
+                return error_response(jsonify(error=message), 400, logger)
             download_url = get_download_url(
                 url_object, app.config["PROVIDER_CONFIG_FILE"]
             )
@@ -182,7 +188,9 @@ def initialize():
                     f"Payload was: {data}",
                     exc_info=1,
                 )
-                return jsonify(error="Asset URL not found or not available."), 400
+                return error_response(
+                    jsonify(error="Asset URL not found or not available."), 400, logger
+                )
 
         # Prepare the `transfer` tokens transaction with the appropriate number
         # of tokens required for this service
@@ -197,7 +205,9 @@ def initialize():
                 did, service, consumer_address, int(valid_until)
             ),
         }
-        return Response(json.dumps(approve_params), 200, headers=standard_headers)
+        response = Response(json.dumps(approve_params), 200, headers=standard_headers)
+        logger.debug(f"initialize response = {response}")
+        return response
 
     except Exception as e:
         return service_unavailable(e, data, logger)
@@ -247,7 +257,7 @@ def download():
         description: Service Unavailable
     """
     data = get_request_data(request)
-    logger.info(f"download endpoint called. {data}")
+    logger.info(f"download called. arguments = {data}")
     try:
         did = data.get("documentId")
         consumer_address = data.get("consumerAddress")
@@ -265,11 +275,12 @@ def download():
         if service.type != ServiceType.ACCESS and Web3.toChecksumAddress(
             consumer_address
         ) != Web3.toChecksumAddress(compute_address):
-            return (
+            return error_response(
                 jsonify(
                     error=f"Service with index={service_id} is not an access service."
                 ),
                 400,
+                logger,
             )
         logger.info("validate_order called from download endpoint.")
         _tx, _order_log = validate_order(
@@ -279,12 +290,12 @@ def download():
         file_index = int(data.get("fileIndex"))
         files_list = get_service_files_list(service, provider_wallet)
         if file_index > len(files_list):
-            return jsonify(error=f"No such fileIndex {file_index}")
+            return error_response(jsonify(error=f"No such fileIndex {file_index}"))
         url_object = files_list[file_index]
         url_valid, message = validate_url_object(url_object, service_id)
 
         if not url_valid:
-            return (jsonify(error=message), 400)
+            return error_response(jsonify(error=message), 400, logger)
 
         download_url = get_download_url(url_object, app.config["PROVIDER_CONFIG_FILE"])
         download_url = append_userdata(download_url, data)
@@ -296,7 +307,8 @@ def download():
             f"Done processing consume request for asset {did}, " f" url {download_url}"
         )
         update_nonce(consumer_address, data.get("nonce"))
-        return build_download_response(
+
+        response = build_download_response(
             request,
             requests_session,
             url_object["url"],
@@ -304,7 +316,8 @@ def download():
             content_type,
             method=url_object.get("method", "GET"),
         )
-
+        logger.debug(f"download response = {response}")
+        return response
     except Exception as e:
         return service_unavailable(
             e,

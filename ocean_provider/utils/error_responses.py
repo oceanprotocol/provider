@@ -13,9 +13,11 @@ logger = logging.getLogger(__name__)
 STRIPPED_URL_MSG = "<URL stripped for security reasons>"
 
 
-def error_response(err_str: str, status: int) -> Response:
+def error_response(err_str: str, status: int, custom_logger=None) -> Response:
     err_str = strip_and_replace_urls(str(err_str))
-    logger.error(err_str, exc_info=1)
+
+    this_logger = custom_logger if custom_logger else logger
+    this_logger.error(err_str, exc_info=1)
     return Response(
         err_str, status, headers={"Content-type": "text/plain", "Connection": "close"}
     )

@@ -4,6 +4,7 @@
 #
 import configparser
 import logging
+from http.client import responses
 
 from flask import jsonify
 from flask_swagger import swagger
@@ -79,6 +80,7 @@ def version():
 
     chain_id = app.config.get("chain_id")
     if not chain_id:
+        logger.debug("get chain_id from node")
         chain_id = get_web3().eth.chain_id
         app.config["chain_id"] = chain_id
 
@@ -86,7 +88,9 @@ def version():
     info["providerAddress"] = get_provider_address()
     info["serviceEndpoints"] = get_services_endpoints()
     info["computeAddress"], info["computeLimits"] = get_compute_info()
-    return jsonify(info)
+    response = jsonify(info)
+    logger.debug(f"root endpoint response = {response}")
+    return response
 
 
 @app.route("/spec")
@@ -96,7 +100,9 @@ def spec():
     swag["info"]["version"] = get_version()
     swag["info"]["title"] = Metadata.TITLE
     swag["info"]["description"] = Metadata.DESCRIPTION
-    return jsonify(swag)
+    response = jsonify(swag)
+    logger.debug(f"spec endpoint response = {response}")
+    return responses
 
 
 # Call factory function to create our blueprint
