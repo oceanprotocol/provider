@@ -277,7 +277,7 @@ def computeStart():
 
         status = validator.validate()
         if not status:
-            return error_response(jsonify(error=validator.error), 400, logger)
+            return error_response(validator.error, 400, logger)
 
         workflow = validator.workflow
         # workflow is ready, push it to operator
