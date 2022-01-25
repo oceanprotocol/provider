@@ -11,13 +11,11 @@ from flask_swagger import swagger
 from flask_swagger_ui import get_swaggerui_blueprint
 from ocean_provider.config import Config
 from ocean_provider.constants import BaseURLs, ConfigSections, Metadata
-from ocean_provider.log import setup_logging
 from ocean_provider.myapp import app
 from ocean_provider.routes import services
 from ocean_provider.utils.basics import get_provider_wallet, get_web3
 from ocean_provider.utils.util import get_compute_info
 
-setup_logging()
 config = Config(filename=app.config["PROVIDER_CONFIG_FILE"])
 provider_url = config.get(ConfigSections.RESOURCES, "ocean_provider.url")
 
