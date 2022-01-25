@@ -28,7 +28,7 @@ def setup_logging(default_path="logging.yaml", default_level=None, env_key="LOG_
         default_level = level_map.get(os.getenv("LOG_LEVEL", "INFO"), logging.INFO)
 
     print(
-        f'default log level: {default_level}, env var LOG_LEVEL {os.getenv("LOG_LEVEL", "NOT SET")}'
+        f'log level: {default_level}, env var LOG_LEVEL {os.getenv("LOG_LEVEL", "NOT SET")}'
     )
 
     if os.getenv("LOG_LEVEL", None) is None and os.path.exists(path):
