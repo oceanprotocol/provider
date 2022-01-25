@@ -5,8 +5,6 @@
 import logging
 
 from flask import Response, request
-
-from ocean_provider.log import setup_logging
 from ocean_provider.requests_session import get_requests_session
 from ocean_provider.utils.basics import LocalFileAdapter, get_provider_wallet
 from ocean_provider.utils.encryption import do_encrypt
@@ -14,7 +12,6 @@ from ocean_provider.utils.error_responses import error_response, service_unavail
 
 from . import services
 
-setup_logging()
 provider_wallet = get_provider_wallet()
 requests_session = get_requests_session()
 requests_session.mount("file://", LocalFileAdapter())

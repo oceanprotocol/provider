@@ -16,7 +16,6 @@ from eth_typing.evm import HexAddress
 from flask.testing import FlaskClient
 from jsonsempai import magic  # noqa: F401
 from ocean_provider.constants import BaseURLs
-from ocean_provider.log import setup_logging
 from ocean_provider.utils.address import get_contract_address
 from ocean_provider.utils.basics import (
     get_asset_from_metadatastore,
@@ -42,7 +41,6 @@ from web3.logs import DISCARD
 from web3.main import Web3
 from web3.types import TxParams, TxReceipt
 
-setup_logging()
 logger = logging.getLogger(__name__)
 BLACK_HOLE_ADDRESS = "0x0000000000000000000000000000000000000000"
 

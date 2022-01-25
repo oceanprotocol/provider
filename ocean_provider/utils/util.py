@@ -10,25 +10,22 @@ import os
 from cgi import parse_header
 
 import requests
+from artifacts import ERC721Template
 from eth_account.signers.local import LocalAccount
 from flask import Response
 from jsonsempai import magic  # noqa: F401
-from osmosis_driver_interface.osmosis import Osmosis
-from websockets import ConnectionClosed
-
-from artifacts import ERC721Template
-from ocean_provider.log import setup_logging
 from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.basics import get_config, get_provider_wallet, get_web3
 from ocean_provider.utils.consumable import ConsumableCodes
 from ocean_provider.utils.currency import to_wei
-from ocean_provider.utils.datatoken import verify_order_tx
 from ocean_provider.utils.data_nft import get_data_nft_contract
+from ocean_provider.utils.datatoken import verify_order_tx
 from ocean_provider.utils.encryption import do_decrypt
 from ocean_provider.utils.services import Service
 from ocean_provider.utils.url import is_safe_url
+from osmosis_driver_interface.osmosis import Osmosis
+from websockets import ConnectionClosed
 
-setup_logging()
 logger = logging.getLogger(__name__)
 
 
