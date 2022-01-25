@@ -8,6 +8,7 @@ export ADDRESS_FILE=~/.ocean/ocean-contracts/artifacts/address.json
 export IPFS_GATEWAY=http://172.15.0.16:8080
 export PROVIDER_IPFS_GATEWAY=http://172.15.0.16:8080
 export AUTHORIZED_DECRYPTERS=[]
+export LOG_LEVEL=DEBUG
 
 # Start Flask server
 export FLASK_ENV=development

@@ -6,42 +6,31 @@
 import logging
 import logging.config
 import os
+from pathlib import Path
 
 import coloredlogs
 import yaml
 
 
-def setup_logging(default_path="logging.yaml", default_level=None, env_key="LOG_CFG"):
+def setup_logging(log_config_path="logging.yaml", log_level=None):
     """Logging Setup"""
-    path = default_path
-    value = os.getenv(env_key, None)
-    if value:
-        path = value
+    env_log_level = os.getenv("LOG_LEVEL", None)
+    if env_log_level:
+        print(f"env var LOG_LEVEL detected = {env_log_level}")
+        log_level = logging._nameToLevel.get(env_log_level)
 
-    if not default_level:
-        level_map = {
-            "INFO": logging.INFO,
-            "DEBUG": logging.DEBUG,
-            "WARNING": logging.WARNING,
-            "ERROR": logging.ERROR,
-        }
-        default_level = level_map.get(os.getenv("LOG_LEVEL", "INFO"), logging.INFO)
+    env_log_config_path = os.getenv("LOG_CFG", None)
+    if env_log_config_path:
+        print(f"env var LOG_CFG detected = {env_log_config_path}")
+        log_config_path = env_log_config_path
 
-    print(
-        f'log level: {default_level}, env var LOG_LEVEL {os.getenv("LOG_LEVEL", "NOT SET")}'
-    )
-
-    if os.getenv("LOG_LEVEL", None) is None and os.path.exists(path):
-        with open(path, "rt") as f:
-            try:
-                config = yaml.safe_load(f.read())
-                logging.config.dictConfig(config)
-                coloredlogs.install()
-            except Exception as e:
-                print(f"Error in Logging Configuration (using default configs): {e}")
-                logging.basicConfig(level=default_level)
-                coloredlogs.install(level=default_level)
+    if log_level:
+        print(f"Using basic logging config, log level = {log_level}")
+        logging.basicConfig(level=log_level)
+        coloredlogs.install(level=log_level)
     else:
-        logging.basicConfig(level=default_level)
-        coloredlogs.install(level=default_level)
-        print("Failed to load configuration file. Using default configs")
+        log_config_path = Path(log_config_path).expanduser().resolve()
+        print(f"Using logging config file, {log_config_path}")
+        with open(log_config_path, "rt") as f:
+            log_config_dict = yaml.safe_load(f.read())
+            logging.config.dictConfig(log_config_dict)
