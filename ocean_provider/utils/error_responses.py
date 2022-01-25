@@ -5,8 +5,8 @@
 import json
 import logging
 
+from flask import jsonify, make_response
 from flask.wrappers import Response
-from flask import make_response, jsonify
 from ocean_provider.utils.url import is_url
 
 logger = logging.getLogger(__name__)
@@ -19,7 +19,7 @@ def error_response(err_str: str, status: int, custom_logger=None) -> Response:
 
     this_logger = custom_logger if custom_logger else logger
     this_logger.error(err_str, exc_info=1)
-    response = make_response(jsonify(error=err_str), 400)
+    response = make_response(jsonify(error=err_str), status)
     response.headers["Connection"] = "close"
 
     return response
