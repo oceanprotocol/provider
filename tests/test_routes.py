@@ -2,14 +2,15 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
+import json
 from datetime import datetime
-import pytest
 
+import pytest
 from ocean_provider.constants import BaseURLs
 from ocean_provider.run import get_provider_address, get_services_endpoints
+from ocean_provider.user_nonce import get_nonce, update_nonce
 from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.basics import get_provider_wallet
-from ocean_provider.user_nonce import update_nonce, get_nonce
 from tests.test_helpers import get_registered_asset
 
 
@@ -45,11 +46,22 @@ def test_spec(client):
     assert response.status == "200 OK"
 
 
-encrypt_endpoint = BaseURLs.SERVICES_URL + "/encrypt"
+@pytest.mark.unit
+def test_root(client):
+    response = client.get("/")
+    assert response.status == "200 OK"
+
+
+@pytest.mark.unit
+def test_invalid_endpoint(client, caplog):
+    response = client.get("invalid/endpoint", query_string={"hello": "world"})
+    assert response.status == "404 NOT FOUND"
+    # TODO: Capture and verify INFO log from log_incoming_request using caplog
 
 
 @pytest.mark.unit
 def test_empty_payload_encryption(client):
+    encrypt_endpoint = BaseURLs.SERVICES_URL + "/encrypt"
     publish = client.post(encrypt_endpoint, data=None, content_type="application/json")
     assert publish.status_code == 400
 
@@ -69,6 +81,7 @@ def test_encrypt_endpoint(client, provider_wallet, publisher_wallet):
         "document": files_list_str,
         "publisherAddress": provider_wallet.address,
     }
+    encrypt_endpoint = BaseURLs.SERVICES_URL + "/encrypt"
     response = client.post(
         encrypt_endpoint, json=payload, content_type="application/octet-stream"
     )
