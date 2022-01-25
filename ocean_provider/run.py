@@ -26,7 +26,9 @@ logger = logging.getLogger(__name__)
 
 @app.before_request
 def log_incoming_request():
-    logger.info(f"{request}")
+    logger.info(
+        f"incoming request = {request.scheme}, {request.method}, {request.remote_addr}, {request.full_path}"
+    )
 
 
 def get_services_endpoints():
