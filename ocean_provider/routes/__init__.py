@@ -8,7 +8,6 @@ from flask import Blueprint
 
 services = Blueprint("services", __name__)
 
-from .root import *  # isort:skip
 from .compute import *  # isort:skip
 from .consume import *  # isort:skip
 from .encrypt import *  # isort:skip
