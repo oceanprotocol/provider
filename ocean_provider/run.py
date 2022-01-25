@@ -6,7 +6,7 @@ import configparser
 import logging
 from http.client import responses
 
-from flask import jsonify
+from flask import jsonify, request
 from flask_swagger import swagger
 from flask_swagger_ui import get_swaggerui_blueprint
 from ocean_provider.config import Config
@@ -22,6 +22,11 @@ config = Config(filename=app.config["PROVIDER_CONFIG_FILE"])
 provider_url = config.get(ConfigSections.RESOURCES, "ocean_provider.url")
 
 logger = logging.getLogger(__name__)
+
+
+@app.before_request
+def log_incoming_request():
+    logger.info(f"{request}")
 
 
 def get_services_endpoints():
