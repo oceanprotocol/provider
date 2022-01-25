@@ -341,23 +341,25 @@ def computeResult():
     """
     data = get_request_data(request)
     logger.info(f"computeResult endpoint called. {data}")
-    url = get_compute_result_endpoint()
-    msg_to_sign = f"{data.get('jobId')}{data.get('index')}{data.get('consumerAddress')}"
-    # we sign the same message as consumer does, but using our key
-    provider_signature = sign_message(msg_to_sign, provider_wallet)
-    params = {
-        "index": data.get("index"),
-        "consumerAddress": data.get("consumerAddress"),
-        "jobId": data.get("jobId"),
-        "consumerSignature": data.get("signature"),
-        "providerSignature": provider_signature,
-    }
-    req = PreparedRequest()
-    req.prepare_url(url, params)
-    result_url = req.url
-    logger.debug(f"Done processing computeResult, url: {result_url}")
-    update_nonce(data.get("consumerAddress"), data.get("nonce"))
     try:
+        url = get_compute_result_endpoint()
+        msg_to_sign = (
+            f"{data.get('jobId')}{data.get('index')}{data.get('consumerAddress')}"
+        )
+        # we sign the same message as consumer does, but using our key
+        provider_signature = sign_message(msg_to_sign, provider_wallet)
+        params = {
+            "index": data.get("index"),
+            "consumerAddress": data.get("consumerAddress"),
+            "jobId": data.get("jobId"),
+            "consumerSignature": data.get("signature"),
+            "providerSignature": provider_signature,
+        }
+        req = PreparedRequest()
+        req.prepare_url(url, params)
+        result_url = req.url
+        logger.debug(f"Done processing computeResult, url: {result_url}")
+        update_nonce(data.get("consumerAddress"), data.get("nonce"))
         return build_download_response(
             request, requests_session, result_url, result_url, None
         )
