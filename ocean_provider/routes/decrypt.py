@@ -156,7 +156,7 @@ def _decrypt(
     response = Response(
         document, 201, {"Content-type": "text/plain", "Connection": "close"}
     )
-    logger.debug(f"decrypt response = {response}")
+    logger.info(f"decrypt response = {response}")
     return response
 
 

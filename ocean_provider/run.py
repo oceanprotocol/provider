@@ -94,7 +94,7 @@ def version():
     info["serviceEndpoints"] = get_services_endpoints()
     info["computeAddress"], info["computeLimits"] = get_compute_info()
     response = jsonify(info)
-    logger.debug(f"root endpoint response = {response}")
+    logger.info(f"root endpoint response = {response}")
     return response
 
 

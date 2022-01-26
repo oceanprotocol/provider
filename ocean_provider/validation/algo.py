@@ -410,11 +410,7 @@ class InputItemValidator:
         logger.debug("Validating ASSET usage.")
         try:
             _tx, _order_log = validate_order(
-                self.web3,
-                self.consumer_address,
-                tx_id,
-                self.asset,
-                self.service,
+                self.web3, self.consumer_address, tx_id, self.asset, self.service
             )
             validate_transfer_not_used_for_other_service(
                 self.did, self.service.id, tx_id, self.consumer_address, token_address
@@ -428,7 +424,7 @@ class InputItemValidator:
                 1,
             )
         except Exception as e:
-            logger.debug(f"validate_usage failed with {str(e)}.")
+            logger.exception(f"validate_usage failed with {str(e)}.")
             self.error = f"Order for serviceId {self.service.id} is not valid."
             return False
 

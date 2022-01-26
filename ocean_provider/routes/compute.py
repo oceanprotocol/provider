@@ -5,7 +5,7 @@
 import json
 import logging
 
-from flask import Response, jsonify, request
+from flask import Response, request
 from flask_sieve import validate
 from ocean_provider.requests_session import get_requests_session
 from ocean_provider.user_nonce import update_nonce
@@ -90,7 +90,7 @@ def computeDelete():
         response = Response(
             response.content, response.status_code, headers=standard_headers
         )
-        logger.debug(f"computeDelete response = {response}")
+        logger.info(f"computeDelete response = {response}")
         return response
     except (ValueError, Exception) as e:
         return service_unavailable(e, data, logger)
@@ -151,7 +151,8 @@ def computeStop():
         response = Response(
             response.content, response.status_code, headers=standard_headers
         )
-        logger.debug(f"computeStop response = {response}")
+        logger.info(f"computeStop response = {response}")
+        return response
     except (ValueError, Exception) as e:
         return service_unavailable(e, data, logger)
 
@@ -206,7 +207,7 @@ def computeStatus():
         _response = Response(
             response.content, response.status_code, headers=standard_headers
         )
-        logger.debug(f"computeStatus response = {_response}")
+        logger.info(f"computeStatus response = {_response}")
         return _response
 
     except (ValueError, Exception) as e:
@@ -304,7 +305,7 @@ def computeStart():
         response = Response(
             response.content, response.status_code, headers=standard_headers
         )
-        logger.debug(f"computeStart response = {response}")
+        logger.info(f"computeStart response = {response}")
         return response
     except (ValueError, KeyError, Exception) as e:
         return service_unavailable(e, data, logger)
@@ -373,7 +374,7 @@ def computeResult():
         response = build_download_response(
             request, requests_session, result_url, result_url, None
         )
-        logger.debug(f"computeResult response = {response}")
+        logger.info(f"computeResult response = {response}")
         return response
     except Exception as e:
         return service_unavailable(
