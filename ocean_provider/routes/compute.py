@@ -5,14 +5,13 @@
 import json
 import logging
 
-from flask import Response, jsonify, request
+from flask import Response, request
 from flask_sieve import validate
-from ocean_provider.log import setup_logging
 from ocean_provider.requests_session import get_requests_session
 from ocean_provider.user_nonce import update_nonce
 from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.basics import LocalFileAdapter, get_provider_wallet, get_web3
-from ocean_provider.utils.error_responses import service_unavailable
+from ocean_provider.utils.error_responses import error_response, service_unavailable
 from ocean_provider.utils.util import (
     build_download_response,
     get_compute_endpoint,
@@ -31,7 +30,6 @@ from requests.models import PreparedRequest
 
 from . import services
 
-setup_logging()
 provider_wallet = get_provider_wallet()
 requests_session = get_requests_session()
 requests_session.mount("file://", LocalFileAdapter())
@@ -81,16 +79,19 @@ def computeDelete():
         description: Service Unavailable
     """
     data = get_request_data(request)
-    logger.info(f"computeDelete called. {data}")
+    logger.info(f"computeDelete called. arguments = {data}")
     try:
         body = process_compute_request(data)
         response = requests_session.delete(
             get_compute_endpoint(), params=body, headers=standard_headers
         )
         update_nonce(body["owner"], data.get("nonce"))
-        return Response(
+
+        response = Response(
             response.content, response.status_code, headers=standard_headers
         )
+        logger.info(f"computeDelete response = {response}")
+        return response
     except (ValueError, Exception) as e:
         return service_unavailable(e, data, logger)
 
@@ -139,16 +140,19 @@ def computeStop():
         description: Service unavailable
     """
     data = get_request_data(request)
-    logger.info(f"computeStop called. {data}")
+    logger.info(f"computeStop called. arguments = {data}")
     try:
         body = process_compute_request(data)
         response = requests_session.put(
             get_compute_endpoint(), params=body, headers=standard_headers
         )
         update_nonce(body["owner"], data.get("nonce"))
-        return Response(
+
+        response = Response(
             response.content, response.status_code, headers=standard_headers
         )
+        logger.info(f"computeStop response = {response}")
+        return response
     except (ValueError, Exception) as e:
         return service_unavailable(e, data, logger)
 
@@ -192,7 +196,7 @@ def computeStatus():
         description: Service Unavailable
     """
     data = get_request_data(request)
-    logger.info(f"computeStatus called. {data}")
+    logger.info(f"computeStatus called. arguments = {data}")
     try:
         body = process_compute_request(data)
 
@@ -200,8 +204,11 @@ def computeStatus():
             get_compute_endpoint(), params=body, headers=standard_headers
         )
 
-        _response = response.content
-        return Response(_response, response.status_code, headers=standard_headers)
+        _response = Response(
+            response.content, response.status_code, headers=standard_headers
+        )
+        logger.info(f"computeStatus response = {_response}")
+        return _response
 
     except (ValueError, Exception) as e:
         return service_unavailable(e, data, logger)
@@ -261,7 +268,7 @@ def computeStart():
         description: Service unavailable
     """
     data = request.json
-    logger.info(f"computeStart called. {data}")
+    logger.info(f"computeStart called. arguments = {data}")
 
     try:
         consumer_address = data.get("consumerAddress")
@@ -271,7 +278,7 @@ def computeStart():
 
         status = validator.validate()
         if not status:
-            return jsonify(error=validator.error), 400
+            return error_response(validator.error, 400, logger)
 
         workflow = validator.workflow
         # workflow is ready, push it to operator
@@ -294,9 +301,12 @@ def computeStart():
             get_compute_endpoint(), data=json.dumps(payload), headers=standard_headers
         )
         update_nonce(consumer_address, data.get("nonce"))
-        return Response(
+
+        response = Response(
             response.content, response.status_code, headers=standard_headers
         )
+        logger.info(f"computeStart response = {response}")
+        return response
     except (ValueError, KeyError, Exception) as e:
         return service_unavailable(e, data, logger)
 
@@ -340,27 +350,32 @@ def computeResult():
         description: Service Unavailable
     """
     data = get_request_data(request)
-    logger.info(f"computeResult endpoint called. {data}")
-    url = get_compute_result_endpoint()
-    msg_to_sign = f"{data.get('jobId')}{data.get('index')}{data.get('consumerAddress')}"
-    # we sign the same message as consumer does, but using our key
-    provider_signature = sign_message(msg_to_sign, provider_wallet)
-    params = {
-        "index": data.get("index"),
-        "consumerAddress": data.get("consumerAddress"),
-        "jobId": data.get("jobId"),
-        "consumerSignature": data.get("signature"),
-        "providerSignature": provider_signature,
-    }
-    req = PreparedRequest()
-    req.prepare_url(url, params)
-    result_url = req.url
-    logger.debug(f"Done processing computeResult, url: {result_url}")
-    update_nonce(data.get("consumerAddress"), data.get("nonce"))
+    logger.info(f"computeResult called. arguments = {data}")
     try:
-        return build_download_response(
+        url = get_compute_result_endpoint()
+        msg_to_sign = (
+            f"{data.get('jobId')}{data.get('index')}{data.get('consumerAddress')}"
+        )
+        # we sign the same message as consumer does, but using our key
+        provider_signature = sign_message(msg_to_sign, provider_wallet)
+        params = {
+            "index": data.get("index"),
+            "consumerAddress": data.get("consumerAddress"),
+            "jobId": data.get("jobId"),
+            "consumerSignature": data.get("signature"),
+            "providerSignature": provider_signature,
+        }
+        req = PreparedRequest()
+        req.prepare_url(url, params)
+        result_url = req.url
+        logger.debug(f"Done processing computeResult, url: {result_url}")
+        update_nonce(data.get("consumerAddress"), data.get("nonce"))
+
+        response = build_download_response(
             request, requests_session, result_url, result_url, None
         )
+        logger.info(f"computeResult response = {response}")
+        return response
     except Exception as e:
         return service_unavailable(
             e,

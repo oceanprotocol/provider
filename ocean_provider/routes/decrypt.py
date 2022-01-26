@@ -11,9 +11,6 @@ from eth_typing.encoding import HexStr
 from eth_typing.evm import HexAddress
 from flask import Response, request
 from flask_sieve import validate
-from web3.main import Web3
-
-from ocean_provider.log import setup_logging
 from ocean_provider.requests_session import get_requests_session
 from ocean_provider.user_nonce import update_nonce
 from ocean_provider.utils.basics import (
@@ -31,10 +28,10 @@ from ocean_provider.utils.encryption import do_decrypt
 from ocean_provider.utils.error_responses import error_response, service_unavailable
 from ocean_provider.utils.util import get_request_data
 from ocean_provider.validation.provider_requests import DecryptRequest
+from web3.main import Web3
 
 from . import services
 
-setup_logging()
 provider_wallet = get_provider_wallet()
 requests_session = get_requests_session()
 requests_session.mount("file://", LocalFileAdapter())
@@ -46,7 +43,7 @@ logger = logging.getLogger(__name__)
 @validate(DecryptRequest)
 def decrypt():
     data = get_request_data(request)
-    logger.info(f"decrypt endpoint called. {data}")
+    logger.info(f"decrypt called. arguments = {data}")
 
     try:
         return _decrypt(
@@ -78,13 +75,13 @@ def _decrypt(
     # Check if given chain_id matches Provider's chain_id
     web3 = get_web3()
     if web3.eth.chain_id != chain_id:
-        return error_response(f"Unsupported chain ID", 400)
+        return error_response(f"Unsupported chain ID", 400, logger)
 
     # Check if decrypter is authorized
     authorized_decrypters = get_config().authorized_decrypters
     logger.info(f"authorized_decrypters = {authorized_decrypters}")
     if authorized_decrypters and decrypter_address not in authorized_decrypters:
-        return error_response(f"Decrypter not authorized", 403)
+        return error_response(f"Decrypter not authorized", 403, logger)
 
     if not transaction_id:
         try:
@@ -92,7 +89,9 @@ def _decrypt(
                 encrypted_document, flags, document_hash
             )
         except Exception:
-            return error_response(f"Failed to convert input args to bytes.", 400)
+            return error_response(
+                f"Failed to convert input args to bytes.", 400, logger
+            )
     else:
         try:
             (
@@ -102,7 +101,7 @@ def _decrypt(
                 document_hash,
             ) = _get_args_from_transaction_id(web3, transaction_id)
         except Exception:
-            return error_response(f"Failed to process transaction id.", 400)
+            return error_response(f"Failed to process transaction id.", 400, logger)
     logger.info(
         f"data_nft_address = {data_nft_address}, "
         f"encrypted_document as bytes = {encrypted_document}, "
@@ -116,13 +115,13 @@ def _decrypt(
     if metadata_state == MetadataState.ACTIVE:
         pass
     elif metadata_state == MetadataState.END_OF_LIFE:
-        return error_response(f"Asset end of life", 403)
+        return error_response(f"Asset end of life", 403, logger)
     elif metadata_state == MetadataState.DEPRECATED:
-        return error_response(f"Asset deprecated", 403)
+        return error_response(f"Asset deprecated", 403, logger)
     elif metadata_state == MetadataState.REVOKED:
-        return error_response(f"Asset revoked", 403)
+        return error_response(f"Asset revoked", 403, logger)
     else:
-        return error_response(f"Invalid MetadataState", 400)
+        return error_response(f"Invalid MetadataState", 400, logger)
 
     working_document = encrypted_document
 
@@ -132,7 +131,7 @@ def _decrypt(
             working_document = do_decrypt(working_document, get_provider_wallet())
             logger.info("Successfully decrypted document.")
         except Exception:
-            return error_response(f"Failed to decrypt.", 400)
+            return error_response(f"Failed to decrypt.", 400, logger)
     else:
         logger.warning(
             "Document not encrypted (flags bit 2 not set). Skipping decryption."
@@ -144,19 +143,21 @@ def _decrypt(
             working_document = lzma.decompress(working_document)
             logger.info("Successfully decompressed document.")
         except Exception:
-            return error_response(f"Failed to decompress", 400)
+            return error_response(f"Failed to decompress", 400, logger)
 
     document = working_document
     logger.info(f"document = {document}")
 
     # Verify checksum matches
     if sha256(document).hexdigest() != document_hash.hex():
-        return error_response("Checksum doesn't match.", 400)
+        return error_response("Checksum doesn't match.", 400, logger)
     logger.info(f"Checksum matches.")
 
-    return Response(
+    response = Response(
         document, 201, {"Content-type": "text/plain", "Connection": "close"}
     )
+    logger.info(f"decrypt response = {response}")
+    return response
 
 
 def _convert_args_to_bytes(

@@ -5,11 +5,9 @@ from typing import Any, Dict
 
 from eth_keys import KeyAPI
 from eth_keys.backends import NativeECCBackend
-from ocean_provider.log import setup_logging
 from ocean_provider.utils.basics import get_provider_wallet, get_web3
 from ocean_provider.utils.services import Service
 
-setup_logging()
 logger = logging.getLogger(__name__)
 keys = KeyAPI(NativeECCBackend)
 

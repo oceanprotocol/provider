@@ -10,25 +10,22 @@ import os
 from cgi import parse_header
 
 import requests
+from jsonsempai import magic  # noqa: F401
+from artifacts import ERC721Template
 from eth_account.signers.local import LocalAccount
 from flask import Response
-from jsonsempai import magic  # noqa: F401
-from osmosis_driver_interface.osmosis import Osmosis
-from websockets import ConnectionClosed
-
-from artifacts import ERC721Template
-from ocean_provider.log import setup_logging
 from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.basics import get_config, get_provider_wallet, get_web3
 from ocean_provider.utils.consumable import ConsumableCodes
 from ocean_provider.utils.currency import to_wei
-from ocean_provider.utils.datatoken import verify_order_tx
 from ocean_provider.utils.data_nft import get_data_nft_contract
+from ocean_provider.utils.datatoken import verify_order_tx
 from ocean_provider.utils.encryption import do_decrypt
 from ocean_provider.utils.services import Service
 from ocean_provider.utils.url import is_safe_url
+from osmosis_driver_interface.osmosis import Osmosis
+from websockets import ConnectionClosed
 
-setup_logging()
 logger = logging.getLogger(__name__)
 
 
@@ -256,15 +253,12 @@ def process_compute_request(data):
     did = data.get("documentId")
     owner = data.get("consumerAddress")
     job_id = data.get("jobId")
-    tx_id = data.get("transferTxId")
     body = dict()
     body["providerAddress"] = provider_wallet.address
     if owner is not None:
         body["owner"] = owner
     if job_id is not None:
         body["jobId"] = job_id
-    if tx_id is not None:
-        body["agreementId"] = tx_id
     if did is not None:
         body["documentId"] = did
 
