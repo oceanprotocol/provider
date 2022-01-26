@@ -61,7 +61,7 @@ def nonce():
     logger.info(f"nonce for user {address} is {nonce}")
 
     response = Response(json.dumps({"nonce": nonce}), 200, headers=standard_headers)
-    logger.debug(f"nonce response = {response}")
+    logger.info(f"nonce response = {response}")
     return response
 
 
@@ -113,7 +113,7 @@ def fileinfo():
         files_info.append(info)
 
     response = Response(json.dumps(files_info), 200, headers=standard_headers)
-    logger.debug(f"fileinfo response = {response}")
+    logger.info(f"fileinfo response = {response}")
     return response
 
 
@@ -204,7 +204,7 @@ def initialize():
             ),
         }
         response = Response(json.dumps(approve_params), 200, headers=standard_headers)
-        logger.debug(f"initialize response = {response}")
+        logger.info(f"initialize response = {response}")
         return response
 
     except Exception as e:
@@ -312,7 +312,7 @@ def download():
             content_type,
             method=url_object.get("method", "GET"),
         )
-        logger.debug(f"download response = {response}")
+        logger.info(f"download response = {response}")
         return response
     except Exception as e:
         return service_unavailable(
