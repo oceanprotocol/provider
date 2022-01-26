@@ -5,7 +5,7 @@
 import json
 import logging
 
-from flask import Response, jsonify, request
+from flask import Response, request
 from flask_sieve import validate
 from ocean_provider.requests_session import get_requests_session
 from ocean_provider.user_nonce import update_nonce
@@ -152,6 +152,7 @@ def computeStop():
             response.content, response.status_code, headers=standard_headers
         )
         logger.debug(f"computeStop response = {response}")
+        return response
     except (ValueError, Exception) as e:
         return service_unavailable(e, data, logger)
 
