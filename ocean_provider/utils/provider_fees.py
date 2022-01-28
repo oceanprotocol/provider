@@ -54,3 +54,23 @@ def get_provider_fees(
     }
     logger.debug(f"Returning provider_fees: {provider_fee}")
     return provider_fee
+
+
+def get_c2d_enviroments() -> Dict[str, Any]:
+    mock_env = dict()
+    mock_env["environments"] = [
+        {
+            "id": "ocean-compute",
+            "nCPU": 2,
+            "cpuType": "AMD Ryzen 7 5800X 8-Core Processor",
+            "nGPU": 0,
+            "gpuType": "AMD RX570",
+            "ramGB": 1,
+            "diskGB": 2,
+            "priceMin": 2.3,
+            "desc": "This is a mocked enviroment",
+            "currentJobs": 0,
+            "maxJobs": 10,
+        }
+    ]
+    return mock_env
