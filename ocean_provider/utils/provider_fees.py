@@ -56,7 +56,7 @@ def get_provider_fees(
     return provider_fee
 
 
-def get_c2d_enviroments() -> Dict[str, Any]:
+def get_c2d_environments() -> Dict[str, Any]:
     mock_env = dict()
     mock_env["environments"] = [
         {
