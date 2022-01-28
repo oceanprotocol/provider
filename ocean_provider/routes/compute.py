@@ -12,6 +12,7 @@ from ocean_provider.user_nonce import update_nonce
 from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.basics import LocalFileAdapter, get_provider_wallet, get_web3
 from ocean_provider.utils.error_responses import error_response, service_unavailable
+from ocean_provider.utils.provider_fees import get_c2d_enviroments
 from ocean_provider.utils.util import (
     build_download_response,
     get_compute_endpoint,
@@ -386,3 +387,23 @@ def computeResult():
             },
             logger,
         )
+
+
+@services.route("/computeEnviroments", methods=["GET"])
+def computeEnviroments():
+    """Get compute enviroments
+
+    ---
+    tags:
+      - services
+    consumes:
+      - application/json
+
+    responses:
+      200:
+        description: Call to the operator-service was successful.
+      503:
+        description: Service Unavailable
+    """
+    response = Response(get_c2d_enviroments(), 200, headers=standard_headers)
+    return response
