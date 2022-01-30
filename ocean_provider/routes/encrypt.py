@@ -94,4 +94,5 @@ def _encrypt(data: bytes) -> Response:
         headers={"Content-type": "text/plain", "Connection": "close"},
     )
     logger.info(f"encrypt response = {response}")
+
     return response

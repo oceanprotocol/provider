@@ -324,17 +324,3 @@ def download():
             },
             logger,
         )
-
-
-def process_consume_request(data: dict):
-    did = data.get("documentId")
-    token_address = data.get("datatoken")
-    consumer_address = data.get("consumerAddress")
-    service_id = int(data.get("serviceId"))
-
-    # grab asset for did from the metadatastore associated with
-    # the datatoken address
-    asset = get_asset_from_metadatastore(get_metadata_url(), did)
-    service = asset.get_service_by_id(service_id)
-
-    return asset, service, did, consumer_address, token_address
