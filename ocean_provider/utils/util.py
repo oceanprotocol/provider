@@ -45,15 +45,6 @@ def msg_hash(message: str):
     return hashlib.sha256(message.encode("utf-8")).hexdigest()
 
 
-def checksum(seed) -> str:
-    """Calculate the hash3_256."""
-    return hashlib.sha3_256(
-        (json.dumps(dict(sorted(seed.items(), reverse=False))).replace(" ", "")).encode(
-            "utf-8"
-        )
-    ).hexdigest()
-
-
 def build_download_response(
     request, requests_session, url, download_url, content_type=None, method="GET"
 ):
@@ -274,16 +265,6 @@ def process_compute_request(data):
     body["providerSignature"] = sign_message(msg_to_sign, provider_wallet)
 
     return body
-
-
-def filter_dictionary(dictionary, keys):
-    """Filters a dictionary from a list of keys."""
-    return {key: dictionary[key] for key in dictionary if key in keys}
-
-
-def filter_dictionary_starts_with(dictionary, prefix):
-    """Filters a dictionary from a key prefix."""
-    return {key: dictionary[key] for key in dictionary if key.startswith(prefix)}
 
 
 def decode_from_data(data, key, dec_type="list"):
