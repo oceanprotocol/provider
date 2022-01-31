@@ -70,7 +70,7 @@ dev_requirements = [
     "python-dotenv==0.15.0",
     "flake8",
     "isort",
-    "black==21.4b0",
+    "black==22.1.0",
     "pre-commit",
     "licenseheaders",
     "pytest-env",
