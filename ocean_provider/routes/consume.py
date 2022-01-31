@@ -2,10 +2,9 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
-import json
 import logging
 
-from flask import Response, request
+from flask import request, jsonify
 from flask_sieve import validate
 from ocean_provider.myapp import app
 from ocean_provider.requests_session import get_requests_session
@@ -60,8 +59,9 @@ def nonce():
     nonce = get_nonce(address)
     logger.info(f"nonce for user {address} is {nonce}")
 
-    response = Response(json.dumps({"nonce": nonce}), 200, headers=standard_headers)
+    response = jsonify(nonce=nonce), 200
     logger.info(f"nonce response = {response}")
+
     return response
 
 
@@ -112,8 +112,9 @@ def fileinfo():
         info.update(details)
         files_info.append(info)
 
-    response = Response(json.dumps(files_info), 200, headers=standard_headers)
+    response = jsonify(files_info), 200
     logger.info(f"fileinfo response = {response}")
+
     return response
 
 
@@ -198,8 +199,9 @@ def initialize():
             did, service, consumer_address, int(valid_until)
         ),
     }
-    response = Response(json.dumps(approve_params), 200, headers=standard_headers)
+    response = jsonify(approve_params), 200
     logger.info(f"initialize response = {response}")
+
     return response
 
 

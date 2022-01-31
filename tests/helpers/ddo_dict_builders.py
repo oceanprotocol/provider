@@ -80,47 +80,6 @@ def build_service_dict_type_access(
     return access_service
 
 
-def build_service_dict_type_compute(
-    datatoken_address: HexAddress,
-    service_endpoint: str,
-    encrypted_files: HexStr,
-    timeout: int = 3600,
-):
-    """Build a compute service dict, used for testing"""
-    compute_service = _build_service_dict_untyped(
-        datatoken_address, service_endpoint, encrypted_files, timeout
-    )
-    compute_service["type"] = "compute"
-    compute_service["privacy"] = build_privacy_dict()
-    return compute_service
-
-
-def build_privacy_dict(
-    allow_raw_algo: bool,
-    allow_network_access: bool,
-    trusted_algo_publishers: List[str],
-    trusted_algos: List[dict],
-) -> dict:
-    "Build a privacy dict, used for testing"
-    return {
-        "allowRawAlgorithm": allow_raw_algo,
-        "allowNetworkAccess": allow_network_access,
-        "publisherTrustedAlgorithmPublishers": trusted_algo_publishers,
-        "publisherTrustedAlgorithms": trusted_algos,
-    }
-
-
-def build_publisher_trusted_algo_dict(
-    did: str, files_checksum: str, container_section_checksum: str
-) -> dict:
-    """Build a publisherTrustedAlgorithm dict"""
-    return {
-        "did": did,
-        "filesChecksum": files_checksum,
-        "containerSectionChecksum": container_section_checksum,
-    }
-
-
 def _build_untyped_metadata_dict() -> dict:
     """Build an untyped metadata dict, used for testing"""
     return {
@@ -178,10 +137,6 @@ def build_credentials_dict() -> dict:
     return {"allow": [], "deny": []}
 
 
-def get_access_service():
-    return Service()
-
-
 def get_compute_service(
     address, price, datatoken_address, trusted_algos=None, trusted_publishers=None
 ):
@@ -218,32 +173,6 @@ def get_compute_service(
         "serviceEndpoint": "http://172.15.0.4:8030/",
         "files": encrypted_files,
         "compute": compute_service_attributes,
-    }
-
-
-def get_bogus_service(datatoken_address):
-    unencrypted_files_list = [
-        {
-            "type": "url",
-            "method": "GET",
-            "url": "https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt",
-        }
-    ]
-
-    encrypted_files_str = json.dumps(unencrypted_files_list, separators=(",", ":"))
-    encrypted_files = do_encrypt(
-        Web3.toHex(text=encrypted_files_str), get_provider_wallet()
-    )
-
-    return {
-        "id": "bogus_invalid_1",
-        "type": "bogus_invalid",
-        "name": "bogus_invalid_1",
-        "description": "bogus_invalid_1",
-        "datatokenAddress": datatoken_address,
-        "timeout": 3600,
-        "serviceEndpoint": "http://172.15.0.4:8030/",
-        "files": encrypted_files,
     }
 
 

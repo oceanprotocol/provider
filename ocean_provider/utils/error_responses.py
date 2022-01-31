@@ -5,7 +5,6 @@
 import logging
 
 from flask import jsonify, make_response
-from flask.wrappers import Response
 from ocean_provider.utils.url import is_url
 
 logger = logging.getLogger(__name__)
@@ -13,7 +12,7 @@ logger = logging.getLogger(__name__)
 STRIPPED_URL_MSG = "<URL stripped for security reasons>"
 
 
-def error_response(err_str: str, status: int, custom_logger=None) -> Response:
+def error_response(err_str: str, status: int, custom_logger=None):
     err_str = strip_and_replace_urls(str(err_str))
 
     this_logger = custom_logger if custom_logger else logger

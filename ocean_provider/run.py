@@ -30,6 +30,12 @@ def log_incoming_request():
     )
 
 
+@app.after_request
+def add_header(response):
+    response.headers["Connection"] = "close"
+    return response
+
+
 @app.errorhandler(Exception)
 def handle_error(error):
     code = getattr(error, "code", 503)

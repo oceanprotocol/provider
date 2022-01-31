@@ -150,9 +150,7 @@ def _decrypt(
         return error_response("Checksum doesn't match.", 400, logger)
     logger.info(f"Checksum matches.")
 
-    response = Response(
-        document, 201, {"Content-type": "text/plain", "Connection": "close"}
-    )
+    response = Response(document, 201, {"Content-type": "text/plain"})
     logger.info(f"decrypt response = {response}")
     return response
 
