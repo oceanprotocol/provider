@@ -5,7 +5,7 @@
 import json
 import logging
 
-from flask import Response, request
+from flask import Response, request, jsonify
 from flask_sieve import validate
 from ocean_provider.requests_session import get_requests_session
 from ocean_provider.user_nonce import update_nonce
@@ -383,6 +383,8 @@ def computeEnvironments():
       503:
         description: Service Unavailable
     """
-    response = Response(get_c2d_environments(), 200, headers=standard_headers)
+    response = jsonify(get_c2d_environments())
+    response.status_code = 200
+    response.headers = standard_headers
 
     return response

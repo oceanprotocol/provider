@@ -54,13 +54,6 @@ def get_provider_wallet(web3: Optional[Web3] = None):
     return wallet
 
 
-def get_artifacts_path():
-    """
-    :return: Path to the artifact directory
-    """
-    return Path(artifacts.__file__).parent.expanduser().resolve()
-
-
 def get_web3(network_url: Optional[str] = None) -> Web3:
     """
     :return: `Web3` instance
