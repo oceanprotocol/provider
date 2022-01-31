@@ -8,7 +8,7 @@ from flask import Response, request
 from ocean_provider.requests_session import get_requests_session
 from ocean_provider.utils.basics import LocalFileAdapter, get_provider_wallet
 from ocean_provider.utils.encryption import do_encrypt
-from ocean_provider.utils.error_responses import error_response, service_unavailable
+from ocean_provider.utils.error_responses import error_response
 
 from . import services
 
@@ -75,10 +75,7 @@ def encrypt():
     data = request.get_data()
     logger.info(f"encrypt called. arguments = {data}")
 
-    try:
-        return _encrypt(data)
-    except Exception as e:
-        return service_unavailable(e, data, logger)
+    return _encrypt(data)
 
 
 def _encrypt(data: bytes) -> Response:

@@ -8,6 +8,7 @@ import logging
 import mimetypes
 import os
 from cgi import parse_header
+import werkzeug
 
 import requests
 from jsonsempai import magic  # noqa: F401
@@ -34,7 +35,10 @@ def get_metadata_url():
 
 
 def get_request_data(request):
-    return request.args if request.args else request.json
+    try:
+        return request.args if request.args else request.json
+    except werkzeug.exceptions.BadRequest:
+        return {}
 
 
 def msg_hash(message: str):

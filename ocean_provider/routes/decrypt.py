@@ -25,7 +25,7 @@ from ocean_provider.utils.data_nft import (
     get_metadata_logs_from_tx_receipt,
 )
 from ocean_provider.utils.encryption import do_decrypt
-from ocean_provider.utils.error_responses import error_response, service_unavailable
+from ocean_provider.utils.error_responses import error_response
 from ocean_provider.utils.util import get_request_data
 from ocean_provider.validation.provider_requests import DecryptRequest
 from web3.main import Web3
@@ -45,19 +45,16 @@ def decrypt():
     data = get_request_data(request)
     logger.info(f"decrypt called. arguments = {data}")
 
-    try:
-        return _decrypt(
-            decrypter_address=data.get("decrypterAddress"),
-            chain_id=data.get("chainId"),
-            transaction_id=data.get("transactionId"),
-            data_nft_address=data.get("dataNftAddress"),
-            encrypted_document=data.get("encryptedDocument"),
-            flags=data.get("flags"),
-            document_hash=data.get("documentHash"),
-            nonce=data.get("nonce"),
-        )
-    except Exception as e:
-        return service_unavailable(e, data, logger)
+    return _decrypt(
+        decrypter_address=data.get("decrypterAddress"),
+        chain_id=data.get("chainId"),
+        transaction_id=data.get("transactionId"),
+        data_nft_address=data.get("dataNftAddress"),
+        encrypted_document=data.get("encryptedDocument"),
+        flags=data.get("flags"),
+        document_hash=data.get("documentHash"),
+        nonce=data.get("nonce"),
+    )
 
 
 def _decrypt(
