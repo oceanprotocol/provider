@@ -676,63 +676,7 @@ def test_fails_invalid_algorithm_dict(provider_wallet, consumer_address, web3):
     ):
         validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
         assert validator.validate() is False
-        assert validator.error == f"cannot get url for the algorithmDid {alg_ddo.did}"
-
-
-@pytest.mark.unit
-@patch("ocean_provider.validation.algo.check_asset_consumable", return_value=(True, ""))
-@patch("ocean_provider.validation.algo.validate_order", return_value=(None, None, None))
-@patch(
-    "ocean_provider.validation.algo.get_service_files_list",
-    return_value=[{"url": "dummy"}],
-)
-def test_fails_algorithm_in_use(provider_wallet, consumer_address, web3):
-    ddo = Asset(ddo_dict)
-    alg_ddo = Asset(alg_ddo_dict)
-    sa_compute = alg_ddo.get_service_by_type(ServiceType.ACCESS)
-    sa = ddo.get_service_by_type(ServiceType.COMPUTE)
-
-    data = {
-        "dataset": {
-            "documentId": ddo.did,
-            "serviceId": sa.id,
-            "transferTxId": "tx_id",
-        },
-        "algorithm": {
-            "documentId": alg_ddo.did,
-            "serviceId": sa_compute.id,
-            "transferTxId": "alg_tx_id",
-        },
-    }
-
-    def side_effect(*args, **kwargs):
-        nonlocal ddo, alg_ddo
-        if ddo.did == args[1]:
-            return ddo
-        if alg_ddo.did == args[1]:
-            return alg_ddo
-
-    def record_consume_request_side_effect(*args, **kwargs):
-        nonlocal ddo, alg_ddo
-        if ddo.did == args[0]:
-            return ddo
-        if alg_ddo.did == args[0]:
-            raise Exception("I know Python!")
-
-    with patch(
-        "ocean_provider.validation.algo.get_asset_from_metadatastore",
-        side_effect=side_effect,
-    ):
-        with patch(
-            "ocean_provider.validation.algo.record_consume_request",
-            side_effect=record_consume_request_side_effect,
-        ):
-            validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
-            assert validator.validate() is False
-            assert (
-                validator.error
-                == "Algorithm is already in use or can not be found on chain."
-            )
+        assert validator.error == f"Order for serviceId {sa.id} is not valid."
 
 
 @pytest.mark.unit
@@ -836,64 +780,6 @@ def test_fail_allow_raw_false(provider_wallet, consumer_address, web3):
         validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
         assert validator.validate() is False
         assert validator.error == f"cannot run raw algorithm on this did {ddo.did}."
-
-
-@pytest.mark.unit
-@patch("ocean_provider.validation.algo.check_asset_consumable", return_value=(True, ""))
-@patch("ocean_provider.validation.algo.validate_order", return_value=(None, None, None))
-def test_success_multiple_services_types(provider_wallet, consumer_address, web3):
-    ddo = Asset(ddo_dict)
-    alg_ddo = Asset(alg_ddo_dict)
-    sa_compute = alg_ddo.get_service_by_type(ServiceType.ACCESS)
-    sa = ddo.get_service_by_type(ServiceType.COMPUTE)
-
-    data = {
-        "dataset": {
-            "documentId": ddo.did,
-            "transferTxId": "tx_id",
-            "serviceId": sa.id,
-        },
-        "algorithm": {
-            "serviceId": sa_compute.id,
-            "meta": {
-                "rawcode": "console.log('Hello world'!)",
-                "format": "docker-image",
-                "version": "0.1",
-                "container": {"entrypoint": "node $ALGO", "image": "node", "tag": "10"},
-            },
-        },
-        "additionalDatasets": [
-            {
-                "documentId": ddo.did,
-                "transferTxId": "ddo.did",
-                "serviceId": "access_1",
-            }
-        ],
-    }
-
-    def side_effect(*args, **kwargs):
-        nonlocal ddo, alg_ddo
-        if ddo.did == args[1]:
-            return ddo
-        if alg_ddo.did == args[1]:
-            return alg_ddo
-
-    def another_side_effect(*args, **kwargs):
-        nonlocal ddo, alg_ddo
-        if args[0].type == "access":
-            return None
-        return [{"url": "dummy"}]
-
-    with patch(
-        "ocean_provider.validation.algo.get_asset_from_metadatastore",
-        side_effect=side_effect,
-    ):
-        with patch(
-            "ocean_provider.validation.algo.get_service_files_list",
-            side_effect=another_side_effect,
-        ):
-            validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
-            assert validator.validate() is True
 
 
 @pytest.mark.unit
