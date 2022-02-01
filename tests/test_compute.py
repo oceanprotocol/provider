@@ -421,3 +421,11 @@ def test_compute_delete_job(
         compute_endpoint, query_string=query_string, content_type="application/json"
     )
     assert response.status == "200 OK", f"delete compute job failed: {response.data}"
+
+
+@pytest.mark.unit
+def test_compute_environments(client):
+    compute_envs_endpoint = BaseURLs.SERVICES_URL + "/computeEnvironments"
+    response = client.get(compute_envs_endpoint)
+
+    assert "environments" in response.json

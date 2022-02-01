@@ -172,15 +172,6 @@ class NonceRequest(CustomJsonRequest):
         return {"userAddress": ["required"]}
 
 
-class EncryptRequest(CustomJsonRequest):
-    def rules(self):
-        return {
-            "documentId": ["required"],
-            "document": ["required"],
-            "publisherAddress": ["required"],
-        }
-
-
 class DecryptRequest(CustomJsonRequest):
     def rules(self):
         return {

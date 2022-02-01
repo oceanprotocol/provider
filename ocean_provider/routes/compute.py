@@ -5,13 +5,13 @@
 import json
 import logging
 
-from flask import Response, request
+from flask import Response, request, jsonify
 from flask_sieve import validate
 from ocean_provider.requests_session import get_requests_session
 from ocean_provider.user_nonce import update_nonce
 from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.basics import LocalFileAdapter, get_provider_wallet, get_web3
-from ocean_provider.utils.error_responses import error_response, service_unavailable
+from ocean_provider.utils.error_responses import error_response
 from ocean_provider.utils.provider_fees import get_c2d_environments
 from ocean_provider.utils.util import (
     build_download_response,
@@ -81,20 +81,18 @@ def computeDelete():
     """
     data = get_request_data(request)
     logger.info(f"computeDelete called. arguments = {data}")
-    try:
-        body = process_compute_request(data)
-        response = requests_session.delete(
-            get_compute_endpoint(), params=body, headers=standard_headers
-        )
-        update_nonce(body["owner"], data.get("nonce"))
 
-        response = Response(
-            response.content, response.status_code, headers=standard_headers
-        )
-        logger.info(f"computeDelete response = {response}")
-        return response
-    except (ValueError, Exception) as e:
-        return service_unavailable(e, data, logger)
+    body = process_compute_request(data)
+    response = requests_session.delete(
+        get_compute_endpoint(), params=body, headers=standard_headers
+    )
+    update_nonce(body["owner"], data.get("nonce"))
+
+    response = Response(
+        response.content, response.status_code, headers=standard_headers
+    )
+    logger.info(f"computeDelete response = {response}")
+    return response
 
 
 @services.route("/compute", methods=["PUT"])
@@ -142,20 +140,19 @@ def computeStop():
     """
     data = get_request_data(request)
     logger.info(f"computeStop called. arguments = {data}")
-    try:
-        body = process_compute_request(data)
-        response = requests_session.put(
-            get_compute_endpoint(), params=body, headers=standard_headers
-        )
-        update_nonce(body["owner"], data.get("nonce"))
 
-        response = Response(
-            response.content, response.status_code, headers=standard_headers
-        )
-        logger.info(f"computeStop response = {response}")
-        return response
-    except (ValueError, Exception) as e:
-        return service_unavailable(e, data, logger)
+    body = process_compute_request(data)
+    response = requests_session.put(
+        get_compute_endpoint(), params=body, headers=standard_headers
+    )
+    update_nonce(body["owner"], data.get("nonce"))
+
+    response = Response(
+        response.content, response.status_code, headers=standard_headers
+    )
+    logger.info(f"computeStop response = {response}")
+
+    return response
 
 
 @services.route("/compute", methods=["GET"])
@@ -198,21 +195,18 @@ def computeStatus():
     """
     data = get_request_data(request)
     logger.info(f"computeStatus called. arguments = {data}")
-    try:
-        body = process_compute_request(data)
 
-        response = requests_session.get(
-            get_compute_endpoint(), params=body, headers=standard_headers
-        )
+    body = process_compute_request(data)
 
-        _response = Response(
-            response.content, response.status_code, headers=standard_headers
-        )
-        logger.info(f"computeStatus response = {_response}")
-        return _response
+    response = requests_session.get(
+        get_compute_endpoint(), params=body, headers=standard_headers
+    )
 
-    except (ValueError, Exception) as e:
-        return service_unavailable(e, data, logger)
+    _response = Response(
+        response.content, response.status_code, headers=standard_headers
+    )
+    logger.info(f"computeStatus response = {_response}")
+    return _response
 
 
 @services.route("/compute", methods=["POST"])
@@ -271,45 +265,40 @@ def computeStart():
     data = request.json
     logger.info(f"computeStart called. arguments = {data}")
 
-    try:
-        consumer_address = data.get("consumerAddress")
-        validator = WorkflowValidator(
-            get_web3(), consumer_address, provider_wallet, data
-        )
+    consumer_address = data.get("consumerAddress")
+    validator = WorkflowValidator(get_web3(), consumer_address, provider_wallet, data)
 
-        status = validator.validate()
-        if not status:
-            return error_response(validator.error, 400, logger)
+    status = validator.validate()
+    if not status:
+        return error_response(validator.error, 400, logger)
 
-        workflow = validator.workflow
-        # workflow is ready, push it to operator
-        logger.info("Sending: %s", workflow)
+    workflow = validator.workflow
+    # workflow is ready, push it to operator
+    logger.info("Sending: %s", workflow)
 
-        tx_id = data.get("transferTxId")
-        did = data.get("documentId")
+    tx_id = data.get("transferTxId")
+    did = data.get("documentId")
 
-        msg_to_sign = f"{provider_wallet.address}{did}"
+    msg_to_sign = f"{provider_wallet.address}{did}"
 
-        payload = {
-            "workflow": workflow,
-            "providerSignature": sign_message(msg_to_sign, provider_wallet),
-            "documentId": did,
-            "agreementId": tx_id,
-            "owner": consumer_address,
-            "providerAddress": provider_wallet.address,
-        }
-        response = requests_session.post(
-            get_compute_endpoint(), data=json.dumps(payload), headers=standard_headers
-        )
-        update_nonce(consumer_address, data.get("nonce"))
+    payload = {
+        "workflow": workflow,
+        "providerSignature": sign_message(msg_to_sign, provider_wallet),
+        "documentId": did,
+        "agreementId": tx_id,
+        "owner": consumer_address,
+        "providerAddress": provider_wallet.address,
+    }
+    response = requests_session.post(
+        get_compute_endpoint(), data=json.dumps(payload), headers=standard_headers
+    )
+    update_nonce(consumer_address, data.get("nonce"))
 
-        response = Response(
-            response.content, response.status_code, headers=standard_headers
-        )
-        logger.info(f"computeStart response = {response}")
-        return response
-    except (ValueError, KeyError, Exception) as e:
-        return service_unavailable(e, data, logger)
+    response = Response(
+        response.content, response.status_code, headers=standard_headers
+    )
+    logger.info(f"computeStart response = {response}")
+    return response
 
 
 @services.route("/computeResult", methods=["GET"])
@@ -352,41 +341,30 @@ def computeResult():
     """
     data = get_request_data(request)
     logger.info(f"computeResult called. arguments = {data}")
-    try:
-        url = get_compute_result_endpoint()
-        msg_to_sign = (
-            f"{data.get('jobId')}{data.get('index')}{data.get('consumerAddress')}"
-        )
-        # we sign the same message as consumer does, but using our key
-        provider_signature = sign_message(msg_to_sign, provider_wallet)
-        params = {
-            "index": data.get("index"),
-            "consumerAddress": data.get("consumerAddress"),
-            "jobId": data.get("jobId"),
-            "consumerSignature": data.get("signature"),
-            "providerSignature": provider_signature,
-        }
-        req = PreparedRequest()
-        req.prepare_url(url, params)
-        result_url = req.url
-        logger.debug(f"Done processing computeResult, url: {result_url}")
-        update_nonce(data.get("consumerAddress"), data.get("nonce"))
 
-        response = build_download_response(
-            request, requests_session, result_url, result_url, None
-        )
-        logger.info(f"computeResult response = {response}")
-        return response
-    except Exception as e:
-        return service_unavailable(
-            e,
-            {
-                "jobId": data.get("jobId"),
-                "index": data.get("index"),
-                "consumerAddress": data.get("consumerAddress"),
-            },
-            logger,
-        )
+    url = get_compute_result_endpoint()
+    msg_to_sign = f"{data.get('jobId')}{data.get('index')}{data.get('consumerAddress')}"
+    # we sign the same message as consumer does, but using our key
+    provider_signature = sign_message(msg_to_sign, provider_wallet)
+    params = {
+        "index": data.get("index"),
+        "consumerAddress": data.get("consumerAddress"),
+        "jobId": data.get("jobId"),
+        "consumerSignature": data.get("signature"),
+        "providerSignature": provider_signature,
+    }
+    req = PreparedRequest()
+    req.prepare_url(url, params)
+    result_url = req.url
+    logger.debug(f"Done processing computeResult, url: {result_url}")
+    update_nonce(data.get("consumerAddress"), data.get("nonce"))
+
+    response = build_download_response(
+        request, requests_session, result_url, result_url, None
+    )
+    logger.info(f"computeResult response = {response}")
+
+    return response
 
 
 @services.route("/computeEnvironments", methods=["GET"])
@@ -405,5 +383,8 @@ def computeEnvironments():
       503:
         description: Service Unavailable
     """
-    response = Response(get_c2d_environments(), 200, headers=standard_headers)
+    response = jsonify(get_c2d_environments())
+    response.status_code = 200
+    response.headers = standard_headers
+
     return response

@@ -11,10 +11,11 @@ from flask_swagger import swagger
 from flask_swagger_ui import get_swaggerui_blueprint
 from ocean_provider.config import Config
 from ocean_provider.constants import BaseURLs, ConfigSections, Metadata
+from ocean_provider.utils.error_responses import strip_and_replace_urls
 from ocean_provider.myapp import app
 from ocean_provider.routes import services
 from ocean_provider.utils.basics import get_provider_wallet, get_web3
-from ocean_provider.utils.util import get_compute_info
+from ocean_provider.utils.util import get_compute_info, get_request_data
 
 config = Config(filename=app.config["PROVIDER_CONFIG_FILE"])
 provider_url = config.get(ConfigSections.RESOURCES, "ocean_provider.url")
@@ -27,6 +28,27 @@ def log_incoming_request():
     logger.info(
         f"incoming request = {request.scheme}, {request.method}, {request.remote_addr}, {request.full_path}"
     )
+
+
+@app.after_request
+def add_header(response):
+    response.headers["Connection"] = "close"
+    return response
+
+
+@app.errorhandler(Exception)
+def handle_error(error):
+    code = getattr(error, "code", 503)
+
+    error = strip_and_replace_urls(str(error))
+
+    response = jsonify(error=str(error), context=get_request_data(request))
+    response.status_code = code
+    response.headers["Connection"] = "close"
+
+    logger.error(f"error: {error}, payload: {request.data}", exc_info=1)
+
+    return response
 
 
 def get_services_endpoints():
