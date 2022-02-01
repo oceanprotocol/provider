@@ -5,16 +5,13 @@
 import logging
 
 from flask import Response, request
-
-from ocean_provider.log import setup_logging
 from ocean_provider.requests_session import get_requests_session
 from ocean_provider.utils.basics import LocalFileAdapter, get_provider_wallet
 from ocean_provider.utils.encryption import do_encrypt
-from ocean_provider.utils.error_responses import error_response, service_unavailable
+from ocean_provider.utils.error_responses import error_response
 
 from . import services
 
-setup_logging()
 provider_wallet = get_provider_wallet()
 requests_session = get_requests_session()
 requests_session.mount("file://", LocalFileAdapter())
@@ -70,16 +67,15 @@ def encrypt():
     """
     if request.content_type != "application/octet-stream":
         return error_response(
-            "Invalid request content type: should be application/octet-stream", 400
+            "Invalid request content type: should be application/octet-stream",
+            400,
+            logger,
         )
 
     data = request.get_data()
-    logger.info(f"encrypt endpoint called. {data}")
+    logger.info(f"encrypt called. arguments = {data}")
 
-    try:
-        return _encrypt(data)
-    except Exception as e:
-        return service_unavailable(e, data, logger)
+    return _encrypt(data)
 
 
 def _encrypt(data: bytes) -> Response:
@@ -87,10 +83,13 @@ def _encrypt(data: bytes) -> Response:
         encrypted_data = do_encrypt(data, provider_wallet)
         logger.info(f"encrypted_data = {encrypted_data}")
     except Exception:
-        return error_response(f"Failed to encrypt.", 400)
+        return error_response(f"Failed to encrypt.", 400, logger)
 
-    return Response(
+    response = Response(
         encrypted_data,
         201,
-        headers={"Content-type": "text/plain", "Connection": "close"},
+        headers={"Content-type": "text/plain"},
     )
+    logger.info(f"encrypt response = {response}")
+
+    return response

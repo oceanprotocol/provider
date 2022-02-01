@@ -69,7 +69,7 @@ def test_initialize_request_payload(
     req = {
         "documentId": asset.did,
         "serviceId": service.id,
-        "dataToken": service.datatoken_address,
+        "datatoken": service.datatoken_address,
         "consumerAddress": consumer_wallet.address,
     }
 
@@ -97,7 +97,7 @@ def test_access_request_payload(
     req = {
         "documentId": asset.did,
         "serviceId": service.id,
-        "dataToken": service.datatoken_address,
+        "datatoken": service.datatoken_address,
         "consumerAddress": consumer_wallet.address,
         "transferTxId": "0xsometx",
         "fileIndex": 0,

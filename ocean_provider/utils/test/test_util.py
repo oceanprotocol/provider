@@ -21,6 +21,7 @@ from ocean_provider.utils.util import (
     get_download_url,
     get_service_files_list,
     msg_hash,
+    validate_url_object,
 )
 
 test_logger = logging.getLogger(__name__)
@@ -173,3 +174,18 @@ def test_get_service_files_list(provider_wallet):
     )
 
     assert get_service_files_list(service, provider_wallet) is None
+
+
+@pytest.mark.unit
+def test_validate_url_object():
+    result, message = validate_url_object({}, 1)
+    assert result is False
+    assert message == "cannot decrypt files for this service. id=1"
+
+    result, message = validate_url_object({"type": "not_ipfs_or_url"}, 1)
+    assert result is False
+    assert message == "malformed or unsupported type for service files. id=1"
+
+    result, message = validate_url_object({"type": "ipfs", "but_hash": "missing"}, 1)
+    assert result is False
+    assert message == "malformed service files, missing required keys. id=1"

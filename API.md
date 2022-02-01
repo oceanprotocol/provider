@@ -94,7 +94,7 @@ payload:
 {
     "documentId":"0x1111",
     "serviceId": 0,
-    "dataToken": "",
+    "datatoken": "",
     "consumerAddress":"0x990922334",
 ```
 
@@ -105,7 +105,7 @@ Response:
     "from": "0x...",
     "to": "0x...",
     "numTokens": 21,
-    "dataToken": "0x21fa3ea32892091...",
+    "datatoken": "0x21fa3ea32892091...",
     "nonce": 23
 }
 ```
@@ -121,7 +121,7 @@ Parameters
     nonce: Nonce
     signature: String object containg user signature (signed message)
     consumerAddress: String object containing publisher's ethereum address
-    transactionId: Hex string -- the id of on-chain transaction for approval of DataTokens transfer
+    transactionId: Hex string -- the id of on-chain transaction for approval of datatokens transfer
         given to the provider's account
 ```
 
@@ -137,7 +137,7 @@ payload:
     "documentId":"0x1111",
     "serviceId": 0,
     "fileIndex": 0,
-    "dataToken": "",
+    "datatoken": "",
     "consumerAddress":"0x990922334",
     "signature":"0x00110011",
     "transferTxId": "0xa09fc23421345532e34829"
@@ -217,7 +217,7 @@ Parameters
         amount of data tokens expressed in the `initialize` endpoint
     serviceId: integer identifies a service in the list of services in the DDO document
     serviceType: type of service that serviceId refers to, must be `compute` in this case
-    dataToken: hex str the ERC20 contract address of the DataToken attached to the documentId (did)
+    datatoken: hex str the ERC20 contract address of the datatoken attached to the documentId (did)
 
     One of `algorithmDid` or `algorithmMeta` is required, `algorithmDid` takes precedence
 ```

@@ -2,7 +2,7 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
-
+from datetime import datetime
 import os
 
 from flask import request as flask_request
@@ -172,15 +172,6 @@ class NonceRequest(CustomJsonRequest):
         return {"userAddress": ["required"]}
 
 
-class EncryptRequest(CustomJsonRequest):
-    def rules(self):
-        return {
-            "documentId": ["required"],
-            "document": ["required"],
-            "publisherAddress": ["required"],
-        }
-
-
 class DecryptRequest(CustomJsonRequest):
     def rules(self):
         return {
@@ -296,9 +287,12 @@ class DownloadRequest(CustomJsonRequest):
 
 class InitializeRequest(CustomJsonRequest):
     def rules(self):
+        timestamp_now = int(datetime.now().timestamp())
+
         return {
             "documentId": ["required"],
             "serviceId": ["required"],
             "consumerAddress": ["required"],
             "fileIndex": ["sometimes", "integer", "min:0"],
+            "validUntil": ["sometimes", "integer", "min:" + str(timestamp_now)],
         }

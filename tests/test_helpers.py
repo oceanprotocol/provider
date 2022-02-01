@@ -9,14 +9,13 @@ import time
 from hashlib import sha256
 from typing import Dict, Tuple
 
+from jsonsempai import magic  # noqa: F401
 from artifacts import ERC721Template
 from eth_account.signers.local import LocalAccount
 from eth_typing.encoding import HexStr
 from eth_typing.evm import HexAddress
 from flask.testing import FlaskClient
-from jsonsempai import magic  # noqa: F401
 from ocean_provider.constants import BaseURLs
-from ocean_provider.log import setup_logging
 from ocean_provider.utils.address import get_contract_address
 from ocean_provider.utils.basics import (
     get_asset_from_metadatastore,
@@ -42,7 +41,6 @@ from web3.logs import DISCARD
 from web3.main import Web3
 from web3.types import TxParams, TxReceipt
 
-setup_logging()
 logger = logging.getLogger(__name__)
 BLACK_HOLE_ADDRESS = "0x0000000000000000000000000000000000000000"
 
@@ -186,6 +184,7 @@ def get_registered_asset(
     custom_services=None,
     custom_services_args=None,
     custom_service_endpoint=None,
+    erc20_enterprise=False,
 ):
     web3 = get_web3()
     data_nft_address = deploy_data_nft(
@@ -198,10 +197,11 @@ def get_registered_asset(
         from_wallet=from_wallet,
     )
 
+    template_index = 1 if not erc20_enterprise else 2
     datatoken_address = deploy_datatoken(
         web3=web3,
         data_nft_address=data_nft_address,
-        template_index=1,
+        template_index=template_index,
         name="Datatoken 1",
         symbol="DT1",
         minter=from_wallet.address,
@@ -417,7 +417,7 @@ def initialize_service(
         return response
 
     return (
-        response.json.get("dataToken"),
+        response.json.get("datatoken"),
         response.json.get("nonce"),
         response.json.get("computeAddress"),
         response.json.get("providerFees"),
@@ -436,13 +436,16 @@ def start_order(
     start_order_tx = datatoken_contract.functions.startOrder(
         consumer,
         service_index,
-        provider_fees["providerFeeAddress"],
-        provider_fees["providerFeeToken"],
-        provider_fees["providerFeeAmount"],
-        provider_fees["v"],
-        provider_fees["r"],
-        provider_fees["s"],
-        provider_fees["providerData"],
+        (
+            provider_fees["providerFeeAddress"],
+            provider_fees["providerFeeToken"],
+            provider_fees["providerFeeAmount"],
+            provider_fees["v"],
+            provider_fees["r"],
+            provider_fees["s"],
+            provider_fees["validUntil"],
+            provider_fees["providerData"],
+        ),
     ).buildTransaction({"from": from_wallet.address, "gasPrice": get_gas_price(web3)})
     txid, receipt = sign_send_and_wait_for_receipt(web3, start_order_tx, from_wallet)
     # if needed, we can log the tx here
