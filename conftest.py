@@ -67,16 +67,17 @@ def provider_address(provider_wallet):
 
 
 @pytest.fixture(autouse=True)
-def setup_all(provider_address, consumer_address):
+def setup_all(provider_address, consumer_address, ganache_wallet):
     web3 = get_web3()
-    if (
-        web3.eth.accounts
-        and web3.eth.accounts[0].lower()
-        == "0xe2DD09d719Da89e5a3D0F2549c7E24566e947260".lower()
-    ):
-        wallet = Account.from_key(
-            "0xfd5c1ccea015b6d663618850824154a3b3fb2882c46cefb05b9a93fea8c3d215"
-        )
+    if ganache_wallet:
+        if (
+            web3.fromWei(
+                web3.eth.get_balance(provider_address, block_identifier="latest"),
+                "ether",
+            )
+            < 10
+        ):
+            send_ether(web3, ganache_wallet, provider_address, 25)
 
         if (
             web3.fromWei(
@@ -85,16 +86,7 @@ def setup_all(provider_address, consumer_address):
             )
             < 10
         ):
-            send_ether(web3, wallet, provider_address, 25)
-
-        if (
-            web3.fromWei(
-                web3.eth.get_balance(provider_address, block_identifier="latest"),
-                "ether",
-            )
-            < 10
-        ):
-            send_ether(web3, wallet, consumer_address, 25)
+            send_ether(web3, ganache_wallet, consumer_address, 25)
 
 
 @pytest.fixture

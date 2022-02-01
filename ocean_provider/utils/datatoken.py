@@ -1,14 +1,14 @@
 import logging
+from datetime import datetime
 from typing import Optional
 
+from jsonsempai import magic  # noqa: F401
 from artifacts import ERC20Template
 from eth_keys import KeyAPI
 from eth_keys.backends import NativeECCBackend
 from eth_typing.encoding import HexStr
 from eth_typing.evm import HexAddress
 from hexbytes import HexBytes
-from jsonsempai import magic  # noqa: F401
-from ocean_provider.log import setup_logging
 from ocean_provider.utils.basics import get_provider_wallet
 from ocean_provider.utils.services import Service
 from web3.contract import Contract
@@ -16,7 +16,6 @@ from web3.logs import DISCARD
 from web3.main import Web3
 from websockets import ConnectionClosed
 
-setup_logging()
 logger = logging.getLogger(__name__)
 keys = KeyAPI(NativeECCBackend)
 
@@ -93,14 +92,16 @@ def verify_order_tx(
     )
     signature = keys.Signature(signature_bytes=bts)
     message_hash = Web3.solidityKeccak(
-        ["bytes", "address", "address", "uint256"],
+        ["bytes", "address", "address", "uint256", "uint256"],
         [
             provider_fee_order_log.args.providerData,
             provider_fee_order_log.args.providerFeeAddress,
             provider_fee_order_log.args.providerFeeToken,
             provider_fee_order_log.args.providerFeeAmount,
+            provider_fee_order_log.args.validUntil,
         ],
     )
+
     prefix = "\x19Ethereum Signed Message:\n32"
     signable_hash = Web3.solidityKeccak(
         ["bytes", "bytes"], [Web3.toBytes(text=prefix), Web3.toBytes(message_hash)]
@@ -111,9 +112,30 @@ def verify_order_tx(
             f"Provider was not able to check the signed message in ProviderFees event\n"
         )
 
-    # TO DO - check transfer of providerFeeAmount providerFeeToken to providerFeeAddress
-
+    # check duration
+    if provider_fee_order_log.args.validUntil > 0:
+        timestamp_now = datetime.now().timestamp()
+        if provider_fee_order_log.args.validUntil < timestamp_now:
+            raise AssertionError(
+                f"Validity in transaction exceeds current UTC timestamp"
+            )
     # end check provider fees
+
+    # check if we have an OrderReused event. If so, get orderTxId and switch next checks to use that
+    event_logs = datatoken_contract.events.OrderReused().processReceipt(
+        tx_receipt, errors=DISCARD
+    )
+    order_log = event_logs[0] if event_logs else None
+    if order_log and order_log.args.orderTxId:
+        try:
+            tx_receipt = get_tx_receipt(web3, order_log.args.orderTxId)
+        except ConnectionClosed:
+            # try again in this case
+            tx_receipt = get_tx_receipt(web3, order_log.args.orderTxId)
+        if tx_receipt is None:
+            raise AssertionError("Failed to get tx receipt referenced in OrderReused..")
+        if tx_receipt.status == 0:
+            raise AssertionError("order referenced in OrderReused failed.")
 
     event_logs = datatoken_contract.events.OrderStarted().processReceipt(
         tx_receipt, errors=DISCARD
@@ -146,21 +168,6 @@ def verify_order_tx(
     if sender not in [order_log.args.consumer, order_log.args.payer]:
         raise ValueError("sender of order transaction is not the consumer/payer.")
 
-    transfer_logs = datatoken_contract.events.Transfer().processReceipt(
-        tx_receipt, errors=DISCARD
-    )
-    receiver_to_transfers = {}
-    for tr in transfer_logs:
-        if tr.args.to not in receiver_to_transfers:
-            receiver_to_transfers[tr.args.to] = []
-        receiver_to_transfers[tr.args.to].append(tr)
-    receiver = datatoken_contract.caller.getPaymentCollector()
-    if receiver not in receiver_to_transfers:
-        raise AssertionError(
-            f"receiver {receiver} is not found in the transfer events."
-        )
-    transfers = sorted(receiver_to_transfers[receiver], key=lambda x: x.args.value)
-
     tx = web3.eth.get_transaction(HexBytes(tx_id))
 
-    return tx, order_log, transfers[-1]
+    return tx, order_log

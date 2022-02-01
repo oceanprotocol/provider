@@ -13,9 +13,12 @@ import os
 from flask import Flask, _app_ctx_stack
 from flask_cors import CORS
 from flask_sieve import Sieve
+from ocean_provider.log import setup_logging
 from sqlalchemy.orm import scoped_session
 
 from .database import Base, SessionLocal, engine
+
+setup_logging()
 
 with engine.connect() as con:
     rs = con.execute(

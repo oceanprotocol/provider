@@ -88,7 +88,15 @@ You might also want to set `FLASK_ENV=development`. Then run ```flask run --port
 
 Refer to the [API.md](API.md) file for endpoints and payloads.
 
-To setup the number of times file downloads are tried, accounting for network glitches and connectivity issues, you may set the custom variable REQUEST_RETRIES. This defaults to 1 (one trial, meaning no retries).
+##### Environment variables
+* `REQUEST_RETRIES` defines the number of times file downloads are tried, accounting got network glitches and connectivity issues. Defaults to 1 (one trial, meaning no retries).
+* `RBAC_SERVER_URL` defines the URL to the RBAC permissions server. Defaults to None (no special permissions).
+* `REDIS_CONNECTION` defines a connection URL to Redis. Defaults to None (no Redis connection, SQLite database is used instead)
+* `TEST_PRIVATE_KEY1` and `TEST_PRIVATE_KEY2` are private wallet keys for publisher and consumer tests.
+* `OPERATOR_SERVICE_URL` defines connection to C2D
+* `LOG_CFG` and `LOG_LEVEL` define the location of the log file and logging leve, respectively
+* `IPFS_GATEWAY` / `PROVIDER_IPFS_GATEWAY` TODO: applicable?
+
 
 #### Before you commit
 If you are a contributor, make sure you install the pre-commit hooks using the command `pre-commit install`. This will make sure your imports are sorted and your code is properly formatted before committing. We use `black`, `isort` and `flake8` to keep code clean.

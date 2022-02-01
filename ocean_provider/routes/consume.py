@@ -2,12 +2,10 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
-import json
 import logging
 
-from flask import Response, jsonify, request
+from flask import request, jsonify
 from flask_sieve import validate
-from ocean_provider.log import setup_logging
 from ocean_provider.myapp import app
 from ocean_provider.requests_session import get_requests_session
 from ocean_provider.user_nonce import get_nonce, update_nonce
@@ -17,7 +15,7 @@ from ocean_provider.utils.basics import (
     get_provider_wallet,
     get_web3,
 )
-from ocean_provider.utils.error_responses import service_unavailable
+from ocean_provider.utils.error_responses import error_response
 from ocean_provider.utils.provider_fees import get_provider_fees
 from ocean_provider.utils.services import ServiceType
 from ocean_provider.utils.url import append_userdata, check_url_details
@@ -42,7 +40,6 @@ from web3.main import Web3
 
 from . import services
 
-setup_logging()
 provider_wallet = get_provider_wallet()
 requests_session = get_requests_session()
 requests_session.mount("file://", LocalFileAdapter())
@@ -61,7 +58,11 @@ def nonce():
     address = data.get("userAddress")
     nonce = get_nonce(address)
     logger.info(f"nonce for user {address} is {nonce}")
-    return Response(json.dumps({"nonce": nonce}), 200, headers=standard_headers)
+
+    response = jsonify(nonce=nonce), 200
+    logger.info(f"nonce response = {response}")
+
+    return response
 
 
 @services.route("/fileinfo", methods=["POST"])
@@ -87,7 +88,7 @@ def fileinfo():
     return: list of file info (index, valid, contentLength, contentType)
     """
     data = get_request_data(request)
-    logger.info(f"fileinfo endpoint called. {data}")
+    logger.info(f"fileinfo called. arguments = {data}")
     did = data.get("did")
     service_id = data.get("serviceId")
 
@@ -111,7 +112,10 @@ def fileinfo():
         info.update(details)
         files_info.append(info)
 
-    return Response(json.dumps(files_info), 200, headers=standard_headers)
+    response = jsonify(files_info), 200
+    logger.info(f"fileinfo response = {response}")
+
+    return response
 
 
 @services.route("/initialize", methods=["GET"])
@@ -119,10 +123,10 @@ def fileinfo():
 def initialize():
     """Initialize a service request.
     In order to consume a data service the user is required to send
-    a number of data tokens to the provider as defined in the Asset's
+    a number of datatokens to the provider as defined in the Asset's
     service description in the Asset's DDO document.
 
-    The data tokens are transferred via the ethereum blockchain network
+    The datatokens are transferred via the ethereum blockchain network
     by requesting the user to sign an ERC20 `approveAndLock` transaction
     where the approval is given to the provider's ethereum account for
     the number of tokens required by the service.
@@ -131,7 +135,7 @@ def initialize():
         json object as follows:
         ```JSON
         {
-            "dataToken": <data-token-contract-address>,
+            "datatoken": <data-token-contract-address>,
             "nonce": <nonce-used-in-consumer-signature>,
             "providerFee": <object containing provider fees
             "computeAddress": <compute address>
@@ -139,67 +143,66 @@ def initialize():
         ```
     """
     data = get_request_data(request)
-    logger.info(f"initialize endpoint called. {data}")
+    logger.info(f"initialize called. arguments = {data}")
 
-    try:
-        did = data.get("documentId")
-        consumer_address = data.get("consumerAddress")
-        compute_env = data.get("computeEnv")
+    did = data.get("documentId")
+    consumer_address = data.get("consumerAddress")
+    compute_env = data.get("computeEnv")
+    valid_until = data.get("validUntil", 0)
 
-        asset = get_asset_from_metadatastore(get_metadata_url(), did)
-        consumable, message = check_asset_consumable(asset, consumer_address, logger)
-        if not consumable:
-            return jsonify(error=message), 400
+    asset = get_asset_from_metadatastore(get_metadata_url(), did)
+    consumable, message = check_asset_consumable(asset, consumer_address, logger)
+    if not consumable:
+        return error_response(message, 400, logger)
 
-        service_id = data.get("serviceId")
-        service = asset.get_service_by_id(service_id)
+    service_id = data.get("serviceId")
+    service = asset.get_service_by_id(service_id)
 
-        if service.type == "compute" and not compute_env:
-            return (
-                jsonify(
-                    error="The computeEnv is mandatory when initializing a compute service."
-                ),
-                400,
+    if service.type == "compute" and not (compute_env and valid_until):
+        return error_response(
+            "The computeEnv and validUntil are mandatory when initializing a compute service.",
+            400,
+            logger,
+        )
+
+    token_address = service.datatoken_address
+
+    file_index = int(data.get("fileIndex", "-1"))
+    # we check if the file is valid only if we have fileIndex
+    if file_index > -1:
+        url_object = get_service_files_list(service, provider_wallet)[file_index]
+        url_valid, message = validate_url_object(url_object, service_id)
+        if not url_valid:
+            return error_response(message, 400, logger)
+        download_url = get_download_url(url_object, app.config["PROVIDER_CONFIG_FILE"])
+        download_url = append_userdata(download_url, data)
+        valid, url_details = check_url_details(download_url)
+
+        if not valid:
+            logger.error(
+                f"Error: Asset URL not found or not available. \n"
+                f"Payload was: {data}",
+                exc_info=1,
             )
+            return error_response("Asset URL not found or not available.", 400, logger)
 
-        token_address = service.datatoken_address
+    # Prepare the `transfer` tokens transaction with the appropriate number
+    # of tokens required for this service
+    # The consumer must sign and execute this transaction in order to be
+    # able to consume the service
+    compute_address, compute_limits = get_compute_info()
+    approve_params = {
+        "datatoken": token_address,
+        "nonce": get_nonce(consumer_address),
+        "computeAddress": compute_address,
+        "providerFee": get_provider_fees(
+            did, service, consumer_address, int(valid_until)
+        ),
+    }
+    response = jsonify(approve_params), 200
+    logger.info(f"initialize response = {response}")
 
-        file_index = int(data.get("fileIndex", "-1"))
-        # we check if the file is valid only if we have fileIndex
-        if file_index > -1:
-            url_object = get_service_files_list(service, provider_wallet)[file_index]
-            url_valid, message = validate_url_object(url_object, service_id)
-            if not url_valid:
-                return (jsonify(error=message), 400)
-            download_url = get_download_url(
-                url_object, app.config["PROVIDER_CONFIG_FILE"]
-            )
-            download_url = append_userdata(download_url, data)
-            valid, url_details = check_url_details(download_url)
-
-            if not valid:
-                logger.error(
-                    f"Error: Asset URL not found or not available. \n"
-                    f"Payload was: {data}",
-                    exc_info=1,
-                )
-                return jsonify(error="Asset URL not found or not available."), 400
-
-        # Prepare the `transfer` tokens transaction with the appropriate number
-        # of tokens required for this service
-        # The consumer must sign and execute this transaction in order to be
-        # able to consume the service
-        compute_address, compute_limits = get_compute_info()
-        approve_params = {
-            "dataToken": token_address,
-            "nonce": get_nonce(consumer_address),
-            "computeAddress": compute_address,
-            "providerFee": get_provider_fees(did, service, consumer_address),
-        }
-        return Response(json.dumps(approve_params), 200, headers=standard_headers)
-
-    except Exception as e:
-        return service_unavailable(e, data, logger)
+    return response
 
 
 @services.route("/download", methods=["GET"])
@@ -246,86 +249,63 @@ def download():
         description: Service Unavailable
     """
     data = get_request_data(request)
-    logger.info(f"download endpoint called. {data}")
-    try:
-        did = data.get("documentId")
-        consumer_address = data.get("consumerAddress")
-        service_id = data.get("serviceId")
-        tx_id = data.get("transferTxId")
+    logger.info(f"download called. arguments = {data}")
 
-        # grab asset for did from the metadatastore associated with
-        # the Data Token address
-        asset = get_asset_from_metadatastore(get_metadata_url(), did)
-        service = asset.get_service_by_id(service_id)
-        token_address = service.datatoken_address
-
-        compute_address, compute_limits = get_compute_info()
-
-        # allow our C2D to download a compute asset
-        if service.type != ServiceType.ACCESS and Web3.toChecksumAddress(
-            consumer_address
-        ) != Web3.toChecksumAddress(compute_address):
-            return (
-                jsonify(
-                    error=f"Service with index={service_id} is not an access service."
-                ),
-                400,
-            )
-        logger.info("validate_order called from download endpoint.")
-        _tx, _order_log, _transfer_log = validate_order(
-            get_web3(), consumer_address, token_address, 1, tx_id, did, service
-        )
-
-        file_index = int(data.get("fileIndex"))
-        files_list = get_service_files_list(service, provider_wallet)
-        if file_index > len(files_list):
-            return jsonify(error=f"No such fileIndex")
-        url_object = files_list[file_index]
-        url_valid, message = validate_url_object(url_object, service_id)
-
-        if not url_valid:
-            return (jsonify(error=message), 400)
-
-        download_url = get_download_url(url_object, app.config["PROVIDER_CONFIG_FILE"])
-        download_url = append_userdata(download_url, data)
-
-        valid, details = check_url_details(url_object["url"])
-        content_type = details["contentType"] if valid else None
-
-        logger.info(
-            f"Done processing consume request for asset {did}, " f" url {download_url}"
-        )
-        update_nonce(consumer_address, data.get("nonce"))
-        return build_download_response(
-            request,
-            requests_session,
-            url_object["url"],
-            download_url,
-            content_type,
-            method=url_object.get("method", "GET"),
-        )
-
-    except Exception as e:
-        return service_unavailable(
-            e,
-            {
-                "documentId": data.get("documentId"),
-                "consumerAddress": data.get("consumerAddress"),
-                "serviceId": data.get("serviceId"),
-            },
-            logger,
-        )
-
-
-def process_consume_request(data: dict):
     did = data.get("documentId")
-    token_address = data.get("dataToken")
     consumer_address = data.get("consumerAddress")
-    service_id = int(data.get("serviceId"))
+    service_id = data.get("serviceId")
+    tx_id = data.get("transferTxId")
 
     # grab asset for did from the metadatastore associated with
-    # the Data Token address
+    # the datatoken address
     asset = get_asset_from_metadatastore(get_metadata_url(), did)
     service = asset.get_service_by_id(service_id)
 
-    return asset, service, did, consumer_address, token_address
+    compute_address, compute_limits = get_compute_info()
+
+    # allow our C2D to download a compute asset
+    if service.type != ServiceType.ACCESS and Web3.toChecksumAddress(
+        consumer_address
+    ) != Web3.toChecksumAddress(compute_address):
+        return error_response(
+            f"Service with index={service_id} is not an access service.",
+            400,
+            logger,
+        )
+    logger.info("validate_order called from download endpoint.")
+    _tx, _order_log = validate_order(
+        get_web3(), consumer_address, tx_id, asset, service
+    )
+
+    file_index = int(data.get("fileIndex"))
+    files_list = get_service_files_list(service, provider_wallet)
+    if file_index > len(files_list):
+        return error_response(f"No such fileIndex {file_index}", 400, logger)
+    url_object = files_list[file_index]
+    url_valid, message = validate_url_object(url_object, service_id)
+
+    if not url_valid:
+        return error_response(message, 400, logger)
+
+    download_url = get_download_url(url_object, app.config["PROVIDER_CONFIG_FILE"])
+    download_url = append_userdata(download_url, data)
+
+    valid, details = check_url_details(url_object["url"])
+    content_type = details["contentType"] if valid else None
+
+    logger.info(
+        f"Done processing consume request for asset {did}, " f" url {download_url}"
+    )
+    update_nonce(consumer_address, data.get("nonce"))
+
+    response = build_download_response(
+        request,
+        requests_session,
+        url_object["url"],
+        download_url,
+        content_type,
+        method=url_object.get("method", "GET"),
+    )
+    logger.info(f"download response = {response}")
+
+    return response
