@@ -91,6 +91,7 @@ Refer to the [API.md](API.md) file for endpoints and payloads.
 ##### Environment variables
 * `REQUEST_RETRIES` defines the number of times file downloads are tried, accounting got network glitches and connectivity issues. Defaults to 1 (one trial, meaning no retries).
 * `RBAC_SERVER_URL` defines the URL to the RBAC permissions server. Defaults to None (no special permissions).
+* `PRIVATE_PROVIDER` if set, adds a "providerAccess": "private" key-value pair to RBAC requests
 * `REDIS_CONNECTION` defines a connection URL to Redis. Defaults to None (no Redis connection, SQLite database is used instead)
 * `TEST_PRIVATE_KEY1` and `TEST_PRIVATE_KEY2` are private wallet keys for publisher and consumer tests.
 * `OPERATOR_SERVICE_URL` defines connection to C2D

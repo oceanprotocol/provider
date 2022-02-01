@@ -32,7 +32,8 @@ encrypt_endpoint = BaseURLs.SERVICES_URL + "/encrypt"
 
 
 @pytest.mark.unit
-def test_encrypt_request_payload(consumer_wallet, publisher_wallet):
+def test_encrypt_request_payload(consumer_wallet, publisher_wallet, monkeypatch):
+    monkeypatch.setenv("PRIVATE_PROVIDER", "1")
     document = {
         "url": "http://localhost:8030" + encrypt_endpoint,
         "index": 0,
@@ -50,6 +51,7 @@ def test_encrypt_request_payload(consumer_wallet, publisher_wallet):
     payload = validator.build_payload()
     assert validator.request == req
     assert payload["eventType"] == "encryptUrl"
+    assert payload["providerAccess"] == "private"
     assert payload["component"] == "provider"
     assert payload["credentials"] == {
         "type": "address",
@@ -75,6 +77,7 @@ def test_initialize_request_payload(
     payload = validator.build_payload()
     assert validator.request == req
     assert payload["eventType"] == "initialize"
+    assert payload["providerAccess"] == "public"
     assert payload["component"] == "provider"
     assert payload["credentials"] == {
         "type": "address",
@@ -109,6 +112,7 @@ def test_access_request_payload(
     payload = validator.build_payload()
     assert validator.request == req
     assert payload["eventType"] == "access"
+    assert payload["providerAccess"] == "public"
     assert payload["component"] == "provider"
     assert payload["credentials"] == {
         "type": "address",
@@ -151,6 +155,7 @@ def test_compute_payload_without_additional_inputs(
     payload = validator.build_payload()
     assert validator.request == req
     assert payload["eventType"] == "compute"
+    assert payload["providerAccess"] == "public"
     assert payload["component"] == "provider"
     assert payload["credentials"] == {
         "type": "address",
@@ -207,6 +212,7 @@ def test_compute_request_payload(
     payload = validator.build_payload()
     assert validator.request == req
     assert payload["eventType"] == "compute"
+    assert payload["providerAccess"] == "public"
     assert payload["component"] == "provider"
     assert payload["credentials"] == {
         "type": "address",
