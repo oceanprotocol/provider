@@ -42,8 +42,7 @@ jobs:
           pip install -r requirements_dev.txt
       - name: Test with pytest
         run: |
-          #coverage run --source ocean_provider -m pytest
-          coverage run -m pytest ocean_provider
+          coverage run --source ocean_provider -m pytest
           coverage report
           coverage xml
       - name: Publish code coverage
