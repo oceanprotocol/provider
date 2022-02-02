@@ -96,7 +96,7 @@ Refer to the [API.md](API.md) file for endpoints and payloads.
 * `TEST_PRIVATE_KEY1` and `TEST_PRIVATE_KEY2` are private wallet keys for publisher and consumer tests.
 * `OPERATOR_SERVICE_URL` defines connection to C2D
 * `LOG_CFG` and `LOG_LEVEL` define the location of the log file and logging leve, respectively
-* `IPFS_GATEWAY` / `PROVIDER_IPFS_GATEWAY` TODO: applicable?
+* `IPFS_GATEWAY` defines ipfs gateway for resolving urls
 
 
 #### Before you commit
