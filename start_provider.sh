@@ -6,7 +6,6 @@ export TEST_PRIVATE_KEY2=0x5d75837394b078ce97bc289fa8d75e21000573520bfa7784a9d28
 export OPERATOR_SERVICE_URL=https://c2d-dev.operator.oceanprotocol.com/
 export ADDRESS_FILE=~/.ocean/ocean-contracts/artifacts/address.json
 export IPFS_GATEWAY=http://172.15.0.16:8080
-export PROVIDER_IPFS_GATEWAY=http://172.15.0.16:8080
 export AUTHORIZED_DECRYPTERS=[]
 export LOG_LEVEL=DEBUG
 
