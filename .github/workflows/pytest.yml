@@ -40,11 +40,11 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements_dev.txt
-      - name: Test with pytest and publish code coverage
+      - name: Test with pytest
+        run: |
+          coverage run --source ocean_provider -m pytest
+          coverage report
+      - name: Publish code coverage
         uses: paambaati/codeclimate-action@v2.7.5
         env:
-          IPFS_GATEWAY: http://172.15.0.16:8080
           CC_TEST_REPORTER_ID: b0d75c25d5176c59e8ea665bf74396d9ee1bdf2c97f11ccc6869f9e91d80a6c7
-        with:
-          coverageCommand: pytest
-          debug: true
