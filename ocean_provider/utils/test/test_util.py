@@ -18,6 +18,8 @@ from ocean_provider.utils.encryption import do_encrypt
 from ocean_provider.utils.services import Service
 from ocean_provider.utils.util import (
     build_download_response,
+    get_compute_endpoint,
+    get_compute_result_endpoint,
     get_download_url,
     get_service_files_list,
     msg_hash,
@@ -189,3 +191,20 @@ def test_validate_url_object():
     result, message = validate_url_object({"type": "ipfs", "but_hash": "missing"}, 1)
     assert result is False
     assert message == "malformed service files, missing required keys. id=1"
+
+
+@pytest.mark.unit
+def test_get_compute_endpoint(monkeypatch):
+    monkeypatch.setenv("OPERATOR_SERVICE_URL", "http://with-slash.com/")
+    assert get_compute_endpoint() == "http://with-slash.com/api/v1/operator/compute"
+    assert (
+        get_compute_result_endpoint()
+        == "http://with-slash.com/api/v1/operator/getResult"
+    )
+
+    monkeypatch.setenv("OPERATOR_SERVICE_URL", "http://without-slash.com")
+    assert get_compute_endpoint() == "http://without-slash.com/api/v1/operator/compute"
+    assert (
+        get_compute_result_endpoint()
+        == "http://without-slash.com/api/v1/operator/getResult"
+    )

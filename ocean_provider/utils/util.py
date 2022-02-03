@@ -8,6 +8,7 @@ import logging
 import mimetypes
 import os
 from cgi import parse_header
+from urllib.parse import urljoin
 import werkzeug
 
 import requests
@@ -160,11 +161,11 @@ def get_download_url(url_object, config_file):
 
 
 def get_compute_endpoint():
-    return get_config().operator_service_url + "api/v1/operator/compute"
+    return urljoin(get_config().operator_service_url, "api/v1/operator/compute")
 
 
 def get_compute_result_endpoint():
-    return get_config().operator_service_url + "api/v1/operator/getResult"
+    return urljoin(get_config().operator_service_url, "api/v1/operator/getResult")
 
 
 def get_compute_info():
