@@ -22,7 +22,6 @@ RUN python3.8 -m pip install --upgrade pip
 RUN python3.8 -m pip install setuptools
 RUN python3.8 -m pip install wheel
 RUN python3.8 -m pip install .
-RUN mkdir /usr/local/lib/python3.8/dist-packages/artifacts && find ./artifacts -name '*.json' -exec cp -pr '{}' '/usr/local/lib/python3.8/dist-packages/artifacts' ';'
 
 # config.ini configuration file variables
 ENV NETWORK_URL='http://127.0.0.1:8545'
