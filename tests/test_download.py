@@ -73,6 +73,15 @@ def test_download_service(
     response = client.get(download_endpoint, query_string=payload)
     assert response.status_code == 200, f"{response.data}"
 
+    if not userdata and not erc20_enterprise:
+        nonce = str(datetime.now().timestamp())
+        _msg = f"{asset.did}{nonce}"
+        payload["signature"] = sign_message(_msg, consumer_wallet)
+        payload["nonce"] = nonce
+        payload["transferTxId"] = "0x123"  # some dummy
+        response = client.get(download_endpoint, query_string=payload)
+        assert response.status_code == 400, f"{response.data}"
+
 
 @pytest.mark.unit
 def test_empty_payload(client):
