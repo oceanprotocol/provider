@@ -285,7 +285,6 @@ def computeStart():
     tx_id = data.get("transferTxId")
     did = data.get("documentId")
     compute_env = data.get("environment")
-    msg_to_sign = f"{consumer_address}{did}"
 
     if not check_environment_exists(get_c2d_environments(), compute_env):
         return error_response("Compute environment does not exist", 400, logger)
