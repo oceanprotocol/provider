@@ -36,7 +36,6 @@ from ocean_provider.validation.provider_requests import (
     InitializeRequest,
     NonceRequest,
 )
-from web3.exceptions import TimeExhausted
 from web3.main import Web3
 
 from . import services
@@ -279,7 +278,7 @@ def download():
         _tx, _order_log = validate_order(
             get_web3(), consumer_address, tx_id, asset, service
         )
-    except TimeExhausted:
+    except Exception:
         return error_response(
             f"=Order with tx_id {tx_id} is not found on chain.",
             400,

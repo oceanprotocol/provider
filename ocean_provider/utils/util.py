@@ -26,7 +26,6 @@ from ocean_provider.utils.encryption import do_decrypt
 from ocean_provider.utils.services import Service
 from ocean_provider.utils.url import is_safe_url
 from osmosis_driver_interface.osmosis import Osmosis
-from web3.exceptions import TimeExhausted
 from websockets import ConnectionClosed
 
 logger = logging.getLogger(__name__)
@@ -220,7 +219,7 @@ def validate_order(web3, sender, tx_id, asset, service):
                     "reached max no. of tries, raise ConnectionClosed in validate_order."
                 )
                 raise
-        except TimeExhausted:
+        except Exception:
             raise
 
 
