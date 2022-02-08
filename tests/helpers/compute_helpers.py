@@ -16,7 +16,12 @@ from tests.test_helpers import (
 
 
 def build_and_send_ddo_with_compute_service(
-    client, publisher_wallet, consumer_wallet, alg_diff=False, asset_type=None, c2d_address=None
+    client,
+    publisher_wallet,
+    consumer_wallet,
+    alg_diff=False,
+    asset_type=None,
+    c2d_address=None,
 ):
     web3 = get_web3()
     algo_metadata = build_metadata_dict_type_algorithm()
