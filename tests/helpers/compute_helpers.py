@@ -60,7 +60,9 @@ def build_and_send_ddo_with_compute_service(
             ],
         )
 
-    service = get_first_service_by_type(dataset_ddo_w_compute_service, ServiceType.COMPUTE)
+    service = get_first_service_by_type(
+        dataset_ddo_w_compute_service, ServiceType.COMPUTE
+    )
     datatoken = service.datatoken_address
     mint_100_datatokens(web3, datatoken, consumer_wallet.address, publisher_wallet)
 

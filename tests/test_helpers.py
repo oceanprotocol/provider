@@ -490,7 +490,4 @@ def build_custom_services(
 
 def get_first_service_by_type(asset, service_type: ServiceType) -> Service:
     """Return the first Service with the given ServiceType."""
-    return next(
-        (service for service in asset.services if service.type == service_type)
-    )
-
+    return next((service for service in asset.services if service.type == service_type))
