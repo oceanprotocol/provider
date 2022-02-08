@@ -190,11 +190,9 @@ def initialize():
     # of tokens required for this service
     # The consumer must sign and execute this transaction in order to be
     # able to consume the service
-    compute_address, compute_limits = get_compute_info()
     approve_params = {
         "datatoken": token_address,
         "nonce": get_nonce(consumer_address),
-        "computeAddress": compute_address,
         "providerFee": get_provider_fees(
             did, service, consumer_address, int(valid_until), compute_env
         ),
