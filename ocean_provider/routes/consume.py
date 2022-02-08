@@ -4,7 +4,7 @@
 #
 import logging
 
-from flask import request, jsonify
+from flask import jsonify, request
 from flask_sieve import validate
 from ocean_provider.myapp import app
 from ocean_provider.requests_session import get_requests_session
@@ -196,7 +196,7 @@ def initialize():
         "nonce": get_nonce(consumer_address),
         "computeAddress": compute_address,
         "providerFee": get_provider_fees(
-            did, service, consumer_address, int(valid_until)
+            did, service, consumer_address, int(valid_until), compute_env
         ),
     }
     response = jsonify(approve_params), 200
@@ -268,9 +268,7 @@ def download():
         consumer_address
     ) != Web3.toChecksumAddress(compute_address):
         return error_response(
-            f"Service with index={service_id} is not an access service.",
-            400,
-            logger,
+            f"Service with index={service_id} is not an access service.", 400, logger
         )
     logger.info("validate_order called from download endpoint.")
     _tx, _order_log = validate_order(

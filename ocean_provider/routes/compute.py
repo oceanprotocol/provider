@@ -5,7 +5,7 @@
 import json
 import logging
 
-from flask import Response, request, jsonify
+from flask import Response, jsonify, request
 from flask_sieve import validate
 from ocean_provider.requests_session import get_requests_session
 from ocean_provider.user_nonce import update_nonce
@@ -231,7 +231,11 @@ def computeStart():
         description: The consumer ethereum address.
         required: true
         type: string
-
+      - name: computeEnv
+        in: query
+        description: Compute Environment
+        required: true
+        type: string
       - name: algorithmDid
         in: query
         description: The DID of the algorithm Asset to be executed
@@ -278,7 +282,8 @@ def computeStart():
 
     tx_id = data.get("transferTxId")
     did = data.get("documentId")
-
+    compute_env = data.get("computeEnv")
+    # TO DO - check if this env exists
     msg_to_sign = f"{provider_wallet.address}{did}"
 
     payload = {
@@ -288,6 +293,7 @@ def computeStart():
         "agreementId": tx_id,
         "owner": consumer_address,
         "providerAddress": provider_wallet.address,
+        "environment": compute_env,
     }
     response = requests_session.post(
         get_compute_endpoint(), data=json.dumps(payload), headers=standard_headers
@@ -383,6 +389,7 @@ def computeEnvironments():
       503:
         description: Service Unavailable
     """
+
     response = jsonify(get_c2d_environments())
     response.status_code = 200
     response.headers = standard_headers

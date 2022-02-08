@@ -9,13 +9,13 @@ import mimetypes
 import os
 from cgi import parse_header
 from urllib.parse import urljoin
-import werkzeug
 
 import requests
-from jsonsempai import magic  # noqa: F401
+import werkzeug
 from artifacts import ERC721Template
 from eth_account.signers.local import LocalAccount
 from flask import Response
+from jsonsempai import magic  # noqa: F401
 from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.basics import get_config, get_provider_wallet, get_web3
 from ocean_provider.utils.consumable import ConsumableCodes
@@ -164,6 +164,10 @@ def get_compute_endpoint():
     return urljoin(get_config().operator_service_url, "api/v1/operator/compute")
 
 
+def get_compute_environments():
+    return urljoin(get_config().operator_service_url, "api/v1/operator/environments")
+
+
 def get_compute_result_endpoint():
     return urljoin(get_config().operator_service_url, "api/v1/operator/getResult")
 
@@ -305,3 +309,12 @@ def check_asset_consumable(asset, consumer_address, logger, custom_url=None):
     logger.error(message, exc_info=1)
 
     return False, message
+
+
+def check_environment_exists(envs, id):
+    """Checks if enironment with id exists in environments list."""
+    if envs and isinstance(envs, list):
+        for i in range(len(envs)):
+            if envs[i]["id"] == id:
+                return True
+    return False

@@ -8,7 +8,7 @@ from datetime import datetime
 import pytest
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
-from ocean_provider.utils.provider_fees import get_provider_fees
+from ocean_provider.utils.provider_fees import get_c2d_environments, get_provider_fees
 from ocean_provider.utils.services import ServiceType
 from ocean_provider.validation.provider_requests import RBACValidator
 from tests.helpers.compute_helpers import (
@@ -46,7 +46,7 @@ def test_compute_norawalgo_allowed(
         "version": "0.1",
         "container": {"entrypoint": "node $ALGO", "image": "node", "tag": "10"},
     }
-
+    environments = get_c2d_environments()
     tx_id, _ = start_order(
         web3,
         datatoken,
@@ -57,6 +57,7 @@ def test_compute_norawalgo_allowed(
             sa,
             consumer_wallet.address,
             get_future_valid_until(),
+            environments[0]["id"],
         ),
         consumer_wallet,
     )
@@ -75,6 +76,7 @@ def test_compute_norawalgo_allowed(
         "signature": signature,
         "nonce": nonce,
         "consumerAddress": consumer_address,
+        "environment": environments[0]["id"],
     }
 
     response = post_to_compute(client, payload)
@@ -100,7 +102,7 @@ def test_compute_specific_algo_dids(
         publisher_wallet, custom_metadata=algo_metadata
     )
     not_sa_compute = another_alg_ddo.get_service_by_type(ServiceType.ACCESS)
-
+    environments = get_c2d_environments()
     # Start the compute job
     payload = {
         "dataset": {"documentId": ddo.did, "serviceId": sa.id, "transferTxId": tx_id},
@@ -111,6 +113,7 @@ def test_compute_specific_algo_dids(
         "signature": signature,
         "nonce": nonce,
         "consumerAddress": consumer_address,
+        "environment": environments[0]["id"],
     }
 
     response = post_to_compute(client, payload)
@@ -132,7 +135,7 @@ def test_compute(client, publisher_wallet, consumer_wallet):
     sa_compute = alg_ddo.get_service_by_type(ServiceType.ACCESS)
     sa = ddo.get_service_by_type(ServiceType.COMPUTE)
     nonce, signature = get_compute_signature(client, consumer_wallet, ddo.did)
-
+    environments = get_c2d_environments()
     # Start the compute job
     payload = {
         "dataset": {"documentId": ddo.did, "serviceId": sa.id, "transferTxId": tx_id},
@@ -144,6 +147,7 @@ def test_compute(client, publisher_wallet, consumer_wallet):
         "signature": signature,
         "nonce": nonce,
         "consumerAddress": consumer_wallet.address,
+        "environment": environments[0]["id"],
     }
 
     # Start compute using invalid signature (withOUT nonce), should fail
@@ -252,7 +256,7 @@ def test_compute_diff_provider(client, publisher_wallet, consumer_wallet):
     sa_compute = alg_ddo.get_service_by_type(ServiceType.ACCESS)
     sa = ddo.get_service_by_type(ServiceType.COMPUTE)
     nonce, signature = get_compute_signature(client, consumer_wallet, ddo.did)
-
+    environments = get_c2d_environments()
     # Start the compute job
     payload = {
         "dataset": {"documentId": ddo.did, "serviceId": sa.id, "transferTxId": tx_id},
@@ -264,6 +268,7 @@ def test_compute_diff_provider(client, publisher_wallet, consumer_wallet):
         "signature": signature,
         "nonce": nonce,
         "consumerAddress": consumer_wallet.address,
+        "environment": environments[0]["id"],
     }
 
     response = post_to_compute(client, payload)
@@ -278,7 +283,7 @@ def test_compute_allow_all_published(client, publisher_wallet, consumer_wallet):
     sa_compute = alg_ddo.get_service_by_type(ServiceType.ACCESS)
     sa = ddo.get_service_by_type(ServiceType.COMPUTE)
     nonce, signature = get_compute_signature(client, consumer_wallet, ddo.did)
-
+    environments = get_c2d_environments()
     # Start the compute job
     payload = {
         "dataset": {"documentId": ddo.did, "serviceId": sa.id, "transferTxId": tx_id},
@@ -290,6 +295,7 @@ def test_compute_allow_all_published(client, publisher_wallet, consumer_wallet):
         "signature": signature,
         "nonce": nonce,
         "consumerAddress": consumer_wallet.address,
+        "environment": environments[0]["id"],
     }
 
     response = post_to_compute(client, payload)
@@ -318,13 +324,18 @@ def test_compute_additional_input(
     mint_100_datatokens(
         web3, sa2.datatoken_address, consumer_wallet.address, publisher_wallet
     )
+    environments = get_c2d_environments()
     tx_id2, _ = start_order(
         web3,
         sa2.datatoken_address,
         consumer_wallet.address,
         sa2.index,
         get_provider_fees(
-            ddo2.did, sa2, consumer_wallet.address, get_future_valid_until()
+            ddo2.did,
+            sa2,
+            consumer_wallet.address,
+            get_future_valid_until(),
+            environments[0]["id"],
         ),
         consumer_wallet,
     )
@@ -357,6 +368,7 @@ def test_compute_additional_input(
                 "userdata": {"test_key": "test_value"},
             }
         ],
+        "environment": environments[0]["id"],
     }
 
     monkeypatch.setenv("RBAC_SERVER_URL", "http://172.15.0.8:3000")
@@ -377,7 +389,7 @@ def test_compute_delete_job(
     sa_compute = alg_ddo.get_service_by_type(ServiceType.ACCESS)
     sa = ddo.get_service_by_type(ServiceType.COMPUTE)
     nonce, signature = get_compute_signature(client, consumer_wallet, ddo.did)
-
+    environments = get_c2d_environments()
     # Start the compute job
     payload = {
         "dataset": {"documentId": ddo.did, "serviceId": sa.id, "transferTxId": tx_id},
@@ -389,6 +401,7 @@ def test_compute_delete_job(
         "signature": signature,
         "nonce": nonce,
         "consumerAddress": consumer_wallet.address,
+        "environment": environments[0]["id"],
     }
 
     response = post_to_compute(client, payload)
@@ -428,4 +441,4 @@ def test_compute_environments(client):
     compute_envs_endpoint = BaseURLs.SERVICES_URL + "/computeEnvironments"
     response = client.get(compute_envs_endpoint)
 
-    assert "environments" in response.json
+    assert "id" in response.json[0]

@@ -82,6 +82,7 @@ FLASK_APP=ocean_provider/run.py
 PROVIDER_CONFIG_FILE=config.ini
 PROVIDER_ADDRESS=your ethereum address goes here
 PROVIDER_KEY=the private key
+PROVIDER_FEE_TOKEN = address of ERC20 token used to get fees
 ```
 
 You might also want to set `FLASK_ENV=development`. Then run ```flask run --port=8030```

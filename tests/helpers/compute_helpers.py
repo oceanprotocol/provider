@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
-from ocean_provider.utils.provider_fees import get_provider_fees
+from ocean_provider.utils.provider_fees import get_c2d_environments, get_provider_fees
 from ocean_provider.utils.services import ServiceType
 from ocean_provider.utils.util import msg_hash
 from tests.helpers.ddo_dict_builders import build_metadata_dict_type_algorithm
@@ -63,6 +63,7 @@ def build_and_send_ddo_with_compute_service(
     datatoken = service.datatoken_address
     mint_100_datatokens(web3, datatoken, consumer_wallet.address, publisher_wallet)
 
+    environments = get_c2d_environments()
     tx_id, _ = start_order(
         web3,
         datatoken,
@@ -73,6 +74,7 @@ def build_and_send_ddo_with_compute_service(
             service,
             consumer_wallet.address,
             get_future_valid_until(),
+            environments[0]["id"],
         ),
         consumer_wallet,
     )
@@ -84,7 +86,11 @@ def build_and_send_ddo_with_compute_service(
         consumer_wallet.address,
         alg_service.index,
         get_provider_fees(
-            alg_ddo.did, alg_service, consumer_wallet.address, get_future_valid_until()
+            alg_ddo.did,
+            alg_service,
+            consumer_wallet.address,
+            get_future_valid_until(),
+            environments[0]["id"],
         ),
         consumer_wallet,
     )
