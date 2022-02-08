@@ -8,7 +8,7 @@ from eth_keys.backends import NativeECCBackend
 from ocean_provider.requests_session import get_requests_session
 from ocean_provider.utils.basics import LocalFileAdapter, get_provider_wallet, get_web3
 from ocean_provider.utils.services import Service
-from ocean_provider.utils.util import get_compute_environments
+from ocean_provider.utils.util import get_compute_environments_endpoint
 
 logger = logging.getLogger(__name__)
 keys = KeyAPI(NativeECCBackend)
@@ -70,11 +70,11 @@ def get_c2d_environments() -> List:
     standard_headers = {"Content-type": "application/json", "Connection": "close"}
     try:
         response = requests_session.get(
-            get_compute_environments(), headers=standard_headers
+            get_compute_environments_endpoint(), headers=standard_headers
         )
         # loop envs and add provider token from config
         for i in range(len(response.content)):
             response.content[i]["feeToken"] = os.getenv("PROVIDER_FEE_TOKEN")
         return response.content
     except Exception:
-        return None
+        return []

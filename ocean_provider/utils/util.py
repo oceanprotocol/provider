@@ -164,7 +164,7 @@ def get_compute_endpoint():
     return urljoin(get_config().operator_service_url, "api/v1/operator/compute")
 
 
-def get_compute_environments():
+def get_compute_environments_endpoint():
     return urljoin(get_config().operator_service_url, "api/v1/operator/environments")
 
 
@@ -313,8 +313,7 @@ def check_asset_consumable(asset, consumer_address, logger, custom_url=None):
 
 def check_environment_exists(envs, id):
     """Checks if enironment with id exists in environments list."""
-    if envs and isinstance(envs, list):
-        for i in range(len(envs)):
-            if envs[i]["id"] == id:
-                return True
-    return False
+    if not envs or not isinstance(envs, list):
+        return False
+    matching_envs = [env for env in envs if env["id"] == id]
+    return len(matching_envs) > 0
