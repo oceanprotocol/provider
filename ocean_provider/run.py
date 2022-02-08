@@ -114,7 +114,6 @@ def version():
     info["chainId"] = chain_id
     info["providerAddress"] = get_provider_address()
     info["serviceEndpoints"] = get_services_endpoints()
-    info["computeAddress"], info["computeLimits"] = get_compute_info()
     response = jsonify(info)
     logger.info(f"root endpoint response = {response}")
     return response
