@@ -72,9 +72,12 @@ def get_c2d_environments() -> List:
         response = requests_session.get(
             get_compute_environments_endpoint(), headers=standard_headers
         )
+
         # loop envs and add provider token from config
-        for i in range(len(response.content)):
-            response.content[i]["feeToken"] = os.getenv("PROVIDER_FEE_TOKEN")
-        return response.content
+        envs = response.json()
+        for env in envs:
+            env["feeToken"] = os.getenv("PROVIDER_FEE_TOKEN")
+
+        return envs
     except Exception:
         return []

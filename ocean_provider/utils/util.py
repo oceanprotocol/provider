@@ -311,9 +311,10 @@ def check_asset_consumable(asset, consumer_address, logger, custom_url=None):
     return False, message
 
 
-def check_environment_exists(envs, id):
+def check_environment_exists(envs, env_id):
     """Checks if enironment with id exists in environments list."""
     if not envs or not isinstance(envs, list):
         return False
-    matching_envs = [env for env in envs if env["id"] == id]
+
+    matching_envs = [env for env in envs if env["id"] == env_id]
     return len(matching_envs) > 0

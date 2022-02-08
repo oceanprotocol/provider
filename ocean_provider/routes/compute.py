@@ -15,6 +15,7 @@ from ocean_provider.utils.error_responses import error_response
 from ocean_provider.utils.provider_fees import get_c2d_environments
 from ocean_provider.utils.util import (
     build_download_response,
+    check_environment_exists,
     get_compute_endpoint,
     get_compute_result_endpoint,
     get_request_data,
@@ -282,9 +283,11 @@ def computeStart():
 
     tx_id = data.get("transferTxId")
     did = data.get("documentId")
-    compute_env = data.get("computeEnv")
-    # TO DO - check if this env exists
+    compute_env = data.get("environment")
     msg_to_sign = f"{provider_wallet.address}{did}"
+
+    if not check_environment_exists(get_c2d_environments(), compute_env):
+        return error_response("Compute environment does not exist", 400, logger)
 
     payload = {
         "workflow": workflow,
@@ -295,6 +298,7 @@ def computeStart():
         "providerAddress": provider_wallet.address,
         "environment": compute_env,
     }
+
     response = requests_session.post(
         get_compute_endpoint(), data=json.dumps(payload), headers=standard_headers
     )

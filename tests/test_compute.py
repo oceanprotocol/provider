@@ -295,9 +295,19 @@ def test_compute_allow_all_published(client, publisher_wallet, consumer_wallet):
         "signature": signature,
         "nonce": nonce,
         "consumerAddress": consumer_wallet.address,
-        "environment": environments[0]["id"],
     }
 
+    # Start the compute job on a bad environment
+    payload["environment"] = "some inexistent env"
+    response = post_to_compute(client, payload)
+
+    assert (
+        response.status == "400 BAD REQUEST"
+    ), f"start compute job failed: {response.status} , {response.data}"
+    assert "Compute environment does not exist" in response.json["error"]
+
+    # Start on the correct environment
+    payload["environment"] = environments[0]["id"]
     response = post_to_compute(client, payload)
     assert response.status == "200 OK"
 
@@ -441,4 +451,4 @@ def test_compute_environments(client):
     compute_envs_endpoint = BaseURLs.SERVICES_URL + "/computeEnvironments"
     response = client.get(compute_envs_endpoint)
 
-    assert "id" in response.json[0]
+    assert response.json[0]["id"] == "ocean-compute"
