@@ -12,10 +12,10 @@ from urllib.parse import urljoin
 
 import requests
 import werkzeug
+from jsonsempai import magic  # noqa: F401
 from artifacts import ERC721Template
 from eth_account.signers.local import LocalAccount
 from flask import Response
-from jsonsempai import magic  # noqa: F401
 from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.basics import get_config, get_provider_wallet, get_web3
 from ocean_provider.utils.consumable import ConsumableCodes
