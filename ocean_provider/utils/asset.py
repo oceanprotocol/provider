@@ -7,7 +7,7 @@ from typing import Optional
 
 from ocean_provider.utils.consumable import ConsumableCodes
 from ocean_provider.utils.credentials import AddressCredential
-from ocean_provider.utils.services import Service, ServiceType
+from ocean_provider.utils.services import Service
 
 
 class Asset:
@@ -26,12 +26,6 @@ class Asset:
         self.datatokens = ad.pop("datatokens", None)
         self.event = ad.pop("event", None)
         self.stats = ad.pop("stats", None)
-
-    def get_service_by_type(self, service_type: ServiceType) -> Service:
-        """Return the first Service with the given ServiceType."""
-        return next(
-            (service for service in self.services if service.type == service_type)
-        )
 
     def get_service_by_index(self, index: int) -> Service:
         """Return the first Service with the given index"""
@@ -84,15 +78,3 @@ class Asset:
             return manager.validate_access(credential)
 
         return ConsumableCodes.OK
-
-    def is_flag_enabled(self, flag_name: str) -> bool:
-        """
-        :return: `isListed` or `bool` in metadata_service.attributes["status"]
-        """
-        metadata_service = self.get_service_by_type("metadata")
-        default = flag_name == "isListed"  # only one that defaults to True
-
-        if not metadata_service or "status" not in metadata_service.attributes:
-            return default
-
-        return metadata_service.attributes["status"].get(flag_name, default)

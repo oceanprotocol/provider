@@ -9,6 +9,7 @@ from ocean_provider.utils.util import msg_hash
 from tests.helpers.ddo_dict_builders import build_metadata_dict_type_algorithm
 from tests.test_helpers import (
     get_registered_asset,
+    get_first_service_by_type,
     get_web3,
     mint_100_datatokens,
     start_order,
@@ -31,7 +32,7 @@ def build_and_send_ddo_with_compute_service(
         alg_ddo = get_registered_asset(publisher_wallet, custom_metadata=algo_metadata)
 
     # publish an algorithm asset (asset with metadata of type `algorithm`)
-    service = alg_ddo.get_service_by_type(ServiceType.ACCESS)
+    service = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
     mint_100_datatokens(
         web3, service.datatoken_address, consumer_wallet.address, publisher_wallet
     )
@@ -59,7 +60,7 @@ def build_and_send_ddo_with_compute_service(
             ],
         )
 
-    service = dataset_ddo_w_compute_service.get_service_by_type(ServiceType.COMPUTE)
+    service = get_first_service_by_type(dataset_ddo_w_compute_service, ServiceType.COMPUTE)
     datatoken = service.datatoken_address
     mint_100_datatokens(web3, datatoken, consumer_wallet.address, publisher_wallet)
 
@@ -77,7 +78,7 @@ def build_and_send_ddo_with_compute_service(
         consumer_wallet,
     )
 
-    alg_service = alg_ddo.get_service_by_type(ServiceType.ACCESS)
+    alg_service = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
     alg_tx_id, _ = start_order(
         web3,
         alg_service.datatoken_address,

@@ -18,6 +18,7 @@ from tests.ddo.ddo_sample1_v4 import json_dict as ddo_sample1_v4
 from tests.ddo.ddo_sample_algorithm_v4 import algorithm_ddo_sample
 from tests.helpers.ddo_dict_builders import get_compute_service
 from tests.helpers.compute_helpers import get_compute_signature
+from tests.test_helpers import get_first_service_by_type
 
 
 @pytest.mark.unit
@@ -64,7 +65,7 @@ def test_initialize_request_payload(
     client, publisher_wallet, consumer_wallet, provider_address, web3
 ):
     asset = Asset(ddo_sample1_v4)
-    service = asset.get_service_by_type(ServiceType.ACCESS)
+    service = get_first_service_by_type(asset, ServiceType.ACCESS)
 
     req = {
         "documentId": asset.did,
@@ -92,7 +93,7 @@ def test_access_request_payload(
     client, publisher_wallet, consumer_wallet, provider_address, web3
 ):
     asset = Asset(ddo_sample1_v4)
-    service = asset.get_service_by_type(ServiceType.ACCESS)
+    service = get_first_service_by_type(asset, ServiceType.ACCESS)
 
     req = {
         "documentId": asset.did,
@@ -131,8 +132,8 @@ def test_compute_payload_without_additional_inputs(
     ddo.services.append(Service.from_json(1, get_compute_service(None, None, "0x0")))
 
     alg_ddo = Asset(algorithm_ddo_sample)
-    sa = alg_ddo.get_service_by_type(ServiceType.COMPUTE)
-    sa_compute = ddo.get_service_by_type(ServiceType.COMPUTE)
+    sa = get_first_service_by_type(alg_ddo, ServiceType.COMPUTE)
+    sa_compute = get_first_service_by_type(ddo, ServiceType.COMPUTE)
 
     nonce, signature = get_compute_signature(client, consumer_wallet, ddo.did)
     req = {
@@ -176,13 +177,13 @@ def test_compute_request_payload(
     ddo.services.append(Service.from_json(1, get_compute_service(None, None, "0x0")))
 
     alg_ddo = Asset(algorithm_ddo_sample)
-    sa = alg_ddo.get_service_by_type(ServiceType.COMPUTE)
-    sa_compute = ddo.get_service_by_type(ServiceType.COMPUTE)
+    sa = get_first_service_by_type(alg_ddo, ServiceType.COMPUTE)
+    sa_compute = get_first_service_by_type(ddo, ServiceType.COMPUTE)
 
     ddo_sample2 = copy.deepcopy(ddo_sample1_v4)
     ddo_sample2["did"] = "0xsomeotherdid"
     ddo2 = Asset(ddo_sample2)
-    sa2 = ddo2.get_service_by_type(ServiceType.ACCESS)
+    sa2 = get_first_service_by_type(ddo2, ServiceType.ACCESS)
 
     nonce, signature = get_compute_signature(client, consumer_wallet, ddo.did)
 

@@ -25,6 +25,7 @@ from tests.helpers.compute_helpers import (
     start_order,
 )
 from tests.helpers.ddo_dict_builders import build_metadata_dict_type_algorithm
+from tests.test_helpers import get_first_service_by_type
 
 
 @pytest.mark.integration
@@ -36,7 +37,7 @@ def test_compute_norawalgo_allowed(
         publisher_wallet, custom_services="norawalgo"
     )
 
-    sa = dataset_ddo_w_compute_service.get_service_by_type(ServiceType.COMPUTE)
+    sa = get_first_service_by_type(dataset_ddo_w_compute_service, ServiceType.COMPUTE)
     datatoken = sa.datatoken_address
     mint_100_datatokens(web3, datatoken, consumer_wallet.address, publisher_wallet)
 
@@ -92,14 +93,14 @@ def test_compute_specific_algo_dids(
     ddo, tx_id, alg_ddo, _ = build_and_send_ddo_with_compute_service(
         client, publisher_wallet, consumer_wallet
     )
-    sa = ddo.get_service_by_type(ServiceType.COMPUTE)
+    sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
     nonce, signature = get_compute_signature(client, consumer_wallet, ddo.did)
 
     algo_metadata = build_metadata_dict_type_algorithm()
     another_alg_ddo = get_registered_asset(
         publisher_wallet, custom_metadata=algo_metadata
     )
-    not_sa_compute = another_alg_ddo.get_service_by_type(ServiceType.ACCESS)
+    not_sa_compute = get_first_service_by_type(another_alg_ddo, ServiceType.ACCESS)
 
     # Start the compute job
     payload = {
@@ -129,8 +130,8 @@ def test_compute(client, publisher_wallet, consumer_wallet):
     ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
         client, publisher_wallet, consumer_wallet
     )
-    sa_compute = alg_ddo.get_service_by_type(ServiceType.ACCESS)
-    sa = ddo.get_service_by_type(ServiceType.COMPUTE)
+    sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
+    sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
     nonce, signature = get_compute_signature(client, consumer_wallet, ddo.did)
 
     # Start the compute job
@@ -249,8 +250,8 @@ def test_compute_diff_provider(client, publisher_wallet, consumer_wallet):
     ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
         client, publisher_wallet, consumer_wallet, alg_diff=True
     )
-    sa_compute = alg_ddo.get_service_by_type(ServiceType.ACCESS)
-    sa = ddo.get_service_by_type(ServiceType.COMPUTE)
+    sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
+    sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
     nonce, signature = get_compute_signature(client, consumer_wallet, ddo.did)
 
     # Start the compute job
@@ -275,8 +276,8 @@ def test_compute_allow_all_published(client, publisher_wallet, consumer_wallet):
     ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
         client, publisher_wallet, consumer_wallet, asset_type="allow_all_published"
     )
-    sa_compute = alg_ddo.get_service_by_type(ServiceType.ACCESS)
-    sa = ddo.get_service_by_type(ServiceType.COMPUTE)
+    sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
+    sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
     nonce, signature = get_compute_signature(client, consumer_wallet, ddo.did)
 
     # Start the compute job
@@ -303,8 +304,8 @@ def test_compute_additional_input(
     ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
         client, publisher_wallet, consumer_wallet
     )
-    sa_compute = alg_ddo.get_service_by_type(ServiceType.ACCESS)
-    sa = ddo.get_service_by_type(ServiceType.COMPUTE)
+    sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
+    sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
 
     # same trusted algo
     ddo2 = get_registered_asset(
@@ -314,7 +315,7 @@ def test_compute_additional_input(
     )
 
     web3 = get_web3()
-    sa2 = ddo2.get_service_by_type(ServiceType.COMPUTE)
+    sa2 = get_first_service_by_type(ddo2, ServiceType.COMPUTE)
     mint_100_datatokens(
         web3, sa2.datatoken_address, consumer_wallet.address, publisher_wallet
     )
@@ -374,8 +375,8 @@ def test_compute_delete_job(
     ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
         client, publisher_wallet, consumer_wallet
     )
-    sa_compute = alg_ddo.get_service_by_type(ServiceType.ACCESS)
-    sa = ddo.get_service_by_type(ServiceType.COMPUTE)
+    sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
+    sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
     nonce, signature = get_compute_signature(client, consumer_wallet, ddo.did)
 
     # Start the compute job
