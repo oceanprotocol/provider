@@ -8,8 +8,10 @@ from datetime import datetime
 import pytest
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
+from ocean_provider.utils.basics import get_provider_wallet
 from ocean_provider.utils.provider_fees import get_c2d_environments, get_provider_fees
 from ocean_provider.utils.services import ServiceType
+
 from ocean_provider.validation.provider_requests import RBACValidator
 from tests.helpers.compute_helpers import (
     build_and_send_ddo_with_compute_service,
@@ -23,6 +25,7 @@ from tests.helpers.compute_helpers import (
     mint_100_datatokens,
     post_to_compute,
     start_order,
+    
 )
 from tests.helpers.ddo_dict_builders import build_metadata_dict_type_algorithm
 
@@ -50,7 +53,7 @@ def test_compute_norawalgo_allowed(
     tx_id, _ = start_order(
         web3,
         datatoken,
-        consumer_wallet.address,
+        environments[0]['consumerAddress'],
         sa.index,
         get_provider_fees(
             dataset_ddo_w_compute_service.did,
@@ -91,8 +94,9 @@ def test_compute_norawalgo_allowed(
 def test_compute_specific_algo_dids(
     client, publisher_wallet, consumer_wallet, consumer_address
 ):
+    environments = get_c2d_environments()
     ddo, tx_id, alg_ddo, _ = build_and_send_ddo_with_compute_service(
-        client, publisher_wallet, consumer_wallet
+        client, publisher_wallet, consumer_wallet, False, None, environments[0]['consumerAddress']
     )
     sa = ddo.get_service_by_type(ServiceType.COMPUTE)
     nonce, signature = get_compute_signature(client, consumer_wallet, ddo.did)
@@ -102,7 +106,7 @@ def test_compute_specific_algo_dids(
         publisher_wallet, custom_metadata=algo_metadata
     )
     not_sa_compute = another_alg_ddo.get_service_by_type(ServiceType.ACCESS)
-    environments = get_c2d_environments()
+    
     # Start the compute job
     payload = {
         "dataset": {"documentId": ddo.did, "serviceId": sa.id, "transferTxId": tx_id},
@@ -129,13 +133,14 @@ def test_compute_specific_algo_dids(
 
 @pytest.mark.integration
 def test_compute(client, publisher_wallet, consumer_wallet):
+    environments = get_c2d_environments()
     ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
-        client, publisher_wallet, consumer_wallet
+        client, publisher_wallet, consumer_wallet, False, None, environments[0]['consumerAddress']
     )
     sa_compute = alg_ddo.get_service_by_type(ServiceType.ACCESS)
     sa = ddo.get_service_by_type(ServiceType.COMPUTE)
     nonce, signature = get_compute_signature(client, consumer_wallet, ddo.did)
-    environments = get_c2d_environments()
+    
     # Start the compute job
     payload = {
         "dataset": {"documentId": ddo.did, "serviceId": sa.id, "transferTxId": tx_id},
@@ -216,7 +221,7 @@ def test_compute(client, publisher_wallet, consumer_wallet):
     tries = 0
     while tries < 200:
         job_info = get_compute_job_info(client, compute_endpoint, payload)
-        if job_info["status"] > 60:
+        if job_info["dateFinished"] and int(job_info["dateFinished"]) > 0:
             break
         tries = tries + 1
         time.sleep(5)
@@ -250,13 +255,14 @@ def test_compute(client, publisher_wallet, consumer_wallet):
 
 @pytest.mark.integration
 def test_compute_diff_provider(client, publisher_wallet, consumer_wallet):
+    environments = get_c2d_environments()
     ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
-        client, publisher_wallet, consumer_wallet, alg_diff=True
+        client, publisher_wallet, consumer_wallet, True, None, environments[0]['consumerAddress']
     )
     sa_compute = alg_ddo.get_service_by_type(ServiceType.ACCESS)
     sa = ddo.get_service_by_type(ServiceType.COMPUTE)
     nonce, signature = get_compute_signature(client, consumer_wallet, ddo.did)
-    environments = get_c2d_environments()
+    
     # Start the compute job
     payload = {
         "dataset": {"documentId": ddo.did, "serviceId": sa.id, "transferTxId": tx_id},
@@ -277,13 +283,14 @@ def test_compute_diff_provider(client, publisher_wallet, consumer_wallet):
 
 @pytest.mark.integration
 def test_compute_allow_all_published(client, publisher_wallet, consumer_wallet):
+    environments = get_c2d_environments()
     ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
-        client, publisher_wallet, consumer_wallet, asset_type="allow_all_published"
+        client, publisher_wallet, consumer_wallet, False, "allow_all_published", environments[0]['consumerAddress']
     )
     sa_compute = alg_ddo.get_service_by_type(ServiceType.ACCESS)
     sa = ddo.get_service_by_type(ServiceType.COMPUTE)
     nonce, signature = get_compute_signature(client, consumer_wallet, ddo.did)
-    environments = get_c2d_environments()
+    
     # Start the compute job
     payload = {
         "dataset": {"documentId": ddo.did, "serviceId": sa.id, "transferTxId": tx_id},
@@ -316,8 +323,9 @@ def test_compute_allow_all_published(client, publisher_wallet, consumer_wallet):
 def test_compute_additional_input(
     client, publisher_wallet, consumer_wallet, monkeypatch
 ):
+    environments = get_c2d_environments()
     ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
-        client, publisher_wallet, consumer_wallet
+        client, publisher_wallet, consumer_wallet, False, None, environments[0]['consumerAddress']
     )
     sa_compute = alg_ddo.get_service_by_type(ServiceType.ACCESS)
     sa = ddo.get_service_by_type(ServiceType.COMPUTE)
@@ -334,11 +342,11 @@ def test_compute_additional_input(
     mint_100_datatokens(
         web3, sa2.datatoken_address, consumer_wallet.address, publisher_wallet
     )
-    environments = get_c2d_environments()
+    
     tx_id2, _ = start_order(
         web3,
         sa2.datatoken_address,
-        consumer_wallet.address,
+        environments[0]['consumerAddress'],
         sa2.index,
         get_provider_fees(
             ddo2.did,
@@ -393,13 +401,14 @@ def test_compute_additional_input(
 def test_compute_delete_job(
     client, publisher_wallet, consumer_wallet, consumer_address
 ):
+    environments = get_c2d_environments()
     ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
-        client, publisher_wallet, consumer_wallet
+        client, publisher_wallet, consumer_wallet, False, None, environments[0]['consumerAddress']
     )
     sa_compute = alg_ddo.get_service_by_type(ServiceType.ACCESS)
     sa = ddo.get_service_by_type(ServiceType.COMPUTE)
     nonce, signature = get_compute_signature(client, consumer_wallet, ddo.did)
-    environments = get_c2d_environments()
+    
     # Start the compute job
     payload = {
         "dataset": {"documentId": ddo.did, "serviceId": sa.id, "transferTxId": tx_id},

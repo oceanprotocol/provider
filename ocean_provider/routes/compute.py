@@ -20,6 +20,7 @@ from ocean_provider.utils.util import (
     get_compute_result_endpoint,
     get_request_data,
     process_compute_request,
+    sign_for_compute
 )
 from ocean_provider.validation.algo import WorkflowValidator
 from ocean_provider.validation.provider_requests import (
@@ -284,19 +285,21 @@ def computeStart():
     tx_id = data.get("transferTxId")
     did = data.get("documentId")
     compute_env = data.get("environment")
-    msg_to_sign = f"{provider_wallet.address}{did}"
+    msg_to_sign = f"{consumer_address}{did}"
 
     if not check_environment_exists(get_c2d_environments(), compute_env):
         return error_response("Compute environment does not exist", 400, logger)
 
+    nonce , provider_signature = sign_for_compute(provider_wallet, consumer_address)
     payload = {
         "workflow": workflow,
-        "providerSignature": sign_message(msg_to_sign, provider_wallet),
+        "providerSignature": provider_signature,
         "documentId": did,
         "agreementId": tx_id,
         "owner": consumer_address,
         "providerAddress": provider_wallet.address,
         "environment": compute_env,
+        "nonce": nonce
     }
 
     response = requests_session.post(
@@ -353,15 +356,16 @@ def computeResult():
     logger.info(f"computeResult called. arguments = {data}")
 
     url = get_compute_result_endpoint()
-    msg_to_sign = f"{data.get('jobId')}{data.get('index')}{data.get('consumerAddress')}"
-    # we sign the same message as consumer does, but using our key
-    provider_signature = sign_message(msg_to_sign, provider_wallet)
+    consumer_address = data.get("consumerAddress")
+    job_id = data.get("jobId")
+    nonce , provider_signature = sign_for_compute(provider_wallet, consumer_address, job_id)
     params = {
         "index": data.get("index"),
-        "consumerAddress": data.get("consumerAddress"),
-        "jobId": data.get("jobId"),
+        "owner": data.get("consumerAddress"),
+        "jobId": job_id,
         "consumerSignature": data.get("signature"),
         "providerSignature": provider_signature,
+        "nonce": nonce
     }
     req = PreparedRequest()
     req.prepare_url(url, params)

@@ -16,11 +16,12 @@ from tests.test_helpers import (
 
 
 def build_and_send_ddo_with_compute_service(
-    client, publisher_wallet, consumer_wallet, alg_diff=False, asset_type=None
+    client, publisher_wallet, consumer_wallet, alg_diff=False, asset_type=None, c2d_address=None
 ):
     web3 = get_web3()
     algo_metadata = build_metadata_dict_type_algorithm()
-
+    if c2d_address is None:
+        c2d_address = consumer_wallet.address
     if alg_diff:
         alg_ddo = get_registered_asset(
             publisher_wallet,
@@ -67,7 +68,7 @@ def build_and_send_ddo_with_compute_service(
     tx_id, _ = start_order(
         web3,
         datatoken,
-        consumer_wallet.address,
+        c2d_address,
         service.index,
         get_provider_fees(
             dataset_ddo_w_compute_service.did,
@@ -83,7 +84,7 @@ def build_and_send_ddo_with_compute_service(
     alg_tx_id, _ = start_order(
         web3,
         alg_service.datatoken_address,
-        consumer_wallet.address,
+        c2d_address,
         alg_service.index,
         get_provider_fees(
             alg_ddo.did,
