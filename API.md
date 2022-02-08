@@ -39,49 +39,81 @@ Response:
 ## Encrypt endpoint
 
 ### GET /api/services/encrypt
-Parameters
-```
-    documentId: String object containing document id (e.g. a DID)
-    signature: String object containg user signature (signed message)
-    publisherAddress: String object containing publisher's ethereum address
-    document: String, representing the list of `file` objects that describe each file in the dataset
-```
+Body: binary application/octet-stream
 
 Returns:
-Json object containing the encrypted document.
+Bytes string containing the encrypted document.
 
 
 Example:
 ```
 POST /api/services/encrypt
-payload:
-{
-    "signature":"0x00110011",
-    "documentId":"0x1111",
-    "publisherAddress":"0x990922334",
-    "document":"[{index:0, url:""}, {index:1, url:""}]"
+body: b'\xfd7zXZ\x00\x00\x04\xe6\xd6\xb4F\ ... \x00\x04YZ'
+```
+
+Response:
+
+```
+
+b'0x04b2bfab1f4e...7ed0573'
+
+```
+
+## Decrypt endpoint
+
+### POST /api/services/decrypt
+Parameters
+```
+    decrypterAddress: String object containing the address of the decrypter (required)
+    chainId: the chain id of the network the document is on (required)
+    transactionId: the transaction id of the encrypted document (optional)
+    dataNftAddress: the address of the data nft (optional)
+    encryptedDocument: the encrypted document (optional)
+    flags: the flags of the encrypted document (optional)
+    documentHash: the hash of the encrypted document (optional)
+    nonce: the nonce of the encrypted document (required)
+    signature: the signature of the encrypted document (required)
+```
+
+Returns:
+Bytes string containing the decrypted document.
+
+
+Example:
+```
+POST /api/services/decrypt
+payload: {
+    'decrypterAddress':'0xA78deb2Fa79463945C247991075E2a0e98Ba7A09'
+    'chainId':8996
+    'dataNftAddress':'0xBD558814eE914800EbfeF4a1cbE196F5161823d9'
+    'encryptedDocument':'0xfd377a585a000004e6d6b4460200210116000000742fe5a3e0059f031f5d003d88840633b6d207ac3fdec5d1791d339f068c86c7c2399ad23dbf4d12b749db667b148e444be0bc0022f4b0c5c8795de3fbe6d00873b2c0dad8f18ecb76e3ed9cd5ba519ce9450d6c592c39adae1e1c0d78f8e8a93af488697fdf48d8cc12e91e2165321258aea37f71fd7c9119b498093260fcfb3ce12cd6c27ecfeebe53d51d2eea66802a5c12e647b06939b4ac020b2f77113b58d99f8c2d75c14426d7c1d6e7f711adf49429ef17a050c31ea9d24d9874394ee6fc9f9c08a8482b4e782d5ce2e6afb03d8977a16af310f7a93dd5c6b63078b71b682cb258f728b76811ba56b3affda6078cf516b91689524e3d17f55a26a2fe7df355cc76d4d6ed8f588347ca05b42e3e8d732d4abacc59e5087b049083af28ca7c4e4031d13bf74f4e7f2f484d0c266e4f1350532b8cac46860cff5d9c35dc7041902f4f1a00c2de40d8dfa8b4dfbbf2d4b5922751c80e2ef2af910831697976c868b214555538edac0019c1625d14a027dcccbbc5179b1063d5f9d8382c68a512beef5de0ddd55194a730fb9df480e1baa957f89e4f44c04b82bc391018204006f703b2faf14be0f50c852a66200289ab1899dbfa7ffa662fe08e0d570eac4dada4f212503aae73e74f6436dc08f41c4444e24d59dc32aaa679e6bcd6012c53b5b9cbf07afef7dc214...
+    'flags': 1
+    'documentHash':'0x0cb38a7bba49758a86f8556642aff655d00e41da28240d5ea0f596b74094d91f'
+    'nonce':'1644315615.24195'
+    'signature':'0xd6f27047853203824ab9e5acef87d0a501a64aee93f33a83b6f91cbe8fb4489824defceaccde91273f41290cb2a0c15572368e8bea0b456c7a653659cad7de311b'
 }
 ```
 
 Response:
 
-```json
-{
-  "encryptedDocument": ""
-}
+```
+
+b'{"@context": ["https://w3id.org/did/v1"], "id": "did:op:0c184915b07b44c888d468be85a9b28253e80070e5294b1aaed81c ...'
+
 ```
 
 
 
 ## Initial service request endpoint
-### POST /api/services/initialize
+### GET /api/services/initialize
 Parameters
 ```
     documentId: String object containing document id (e.g. a DID)
-    serviceId: String, representing the list of `file` objects that describe each file in the dataset
+    serviceId: Integer representing a service in the list of services in the DDO document
     fileIndex: Optional, integer, the index of the file from the files list in the dataset. If set, provider will validate the file access.
     consumerAddress: String object containing publisher's ethereum address
     environment:  Compute environment if asset service type is compute
+    validUntil: Optional, integer, date of validity of the service
 ```
 
 Returns:
@@ -90,13 +122,13 @@ Json document with a quote for amount of tokens to transfer to the provider acco
 
 Example:
 ```
-POST /api/services/initialize
+GET /api/services/initialize
 payload:
 {
     "documentId":"0x1111",
     "serviceId": 0,
-    "datatoken": "",
     "consumerAddress":"0x990922334",
+}
 ```
 
 Response:
@@ -118,12 +150,13 @@ Parameters
 ```
     documentId: String object containing document id (e.g. a DID)
     serviceId: String, representing the list of `file` objects that describe each file in the dataset
+    consumerAddress: String object containing publisher's ethereum address
+    transferTxId: Hex string -- the id of on-chain transaction for approval of datatokens transfer
+    given to the provider's account
     fileIndex: integer, the index of the file from the files list in the dataset
     nonce: Nonce
-    signature: String object containg user signature (signed message)
     consumerAddress: String object containing publisher's ethereum address
-    transactionId: Hex string -- the id of on-chain transaction for approval of datatokens transfer
-        given to the provider's account
+    signature: String object containg user signature (signed message)
 ```
 
 Returns:
@@ -152,6 +185,47 @@ Response:
 }
 ```
 
+## File info endpoint
+### POST /api/services/fileinfo
+
+Retrieves Content-Type and Content-Length from the given URL or asset.
+
+Parameters
+```
+    type: String, either "url" or "asset"
+    did: String, DID of the dataset
+    hash: String, hash of the file
+    url: String, URL of the file
+    serviceId: String, service id
+```
+
+Returns:
+Json document file info object
+
+Example:
+```
+POST /api/services/fileinfo
+payload:
+{
+    "url": "https://s3.amazonaws.com/testfiles.oceanprotocol.com/info.0.json",
+    "type": "url",
+    "method": "GET",
+}
+```
+
+Response:
+
+```json
+[
+    {
+        "contentLength":"1161"
+        "contentType":"application/json"
+        "index":0
+        "valid": true
+    },...
+]
+```
+
 ## Compute endpoints
 All compute endpoints respond with an Array of status objects, each object
 describing a compute job info.
@@ -159,8 +233,8 @@ describing a compute job info.
 Each status object will contain:
 ```
     owner:The owner of this compute job
-    documentId:
-    jobId:
+    documentId: String object containing document id (e.g. a DID)
+    jobId: String object containing workflowId
     dateCreated:Unix timestamp of job creation
     dateFinished:Unix timestamp when job finished
     status:  Int, see below for list
@@ -207,20 +281,19 @@ Start a new job
 
 Parameters
 ```
-    signature: String object containg user signature (signed message)
-    documentId: String object containing the document did
-    consumerAddress: String object containing consumer's ethereum address
-    output: json object that define the output section, i.e. attributes of the compute results
-    algorithmDid: hex str the did of the algorithm to be executed
-    algorithmMeta: json object that define the algorithm attributes and url or raw code
-    jobId: String object containing workflowID (optional)
-    transferTxId: hex str the transaction id (hash) of the token transfer, must match the
-        amount of data tokens expressed in the `initialize` endpoint
-    serviceId: integer identifies a service in the list of services in the DDO document
-    serviceType: type of service that serviceId refers to, must be `compute` in this case
-    datatoken: hex str the ERC20 contract address of the datatoken attached to the documentId (did)
+    signature: String object containg user signature (signed message) (required)
+    consumerAddress: String object containing consumer's ethereum address (required)
+    nonce: Integer, Nonce (required)
+    dataset: Json object containing dataset information
+        dataset.documentId: String, object containing document id (e.g. a DID) (required)
+        dataset.serviceId: Integer, identifies a service in the list of services in the DDO document (required)
+        dataset.transferTxId: Hex string, the id of on-chain transaction for approval of datatokens transfer
+            given to the provider's account (required)
+    algorithm: Json object, containing algorithm information
+        algorithm.documentId: Hex string, the did of the algorithm to be executed (optional)
+        algorithm.meta: Json object, defines the algorithm attributes and url or raw code (optional)
 
-    One of `algorithmDid` or `algorithmMeta` is required, `algorithmDid` takes precedence
+    One of `algorithm.documentId` or `algorithm.meta` is required, `algorithm.documentId` takes precedence
 ```
 
 Returns:
@@ -385,5 +458,71 @@ Response:
       "statusText": "Job deleted successfully",
       ...
     }
+]
+```
+
+### GET /api/services/computeResult
+
+Allows download of asset data file.
+
+Parameters
+```
+    jobId: String object containing workflowId (optional)
+    index: Integer, index of the result to download (optional)
+    consumerAddress: String object containing consumer's address (optional)
+    nonce: Integer, Nonce (required)
+    signature: String object containg user signature (signed message)
+```
+
+Returns:
+Bytes string containing the compute result.
+
+
+Example:
+```
+GET /api/services/computeResult?index=0&consumerAddress=0xA78deb2Fa79463945C247991075E2a0e98Ba7A09&jobId=4d32947065bb46c8b87c1f7adfb7ed8b&nonce=1644317370
+```
+
+Response:
+
+```
+b'{"result": "0x0000000000000000000000000000000000000000000000000000000000000001"}'
+```
+
+### GET /api/services/computeEnvironments
+
+Allows download of asset data file.
+
+Parameters
+```
+```
+
+Returns:
+List of compute environments.
+
+
+Example:
+```
+GET /api/services/computeEnvironments
+```
+
+Response:
+
+```json
+[
+    {
+        "cpuType":"AMD Ryzen 7 5800X 8-Core Processor"
+        "currentJobs":0
+        "desc":"This is a mocked enviroment"
+        "diskGB":2
+        "gpuType":"AMD RX570"
+        "id":"ocean-compute"
+        "maxJobs":10
+        "nCPU":2
+        "nGPU":0
+        "priceMin":2.3
+        "ramGB":1
+    },
+    ...
 ]
 ```
