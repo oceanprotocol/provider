@@ -35,7 +35,6 @@ def test_expose_endpoints(client):
     assert "version" in result
     assert "chainId" in result
     assert "providerAddress" in result
-    assert "computeAddress" in result
     assert get_response.status == "200 OK"
     assert len(result["serviceEndpoints"]) == len(services_endpoints)
 
