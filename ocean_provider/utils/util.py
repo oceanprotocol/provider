@@ -263,7 +263,7 @@ def process_compute_request(data):
     if did is not None:
         body["documentId"] = did
 
-    nonce , provider_signature = sign_for_compute(provider_wallet, owner, job_id)
+    nonce, provider_signature = sign_for_compute(provider_wallet, owner, job_id)
     body["providerSignature"] = provider_signature
     body["nonce"] = nonce
 
@@ -316,6 +316,7 @@ def check_environment_exists(envs, env_id):
 
     matching_envs = [env for env in envs if env["id"] == env_id]
     return len(matching_envs) > 0
+
 
 def sign_for_compute(wallet, owner, job_id=None):
     nonce = datetime.now().timestamp()
