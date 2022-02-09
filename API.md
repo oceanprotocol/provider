@@ -129,6 +129,14 @@ payload:
     "serviceId": 0,
     "consumerAddress":"0x990922334",
 }
+payload (with optional parameters):
+{
+    "documentId":"0x1111",
+    "serviceId": 0,
+    "consumerAddress":"0x990922334",
+    "validUntil": 1578004800,
+    "fileIndex": 1
+}
 ```
 
 Response:
