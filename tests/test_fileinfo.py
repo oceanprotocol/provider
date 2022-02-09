@@ -8,6 +8,7 @@ from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.services import ServiceType
 from tests.test_helpers import (
     get_dataset_with_invalid_url_ddo,
+    get_first_service_by_type,
     get_registered_asset,
 )
 
@@ -17,7 +18,7 @@ fileinfo_url = BaseURLs.SERVICES_URL + "/fileinfo"
 @pytest.mark.integration
 def test_asset_info(client, publisher_wallet):
     asset = get_registered_asset(publisher_wallet)
-    service = asset.get_service_by_type(ServiceType.ACCESS)
+    service = get_first_service_by_type(asset, ServiceType.ACCESS)
     response = client.post(
         fileinfo_url,
         json={"did": asset.did, "serviceId": service.id, "checksum": "true"},
@@ -39,7 +40,7 @@ def test_asset_info(client, publisher_wallet):
         assert file_info["checksumType"] == "sha256"
 
     asset = get_dataset_with_invalid_url_ddo(client, publisher_wallet)
-    service = asset.get_service_by_type(ServiceType.ACCESS)
+    service = get_first_service_by_type(asset, ServiceType.ACCESS)
     response = client.post(
         fileinfo_url, json={"did": asset.did, "serviceId": service.id}
     )

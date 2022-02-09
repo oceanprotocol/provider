@@ -29,6 +29,7 @@ from ocean_provider.utils.data_nft_factory import get_data_nft_factory_contract
 from ocean_provider.utils.datatoken import get_datatoken_contract
 from ocean_provider.utils.did import compute_did_from_data_nft_address_and_chain_id
 from ocean_provider.utils.encryption import do_encrypt
+from ocean_provider.utils.services import Service, ServiceType
 from tests.helpers.ddo_dict_builders import (
     build_credentials_dict,
     build_ddo_dict,
@@ -485,3 +486,8 @@ def build_custom_services(
         ]
 
     return []
+
+
+def get_first_service_by_type(asset, service_type: ServiceType) -> Service:
+    """Return the first Service with the given ServiceType."""
+    return next((service for service in asset.services if service.type == service_type))

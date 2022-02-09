@@ -15,6 +15,7 @@ from tests.test_helpers import (
     get_dataset_ddo_with_multiple_files,
     get_dataset_with_invalid_url_ddo,
     get_dataset_with_ipfs_url_ddo,
+    get_first_service_by_type,
     get_registered_asset,
     initialize_service,
     mint_100_datatokens,
@@ -31,7 +32,7 @@ def test_download_service(
     client, publisher_wallet, consumer_wallet, web3, userdata, erc20_enterprise
 ):
     asset = get_registered_asset(publisher_wallet, erc20_enterprise=erc20_enterprise)
-    service = asset.get_service_by_type(ServiceType.ACCESS)
+    service = get_first_service_by_type(asset, ServiceType.ACCESS)
     mint_100_datatokens(
         web3, service.datatoken_address, consumer_wallet.address, publisher_wallet
     )
@@ -85,7 +86,7 @@ def test_empty_payload(client):
 @pytest.mark.integration
 def test_initialize_on_bad_url(client, publisher_wallet, consumer_wallet, web3):
     asset = get_dataset_with_invalid_url_ddo(client, publisher_wallet)
-    service = asset.get_service_by_type(ServiceType.ACCESS)
+    service = get_first_service_by_type(asset, ServiceType.ACCESS)
 
     mint_100_datatokens(
         web3, service.datatoken_address, consumer_wallet.address, publisher_wallet
@@ -101,7 +102,7 @@ def test_initialize_on_bad_url(client, publisher_wallet, consumer_wallet, web3):
 @pytest.mark.integration
 def test_initialize_on_ipfs_url(client, publisher_wallet, consumer_wallet, web3):
     asset = get_dataset_with_ipfs_url_ddo(client, publisher_wallet)
-    service = asset.get_service_by_type(ServiceType.ACCESS)
+    service = get_first_service_by_type(asset, ServiceType.ACCESS)
 
     mint_100_datatokens(
         web3, service.datatoken_address, consumer_wallet.address, publisher_wallet
@@ -118,7 +119,7 @@ def test_initialize_on_ipfs_url(client, publisher_wallet, consumer_wallet, web3)
 def test_initialize_on_disabled_asset(client, publisher_wallet, consumer_wallet, web3):
     asset, real_asset = get_dataset_ddo_disabled(client, publisher_wallet)
     assert real_asset
-    service = asset.get_service_by_type(ServiceType.ACCESS)
+    service = get_first_service_by_type(asset, ServiceType.ACCESS)
 
     mint_100_datatokens(
         web3, service.datatoken_address, consumer_wallet.address, publisher_wallet
@@ -139,7 +140,7 @@ def test_initialize_on_asset_with_custom_credentials(
         client, publisher_wallet, consumer_wallet.address
     )
 
-    service = asset.get_service_by_type(ServiceType.ACCESS)
+    service = get_first_service_by_type(asset, ServiceType.ACCESS)
 
     mint_100_datatokens(
         web3, service.datatoken_address, consumer_wallet.address, publisher_wallet
@@ -158,7 +159,7 @@ def test_initialize_on_asset_with_custom_credentials(
 @pytest.mark.integration
 def test_download_multiple_files(client, publisher_wallet, consumer_wallet, web3):
     asset = get_dataset_ddo_with_multiple_files(client, publisher_wallet)
-    service = asset.get_service_by_type(ServiceType.ACCESS)
+    service = get_first_service_by_type(asset, ServiceType.ACCESS)
 
     mint_100_datatokens(
         web3, service.datatoken_address, consumer_wallet.address, publisher_wallet

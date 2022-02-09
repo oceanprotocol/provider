@@ -10,6 +10,7 @@ from ocean_provider.utils.asset import Asset
 from ocean_provider.utils.services import ServiceType, Service
 from ocean_provider.validation.algo import WorkflowValidator
 from tests.ddo.ddo_sample1_compute import ddo_dict, alg_ddo_dict
+from tests.test_helpers import get_first_service_by_type
 
 
 @pytest.mark.unit
@@ -23,8 +24,8 @@ def test_passes_algo_ddo(provider_wallet, consumer_address, web3):
     """Tests happy flow of validator with algo ddo."""
     ddo = Asset(ddo_dict)
     alg_ddo = Asset(alg_ddo_dict)
-    sa_compute = alg_ddo.get_service_by_type(ServiceType.ACCESS)
-    sa = ddo.get_service_by_type(ServiceType.COMPUTE)
+    sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
+    sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
 
     data = {
         "dataset": {
@@ -64,7 +65,7 @@ def test_passes_algo_ddo(provider_wallet, consumer_address, web3):
 def test_passes_raw(provider_wallet, consumer_address, web3):
     """Tests happy flow of validator with raw algo."""
     ddo = Asset(ddo_dict)
-    sa = ddo.get_service_by_type(ServiceType.COMPUTE)
+    sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
     data = {
         "dataset": {
             "documentId": ddo.did,
@@ -103,8 +104,8 @@ def test_fails_not_an_algo(provider_wallet, consumer_address, web3):
     ddo = Asset(_copy)
     did = ddo.did
     alg_ddo = Asset(alg_ddo_dict)
-    sa_compute = alg_ddo.get_service_by_type(ServiceType.ACCESS)
-    sa = ddo.get_service_by_type(ServiceType.COMPUTE)
+    sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
+    sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
 
     data = {
         "dataset": {
@@ -145,7 +146,7 @@ def test_fails_not_an_algo(provider_wallet, consumer_address, web3):
 def test_fails_meta_issues(provider_wallet, consumer_address, web3):
     """Tests happy flow of validator with raw algo."""
     ddo = Asset(ddo_dict)
-    sa = ddo.get_service_by_type(ServiceType.COMPUTE)
+    sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
     """Tests happy flow of validator with algo ddo and raw algo."""
     data = {
         "dataset": {
@@ -236,8 +237,8 @@ def test_fails_meta_issues(provider_wallet, consumer_address, web3):
 def test_additional_datasets(provider_wallet, consumer_address, web3):
     ddo = Asset(ddo_dict)
     alg_ddo = Asset(alg_ddo_dict)
-    sa_compute = alg_ddo.get_service_by_type(ServiceType.ACCESS)
-    sa = ddo.get_service_by_type(ServiceType.COMPUTE)
+    sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
+    sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
 
     data = {
         "dataset": {
@@ -388,8 +389,8 @@ def test_additional_datasets(provider_wallet, consumer_address, web3):
 def test_service_not_compute(provider_wallet, consumer_address, web3):
     ddo = Asset(ddo_dict)
     alg_ddo = Asset(alg_ddo_dict)
-    sa_compute = alg_ddo.get_service_by_type(ServiceType.ACCESS)
-    sa = ddo.get_service_by_type(ServiceType.COMPUTE)
+    sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
+    sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
 
     data = {
         "dataset": {
@@ -446,8 +447,8 @@ def test_fails_trusted(provider_wallet, consumer_address, web3):
     """Tests possible failures of the algo validation."""
     ddo = Asset(ddo_dict)
     alg_ddo = Asset(alg_ddo_dict)
-    sa_compute = alg_ddo.get_service_by_type(ServiceType.ACCESS)
-    sa = ddo.get_service_by_type(ServiceType.COMPUTE)
+    sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
+    sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
 
     # Additional input has other trusted algs
     _copy = copy.deepcopy(ddo_dict)
@@ -456,7 +457,7 @@ def test_fails_trusted(provider_wallet, consumer_address, web3):
         {"did": "0xother", "filesChecksum": "mock", "containerSectionChecksum": "mock"}
     ]
     trust_ddo = Asset(_copy)
-    trust_sa = trust_ddo.get_service_by_type(ServiceType.COMPUTE)
+    trust_sa = get_first_service_by_type(trust_ddo, ServiceType.COMPUTE)
 
     def side_effect(*args, **kwargs):
         nonlocal ddo, alg_ddo, trust_ddo
@@ -506,7 +507,7 @@ def test_fails_trusted(provider_wallet, consumer_address, web3):
     ]
     _copy["services"][0]["id"] = "compute_2"
     trust_ddo = Asset(_copy)
-    trust_sa = trust_ddo.get_service_by_type(ServiceType.COMPUTE)
+    trust_sa = get_first_service_by_type(trust_ddo, ServiceType.COMPUTE)
 
     data = {
         "dataset": {
@@ -549,7 +550,7 @@ def test_fails_trusted(provider_wallet, consumer_address, web3):
 )
 def test_fails_no_asset_url(provider_wallet, consumer_address, web3):
     ddo = Asset(ddo_dict)
-    sa = ddo.get_service_by_type(ServiceType.COMPUTE)
+    sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
     data = {
         "dataset": {
             "documentId": ddo.did,
@@ -582,7 +583,7 @@ def test_fails_no_asset_url(provider_wallet, consumer_address, web3):
 )
 def test_fails_validate_order(provider_wallet, consumer_address, web3):
     ddo = Asset(ddo_dict)
-    sa = ddo.get_service_by_type(ServiceType.COMPUTE)
+    sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
     data = {
         "dataset": {
             "documentId": ddo.did,
@@ -612,7 +613,7 @@ def test_fails_validate_order(provider_wallet, consumer_address, web3):
 )
 def test_fails_no_service_id(provider_wallet, consumer_address, web3):
     ddo = Asset(ddo_dict)
-    sa = ddo.get_service_by_type(ServiceType.COMPUTE)
+    sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
     data = {
         "dataset": {
             "documentId": ddo.did,
@@ -647,8 +648,8 @@ def test_fails_no_service_id(provider_wallet, consumer_address, web3):
 def test_fails_invalid_algorithm_dict(provider_wallet, consumer_address, web3):
     ddo = Asset(ddo_dict)
     alg_ddo = Asset(alg_ddo_dict)
-    sa_compute = alg_ddo.get_service_by_type(ServiceType.ACCESS)
-    sa = ddo.get_service_by_type(ServiceType.COMPUTE)
+    sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
+    sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
 
     data = {
         "dataset": {
@@ -689,8 +690,8 @@ def test_fails_invalid_algorithm_dict(provider_wallet, consumer_address, web3):
 def test_fails_algorithm_in_use(provider_wallet, consumer_address, web3):
     ddo = Asset(ddo_dict)
     alg_ddo = Asset(alg_ddo_dict)
-    sa_compute = alg_ddo.get_service_by_type(ServiceType.ACCESS)
-    sa = ddo.get_service_by_type(ServiceType.COMPUTE)
+    sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
+    sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
 
     data = {
         "dataset": {
@@ -745,8 +746,8 @@ def test_fails_algorithm_in_use(provider_wallet, consumer_address, web3):
 def test_fail_wrong_algo_type(provider_wallet, consumer_address, web3):
     ddo = Asset(ddo_dict)
     alg_ddo = Asset(alg_ddo_dict)
-    sa_compute = alg_ddo.get_service_by_type(ServiceType.ACCESS)
-    sa = ddo.get_service_by_type(ServiceType.COMPUTE)
+    sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
+    sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
 
     data = {
         "dataset": {
@@ -802,8 +803,8 @@ def test_fail_wrong_algo_type(provider_wallet, consumer_address, web3):
 def test_fail_allow_raw_false(provider_wallet, consumer_address, web3):
     ddo = Asset(ddo_dict)
     alg_ddo = Asset(alg_ddo_dict)
-    sa_compute = alg_ddo.get_service_by_type(ServiceType.ACCESS)
-    sa = ddo.get_service_by_type(ServiceType.COMPUTE)
+    sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
+    sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
     ddo.services[0].compute_dict["allowRawAlgorithm"] = False
     data = {
         "dataset": {
@@ -844,8 +845,8 @@ def test_fail_allow_raw_false(provider_wallet, consumer_address, web3):
 def test_success_multiple_services_types(provider_wallet, consumer_address, web3):
     ddo = Asset(ddo_dict)
     alg_ddo = Asset(alg_ddo_dict)
-    sa_compute = alg_ddo.get_service_by_type(ServiceType.ACCESS)
-    sa = ddo.get_service_by_type(ServiceType.COMPUTE)
+    sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
+    sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
 
     data = {
         "dataset": {
@@ -902,7 +903,7 @@ def test_success_multiple_services_types(provider_wallet, consumer_address, web3
 def test_fail_missing_algo_meta_documentId(provider_wallet, consumer_address, web3):
     ddo = Asset(ddo_dict)
     alg_ddo = Asset(alg_ddo_dict)
-    sa = ddo.get_service_by_type(ServiceType.COMPUTE)
+    sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
 
     data = {
         "dataset": {
