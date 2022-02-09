@@ -76,7 +76,9 @@ def get_c2d_environments() -> List:
         # loop envs and add provider token from config
         envs = response.json()
         for env in envs:
-            env["feeToken"] = os.getenv("PROVIDER_FEE_TOKEN",'0x0000000000000000000000000000000000000000')
+            env["feeToken"] = os.getenv(
+                "PROVIDER_FEE_TOKEN", "0x0000000000000000000000000000000000000000"
+            )
 
         return envs
     except Exception:
