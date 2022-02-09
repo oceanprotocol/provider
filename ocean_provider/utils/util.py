@@ -219,6 +219,8 @@ def validate_order(web3, sender, tx_id, asset, service):
                     "reached max no. of tries, raise ConnectionClosed in validate_order."
                 )
                 raise
+        except Exception:
+            raise
 
 
 def validate_transfer_not_used_for_other_service(
