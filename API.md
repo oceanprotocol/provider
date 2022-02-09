@@ -109,11 +109,11 @@ b'{"@context": ["https://w3id.org/did/v1"], "id": "did:op:0c184915b07b44c888d468
 Parameters
 ```
     documentId: String object containing document id (e.g. a DID)
-    serviceId: Integer representing a service in the list of services in the DDO document
-    fileIndex: Optional, integer, the index of the file from the files list in the dataset. If set, provider will validate the file access.
-    consumerAddress: String object containing publisher's ethereum address
-    environment:  Compute environment if asset service type is compute
-    validUntil: Optional, integer, date of validity of the service
+    serviceId: String, ID of the service the datatoken is attached to
+    consumerAddress: String object containing consumerAddress's ethereum address
+    environment: String representing a compute environment offered by the provider
+    validUntil: Integer, date of validity of the service (optional)
+    fileIndex: Integer, the index of the file from the files list in the dataset. If set, provider will validate the file access. (optional)
 ```
 
 Returns:
@@ -135,11 +135,10 @@ Response:
 
 ```json
 {
-    "from": "0x...",
-    "to": "0x...",
-    "numTokens": 21,
     "datatoken": "0x21fa3ea32892091...",
-    "nonce": 23
+    "nonce": 23,
+    "providerFee": 200,
+    "computeAddress": "0x8123jdf8sdsa..."
 }
 ```
 
@@ -150,12 +149,11 @@ Parameters
 ```
     documentId: String object containing document id (e.g. a DID)
     serviceId: String, representing the list of `file` objects that describe each file in the dataset
-    consumerAddress: String object containing publisher's ethereum address
     transferTxId: Hex string -- the id of on-chain transaction for approval of datatokens transfer
     given to the provider's account
     fileIndex: integer, the index of the file from the files list in the dataset
     nonce: Nonce
-    consumerAddress: String object containing publisher's ethereum address
+    consumerAddress: String object containing consumerAddress's ethereum address
     signature: String object containg user signature (signed message)
 ```
 
@@ -196,7 +194,7 @@ Parameters
     did: String, DID of the dataset
     hash: String, hash of the file
     url: String, URL of the file
-    serviceId: String, service id
+    serviceId: String, ID of the service the datatoken is attached to
 ```
 
 Returns:
@@ -286,7 +284,7 @@ Parameters
     nonce: Integer, Nonce (required)
     dataset: Json object containing dataset information
         dataset.documentId: String, object containing document id (e.g. a DID) (required)
-        dataset.serviceId: Integer, identifies a service in the list of services in the DDO document (required)
+        dataset.serviceId: String, ID of the service the datatoken is attached to (required)
         dataset.transferTxId: Hex string, the id of on-chain transaction for approval of datatokens transfer
             given to the provider's account (required)
     algorithm: Json object, containing algorithm information
