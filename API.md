@@ -86,7 +86,7 @@ payload: {
     'decrypterAddress':'0xA78deb2Fa79463945C247991075E2a0e98Ba7A09'
     'chainId':8996
     'dataNftAddress':'0xBD558814eE914800EbfeF4a1cbE196F5161823d9'
-    'encryptedDocument':'0xfd377a585a000004e6d6b4460200210116000000742fe5a3e0059f031f5d003d88840633b6d207ac3fdec5d1791d339f068c86c7c2399ad23dbf4d12b749db667b148e444be0bc0022f4b0c5c8795de3fbe6d00873b2c0dad8f18ecb76e3ed9cd5ba519ce9450d6c592c39adae1e1c0d78f8e8a93af488697fdf48d8cc12e91e2165321258aea37f71fd7c9119b498093260fcfb3ce12cd6c27ecfeebe53d51d2eea66802a5c12e647b06939b4ac020b2f77113b58d99f8c2d75c14426d7c1d6e7f711adf49429ef17a050c31ea9d24d9874394ee6fc9f9c08a8482b4e782d5ce2e6afb03d8977a16af310f7a93dd5c6b63078b71b682cb258f728b76811ba56b3affda6078cf516b91689524e3d17f55a26a2fe7df355cc76d4d6ed8f588347ca05b42e3e8d732d4abacc59e5087b049083af28ca7c4e4031d13bf74f4e7f2f484d0c266e4f1350532b8cac46860cff5d9c35dc7041902f4f1a00c2de40d8dfa8b4dfbbf2d4b5922751c80e2ef2af910831697976c868b214555538edac0019c1625d14a027dcccbbc5179b1063d5f9d8382c68a512beef5de0ddd55194a730fb9df480e1baa957f89e4f44c04b82bc391018204006f703b2faf14be0f50c852a66200289ab1899dbfa7ffa662fe08e0d570eac4dada4f212503aae73e74f6436dc08f41c4444e24d59dc32aaa679e6bcd6012c53b5b9cbf07afef7dc214...
+    'encryptedDocument':'0xfd377a585a0...f07afef7dc214'
     'flags': 1
     'documentHash':'0x0cb38a7bba49758a86f8556642aff655d00e41da28240d5ea0f596b74094d91f'
     'nonce':'1644315615.24195'
@@ -110,7 +110,7 @@ Parameters
 ```
     documentId: String object containing document id (e.g. a DID)
     serviceId: String, ID of the service the datatoken is attached to
-    consumerAddress: String object containing consumerAddress's ethereum address
+    consumerAddress: String object containing consumer's address
     environment: String representing a compute environment offered by the provider
     validUntil: Integer, date of validity of the service (optional)
     fileIndex: Integer, the index of the file from the files list in the dataset. If set, provider will validate the file access. (optional)
@@ -161,7 +161,7 @@ Parameters
     given to the provider's account
     fileIndex: integer, the index of the file from the files list in the dataset
     nonce: Nonce
-    consumerAddress: String object containing consumerAddress's ethereum address
+    consumerAddress: String object containing consumer's address
     signature: String object containg user signature (signed message)
 ```
 
