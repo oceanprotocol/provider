@@ -9,7 +9,7 @@ import mimetypes
 import os
 from cgi import parse_header
 from urllib.parse import urljoin
-from datetime import datetime, timedelta
+from datetime import datetime
 
 import requests
 import werkzeug
@@ -26,7 +26,6 @@ from ocean_provider.utils.datatoken import verify_order_tx
 from ocean_provider.utils.encryption import do_decrypt
 from ocean_provider.utils.services import Service
 from ocean_provider.utils.url import is_safe_url
-from osmosis_driver_interface.osmosis import Osmosis
 from websockets import ConnectionClosed
 
 logger = logging.getLogger(__name__)
@@ -144,21 +143,14 @@ def validate_url_object(url_object, service_id):
     return True, ""
 
 
-def get_download_url(url_object, config_file):
+def get_download_url(url_object):
     if url_object["type"] != "ipfs":
         return url_object["url"]
 
-    url = "ipfs://" + url_object["hash"]
+    if not os.getenv("IPFS_GATEWAY"):
+        raise Exception("No IPFS_GATEWAY defined, can not resolve ipfs hash.")
 
-    try:
-        logger.info("Connecting through Osmosis to generate the signed url.")
-        osm = Osmosis(url, config_file)
-        download_url = osm.data_plugin.generate_url(url)
-        logger.debug(f"Osmosis generated the url: {download_url}")
-        return download_url
-    except Exception as e:
-        logger.error(f"Error generating url (using Osmosis): {str(e)}")
-        raise
+    return urljoin(os.getenv("IPFS_GATEWAY"), urljoin("ipfs/", url_object["hash"]))
 
 
 def get_compute_endpoint():

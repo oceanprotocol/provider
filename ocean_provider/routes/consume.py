@@ -96,12 +96,9 @@ def fileinfo():
         asset = get_asset_from_metadatastore(get_metadata_url(), did)
         service = asset.get_service_by_id(service_id)
         files_list = get_service_files_list(service, provider_wallet)
-        url_list = [
-            get_download_url(file_item, app.config["PROVIDER_CONFIG_FILE"])
-            for file_item in files_list
-        ]
+        url_list = [get_download_url(file_item) for file_item in files_list]
     else:
-        url_list = [get_download_url(data, app.config["PROVIDER_CONFIG_FILE"])]
+        url_list = [get_download_url(data)]
 
     with_checksum = data.get("checksum", False)
 
@@ -174,8 +171,9 @@ def initialize():
         url_valid, message = validate_url_object(url_object, service_id)
         if not url_valid:
             return error_response(message, 400, logger)
-        download_url = get_download_url(url_object, app.config["PROVIDER_CONFIG_FILE"])
+        download_url = get_download_url(url_object)
         download_url = append_userdata(download_url, data)
+        # TOdO: remove config
         valid, url_details = check_url_details(download_url)
 
         if not valid:
@@ -291,7 +289,7 @@ def download():
     if not url_valid:
         return error_response(message, 400, logger)
 
-    download_url = get_download_url(url_object, app.config["PROVIDER_CONFIG_FILE"])
+    download_url = get_download_url(url_object)
     download_url = append_userdata(download_url, data)
 
     valid, details = check_url_details(url_object["url"])
