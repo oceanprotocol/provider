@@ -299,7 +299,7 @@ Parameters
         algorithm.documentId: Hex string, the did of the algorithm to be executed (optional)
         algorithm.meta: Json object, defines the algorithm attributes and url or raw code (optional)
 
-    One of `algorithm.documentId` or `algorithm.meta` is required, `algorithm.documentId` takes precedence
+    One of `algorithm.documentId` or `algorithm.meta` is required, `algorithm.meta` takes precedence
 ```
 
 Returns:
