@@ -29,7 +29,7 @@ install_requirements = [
     "flask-swagger-ui==3.25.0",
     "Jinja2>=2.10.1",
     "gunicorn==20.0.4",
-    "ocean-contracts==1.0.0a17",
+    "ocean-contracts==1.0.0a18",
     "osmosis-azure-driver==0.1.0",
     "osmosis-aws-driver==0.1.0",
     "osmosis-driver-interface==0.1.0",
