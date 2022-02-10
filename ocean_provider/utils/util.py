@@ -181,7 +181,7 @@ def get_asset_urls(asset, wallet):
         raise
 
 
-def get_asset_download_urls(asset, wallet, config_file):
+def get_asset_download_urls(asset, wallet):
     return [get_download_url(url) for url in get_asset_urls(asset, wallet)]
 
 
