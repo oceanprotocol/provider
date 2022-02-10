@@ -5,19 +5,3 @@ network = ${NETWORK_URL}
 ocean_provider.url = ${OCEAN_PROVIDER_URL}
 operator_service.url = ${OPERATOR_SERVICE_URL}
 storage.path = ${STORAGE_PATH}
-
-[osmosis]
-azure.account.name = ${AZURE_ACCOUNT_NAME}
-azure.account.key = ${AZURE_ACCOUNT_KEY}
-azure.resource_group = ${AZURE_RESOURCE_GROUP}
-azure.location = ${AZURE_LOCATION}
-azure.client.id = ${AZURE_CLIENT_ID}
-azure.client.secret = ${AZURE_CLIENT_SECRET}
-azure.tenant.id = ${AZURE_TENANT_ID}
-azure.subscription.id = ${AZURE_SUBSCRIPTION_ID}
-; azure.share.input and azure.share.output are only used
-; for Azure Compute data assets (not for Azure Storage data assets).
-; If you're not supporting Azure Compute, just leave their values
-; as compute and output, respectively.
-azure.share.input = ${AZURE_SHARE_INPUT}
-azure.share.output = ${AZURE_SHARE_OUTPUT}
