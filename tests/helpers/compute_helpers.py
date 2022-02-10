@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
-from ocean_provider.utils.provider_fees import get_provider_fees
+from ocean_provider.utils.provider_fees import get_c2d_environments, get_provider_fees
 from ocean_provider.utils.services import ServiceType
 from ocean_provider.utils.util import msg_hash
 from tests.helpers.ddo_dict_builders import build_metadata_dict_type_algorithm
@@ -17,11 +17,17 @@ from tests.test_helpers import (
 
 
 def build_and_send_ddo_with_compute_service(
-    client, publisher_wallet, consumer_wallet, alg_diff=False, asset_type=None
+    client,
+    publisher_wallet,
+    consumer_wallet,
+    alg_diff=False,
+    asset_type=None,
+    c2d_address=None,
 ):
     web3 = get_web3()
     algo_metadata = build_metadata_dict_type_algorithm()
-
+    if c2d_address is None:
+        c2d_address = consumer_wallet.address
     if alg_diff:
         alg_ddo = get_registered_asset(
             publisher_wallet,
@@ -66,16 +72,18 @@ def build_and_send_ddo_with_compute_service(
     datatoken = service.datatoken_address
     mint_100_datatokens(web3, datatoken, consumer_wallet.address, publisher_wallet)
 
+    environments = get_c2d_environments()
     tx_id, _ = start_order(
         web3,
         datatoken,
-        consumer_wallet.address,
+        c2d_address,
         service.index,
         get_provider_fees(
             dataset_ddo_w_compute_service.did,
             service,
             consumer_wallet.address,
             get_future_valid_until(),
+            environments[0]["id"],
         ),
         consumer_wallet,
     )
@@ -84,10 +92,14 @@ def build_and_send_ddo_with_compute_service(
     alg_tx_id, _ = start_order(
         web3,
         alg_service.datatoken_address,
-        consumer_wallet.address,
+        c2d_address,
         alg_service.index,
         get_provider_fees(
-            alg_ddo.did, alg_service, consumer_wallet.address, get_future_valid_until()
+            alg_ddo.did,
+            alg_service,
+            consumer_wallet.address,
+            get_future_valid_until(),
+            environments[0]["id"],
         ),
         consumer_wallet,
     )

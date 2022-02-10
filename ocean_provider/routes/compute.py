@@ -5,7 +5,7 @@
 import json
 import logging
 
-from flask import Response, request, jsonify
+from flask import Response, jsonify, request
 from flask_sieve import validate
 from ocean_provider.requests_session import get_requests_session
 from ocean_provider.user_nonce import update_nonce
@@ -15,10 +15,12 @@ from ocean_provider.utils.error_responses import error_response
 from ocean_provider.utils.provider_fees import get_c2d_environments
 from ocean_provider.utils.util import (
     build_download_response,
+    check_environment_exists,
     get_compute_endpoint,
     get_compute_result_endpoint,
     get_request_data,
     process_compute_request,
+    sign_for_compute,
 )
 from ocean_provider.validation.algo import WorkflowValidator
 from ocean_provider.validation.provider_requests import (
@@ -231,7 +233,11 @@ def computeStart():
         description: The consumer ethereum address.
         required: true
         type: string
-
+      - name: computeEnv
+        in: query
+        description: Compute Environment
+        required: true
+        type: string
       - name: algorithmDid
         in: query
         description: The DID of the algorithm Asset to be executed
@@ -278,17 +284,23 @@ def computeStart():
 
     tx_id = data.get("transferTxId")
     did = data.get("documentId")
+    compute_env = data.get("environment")
 
-    msg_to_sign = f"{provider_wallet.address}{did}"
+    if not check_environment_exists(get_c2d_environments(), compute_env):
+        return error_response("Compute environment does not exist", 400, logger)
 
+    nonce, provider_signature = sign_for_compute(provider_wallet, consumer_address)
     payload = {
         "workflow": workflow,
-        "providerSignature": sign_message(msg_to_sign, provider_wallet),
+        "providerSignature": provider_signature,
         "documentId": did,
         "agreementId": tx_id,
         "owner": consumer_address,
         "providerAddress": provider_wallet.address,
+        "environment": compute_env,
+        "nonce": nonce,
     }
+
     response = requests_session.post(
         get_compute_endpoint(), data=json.dumps(payload), headers=standard_headers
     )
@@ -343,15 +355,18 @@ def computeResult():
     logger.info(f"computeResult called. arguments = {data}")
 
     url = get_compute_result_endpoint()
-    msg_to_sign = f"{data.get('jobId')}{data.get('index')}{data.get('consumerAddress')}"
-    # we sign the same message as consumer does, but using our key
-    provider_signature = sign_message(msg_to_sign, provider_wallet)
+    consumer_address = data.get("consumerAddress")
+    job_id = data.get("jobId")
+    nonce, provider_signature = sign_for_compute(
+        provider_wallet, consumer_address, job_id
+    )
     params = {
         "index": data.get("index"),
-        "consumerAddress": data.get("consumerAddress"),
-        "jobId": data.get("jobId"),
+        "owner": data.get("consumerAddress"),
+        "jobId": job_id,
         "consumerSignature": data.get("signature"),
         "providerSignature": provider_signature,
+        "nonce": nonce,
     }
     req = PreparedRequest()
     req.prepare_url(url, params)
@@ -383,6 +398,7 @@ def computeEnvironments():
       503:
         description: Service Unavailable
     """
+
     response = jsonify(get_c2d_environments())
     response.status_code = 200
     response.headers = standard_headers

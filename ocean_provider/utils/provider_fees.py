@@ -1,24 +1,34 @@
 import json
 import logging
 import os
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 from eth_keys import KeyAPI
 from eth_keys.backends import NativeECCBackend
-from ocean_provider.utils.basics import get_provider_wallet, get_web3
+from ocean_provider.requests_session import get_requests_session
+from ocean_provider.utils.basics import LocalFileAdapter, get_provider_wallet, get_web3
 from ocean_provider.utils.services import Service
+from ocean_provider.utils.util import get_compute_environments_endpoint
 
 logger = logging.getLogger(__name__)
 keys = KeyAPI(NativeECCBackend)
+requests_session = get_requests_session()
+requests_session.mount("file://", LocalFileAdapter())
 
 
 def get_provider_fees(
-    did: str, service: Service, consumer_address: str, valid_until: int
+    did: str,
+    service: Service,
+    consumer_address: str,
+    valid_until: int,
+    compute_env: str = None,
 ) -> Dict[str, Any]:
     web3 = get_web3()
     provider_wallet = get_provider_wallet()
     provider_fee_amount = 0
-    provider_data = json.dumps({"timeout": 0}, separators=(",", ":"))
+    provider_data = json.dumps(
+        {"environment": compute_env, "timeout": 0}, separators=(",", ":")
+    )
     provider_fee_address = provider_wallet.address
     provider_fee_token = os.environ.get(
         "PROVIDER_FEE_TOKEN", "0x0000000000000000000000000000000000000000"
@@ -56,21 +66,20 @@ def get_provider_fees(
     return provider_fee
 
 
-def get_c2d_environments() -> Dict[str, Any]:
-    mock_env = dict()
-    mock_env["environments"] = [
-        {
-            "id": "ocean-compute",
-            "nCPU": 2,
-            "cpuType": "AMD Ryzen 7 5800X 8-Core Processor",
-            "nGPU": 0,
-            "gpuType": "AMD RX570",
-            "ramGB": 1,
-            "diskGB": 2,
-            "priceMin": 2.3,
-            "desc": "This is a mocked enviroment",
-            "currentJobs": 0,
-            "maxJobs": 10,
-        }
-    ]
-    return mock_env
+def get_c2d_environments() -> List:
+    standard_headers = {"Content-type": "application/json", "Connection": "close"}
+    try:
+        response = requests_session.get(
+            get_compute_environments_endpoint(), headers=standard_headers
+        )
+
+        # loop envs and add provider token from config
+        envs = response.json()
+        for env in envs:
+            env["feeToken"] = os.getenv(
+                "PROVIDER_FEE_TOKEN", "0x0000000000000000000000000000000000000000"
+            )
+
+        return envs
+    except Exception:
+        return []

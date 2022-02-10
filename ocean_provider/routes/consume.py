@@ -4,7 +4,7 @@
 #
 import logging
 
-from flask import request, jsonify
+from flask import jsonify, request
 from flask_sieve import validate
 from ocean_provider.myapp import app
 from ocean_provider.requests_session import get_requests_session
@@ -147,7 +147,7 @@ def initialize():
 
     did = data.get("documentId")
     consumer_address = data.get("consumerAddress")
-    compute_env = data.get("computeEnv")
+    compute_env = data.get("environment")
     valid_until = data.get("validUntil", 0)
 
     asset = get_asset_from_metadatastore(get_metadata_url(), did)
@@ -160,7 +160,7 @@ def initialize():
 
     if service.type == "compute" and not (compute_env and valid_until):
         return error_response(
-            "The computeEnv and validUntil are mandatory when initializing a compute service.",
+            "The environment and validUntil are mandatory when initializing a compute service.",
             400,
             logger,
         )
@@ -190,13 +190,11 @@ def initialize():
     # of tokens required for this service
     # The consumer must sign and execute this transaction in order to be
     # able to consume the service
-    compute_address, compute_limits = get_compute_info()
     approve_params = {
         "datatoken": token_address,
         "nonce": get_nonce(consumer_address),
-        "computeAddress": compute_address,
         "providerFee": get_provider_fees(
-            did, service, consumer_address, int(valid_until)
+            did, service, consumer_address, int(valid_until), compute_env
         ),
     }
     response = jsonify(approve_params), 200
@@ -268,9 +266,7 @@ def download():
         consumer_address
     ) != Web3.toChecksumAddress(compute_address):
         return error_response(
-            f"Service with index={service_id} is not an access service.",
-            400,
-            logger,
+            f"Service with index={service_id} is not an access service.", 400, logger
         )
     logger.info("validate_order called from download endpoint.")
 

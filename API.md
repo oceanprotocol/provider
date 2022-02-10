@@ -81,6 +81,7 @@ Parameters
     serviceId: String, representing the list of `file` objects that describe each file in the dataset
     fileIndex: Optional, integer, the index of the file from the files list in the dataset. If set, provider will validate the file access.
     consumerAddress: String object containing publisher's ethereum address
+    environment:  Compute environment if asset service type is compute
 ```
 
 Returns:

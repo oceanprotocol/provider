@@ -9,9 +9,10 @@ import mimetypes
 import os
 from cgi import parse_header
 from urllib.parse import urljoin
-import werkzeug
+from datetime import datetime, timedelta
 
 import requests
+import werkzeug
 from jsonsempai import magic  # noqa: F401
 from artifacts import ERC721Template
 from eth_account.signers.local import LocalAccount
@@ -164,6 +165,10 @@ def get_compute_endpoint():
     return urljoin(get_config().operator_service_url, "api/v1/operator/compute")
 
 
+def get_compute_environments_endpoint():
+    return urljoin(get_config().operator_service_url, "api/v1/operator/environments")
+
+
 def get_compute_result_endpoint():
     return urljoin(get_config().operator_service_url, "api/v1/operator/getResult")
 
@@ -260,12 +265,9 @@ def process_compute_request(data):
     if did is not None:
         body["documentId"] = did
 
-    msg_to_sign = (
-        f"{provider_wallet.address}"
-        f'{body.get("jobId", "")}'
-        f'{body.get("documentId", "")}'
-    )  # noqa
-    body["providerSignature"] = sign_message(msg_to_sign, provider_wallet)
+    nonce, provider_signature = sign_for_compute(provider_wallet, owner, job_id)
+    body["providerSignature"] = provider_signature
+    body["nonce"] = nonce
 
     return body
 
@@ -307,3 +309,25 @@ def check_asset_consumable(asset, consumer_address, logger, custom_url=None):
     logger.error(message, exc_info=1)
 
     return False, message
+
+
+def check_environment_exists(envs, env_id):
+    """Checks if enironment with id exists in environments list."""
+    if not envs or not isinstance(envs, list):
+        return False
+
+    matching_envs = [env for env in envs if env["id"] == env_id]
+    return len(matching_envs) > 0
+
+
+def sign_for_compute(wallet, owner, job_id=None):
+    nonce = datetime.now().timestamp()
+
+    # prepare consumer signature on did
+    if job_id:
+        msg = f"{owner}{job_id}{nonce}"
+    else:
+        msg = f"{owner}{nonce}"
+    signature = sign_message(msg, wallet)
+
+    return nonce, signature
