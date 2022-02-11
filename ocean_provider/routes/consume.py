@@ -16,12 +16,13 @@ from ocean_provider.utils.basics import (
     get_web3,
 )
 from ocean_provider.utils.error_responses import error_response
-from ocean_provider.utils.provider_fees import get_provider_fees
+from ocean_provider.utils.provider_fees import get_provider_fees, get_c2d_environments
 from ocean_provider.utils.services import ServiceType
 from ocean_provider.utils.url import append_userdata, check_url_details
 from ocean_provider.utils.util import (
     build_download_response,
     check_asset_consumable,
+    check_environment_exists,
     get_compute_info,
     get_download_url,
     get_metadata_url,
@@ -162,6 +163,11 @@ def initialize():
             logger,
         )
 
+    if service.type == "compute" and not check_environment_exists(
+        get_c2d_environments(), compute_env
+    ):
+        return error_response("Compute environment does not exist", 400, logger)
+
     token_address = service.datatoken_address
 
     file_index = int(data.get("fileIndex", "-1"))
@@ -173,7 +179,6 @@ def initialize():
             return error_response(message, 400, logger)
         download_url = get_download_url(url_object)
         download_url = append_userdata(download_url, data)
-        # TOdO: remove config
         valid, url_details = check_url_details(download_url)
 
         if not valid:
@@ -269,7 +274,7 @@ def download():
     logger.info("validate_order called from download endpoint.")
 
     try:
-        _tx, _order_log = validate_order(
+        _tx, _order_log, _ = validate_order(
             get_web3(), consumer_address, tx_id, asset, service
         )
     except Exception:

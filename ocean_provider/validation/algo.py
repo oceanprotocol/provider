@@ -72,6 +72,7 @@ class WorkflowValidator:
         algo_data = self.data["algorithm"]
 
         self.validated_inputs = []
+        valid_until_list = []
 
         for index, input_item in enumerate(all_data):
             input_item["algorithm"] = algo_data
@@ -80,6 +81,7 @@ class WorkflowValidator:
                 self.consumer_address,
                 self.provider_wallet,
                 input_item,
+                {"environment": self.data.get("environment")},
                 index,
             )
 
@@ -90,10 +92,12 @@ class WorkflowValidator:
                 return False
 
             self.validated_inputs.append(input_item_validator.validated_inputs)
+            valid_until_list.append(input_item_validator.valid_until)
 
             if index == 0:
                 self.service_endpoint = input_item_validator.service.service_endpoint
 
+        self.valid_until = min(valid_until_list)
         status = self._build_and_validate_algo(algo_data)
         if not status:
             return False
@@ -159,7 +163,7 @@ class WorkflowValidator:
                     self.error = "Failed to retrieve purchased algorithm service id."
                     return False
                 logger.debug("validate_order called for ALGORITHM usage.")
-                _tx, _order_log = validate_order(
+                _tx, _order_log, _provider_fees_log = validate_order(
                     self.web3,
                     self.consumer_address,
                     algorithm_tx_id,
@@ -239,12 +243,15 @@ def validate_formatted_algorithm_dict(algorithm_dict, algorithm_did):
 
 
 class InputItemValidator:
-    def __init__(self, web3, consumer_address, provider_wallet, data, index):
+    def __init__(
+        self, web3, consumer_address, provider_wallet, data, extra_data, index
+    ):
         """Initializes the input item validator."""
         self.web3 = web3
         self.consumer_address = consumer_address
         self.provider_wallet = provider_wallet
         self.data = data
+        self.extra_data = extra_data
         self.index = index
 
     def validate(self):
@@ -408,10 +415,17 @@ class InputItemValidator:
         tx_id = self.data.get("transferTxId")
         token_address = self.service.datatoken_address
         logger.debug("Validating ASSET usage.")
+
         try:
-            _tx, _order_log = validate_order(
-                self.web3, self.consumer_address, tx_id, self.asset, self.service
+            _tx, _order_log, _provider_fees_log = validate_order(
+                self.web3,
+                self.consumer_address,
+                tx_id,
+                self.asset,
+                self.service,
+                self.extra_data,
             )
+            self.valid_until = _provider_fees_log.args.validUntil
             validate_transfer_not_used_for_other_service(
                 self.did, self.service.id, tx_id, self.consumer_address, token_address
             )
@@ -425,7 +439,9 @@ class InputItemValidator:
             )
         except Exception as e:
             logger.exception(f"validate_usage failed with {str(e)}.")
-            self.error = f"Order for serviceId {self.service.id} is not valid."
+            self.error = (
+                f"Order for serviceId {self.service.id} is not valid. {str(e)}."
+            )
             return False
 
         return True

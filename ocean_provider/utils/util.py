@@ -179,7 +179,7 @@ def get_compute_info():
         return None, None
 
 
-def validate_order(web3, sender, tx_id, asset, service):
+def validate_order(web3, sender, tx_id, asset, service, extra_data=None):
     did = asset.did
     token_address = service.datatoken_address
     num_tokens = 1
@@ -199,8 +199,8 @@ def validate_order(web3, sender, tx_id, asset, service):
         logger.debug(f"validate_order is on trial {i + 1} in {num_tries}.")
         i += 1
         try:
-            tx, order_event = verify_order_tx(
-                web3, token_address, tx_id, service, amount, sender
+            tx, order_event, provider_fees_event = verify_order_tx(
+                web3, token_address, tx_id, service, amount, sender, extra_data
             )
             logger.debug(
                 f"validate_order succeeded for: did={did}, service_id={service.id}, tx_id={tx_id}, "
@@ -208,7 +208,7 @@ def validate_order(web3, sender, tx_id, asset, service):
                 f"result is: tx={tx}, order_event={order_event}."
             )
 
-            return tx, order_event
+            return tx, order_event, provider_fees_event
         except ConnectionClosed:
             logger.debug("got ConnectionClosed error on validate_order.")
             if i == num_tries:

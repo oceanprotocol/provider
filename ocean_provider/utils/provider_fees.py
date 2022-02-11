@@ -34,9 +34,7 @@ def get_provider_fees(
     else:
         provider_fee_amount = 0
 
-    provider_data = json.dumps(
-        {"environment": compute_env, "validUntil": valid_until}, separators=(",", ":")
-    )
+    provider_data = json.dumps({"environment": compute_env}, separators=(",", ":"))
     provider_fee_address = provider_wallet.address
     provider_fee_token = os.environ.get(
         "PROVIDER_FEE_TOKEN", "0x0000000000000000000000000000000000000000"
