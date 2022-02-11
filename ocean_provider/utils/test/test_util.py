@@ -129,7 +129,7 @@ def test_download_ipfs_file():
     client = ipfshttpclient.connect("/dns/172.15.0.16/tcp/5001/http")
     cid = client.add("./tests/resources/ddo_sample_file.txt")["Hash"]
     url = f"ipfs://{cid}"
-    download_url = get_download_url(url, None)
+    download_url = get_download_url(url)
     requests_session = get_requests_session()
 
     request = Mock()

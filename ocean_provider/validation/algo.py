@@ -162,11 +162,7 @@ class WorkflowValidator:
                 self.algo_service = algo.get_service_by_index(algo_service_id)
 
                 if self.algo_service.type == "compute":
-                    asset_urls = get_asset_download_urls(
-                        algo,
-                        self.provider_wallet,
-                        config_file=app.config["PROVIDER_CONFIG_FILE"],
-                    )
+                    asset_urls = get_asset_download_urls(algo, self.provider_wallet)
 
                     if not asset_urls:
                         self.error = "Services in algorithm with compute type must be in the same provider you are calling."
@@ -306,11 +302,7 @@ class InputItemValidator:
             self.error = "Service for main asset must be compute."
             return False
 
-        asset_urls = get_asset_download_urls(
-            self.asset,
-            self.provider_wallet,
-            config_file=app.config["PROVIDER_CONFIG_FILE"],
-        )
+        asset_urls = get_asset_download_urls(self.asset, self.provider_wallet)
 
         if self.service.type == "compute" and not asset_urls:
             self.error = "Services in input with compute type must be in the same provider you are calling."

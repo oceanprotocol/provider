@@ -8,6 +8,7 @@ import logging
 import mimetypes
 import os
 from cgi import parse_header
+from urllib.parse import urljoin
 
 import requests
 from flask import Response
@@ -23,7 +24,6 @@ from ocean_provider.utils.currency import to_wei
 from ocean_provider.utils.datatoken import get_dt_contract, verify_order_tx
 from ocean_provider.utils.encryption import do_decrypt
 from ocean_provider.utils.url import is_safe_url
-from osmosis_driver_interface.osmosis import Osmosis
 from websockets import ConnectionClosed
 
 setup_logging()
@@ -181,20 +181,19 @@ def get_asset_urls(asset, wallet):
         raise
 
 
-def get_asset_download_urls(asset, wallet, config_file):
-    return [get_download_url(url, config_file) for url in get_asset_urls(asset, wallet)]
+def get_asset_download_urls(asset, wallet):
+    return [get_download_url(url) for url in get_asset_urls(asset, wallet)]
 
 
-def get_download_url(url, config_file):
-    try:
-        logger.info("Connecting through Osmosis to generate the signed url.")
-        osm = Osmosis(url, config_file)
-        download_url = osm.data_plugin.generate_url(url)
-        logger.debug(f"Osmosis generated the url: {download_url}")
-        return download_url
-    except Exception as e:
-        logger.error(f"Error generating url (using Osmosis): {str(e)}")
-        raise
+def get_download_url(url):
+    if not url.startswith("ipfs://"):
+        return url
+
+    ipfs_hash = url[7:]
+    if not os.getenv("IPFS_GATEWAY"):
+        raise Exception("No IPFS_GATEWAY defined, can not resolve ipfs hash.")
+
+    return urljoin(os.getenv("IPFS_GATEWAY"), urljoin("ipfs/", ipfs_hash))
 
 
 def get_compute_endpoint():

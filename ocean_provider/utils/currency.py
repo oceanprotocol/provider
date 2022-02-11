@@ -4,7 +4,7 @@ from web3.main import Web3
 
 DECIMALS_18 = 18
 ETHEREUM_DECIMAL_CONTEXT = Context(prec=78, rounding=ROUND_DOWN)
-MAX_UINT256 = 2 ** 256 - 1
+MAX_UINT256 = 2**256 - 1
 MAX_WEI = MAX_UINT256
 MIN_WEI = 1
 MAX_ETHER = Decimal(MAX_WEI).scaleb(-18, context=ETHEREUM_DECIMAL_CONTEXT)
