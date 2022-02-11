@@ -1,3 +1,4 @@
+from freezegun import freeze_time
 import pytest
 
 from ocean_provider.utils.currency import to_wei
@@ -13,6 +14,7 @@ from unittest.mock import patch
 
 
 @pytest.mark.unit
+@freeze_time("Feb 11th, 2012 00:00")
 def test_get_provider_fee_amount(web3, publisher_wallet):
     valid_until = get_future_valid_until()
     assert (
@@ -51,10 +53,10 @@ def test_get_provider_fee_amount(web3, publisher_wallet):
     )
 
     with patch("ocean_provider.utils.provider_fees.get_c2d_environments") as mock:
-        mock.return_value = [{"id": "ocean-compute", "priceMin": 2}]
+        mock.return_value = [{"id": "ocean-compute", "priceMin": 60}]
         assert (
             get_provider_fee_amount(
                 valid_until, "ocean-compute", web3, datatoken_address
             )
-            == 119900000000000000000
+            == 3600000000000000000000
         )
