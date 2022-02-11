@@ -85,7 +85,7 @@ def verify_order_tx(
             )
 
         valid_until = provider_fee_order_log.args.validUntil
-        if datetime.now().timestamp() > valid_until:
+        if datetime.now().timestamp() >= valid_until:
             raise AssertionError("Ordered c2d time was exceeded, check validUntil.")
 
     if Web3.toChecksumAddress(
