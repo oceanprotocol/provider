@@ -9,11 +9,9 @@ class ConfigSections:
     This class stores values for:
 
     - `RESOURCES`
-    - `OSMOSIS`
     """
 
     RESOURCES = "resources"
-    OSMOSIS = "osmosis"
 
 
 class BaseURLs:
