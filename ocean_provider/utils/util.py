@@ -304,12 +304,17 @@ def check_asset_consumable(asset, consumer_address, logger, custom_url=None):
 
 
 def check_environment_exists(envs, env_id):
-    """Checks if enironment with id exists in environments list."""
+    """Checks if environment with id exists in environments list."""
+    return bool(get_environment(envs, env_id))
+
+
+def get_environment(envs, env_id):
+    """Gets environment with id exists in environments list."""
     if not envs or not isinstance(envs, list):
         return False
 
     matching_envs = [env for env in envs if env["id"] == env_id]
-    return len(matching_envs) > 0
+    return matching_envs[0] if len(matching_envs) > 0 else None
 
 
 def sign_for_compute(wallet, owner, job_id=None):

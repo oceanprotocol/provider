@@ -1,3 +1,4 @@
+from datetime import datetime
 import json
 import logging
 import os
@@ -8,7 +9,7 @@ from eth_keys.backends import NativeECCBackend
 from ocean_provider.requests_session import get_requests_session
 from ocean_provider.utils.basics import LocalFileAdapter, get_provider_wallet, get_web3
 from ocean_provider.utils.services import Service
-from ocean_provider.utils.util import get_compute_environments_endpoint
+from ocean_provider.utils.util import get_compute_environments_endpoint, get_environment
 
 logger = logging.getLogger(__name__)
 keys = KeyAPI(NativeECCBackend)
@@ -25,9 +26,16 @@ def get_provider_fees(
 ) -> Dict[str, Any]:
     web3 = get_web3()
     provider_wallet = get_provider_wallet()
-    provider_fee_amount = 0
+
+    if compute_env:
+        seconds = (datetime.fromtimestamp(valid_until) - datetime.now()).seconds
+        env = get_environment(get_c2d_environments(), compute_env)
+        provider_fee_amount = seconds * env["priceMin"]
+    else:
+        provider_fee_amount = 0
+
     provider_data = json.dumps(
-        {"environment": compute_env, "timeout": 0}, separators=(",", ":")
+        {"environment": compute_env, "validUntil": valid_until}, separators=(",", ":")
     )
     provider_fee_address = provider_wallet.address
     provider_fee_token = os.environ.get(
