@@ -28,9 +28,9 @@ def get_provider_fees(
     provider_wallet = get_provider_wallet()
 
     if compute_env:
-        seconds = (datetime.fromtimestamp(valid_until) - datetime.now()).seconds
+        minutes = (datetime.fromtimestamp(valid_until) - datetime.now()).minutes
         env = get_environment(get_c2d_environments(), compute_env)
-        provider_fee_amount = seconds * env["priceMin"]
+        provider_fee_amount = minutes * env["priceMin"]
     else:
         provider_fee_amount = 0
 
