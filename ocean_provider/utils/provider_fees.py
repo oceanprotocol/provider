@@ -76,21 +76,18 @@ def get_provider_fees(
 
 def get_c2d_environments() -> List:
     standard_headers = {"Content-type": "application/json", "Connection": "close"}
-    try:
-        response = requests_session.get(
-            get_compute_environments_endpoint(), headers=standard_headers
+    response = requests_session.get(
+        get_compute_environments_endpoint(), headers=standard_headers
+    )
+
+    # loop envs and add provider token from config
+    envs = response.json()
+    for env in envs:
+        env["feeToken"] = os.getenv(
+            "PROVIDER_FEE_TOKEN", "0x0000000000000000000000000000000000000000"
         )
 
-        # loop envs and add provider token from config
-        envs = response.json()
-        for env in envs:
-            env["feeToken"] = os.getenv(
-                "PROVIDER_FEE_TOKEN", "0x0000000000000000000000000000000000000000"
-            )
-
-        return envs
-    except Exception:
-        return []
+    return envs
 
 
 def get_provider_fee_amount(valid_until, compute_env, web3, provider_fee_token):
