@@ -8,6 +8,8 @@ from eth_keys import KeyAPI
 from eth_keys.backends import NativeECCBackend
 from ocean_provider.requests_session import get_requests_session
 from ocean_provider.utils.basics import LocalFileAdapter, get_provider_wallet, get_web3
+from ocean_provider.utils.currency import to_wei
+from ocean_provider.utils.datatoken import get_datatoken_contract
 from ocean_provider.utils.services import Service
 from ocean_provider.utils.util import get_compute_environments_endpoint, get_environment
 
@@ -26,19 +28,19 @@ def get_provider_fees(
 ) -> Dict[str, Any]:
     web3 = get_web3()
     provider_wallet = get_provider_wallet()
-
-    if compute_env:
-        minutes = (datetime.fromtimestamp(valid_until) - datetime.now()).minutes
-        env = get_environment(get_c2d_environments(), compute_env)
-        provider_fee_amount = minutes * env["priceMin"]
-    else:
-        provider_fee_amount = 0
-
-    provider_data = json.dumps({"environment": compute_env}, separators=(",", ":"))
     provider_fee_address = provider_wallet.address
     provider_fee_token = os.environ.get(
         "PROVIDER_FEE_TOKEN", "0x0000000000000000000000000000000000000000"
     )
+
+    if compute_env:
+        provider_fee_amount = get_provider_fee_amount(
+            valid_until, compute_env, web3, provider_fee_token
+        )
+    else:
+        provider_fee_amount = 0
+
+    provider_data = json.dumps({"environment": compute_env}, separators=(",", ":"))
     message_hash = web3.solidityKeccak(
         ["bytes", "address", "address", "uint256", "uint256"],
         [
@@ -89,3 +91,18 @@ def get_c2d_environments() -> List:
         return envs
     except Exception:
         return []
+
+
+def get_provider_fee_amount(valid_until, compute_env, web3, provider_fee_token):
+    seconds = (datetime.fromtimestamp(valid_until) - datetime.now()).seconds
+    env = get_environment(get_c2d_environments(), compute_env)
+
+    if provider_fee_token == "0x0000000000000000000000000000000000000000":
+        return 0
+
+    provider_fee_amount = float(seconds / 60 * env["priceMin"])
+
+    dt = get_datatoken_contract(web3, provider_fee_token)
+    decimals = dt.caller.decimals()
+
+    return to_wei(str(provider_fee_amount), decimals)
