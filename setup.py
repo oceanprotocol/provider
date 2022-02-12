@@ -50,6 +50,7 @@ test_requirements = [
     "codacy-coverage",
     "coverage",
     "docker",
+    "freezegun==1.1.0",
     "mccabe",
     "pylint",
     "pytest",

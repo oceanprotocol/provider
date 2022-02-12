@@ -179,7 +179,7 @@ def get_compute_info():
         return None, None
 
 
-def validate_order(web3, sender, tx_id, asset, service):
+def validate_order(web3, sender, tx_id, asset, service, extra_data=None):
     did = asset.did
     token_address = service.datatoken_address
     num_tokens = 1
@@ -199,8 +199,8 @@ def validate_order(web3, sender, tx_id, asset, service):
         logger.debug(f"validate_order is on trial {i + 1} in {num_tries}.")
         i += 1
         try:
-            tx, order_event = verify_order_tx(
-                web3, token_address, tx_id, service, amount, sender
+            tx, order_event, provider_fees_event = verify_order_tx(
+                web3, token_address, tx_id, service, amount, sender, extra_data
             )
             logger.debug(
                 f"validate_order succeeded for: did={did}, service_id={service.id}, tx_id={tx_id}, "
@@ -208,7 +208,7 @@ def validate_order(web3, sender, tx_id, asset, service):
                 f"result is: tx={tx}, order_event={order_event}."
             )
 
-            return tx, order_event
+            return tx, order_event, provider_fees_event
         except ConnectionClosed:
             logger.debug("got ConnectionClosed error on validate_order.")
             if i == num_tries:
@@ -304,12 +304,17 @@ def check_asset_consumable(asset, consumer_address, logger, custom_url=None):
 
 
 def check_environment_exists(envs, env_id):
-    """Checks if enironment with id exists in environments list."""
+    """Checks if environment with id exists in environments list."""
+    return bool(get_environment(envs, env_id))
+
+
+def get_environment(envs, env_id):
+    """Gets environment with id exists in environments list."""
     if not envs or not isinstance(envs, list):
         return False
 
     matching_envs = [env for env in envs if env["id"] == env_id]
-    return len(matching_envs) > 0
+    return matching_envs[0] if len(matching_envs) > 0 else None
 
 
 def sign_for_compute(wallet, owner, job_id=None):

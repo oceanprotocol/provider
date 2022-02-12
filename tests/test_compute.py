@@ -331,7 +331,10 @@ def test_compute_allow_all_published(client, publisher_wallet, consumer_wallet):
     assert (
         response.status == "400 BAD REQUEST"
     ), f"start compute job failed: {response.status} , {response.data}"
-    assert "Compute environment does not exist" in response.json["error"]
+    assert (
+        "Mismatch between ordered c2d environment and selected one"
+        in response.json["error"]
+    )
 
     # Start on the correct environment
     payload["environment"] = environments[0]["id"]

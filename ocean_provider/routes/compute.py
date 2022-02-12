@@ -2,6 +2,7 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
+from datetime import datetime
 import json
 import logging
 
@@ -9,13 +10,11 @@ from flask import Response, jsonify, request
 from flask_sieve import validate
 from ocean_provider.requests_session import get_requests_session
 from ocean_provider.user_nonce import update_nonce
-from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.basics import LocalFileAdapter, get_provider_wallet, get_web3
 from ocean_provider.utils.error_responses import error_response
 from ocean_provider.utils.provider_fees import get_c2d_environments
 from ocean_provider.utils.util import (
     build_download_response,
-    check_environment_exists,
     get_compute_endpoint,
     get_compute_result_endpoint,
     get_request_data,
@@ -285,9 +284,7 @@ def computeStart():
     tx_id = data.get("transferTxId")
     did = data.get("documentId")
     compute_env = data.get("environment")
-
-    if not check_environment_exists(get_c2d_environments(), compute_env):
-        return error_response("Compute environment does not exist", 400, logger)
+    seconds = (datetime.fromtimestamp(validator.valid_until) - datetime.now()).seconds
 
     nonce, provider_signature = sign_for_compute(provider_wallet, consumer_address)
     payload = {
@@ -298,6 +295,7 @@ def computeStart():
         "owner": consumer_address,
         "providerAddress": provider_wallet.address,
         "environment": compute_env,
+        "maxDuration": seconds,
         "nonce": nonce,
     }
 

@@ -10,12 +10,20 @@ from ocean_provider.utils.asset import Asset
 from ocean_provider.utils.services import ServiceType, Service
 from ocean_provider.validation.algo import WorkflowValidator
 from tests.ddo.ddo_sample1_compute import ddo_dict, alg_ddo_dict
+from tests.helpers.compute_helpers import get_future_valid_until
 from tests.test_helpers import get_first_service_by_type
+
+provider_fees_event = Mock()
+provider_fees_event.args.providerData = {"environment": "ocean-compute"}
+provider_fees_event.args.validUntil = get_future_valid_until()
 
 
 @pytest.mark.unit
 @patch("ocean_provider.validation.algo.check_asset_consumable", return_value=(True, ""))
-@patch("ocean_provider.validation.algo.validate_order", return_value=(None, None))
+@patch(
+    "ocean_provider.validation.algo.validate_order",
+    return_value=(None, None, provider_fees_event),
+)
 @patch(
     "ocean_provider.validation.algo.get_service_files_list",
     return_value=[{"url": "dummy"}],
@@ -57,7 +65,10 @@ def test_passes_algo_ddo(provider_wallet, consumer_address, web3):
 
 @pytest.mark.unit
 @patch("ocean_provider.validation.algo.check_asset_consumable", return_value=(True, ""))
-@patch("ocean_provider.validation.algo.validate_order", return_value=(None, None))
+@patch(
+    "ocean_provider.validation.algo.validate_order",
+    return_value=(None, None, provider_fees_event),
+)
 @patch(
     "ocean_provider.validation.algo.get_service_files_list",
     return_value=[{"url": "dummy"}],
@@ -92,7 +103,10 @@ def test_passes_raw(provider_wallet, consumer_address, web3):
 
 @pytest.mark.unit
 @patch("ocean_provider.validation.algo.check_asset_consumable", return_value=(True, ""))
-@patch("ocean_provider.validation.algo.validate_order", return_value=(None, None))
+@patch(
+    "ocean_provider.validation.algo.validate_order",
+    return_value=(None, None, provider_fees_event),
+)
 @patch(
     "ocean_provider.validation.algo.get_service_files_list",
     return_value=[{"url": "dummy"}],
@@ -138,7 +152,10 @@ def test_fails_not_an_algo(provider_wallet, consumer_address, web3):
 
 @pytest.mark.unit
 @patch("ocean_provider.validation.algo.check_asset_consumable", return_value=(True, ""))
-@patch("ocean_provider.validation.algo.validate_order", return_value=(None, None))
+@patch(
+    "ocean_provider.validation.algo.validate_order",
+    return_value=(None, None, provider_fees_event),
+)
 @patch(
     "ocean_provider.validation.algo.get_service_files_list",
     return_value=[{"url": "dummy"}],
@@ -229,7 +246,10 @@ def test_fails_meta_issues(provider_wallet, consumer_address, web3):
 
 @pytest.mark.unit
 @patch("ocean_provider.validation.algo.check_asset_consumable", return_value=(True, ""))
-@patch("ocean_provider.validation.algo.validate_order", return_value=(None, None))
+@patch(
+    "ocean_provider.validation.algo.validate_order",
+    return_value=(None, None, provider_fees_event),
+)
 @patch(
     "ocean_provider.validation.algo.get_service_files_list",
     return_value=[{"url": "dummy"}],
@@ -381,7 +401,10 @@ def test_additional_datasets(provider_wallet, consumer_address, web3):
 
 @pytest.mark.unit
 @patch("ocean_provider.validation.algo.check_asset_consumable", return_value=(True, ""))
-@patch("ocean_provider.validation.algo.validate_order", return_value=(None, None))
+@patch(
+    "ocean_provider.validation.algo.validate_order",
+    return_value=(None, None, provider_fees_event),
+)
 @patch(
     "ocean_provider.validation.algo.get_service_files_list",
     return_value=[{"url": "dummy"}],
@@ -438,7 +461,10 @@ def test_service_not_compute(provider_wallet, consumer_address, web3):
 
 @pytest.mark.unit
 @patch("ocean_provider.validation.algo.check_asset_consumable", return_value=(True, ""))
-@patch("ocean_provider.validation.algo.validate_order", return_value=(None, None))
+@patch(
+    "ocean_provider.validation.algo.validate_order",
+    return_value=(None, None, provider_fees_event),
+)
 @patch(
     "ocean_provider.validation.algo.get_service_files_list",
     return_value=[{"url": "dummy"}],
@@ -543,7 +569,10 @@ def test_fails_trusted(provider_wallet, consumer_address, web3):
 
 @pytest.mark.unit
 @patch("ocean_provider.validation.algo.check_asset_consumable", return_value=(True, ""))
-@patch("ocean_provider.validation.algo.validate_order", return_value=(None, None))
+@patch(
+    "ocean_provider.validation.algo.validate_order",
+    return_value=(None, None, provider_fees_event),
+)
 @patch(
     "ocean_provider.validation.algo.get_service_files_list",
     return_value=None,
@@ -601,12 +630,15 @@ def test_fails_validate_order(provider_wallet, consumer_address, web3):
     ):
         validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
         assert validator.validate() is False
-        assert validator.error == f"Order for serviceId {sa.id} is not valid."
+        assert validator.error == f"Order for serviceId {sa.id} is not valid. mock."
 
 
 @pytest.mark.unit
 @patch("ocean_provider.validation.algo.check_asset_consumable", return_value=(True, ""))
-@patch("ocean_provider.validation.algo.validate_order", return_value=(None, None))
+@patch(
+    "ocean_provider.validation.algo.validate_order",
+    return_value=(None, None, provider_fees_event),
+)
 @patch(
     "ocean_provider.validation.algo.get_service_files_list",
     return_value=[{"url": "dummy"}],
@@ -636,7 +668,10 @@ def test_fails_no_service_id(provider_wallet, consumer_address, web3):
 
 @pytest.mark.unit
 @patch("ocean_provider.validation.algo.check_asset_consumable", return_value=(True, ""))
-@patch("ocean_provider.validation.algo.validate_order", return_value=(None, None))
+@patch(
+    "ocean_provider.validation.algo.validate_order",
+    return_value=(None, None, provider_fees_event),
+)
 @patch(
     "ocean_provider.validation.algo.get_service_files_list",
     return_value=[{"url": "dummy"}],
@@ -682,7 +717,10 @@ def test_fails_invalid_algorithm_dict(provider_wallet, consumer_address, web3):
 
 @pytest.mark.unit
 @patch("ocean_provider.validation.algo.check_asset_consumable", return_value=(True, ""))
-@patch("ocean_provider.validation.algo.validate_order", return_value=(None, None))
+@patch(
+    "ocean_provider.validation.algo.validate_order",
+    return_value=(None, None, provider_fees_event),
+)
 @patch(
     "ocean_provider.validation.algo.get_service_files_list",
     return_value=[{"url": "dummy"}],
@@ -738,7 +776,10 @@ def test_fails_algorithm_in_use(provider_wallet, consumer_address, web3):
 
 @pytest.mark.unit
 @patch("ocean_provider.validation.algo.check_asset_consumable", return_value=(True, ""))
-@patch("ocean_provider.validation.algo.validate_order", return_value=(None, None))
+@patch(
+    "ocean_provider.validation.algo.validate_order",
+    return_value=(None, None, provider_fees_event),
+)
 @patch(
     "ocean_provider.validation.algo.get_service_files_list",
     return_value=[{"url": "dummy"}],
@@ -795,7 +836,10 @@ def test_fail_wrong_algo_type(provider_wallet, consumer_address, web3):
 
 @pytest.mark.unit
 @patch("ocean_provider.validation.algo.check_asset_consumable", return_value=(True, ""))
-@patch("ocean_provider.validation.algo.validate_order", return_value=(None, None))
+@patch(
+    "ocean_provider.validation.algo.validate_order",
+    return_value=(None, None, provider_fees_event),
+)
 @patch(
     "ocean_provider.validation.algo.get_service_files_list",
     return_value=[{"url": "dummy"}],
@@ -841,7 +885,10 @@ def test_fail_allow_raw_false(provider_wallet, consumer_address, web3):
 
 @pytest.mark.unit
 @patch("ocean_provider.validation.algo.check_asset_consumable", return_value=(True, ""))
-@patch("ocean_provider.validation.algo.validate_order", return_value=(None, None))
+@patch(
+    "ocean_provider.validation.algo.validate_order",
+    return_value=(None, None, provider_fees_event),
+)
 def test_success_multiple_services_types(provider_wallet, consumer_address, web3):
     ddo = Asset(ddo_dict)
     alg_ddo = Asset(alg_ddo_dict)
@@ -899,7 +946,10 @@ def test_success_multiple_services_types(provider_wallet, consumer_address, web3
 
 @pytest.mark.unit
 @patch("ocean_provider.validation.algo.check_asset_consumable", return_value=(True, ""))
-@patch("ocean_provider.validation.algo.validate_order", return_value=(None, None))
+@patch(
+    "ocean_provider.validation.algo.validate_order",
+    return_value=(None, None, provider_fees_event),
+)
 def test_fail_missing_algo_meta_documentId(provider_wallet, consumer_address, web3):
     ddo = Asset(ddo_dict)
     alg_ddo = Asset(alg_ddo_dict)

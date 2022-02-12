@@ -1,3 +1,4 @@
+import json
 import logging
 from datetime import datetime
 from typing import Optional
@@ -42,6 +43,7 @@ def verify_order_tx(
     service: Service,
     amount: int,
     sender: HexAddress,
+    extra_data: None,
 ):
     provider_wallet = get_provider_wallet()
     try:
@@ -74,6 +76,17 @@ def verify_order_tx(
         raise AssertionError(
             f"Multiple order events in the same transaction !!! {provider_fee_order_log}"
         )
+
+    if extra_data:
+        provider_data = json.loads(provider_fee_order_log.args.providerData)
+        if extra_data["environment"] != provider_data["environment"]:
+            raise AssertionError(
+                "Mismatch between ordered c2d environment and selected one."
+            )
+
+        valid_until = provider_fee_order_log.args.validUntil
+        if datetime.now().timestamp() >= valid_until:
+            raise AssertionError("Ordered c2d time was exceeded, check validUntil.")
 
     if Web3.toChecksumAddress(
         provider_fee_order_log.args.providerFeeAddress
@@ -170,4 +183,4 @@ def verify_order_tx(
 
     tx = web3.eth.get_transaction(HexBytes(tx_id))
 
-    return tx, order_log
+    return tx, order_log, provider_fee_order_log
