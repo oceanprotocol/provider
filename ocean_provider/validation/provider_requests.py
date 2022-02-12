@@ -287,7 +287,7 @@ class DownloadRequest(CustomJsonRequest):
 
 class InitializeRequest(CustomJsonRequest):
     def rules(self):
-        timestamp_now = int(datetime.now().timestamp())
+        timestamp_now = int(datetime.utcnow().timestamp())
 
         return {
             "documentId": ["required"],

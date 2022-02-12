@@ -104,7 +104,7 @@ def test_access_request_payload(
         "fileIndex": 0,
     }
 
-    nonce = str(datetime.now().timestamp())
+    nonce = str(datetime.utcnow().timestamp())
     _msg = f"{asset.did}{nonce}"
     req["signature"] = sign_message(_msg, consumer_wallet)
     req["nonce"] = nonce

@@ -244,7 +244,7 @@ def test_compute(client, publisher_wallet, consumer_wallet):
         "jobId": job_id,
     }
 
-    payload["nonce"] = str(datetime.now().timestamp())
+    payload["nonce"] = str(datetime.utcnow().timestamp())
     result_without_signature = get_compute_result(
         client, BaseURLs.SERVICES_URL + "/computeResult", payload, raw_response=True
     )
