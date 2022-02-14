@@ -145,7 +145,16 @@ Response:
 {
     "datatoken": "0x21fa3ea32892091...",
     "nonce": 23,
-    "providerFee": 200,
+    "providerFee": {
+        "providerFeeAddress": "0xabc123...",
+        "providerFeeToken": "0xabc123...",
+        "providerFeeAmount": "200",
+        "providerData": "0xabc123...",
+        "v": 27,
+        "r": "0xabc123...",
+        "s": "0xabc123...",
+        "validUntil": 123456,
+    }
     "computeAddress": "0x8123jdf8sdsa..."
 }
 ```
@@ -241,8 +250,8 @@ Each status object will contain:
     owner:The owner of this compute job
     documentId: String object containing document id (e.g. a DID)
     jobId: String object containing workflowId
-    dateCreated:Unix timestamp of job creation
-    dateFinished:Unix timestamp when job finished
+    dateCreated: Unix timestamp of job creation
+    dateFinished: Unix timestamp when job finished (null if job not finished)
     status:  Int, see below for list
     statusText: String, see below
     algorithmLogUrl: URL to get the algo log (for user)
@@ -252,32 +261,18 @@ Each status object will contain:
 
 Status description (`statusText`): (see Operator-Service for full status list)
 
-| status   | Description               |
-|----------|---------------------------|
-|  1       | Job started               |
-|  2       | Configuring volumes       |
-|  3       | Running algorithm         |
-|  4       | Filtering results         |
-|  5       | Publishing results        |
-|  6       | Job completed             |
-|  7       | Job stopped               |
-|  8       | Job deleted successfully  |
-
-
-The `output` section required in creating a new compute job looks like this:
-```json
-{
-    "nodeUri": "https://node.oceanprotocol.com",
-    "providerUri": "https://provider-service..oceanprotocol.com",
-    "providerAddress": "0x01011010101101010993433",
-    "metadata": {"name": "Workflow output"},
-    "metadataUri": "https://aquarius-service.oceanprotocol.com",
-    "owner": "0x24f432aab0e22",
-    "publishOutput": 1,
-    "publishAlgorithmLog": 1
-}
-```
-
+| status    | Description                   |
+|-----------|-------------------------------|
+|  1        | Warming up                    |
+|  10       | Job started                   |
+|  20       | Configuring volumes           |
+|  30       | Provisioning success          |
+|  31       | Data provisioning failed      |
+|  32       | Algorithm provisioning failed |
+|  40       | Running algorith              |
+|  50       | Filtering results             |
+|  60       | Publishing results            |
+|  70       | Job completed                 |
 
 ## Create new job or restart an existing stopped job
 
@@ -290,14 +285,21 @@ Parameters
     signature: String object containg user signature (signed message) (required)
     consumerAddress: String object containing consumer's ethereum address (required)
     nonce: Integer, Nonce (required)
+    environment: String representing a compute environment offered by the provider 
     dataset: Json object containing dataset information
         dataset.documentId: String, object containing document id (e.g. a DID) (required)
         dataset.serviceId: String, ID of the service the datatoken is attached to (required)
         dataset.transferTxId: Hex string, the id of on-chain transaction for approval of datatokens transfer
             given to the provider's account (required)
+        dataset.userdata: Json, user-defined parameters passed to the dataset service (optional)
     algorithm: Json object, containing algorithm information
         algorithm.documentId: Hex string, the did of the algorithm to be executed (optional)
         algorithm.meta: Json object, defines the algorithm attributes and url or raw code (optional)
+        algorithm.serviceId: String, ID of the service to use to process the algorithm (optional)
+        algorithm.transferTxId: Hex string, the id of on-chain transaction of the order to use the algorithm (optional)
+        algorithm.userdata: Json, user-defined parameters passed to the algorithm running service (optional)
+        algorithm.algocustomdata: Json object, algorithm custom parameters (optional)
+    additionalDatasets: Json object containing a list of dataset objects (optional)
 
     One of `algorithm.documentId` or `algorithm.meta` is required, `algorithm.meta` takes precedence
 ```
@@ -308,7 +310,19 @@ Array of `status` objects as described above, in this case the array will have o
 
 Example:
 ```
-POST /api/compute?signature=0x00110011&documentId=did:op:1111&algorithmDid=0xa203e320008999099000&consumerAddress=0x990922334
+POST /api/compute
+payload:
+{
+    "signature": "0x00110011",
+    "consumerAddress": "0x123abc",
+    "nonce": 1,
+    "environment": "env",
+    "dataset": {
+        "documentId": "did:op:2222...",
+        "serviceId": "compute",
+        "transferTxId": "0x0232123..."
+    }
+}
 ```
 
 Response:
