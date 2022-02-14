@@ -166,6 +166,7 @@ def initialize():
             )
 
         timestamp_ok = validate_timestamp(valid_until)
+        valid_until = int(valid_until)
 
         if not timestamp_ok:
             return error_response(
