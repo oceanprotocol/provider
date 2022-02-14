@@ -108,7 +108,7 @@ def build_and_send_ddo_with_compute_service(
 
 
 def get_compute_signature(client, consumer_wallet, did, job_id=None):
-    nonce = datetime.now().timestamp()
+    nonce = datetime.utcnow().timestamp()
 
     # prepare consumer signature on did
     if job_id:
@@ -179,4 +179,4 @@ def get_compute_result(client, endpoint, params, raw_response=False):
 
 def get_future_valid_until():
     # return a timestamp for one hour in the future
-    return int((datetime.now() + timedelta(hours=1)).timestamp())
+    return int((datetime.utcnow() + timedelta(hours=1)).timestamp())

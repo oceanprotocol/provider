@@ -91,7 +91,7 @@ def get_c2d_environments() -> List:
 
 
 def get_provider_fee_amount(valid_until, compute_env, web3, provider_fee_token):
-    seconds = (datetime.fromtimestamp(valid_until) - datetime.now()).seconds
+    seconds = (datetime.fromtimestamp(valid_until) - datetime.utcnow()).seconds
     env = get_environment(get_c2d_environments(), compute_env)
 
     if provider_fee_token == "0x0000000000000000000000000000000000000000":

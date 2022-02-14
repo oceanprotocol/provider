@@ -328,7 +328,7 @@ def decrypt_ddo_using_transaction_id(
     set_metadata_tx_id: HexStr,
     chain_id: int,
 ):
-    nonce = str(datetime.now().timestamp())
+    nonce = str(datetime.utcnow().timestamp())
     message_to_be_signed = (
         f"{set_metadata_tx_id}{decrypter_wallet.address}{chain_id}{nonce}"
     )
@@ -354,7 +354,7 @@ def decrypt_ddo_using_decrypt_args(
     flags: int,
     ddo_hash_hexstr: HexStr,
 ):
-    nonce = str(datetime.now().timestamp())
+    nonce = str(datetime.utcnow().timestamp())
     message_to_be_signed = (
         f"{data_nft_address}{decrypter_wallet.address}{chain_id}{nonce}"
     )

@@ -70,7 +70,7 @@ def test_encrypt_endpoint(client, provider_wallet, publisher_wallet):
     asset = get_registered_asset(publisher_wallet)
     files_list_str = '["https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt"]'
 
-    nonce = datetime.now().timestamp()
+    nonce = datetime.utcnow().timestamp()
     msg = f"{asset.did}{nonce}"
     signature = sign_message(msg, provider_wallet)
 
@@ -93,7 +93,7 @@ def test_encrypt_endpoint(client, provider_wallet, publisher_wallet):
 def test_get_nonce(client, publisher_wallet):
     address = publisher_wallet.address
     # Ensure address exists in database
-    update_nonce(address, datetime.now().timestamp())
+    update_nonce(address, datetime.utcnow().timestamp())
 
     endpoint = BaseURLs.SERVICES_URL + "/nonce"
     response = client.get(
