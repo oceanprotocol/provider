@@ -140,8 +140,8 @@ def send_ether(web3, from_wallet: Account, to_address: str, amount: int):
 def validate_timestamp(value):
     try:
         valid_until = datetime.fromtimestamp(value)
-        timestamp_now = int(datetime.utcnow().timestamp())
+        now = datetime.utcnow()
 
-        return valid_until > timestamp_now
+        return valid_until > now
     except Exception:
         return False

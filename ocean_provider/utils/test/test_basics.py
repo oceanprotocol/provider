@@ -2,12 +2,14 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
+from datetime import datetime, timedelta
 import pytest
 
 from ocean_provider.utils.basics import (
     get_web3,
     get_web3_connection_provider,
     send_ether,
+    validate_timestamp,
 )
 from ocean_provider.utils.currency import to_wei
 
@@ -36,3 +38,14 @@ def test_send_ether(publisher_wallet, consumer_address):
     assert send_ether(
         get_web3(), publisher_wallet, consumer_address, to_wei(1)
     ), "Send ether was unsuccessful."
+
+
+@pytest.mark.unit
+def test_validate_timestamp():
+    timestamp_future = int((datetime.utcnow() + timedelta(hours=1)).timestamp())
+    assert validate_timestamp(timestamp_future)
+    assert validate_timestamp(1644831664000) is False
+    assert validate_timestamp(str(timestamp_future)) is False
+
+    timestamp_past = (datetime.utcnow() - timedelta(hours=1)).timestamp()
+    assert validate_timestamp(timestamp_past) is False
