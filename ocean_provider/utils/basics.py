@@ -2,6 +2,7 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
+from datetime import datetime
 import os
 from pathlib import Path
 from typing import Optional, Union
@@ -134,3 +135,13 @@ def send_ether(web3, from_wallet: Account, to_address: str, amount: int):
     tx_hash = web3.eth.send_raw_transaction(raw_tx)
 
     return web3.eth.wait_for_transaction_receipt(HexBytes(tx_hash), timeout=120)
+
+
+def validate_timestamp(value):
+    try:
+        valid_until = datetime.fromtimestamp(value)
+        timestamp_now = int(datetime.utcnow().timestamp())
+
+        return valid_until > timestamp_now
+    except Exception:
+        return False
