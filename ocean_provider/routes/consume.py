@@ -147,7 +147,7 @@ def initialize():
     did = data.get("documentId")
     consumer_address = data.get("consumerAddress")
     compute_env = data.get("environment")
-    valid_until = int(data.get("validUntil", 0))
+    valid_until = data.get("validUntil", 0)
 
     asset = get_asset_from_metadatastore(get_metadata_url(), did)
     consumable, message = check_asset_consumable(asset, consumer_address, logger)
@@ -166,6 +166,7 @@ def initialize():
             )
 
         timestamp_ok = validate_timestamp(valid_until)
+        valid_until = int(valid_until)
 
         if not timestamp_ok:
             return error_response(

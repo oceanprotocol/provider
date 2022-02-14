@@ -45,7 +45,7 @@ def test_validate_timestamp():
     timestamp_future = int((datetime.utcnow() + timedelta(hours=1)).timestamp())
     assert validate_timestamp(timestamp_future)
     assert validate_timestamp(1644831664000) is False
-    assert validate_timestamp(str(timestamp_future)) is False
+    assert validate_timestamp(str(timestamp_future))
 
     timestamp_past = (datetime.utcnow() - timedelta(hours=1)).timestamp()
     assert validate_timestamp(timestamp_past) is False
