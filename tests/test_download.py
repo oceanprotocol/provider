@@ -67,7 +67,7 @@ def test_download_service(
     assert response.status_code == 400, f"{response.data}"
 
     # Consume using url index and signature (with nonce)
-    nonce = str(datetime.now().timestamp())
+    nonce = str(datetime.utcnow().timestamp())
     _msg = f"{asset.did}{nonce}"
     payload["signature"] = sign_message(_msg, consumer_wallet)
     payload["nonce"] = nonce
@@ -75,7 +75,7 @@ def test_download_service(
     assert response.status_code == 200, f"{response.data}"
 
     if not userdata and not erc20_enterprise:
-        nonce = str(datetime.now().timestamp())
+        nonce = str(datetime.utcnow().timestamp())
         _msg = f"{asset.did}{nonce}"
         payload["signature"] = sign_message(_msg, consumer_wallet)
         payload["nonce"] = nonce
@@ -183,7 +183,7 @@ def test_download_multiple_files(client, publisher_wallet, consumer_wallet, web3
         consumer_wallet,
     )
 
-    nonce = str(datetime.now().timestamp())
+    nonce = str(datetime.utcnow().timestamp())
     _msg = f"{asset.did}{nonce}"
 
     # Consume using url index and auth token
@@ -201,7 +201,7 @@ def test_download_multiple_files(client, publisher_wallet, consumer_wallet, web3
     response = client.get(download_endpoint, query_string=payload)
     assert response.status_code == 200, f"{response.data}"
 
-    nonce = str(datetime.now().timestamp())
+    nonce = str(datetime.utcnow().timestamp())
     _msg = f"{asset.did}{nonce}"
     payload["signature"] = sign_message(_msg, consumer_wallet)
     payload["fileIndex"] = 1
@@ -210,7 +210,7 @@ def test_download_multiple_files(client, publisher_wallet, consumer_wallet, web3
     response = client.get(download_endpoint, query_string=payload)
     assert response.status_code == 200, f"{response.data}"
 
-    nonce = str(datetime.now().timestamp())
+    nonce = str(datetime.utcnow().timestamp())
     _msg = f"{asset.did}{nonce}"
     payload["signature"] = sign_message(_msg, consumer_wallet)
     payload["fileIndex"] = 2

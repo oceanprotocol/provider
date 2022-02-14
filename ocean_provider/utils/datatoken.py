@@ -85,7 +85,7 @@ def verify_order_tx(
             )
 
         valid_until = provider_fee_order_log.args.validUntil
-        if datetime.now().timestamp() >= valid_until:
+        if datetime.utcnow().timestamp() >= valid_until:
             raise AssertionError("Ordered c2d time was exceeded, check validUntil.")
 
     if Web3.toChecksumAddress(
@@ -127,7 +127,7 @@ def verify_order_tx(
 
     # check duration
     if provider_fee_order_log.args.validUntil > 0:
-        timestamp_now = datetime.now().timestamp()
+        timestamp_now = datetime.utcnow().timestamp()
         if provider_fee_order_log.args.validUntil < timestamp_now:
             raise AssertionError(
                 f"Validity in transaction exceeds current UTC timestamp"

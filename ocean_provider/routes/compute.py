@@ -284,7 +284,9 @@ def computeStart():
     tx_id = data.get("transferTxId")
     did = data.get("documentId")
     compute_env = data.get("environment")
-    seconds = (datetime.fromtimestamp(validator.valid_until) - datetime.now()).seconds
+    seconds = (
+        datetime.fromtimestamp(validator.valid_until) - datetime.utcnow()
+    ).seconds
 
     nonce, provider_signature = sign_for_compute(provider_wallet, consumer_address)
     payload = {

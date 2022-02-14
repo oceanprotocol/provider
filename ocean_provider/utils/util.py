@@ -318,7 +318,7 @@ def get_environment(envs, env_id):
 
 
 def sign_for_compute(wallet, owner, job_id=None):
-    nonce = datetime.now().timestamp()
+    nonce = datetime.utcnow().timestamp()
 
     # prepare consumer signature on did
     if job_id:

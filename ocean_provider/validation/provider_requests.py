@@ -38,6 +38,7 @@ class CustomJsonRequest(JsonRequest):
                     "signature.signature": "Invalid signature provided.",
                     "signature.download_signature": "Invalid signature provided.",
                     "signature.decrypt_signature": "Invalid signature provided.",
+                    "validUntil.timestamp": "Invalid timestamp provided.",
                 },
                 request=request,
             )
@@ -165,6 +166,15 @@ class CustomRulesProcessor(RulesProcessor):
 
         return False
 
+    def validate_timestamp(self, value):
+        try:
+            valid_until = datetime.fromtimestamp(value)
+            timestamp_now = int(datetime.utcnow().timestamp())
+
+            return valid_until > timestamp_now
+        except Exception:
+            return False
+
 
 class NonceRequest(CustomJsonRequest):
     def rules(self):
@@ -286,8 +296,6 @@ class DownloadRequest(CustomJsonRequest):
 
 class InitializeRequest(CustomJsonRequest):
     def rules(self):
-        timestamp_now = int(datetime.now().timestamp())
-
         return {
             "documentId": ["required"],
             "serviceId": ["required"],
