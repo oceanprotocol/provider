@@ -61,7 +61,7 @@ def verify_order_tx(
 
     # check provider fees
     datatoken_contract = get_datatoken_contract(web3, datatoken_address)
-    provider_fee_event_logs = datatoken_contract.events.ProviderFees().processReceipt(
+    provider_fee_event_logs = datatoken_contract.events.ProviderFee().processReceipt(
         tx_receipt, errors=DISCARD
     )
 

@@ -29,7 +29,7 @@ install_requirements = [
     "flask-swagger-ui==3.25.0",
     "Jinja2>=2.10.1",
     "gunicorn==20.0.4",
-    "ocean-contracts==1.0.0a18",
+    "ocean-contracts==1.0.0a19",
     "coloredlogs==15.0.1",
     "Werkzeug>=0.15.3",
     "requests_testadapter",

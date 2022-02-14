@@ -33,6 +33,7 @@ def test_get_provider_fee_amount(web3, publisher_wallet):
         "DATANFTSYMBOL",
         1,
         BLACK_HOLE_ADDRESS,
+        BLACK_HOLE_ADDRESS,
         "",
         publisher_wallet,
     )
