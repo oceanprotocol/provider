@@ -110,12 +110,18 @@ def deploy_data_nft(
     symbol: str,
     template_index: int,
     additional_erc20_deployer: HexAddress,
+    additional_metadata_updater: HexAddress,
     base_uri: str,
     from_wallet: LocalAccount,
 ) -> HexAddress:
     data_nft_factory = get_data_nft_factory_contract(web3)
     deploy_data_nft_tx = data_nft_factory.functions.deployERC721Contract(
-        name, symbol, template_index, additional_erc20_deployer, base_uri
+        name,
+        symbol,
+        template_index,
+        additional_erc20_deployer,
+        additional_metadata_updater,
+        base_uri,
     ).buildTransaction({"from": from_wallet.address, "gasPrice": get_gas_price(web3)})
     _, deploy_data_nft_receipt = sign_send_and_wait_for_receipt(
         web3, deploy_data_nft_tx, from_wallet
@@ -194,6 +200,7 @@ def get_registered_asset(
         symbol="DNFT1",
         template_index=1,
         additional_erc20_deployer=BLACK_HOLE_ADDRESS,
+        additional_metadata_updater=BLACK_HOLE_ADDRESS,
         base_uri="",
         from_wallet=from_wallet,
     )
