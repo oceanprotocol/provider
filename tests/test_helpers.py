@@ -447,6 +447,11 @@ def start_order(
             provider_fees["validUntil"],
             provider_fees["providerData"],
         ),
+        (
+            '0x0000000000000000000000000000000000000000',
+            '0x0000000000000000000000000000000000000000',
+            0
+        )
     ).buildTransaction({"from": from_wallet.address, "gasPrice": get_gas_price(web3)})
     txid, receipt = sign_send_and_wait_for_receipt(web3, start_order_tx, from_wallet)
     # if needed, we can log the tx here
