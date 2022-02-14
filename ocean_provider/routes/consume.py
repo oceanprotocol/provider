@@ -14,6 +14,7 @@ from ocean_provider.utils.basics import (
     get_asset_from_metadatastore,
     get_provider_wallet,
     get_web3,
+    validate_timestamp,
 )
 from ocean_provider.utils.error_responses import error_response
 from ocean_provider.utils.provider_fees import get_provider_fees, get_c2d_environments
@@ -156,17 +157,25 @@ def initialize():
     service_id = data.get("serviceId")
     service = asset.get_service_by_id(service_id)
 
-    if service.type == "compute" and not (compute_env and valid_until):
-        return error_response(
-            "The environment and validUntil are mandatory when initializing a compute service.",
-            400,
-            logger,
-        )
+    if service.type == "compute":
+        if not (compute_env and valid_until):
+            return error_response(
+                "The environment and validUntil are mandatory when initializing a compute service.",
+                400,
+                logger,
+            )
 
-    if service.type == "compute" and not check_environment_exists(
-        get_c2d_environments(), compute_env
-    ):
-        return error_response("Compute environment does not exist", 400, logger)
+        timestamp_ok = validate_timestamp(valid_until)
+
+        if not timestamp_ok:
+            return error_response(
+                "The validUntil value is not correct.",
+                400,
+                logger,
+            )
+
+        if not check_environment_exists(get_c2d_environments(), compute_env):
+            return error_response("Compute environment does not exist", 400, logger)
 
     token_address = service.datatoken_address
 
