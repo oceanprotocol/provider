@@ -59,7 +59,7 @@ def test_compute_norawalgo_allowed(
             dataset_ddo_w_compute_service.did,
             sa,
             consumer_wallet.address,
-            get_future_valid_until(),
+            str(get_future_valid_until()),
             environments[0]["id"],
         ),
         consumer_wallet,
