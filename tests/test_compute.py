@@ -8,10 +8,8 @@ from datetime import datetime
 import pytest
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
-from ocean_provider.utils.basics import get_provider_wallet
 from ocean_provider.utils.provider_fees import get_c2d_environments, get_provider_fees
 from ocean_provider.utils.services import ServiceType
-
 from ocean_provider.validation.provider_requests import RBACValidator
 from tests.helpers.compute_helpers import (
     build_and_send_ddo_with_compute_service,
@@ -31,12 +29,15 @@ from tests.test_helpers import get_first_service_by_type
 
 
 @pytest.mark.integration
-def test_compute_norawalgo_allowed(
-    client, publisher_wallet, consumer_wallet, consumer_address, web3
+@pytest.mark.parametrize("allow_raw_algos", [True, False])
+def test_compute_raw_algo(
+    client, publisher_wallet, consumer_wallet, consumer_address, web3, allow_raw_algos
 ):
+    custom_services = "vanilla_compute" if allow_raw_algos else "norawalgo"
+
     # publish a dataset asset
     dataset_ddo_w_compute_service = get_registered_asset(
-        publisher_wallet, custom_services="norawalgo"
+        publisher_wallet, custom_services=custom_services
     )
 
     sa = get_first_service_by_type(dataset_ddo_w_compute_service, ServiceType.COMPUTE)
@@ -84,10 +85,13 @@ def test_compute_norawalgo_allowed(
 
     response = post_to_compute(client, payload)
 
-    assert (
-        response.status == "400 BAD REQUEST"
-    ), f"start compute job failed: {response.status} , {response.data}"
-    assert "cannot run raw algorithm on this did" in response.json["error"]
+    if allow_raw_algos:
+        assert response.status == "200 OK", f"start compute job failed: {response.data}"
+    else:
+        assert (
+            response.status == "400 BAD REQUEST"
+        ), f"start compute job failed: {response.status} , {response.data}"
+        assert "cannot run raw algorithm on this did" in response.json["error"]
 
 
 @pytest.mark.integration
