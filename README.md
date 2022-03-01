@@ -98,6 +98,7 @@ Refer to the [API.md](API.md) file for endpoints and payloads.
 * `OPERATOR_SERVICE_URL` defines connection to C2D
 * `LOG_CFG` and `LOG_LEVEL` define the location of the log file and logging leve, respectively
 * `IPFS_GATEWAY` defines ipfs gateway for resolving urls
+* `AUTHORIZED_DECRYPTERS` list of authorized addresses that are allowed to decrypt chain data. Use it to restrict access only to certain callers (e.g. custom Aquarius instance). Empty by default, meaning all decrypters are authorized.
 
 
 #### Before you commit
