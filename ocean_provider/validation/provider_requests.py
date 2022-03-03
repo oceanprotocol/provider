@@ -2,6 +2,7 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
+from datetime import datetime
 import os
 
 from flask import request as flask_request
@@ -186,12 +187,9 @@ class DecryptRequest(CustomJsonRequest):
         return {
             "decrypterAddress": ["required"],
             "chainId": ["required"],
+            "dataNftAddress": ["required"],
             "transactionId": [
                 "required_without:dataNftAddress,encryptedDocument,flags,documentHash"
-            ],
-            "dataNftAddress": [
-                "required_without:transactionId",
-                "required_with:encryptedDocument,flags,documentHash",
             ],
             "encryptedDocument": [
                 "required_without:transactionId",

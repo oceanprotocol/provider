@@ -61,7 +61,7 @@ def _decrypt(
     decrypter_address: HexStr,
     chain_id: int,
     transaction_id: Optional[HexStr],
-    data_nft_address: Optional[HexStr],
+    data_nft_address: HexStr,
     encrypted_document: Optional[HexStr],
     flags: Optional[int],
     document_hash: Optional[HexStr],
@@ -92,11 +92,10 @@ def _decrypt(
     else:
         try:
             (
-                data_nft_address,
                 encrypted_document,
                 flags,
                 document_hash,
-            ) = _get_args_from_transaction_id(web3, transaction_id)
+            ) = _get_args_from_transaction_id(web3, transaction_id, data_nft_address)
         except Exception:
             return error_response(f"Failed to process transaction id.", 400, logger)
     logger.info(
@@ -167,19 +166,20 @@ def _convert_args_to_bytes(
 
 
 def _get_args_from_transaction_id(
-    web3: Web3, transaction_id: HexStr
-) -> Tuple[HexAddress, bytes, bytes, bytes]:
+    web3: Web3, transaction_id: HexStr, data_nft_address: HexStr
+) -> Tuple[bytes, bytes, bytes]:
     """Get the MetadataCreated and MetadataUpdated logs from the transaction id.
     Parse logs and return the data_nft_address, encrypted_document, flags, and
     document_hash.
     """
     tx_receipt = web3.eth.get_transaction_receipt(transaction_id)
-    logs = get_metadata_logs_from_tx_receipt(web3, tx_receipt)
+    logs = get_metadata_logs_from_tx_receipt(web3, tx_receipt, data_nft_address)
     logger.info(f"transaction_id = {transaction_id}, logs = {logs}")
     if len(logs) > 1:
         logger.warning(
             "More than 1 MetadataCreated/MetadataUpdated event detected. "
             "Using the event at index 0."
         )
+
     log = logs[0]
-    return (log.address, log.args["data"], log.args["flags"], log.args["metaDataHash"])
+    return (log.args["data"], log.args["flags"], log.args["metaDataHash"])

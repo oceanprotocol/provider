@@ -62,7 +62,7 @@ def test_decrypt_with_plain_input(
 
     # Decrypt DDO using transactionId
     decrypt_response = decrypt_ddo_using_transaction_id(
-        client, consumer_wallet, set_metadata_tx_id, chain_id
+        client, consumer_wallet, set_metadata_tx_id, data_nft_address, chain_id
     )
     assert decrypt_response.status_code == 201
     assert decrypt_response.content_type == "text/plain"
@@ -135,7 +135,7 @@ def test_decrypt_with_compressed_input(
 
     # Decrypt DDO using transactionId
     decrypt_response = decrypt_ddo_using_transaction_id(
-        client, consumer_wallet, set_metadata_tx_id, chain_id
+        client, consumer_wallet, set_metadata_tx_id, data_nft_address, chain_id
     )
     assert decrypt_response.status_code == 201
     assert decrypt_response.content_type == "text/plain"
@@ -218,7 +218,7 @@ def test_encrypt_and_decrypt_with_only_encryption(
 
     # Decrypt DDO using transactionId
     decrypt_response = decrypt_ddo_using_transaction_id(
-        client, consumer_wallet, set_metadata_tx_id, chain_id
+        client, consumer_wallet, set_metadata_tx_id, data_nft_address, chain_id
     )
     assert decrypt_response.status_code == 201
     assert decrypt_response.content_type == "text/plain"
@@ -303,7 +303,7 @@ def test_encrypt_and_decrypt_with_compression_and_encryption(
 
     # Decrypt DDO using transactionId
     decrypt_response = decrypt_ddo_using_transaction_id(
-        client, consumer_wallet, set_metadata_tx_id, chain_id
+        client, consumer_wallet, set_metadata_tx_id, data_nft_address, chain_id
     )
     assert decrypt_response.status_code == 201
     assert decrypt_response.content_type == "text/plain"
@@ -330,6 +330,7 @@ def decrypt_ddo_using_transaction_id(
     client: FlaskClient,
     decrypter_wallet: LocalAccount,
     set_metadata_tx_id: HexStr,
+    data_nft_address: HexStr,
     chain_id: int,
 ):
     nonce = str(datetime.utcnow().timestamp())
@@ -343,6 +344,7 @@ def decrypt_ddo_using_transaction_id(
             "decrypterAddress": decrypter_wallet.address,
             "chainId": chain_id,
             "transactionId": set_metadata_tx_id,
+            "dataNftAddress": data_nft_address,
             "nonce": nonce,
             "signature": signature,
         },
