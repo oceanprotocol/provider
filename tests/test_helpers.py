@@ -91,7 +91,7 @@ def deploy_contract(w3, _json, private_key, *args):
 
 
 def get_ocean_token_address(web3: Web3) -> HexAddress:
-    return get_contract_address(get_config().address_file, "Ocean", web3.eth.chain_id)
+    return get_contract_address(get_config().address_file, "Ocean", 8996)
 
 
 def sign_send_and_wait_for_receipt(
@@ -239,7 +239,7 @@ def get_registered_asset(
         build_credentials_dict() if not custom_credentials else custom_credentials
     )
 
-    chain_id = web3.eth.chain_id
+    chain_id = 8996
     did = compute_did_from_data_nft_address_and_chain_id(data_nft_address, chain_id)
     metadata = (
         build_metadata_dict_type_dataset() if not custom_metadata else custom_metadata

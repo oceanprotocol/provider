@@ -58,7 +58,7 @@ def test_decrypt_with_plain_input(
     )
 
     # Set common decrypt arguments
-    chain_id = web3.eth.chain_id
+    chain_id = 8996
 
     # Decrypt DDO using transactionId
     decrypt_response = decrypt_ddo_using_transaction_id(
@@ -131,7 +131,7 @@ def test_decrypt_with_compressed_input(
     )
 
     # Set common decrypt arguments
-    chain_id = web3.eth.chain_id
+    chain_id = 8996
 
     # Decrypt DDO using transactionId
     decrypt_response = decrypt_ddo_using_transaction_id(
@@ -214,7 +214,7 @@ def test_encrypt_and_decrypt_with_only_encryption(
     )
 
     # Set common decrypt arguments
-    chain_id = web3.eth.chain_id
+    chain_id = 8996
 
     # Decrypt DDO using transactionId
     decrypt_response = decrypt_ddo_using_transaction_id(
@@ -299,7 +299,7 @@ def test_encrypt_and_decrypt_with_compression_and_encryption(
     )
 
     # Set common decrypt arguments
-    chain_id = web3.eth.chain_id
+    chain_id = 8996
 
     # Decrypt DDO using transactionId
     decrypt_response = decrypt_ddo_using_transaction_id(

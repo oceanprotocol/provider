@@ -71,7 +71,7 @@ def _decrypt(
 
     # Check if given chain_id matches Provider's chain_id
     web3 = get_web3()
-    if web3.eth.chain_id != chain_id:
+    if web3.chain_id != chain_id:
         return error_response(f"Unsupported chain ID", 400, logger)
 
     # Check if decrypter is authorized
