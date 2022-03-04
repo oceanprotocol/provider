@@ -13,7 +13,7 @@ from ocean_provider.utils.basics import get_config
 
 def get_data_nft_factory_address(web3: Web3) -> str:
     return get_contract_address(
-        get_config().address_file, "ERC721Factory", web3.eth.chain_id
+        get_config().address_file, "ERC721Factory", web3.chain_id
     )
 
 

@@ -59,6 +59,11 @@ def get_web3(network_url: Optional[str] = None) -> Web3:
     """
     :return: `Web3` instance
     """
+    global app_web3_instance
+
+    if "app_web3_instance" in globals():
+        return app_web3_instance
+
     if network_url is None:
         network_url = get_config().network_url
 
@@ -69,6 +74,8 @@ def get_web3(network_url: Optional[str] = None) -> Web3:
 
         web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
+    web3.chain_id = web3.eth.chain_id
+    app_web3_instance = web3
     return web3
 
 
