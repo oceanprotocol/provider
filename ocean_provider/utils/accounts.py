@@ -21,7 +21,11 @@ def verify_signature(signer_address, signature, original_msg, nonce):
     """
     db_nonce = get_nonce(signer_address)
     if db_nonce and float(nonce) < float(db_nonce):
-        raise InvalidSignatureError("Invalid signature expected nonce > current nonce.")
+        msg = (
+            f"Invalid signature expected nonce ({db_nonce}) > current nonce ({nonce})."
+        )
+        logger.error(msg)
+        raise InvalidSignatureError(msg)
 
     message = f"{original_msg}{str(nonce)}"
     address = Account.recover_message(encode_defunct(text=message), signature=signature)

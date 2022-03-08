@@ -2,6 +2,7 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
+import logging
 from datetime import datetime
 import os
 
@@ -14,6 +15,8 @@ from ocean_provider.exceptions import InvalidSignatureError
 from ocean_provider.utils.accounts import verify_signature
 from ocean_provider.utils.util import get_request_data
 from ocean_provider.validation.RBAC import RBACValidator
+
+logger = logging.getLogger(__name__)
 
 
 class CustomJsonRequest(JsonRequest):
@@ -151,6 +154,11 @@ class CustomRulesProcessor(RulesProcessor):
         decrypter_address = self._attribute_value(params[2])
         chain_id = self._attribute_value(params[3])
         nonce = self._attribute_value(params[4])
+        logger.info(
+            f"Successfully retrieve params for decrypt: transaction_id={transaction_id},"
+            f"data_nft_address={data_nft_address}, decrypter_address={decrypter_address},"
+            f"chain_id={chain_id}, nonce={nonce}."
+        )
 
         if transaction_id:
             first_arg = transaction_id
@@ -161,6 +169,7 @@ class CustomRulesProcessor(RulesProcessor):
 
         try:
             verify_signature(decrypter_address, value, original_msg, nonce)
+            logger.info("Correct signature.")
             return True
         except InvalidSignatureError:
             pass
