@@ -2,13 +2,14 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
+import json
 import logging
 
 from flask import jsonify, request
 from flask_sieve import validate
-from ocean_provider.myapp import app
 from ocean_provider.requests_session import get_requests_session
 from ocean_provider.user_nonce import get_nonce, update_nonce
+from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.basics import (
     LocalFileAdapter,
     get_asset_from_metadatastore,
@@ -17,6 +18,7 @@ from ocean_provider.utils.basics import (
     validate_timestamp,
 )
 from ocean_provider.utils.error_responses import error_response
+from ocean_provider.utils.proof import send_proof
 from ocean_provider.utils.provider_fees import get_provider_fees, get_c2d_environments
 from ocean_provider.utils.services import ServiceType
 from ocean_provider.utils.url import append_userdata, check_url_details
@@ -324,5 +326,27 @@ def download():
         method=url_object.get("method", "GET"),
     )
     logger.info(f"download response = {response}")
+
+    provider_proof_data = json.dumps(
+        {
+            "documentId": did,
+            "serviceId": service_id,
+            "fileIndex": file_index,
+            "downloadedBytes": 0,  # TODO
+        },
+        separators=(",", ":"),
+    )
+
+    consumer_data = f'{did}{data.get("nonce")}'
+
+    send_proof(
+        web3=get_web3(),
+        order_tx_id=_tx.hash,
+        provider_data=provider_proof_data,
+        consumer_data=consumer_data,
+        consumer_signature=data.get("signature"),
+        consumer_address=consumer_address,
+        datatoken_address=service.datatoken_address,
+    )
 
     return response

@@ -25,12 +25,31 @@ from tests.test_helpers import (
 
 @pytest.mark.integration
 @pytest.mark.parametrize(
-    "userdata,erc20_enterprise",
-    [(False, False), ("valid", False), ("invalid", False), (False, True)],
+    "userdata,erc20_enterprise,proof_type",
+    [
+        (False, False, "http"),
+        ("valid", False, "chain"),
+        ("invalid", False, None),
+        (False, True, None),
+    ],
 )
 def test_download_service(
-    client, publisher_wallet, consumer_wallet, web3, userdata, erc20_enterprise
+    client,
+    publisher_wallet,
+    consumer_wallet,
+    web3,
+    userdata,
+    erc20_enterprise,
+    proof_type,
+    monkeypatch,
 ):
+    if proof_type == "http":
+        monkeypatch.setenv("USE_HTTP_PROOF", "http://")
+    elif proof_type == "chain":
+        monkeypatch.setenv("USE_CHAIN_PROOF", "1")
+    else:
+        monkeypatch.delenv("USE_CHAIN_PROOF", raising=False)
+
     asset = get_registered_asset(publisher_wallet, erc20_enterprise=erc20_enterprise)
     service = get_first_service_by_type(asset, ServiceType.ACCESS)
     mint_100_datatokens(
