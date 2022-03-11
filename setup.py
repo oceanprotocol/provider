@@ -22,6 +22,7 @@ install_requirements = [
     "ocean-contracts==0.6.7",
     "web3==5.25.0",
     "Flask==1.1.2",
+    "itsdangerous==2.0.1",  # Required to use Flask 1.1.2. https://serverfault.com/a/1094095
     "Flask-Cors==3.0.9",
     "flask_caching==1.10.1",
     "Flask-RESTful==0.3.8",
