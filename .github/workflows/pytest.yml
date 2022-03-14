@@ -29,6 +29,7 @@ jobs:
         env:
           OPERATOR_SERVICE_VERSION: compute_envs
           OPERATOR_ENGINE_VERSION: compute_envs
+          CONTRACTS_VERSION: v4_rc1
         run: |
           bash -x start_ocean.sh --no-dashboard 2>&1 --with-rbac --with-provider2 --with-c2d > start_ocean.log &
           for i in $(seq 1 150); do
