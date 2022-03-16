@@ -26,7 +26,7 @@ def is_safe_url(url):
 
     result = urlparse(url)
 
-    return is_safe_domain(result.netloc)
+    return is_safe_domain(result.hostname)
 
 
 def is_url(url):
@@ -73,7 +73,7 @@ def is_safe_domain(domain):
     if not is_ip(domain):
         return result
 
-    return result and validate_dns_records(domain, domain, "")
+    return result and validate_dns_record(domain, domain, "")
 
 
 def validate_dns_records(domain, records, record_type):
@@ -99,7 +99,7 @@ def validate_dns_record(record, domain, record_type):
         ip = ipaddress.ip_address(value)
         # noqa See https://docs.python.org/3/library/ipaddress.html#ipaddress.IPv4Address.is_global
         if ip.is_private or ip.is_reserved or ip.is_loopback:
-            if allow_non_public_ip:
+            if allow_non_public_ip is True:
                 logger.warning(
                     f"[!] DNS record type {record_type} for domain name "
                     f"{domain} resolves to a non public IP address {value}, "
