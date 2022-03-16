@@ -28,6 +28,13 @@ from tests.helpers.ddo_dict_builders import build_metadata_dict_type_algorithm
 from tests.test_helpers import get_first_service_by_type
 
 
+@pytest.mark.unit
+def test_compute_rejected(client, monkeypatch):
+    monkeypatch.delenv("OPERATOR_SERVICE_URL")
+    response = post_to_compute(client, {})
+    assert response.status_code == 404
+
+
 @pytest.mark.integration
 @pytest.mark.parametrize("allow_raw_algos", [True, False])
 def test_compute_raw_algo(

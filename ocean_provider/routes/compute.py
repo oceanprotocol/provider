@@ -3,8 +3,11 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 from datetime import datetime
+import flask
+import functools
 import json
 import logging
+import os
 
 from flask import Response, jsonify, request
 from flask_sieve import validate
@@ -41,7 +44,20 @@ logger = logging.getLogger(__name__)
 standard_headers = {"Content-type": "application/json", "Connection": "close"}
 
 
+def validate_compute_request(f):
+    @functools.wraps(f)
+    def decorated_function(*args, **kws):
+        # Do something with your request here
+        if not os.getenv("OPERATOR_SERVICE_URL"):
+            flask.abort(404)
+
+        return f(*args, **kws)
+
+    return decorated_function
+
+
 @services.route("/compute", methods=["DELETE"])
+@validate_compute_request
 @validate(ComputeRequest)
 def computeDelete():
     """Deletes a workflow.
@@ -97,6 +113,7 @@ def computeDelete():
 
 
 @services.route("/compute", methods=["PUT"])
+@validate_compute_request
 @validate(ComputeRequest)
 def computeStop():
     """Stop the execution of a workflow.
@@ -157,6 +174,7 @@ def computeStop():
 
 
 @services.route("/compute", methods=["GET"])
+@validate_compute_request
 @validate(UnsignedComputeRequest)
 def computeStatus():
     """Get status for a specific jobId/documentId/owner
@@ -211,6 +229,7 @@ def computeStatus():
 
 
 @services.route("/compute", methods=["POST"])
+@validate_compute_request
 @validate(ComputeStartRequest)
 def computeStart():
     """Call the execution of a workflow.
@@ -314,6 +333,7 @@ def computeStart():
 
 
 @services.route("/computeResult", methods=["GET"])
+@validate_compute_request
 @validate(ComputeGetResult)
 def computeResult():
     """Allows download of asset data file.
@@ -383,6 +403,7 @@ def computeResult():
 
 
 @services.route("/computeEnvironments", methods=["GET"])
+@validate_compute_request
 def computeEnvironments():
     """Get compute environments
 
