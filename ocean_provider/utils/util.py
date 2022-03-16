@@ -47,7 +47,13 @@ def msg_hash(message: str):
 
 
 def build_download_response(
-    request, requests_session, url, download_url, content_type=None, method="GET", validate_url=True
+    request,
+    requests_session,
+    url,
+    download_url,
+    content_type=None,
+    method="GET",
+    validate_url=True,
 ):
     try:
         if validate_url and not is_safe_url(url):
