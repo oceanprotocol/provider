@@ -73,7 +73,7 @@ def is_safe_domain(domain):
     if not is_ip(domain):
         return result
 
-    return result and validate_dns_records(domain, domain, "")
+    return result and validate_dns_record(domain, domain, "")
 
 
 def validate_dns_records(domain, records, record_type):
