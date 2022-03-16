@@ -47,10 +47,10 @@ def msg_hash(message: str):
 
 
 def build_download_response(
-    request, requests_session, url, download_url, content_type=None, method="GET"
+    request, requests_session, url, download_url, content_type=None, method="GET", validate_url=True
 ):
     try:
-        if not is_safe_url(url):
+        if validate_url and not is_safe_url(url):
             raise ValueError(f"Unsafe url {url}")
         download_request_headers = {}
         download_response_headers = {}

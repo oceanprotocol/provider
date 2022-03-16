@@ -375,7 +375,7 @@ def computeResult():
     update_nonce(data.get("consumerAddress"), data.get("nonce"))
 
     response = build_download_response(
-        request, requests_session, result_url, result_url, None
+        request, requests_session, result_url, result_url, None, False
     )
     logger.info(f"computeResult response = {response}")
 
