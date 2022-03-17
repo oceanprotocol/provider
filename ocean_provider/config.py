@@ -135,7 +135,15 @@ class Config(configparser.ConfigParser):
 
     @property
     def allow_non_public_ip(self):
-        return bool(int(self.get("resources", NAME_ALLOW_NON_PUBLIC_IP, fallback=0)))
+        """Allow non public ip."""
+        should_allow_non_public_ip = self.get(
+            "resources", NAME_ALLOW_NON_PUBLIC_IP, fallback=None
+        )
+        return should_allow_non_public_ip and should_allow_non_public_ip not in [
+            "false",
+            "False",
+            "0",
+        ]
 
     @property
     def storage_path(self):
