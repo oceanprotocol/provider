@@ -53,7 +53,7 @@ def test_config_dict():
 
 
 @pytest.mark.unit
-def test_allow_non_public_ip():
+def test_allow_non_public_ip(monkeypatch):
     config_dict = {
         "eth-network": {},
         "resources": {
@@ -62,54 +62,28 @@ def test_allow_non_public_ip():
         },
     }
     config = Config(options_dict=config_dict)
-    assert config.allow_non_public_ip == False
+    assert config.allow_non_public_ip is False
 
-    config_dict = {
-        "eth-network": {},
-        "resources": {
-            "aquarius.url": "https://another-aqua2.url",
-            "allow_non_public_ip": "0",
-        },
-    }
+    monkeypatch.setenv("ALLOW_NON_PUBLIC_IP", "0")
     config = Config(options_dict=config_dict)
-    assert config.allow_non_public_ip == False
+    assert config.allow_non_public_ip is False
 
-    config_dict = {
-        "eth-network": {},
-        "resources": {
-            "aquarius.url": "https://another-aqua2.url",
-            "allow_non_public_ip": 0,
-        },
-    }
+    monkeypatch.setenv("ALLOW_NON_PUBLIC_IP", 0)
     config = Config(options_dict=config_dict)
-    assert config.allow_non_public_ip == False
+    assert config.allow_non_public_ip is False
 
-    config_dict = {
-        "eth-network": {},
-        "resources": {
-            "aquarius.url": "https://another-aqua2.url",
-            "allow_non_public_ip": True,
-        },
-    }
+    monkeypatch.setenv("ALLOW_NON_PUBLIC_IP", True)
     config = Config(options_dict=config_dict)
-    assert config.allow_non_public_ip == True
+    assert config.allow_non_public_ip is True
 
-    config_dict = {
-        "eth-network": {},
-        "resources": {
-            "aquarius.url": "https://another-aqua2.url",
-            "allow_non_public_ip": "True",
-        },
-    }
+    monkeypatch.setenv("ALLOW_NON_PUBLIC_IP", "True")
     config = Config(options_dict=config_dict)
-    assert config.allow_non_public_ip == True
+    assert config.allow_non_public_ip is True
 
-    config_dict = {
-        "eth-network": {},
-        "resources": {
-            "aquarius.url": "https://another-aqua2.url",
-            "allow_non_public_ip": 1,
-        },
-    }
+    monkeypatch.setenv("ALLOW_NON_PUBLIC_IP", "1")
     config = Config(options_dict=config_dict)
-    assert config.allow_non_public_ip == True
+    assert config.allow_non_public_ip is True
+
+    monkeypatch.delenv("ALLOW_NON_PUBLIC_IP")
+    config = Config(options_dict=config_dict)
+    assert config.allow_non_public_ip is False

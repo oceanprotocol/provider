@@ -8,6 +8,7 @@
 #  SPDX-License-Identifier: Apache-2.0
 
 import configparser
+from distutils.util import strtobool
 import json
 import logging
 import os
@@ -139,11 +140,8 @@ class Config(configparser.ConfigParser):
         should_allow_non_public_ip = self.get(
             "resources", NAME_ALLOW_NON_PUBLIC_IP, fallback=None
         )
-        return should_allow_non_public_ip and should_allow_non_public_ip not in [
-            "false",
-            "False",
-            "0",
-        ]
+
+        return bool(strtobool(should_allow_non_public_ip))
 
     @property
     def storage_path(self):
