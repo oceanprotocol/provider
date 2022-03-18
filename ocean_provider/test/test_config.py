@@ -50,3 +50,40 @@ def test_config_dict():
     }
     config = Config(options_dict=config_dict)
     assert config.aquarius_url == "https://another-aqua2.url"
+
+
+@pytest.mark.unit
+def test_allow_non_public_ip(monkeypatch):
+    config_dict = {
+        "eth-network": {},
+        "resources": {
+            "aquarius.url": "https://another-aqua2.url",
+            "allow_non_public_ip": "False",
+        },
+    }
+    config = Config(options_dict=config_dict)
+    assert config.allow_non_public_ip is False
+
+    monkeypatch.setenv("ALLOW_NON_PUBLIC_IP", "0")
+    config = Config(options_dict=config_dict)
+    assert config.allow_non_public_ip is False
+
+    monkeypatch.setenv("ALLOW_NON_PUBLIC_IP", 0)
+    config = Config(options_dict=config_dict)
+    assert config.allow_non_public_ip is False
+
+    monkeypatch.setenv("ALLOW_NON_PUBLIC_IP", True)
+    config = Config(options_dict=config_dict)
+    assert config.allow_non_public_ip is True
+
+    monkeypatch.setenv("ALLOW_NON_PUBLIC_IP", "True")
+    config = Config(options_dict=config_dict)
+    assert config.allow_non_public_ip is True
+
+    monkeypatch.setenv("ALLOW_NON_PUBLIC_IP", "1")
+    config = Config(options_dict=config_dict)
+    assert config.allow_non_public_ip is True
+
+    monkeypatch.delenv("ALLOW_NON_PUBLIC_IP")
+    config = Config(options_dict=config_dict)
+    assert config.allow_non_public_ip is False

@@ -99,7 +99,7 @@ def validate_dns_record(record, domain, record_type):
         ip = ipaddress.ip_address(value)
         # noqa See https://docs.python.org/3/library/ipaddress.html#ipaddress.IPv4Address.is_global
         if ip.is_private or ip.is_reserved or ip.is_loopback:
-            if allow_non_public_ip is True:
+            if allow_non_public_ip:
                 logger.warning(
                     f"[!] DNS record type {record_type} for domain name "
                     f"{domain} resolves to a non public IP address {value}, "
