@@ -452,8 +452,4 @@ def build_stage_output_dict(output_def, service_endpoint, owner, provider_wallet
     if BaseURLs.SERVICES_URL in service_endpoint:
         service_endpoint = service_endpoint.split(BaseURLs.SERVICES_URL)[0]
 
-    return dict(
-        {
-            "metadataUri": config.aquarius_url
-        }
-    )
+    return dict({"metadataUri": config.aquarius_url})
