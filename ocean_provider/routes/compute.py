@@ -289,6 +289,7 @@ def computeStart():
     ).seconds
 
     nonce, provider_signature = sign_for_compute(provider_wallet, consumer_address)
+    web3 = get_web3()
     payload = {
         "workflow": workflow,
         "providerSignature": provider_signature,
@@ -299,6 +300,7 @@ def computeStart():
         "environment": compute_env,
         "maxDuration": seconds,
         "nonce": nonce,
+        "chainId": web3.chain_id
     }
 
     response = requests_session.post(
