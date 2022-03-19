@@ -79,7 +79,7 @@ def get_c2d_environments() -> List:
     web3 = get_web3()
     params = {"chainId": web3.chain_id}
     response = requests_session.get(
-        get_compute_environments_endpoint(), headers=standard_headers, params = params
+        get_compute_environments_endpoint(), headers=standard_headers, params=params
     )
 
     # loop envs and add provider token from config

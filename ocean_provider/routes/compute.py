@@ -300,7 +300,7 @@ def computeStart():
         "environment": compute_env,
         "maxDuration": seconds,
         "nonce": nonce,
-        "chainId": web3.chain_id
+        "chainId": web3.chain_id,
     }
 
     response = requests_session.post(
