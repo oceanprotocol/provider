@@ -454,7 +454,6 @@ def build_stage_output_dict(output_def, service_endpoint, owner, provider_wallet
 
     return dict(
         {
-            "metadataUri": config.aquarius_url,
-            "owner": output_def.get("owner", owner),
+            "metadataUri": config.aquarius_url
         }
     )
