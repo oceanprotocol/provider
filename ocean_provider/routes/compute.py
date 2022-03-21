@@ -300,24 +300,23 @@ def computeStart():
     # workflow is ready, push it to operator
     logger.info("Sending: %s", workflow)
 
-    tx_id = data.get("transferTxId")
-    did = data.get("documentId")
     compute_env = data.get("environment")
     seconds = (
         datetime.fromtimestamp(validator.valid_until) - datetime.utcnow()
     ).seconds
 
     nonce, provider_signature = sign_for_compute(provider_wallet, consumer_address)
+    web3 = get_web3()
     payload = {
         "workflow": workflow,
         "providerSignature": provider_signature,
-        "documentId": did,
-        "agreementId": tx_id,
+        "agreementId": data["dataset"]["transferTxId"],
         "owner": consumer_address,
         "providerAddress": provider_wallet.address,
         "environment": compute_env,
         "maxDuration": seconds,
         "nonce": nonce,
+        "chainId": web3.chain_id,
     }
 
     response = requests_session.post(

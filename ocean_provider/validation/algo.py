@@ -452,26 +452,4 @@ def build_stage_output_dict(output_def, service_endpoint, owner, provider_wallet
     if BaseURLs.SERVICES_URL in service_endpoint:
         service_endpoint = service_endpoint.split(BaseURLs.SERVICES_URL)[0]
 
-    return dict(
-        {
-            "nodeUri": output_def.get("nodeUri", config.network_url),
-            "brizoUri": output_def.get("brizoUri", service_endpoint),
-            "brizoAddress": output_def.get("brizoAddress", provider_wallet.address),
-            "metadata": output_def.get(
-                "metadata",
-                dict(
-                    {
-                        "main": {"name": "Compute job output"},
-                        "additionalInformation": {
-                            "description": "Output from running the compute job."
-                        },
-                    }
-                ),
-            ),
-            "metadataUri": config.aquarius_url,
-            "owner": output_def.get("owner", owner),
-            "publishOutput": output_def.get("publishOutput", 1),
-            "publishAlgorithmLog": output_def.get("publishAlgorithmLog", 1),
-            "whitelist": output_def.get("whitelist", []),
-        }
-    )
+    return dict({"metadataUri": config.aquarius_url})
