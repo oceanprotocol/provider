@@ -281,7 +281,6 @@ def computeStart():
     # workflow is ready, push it to operator
     logger.info("Sending: %s", workflow)
 
-    tx_id = data.get("transferTxId")
     compute_env = data.get("environment")
     seconds = (
         datetime.fromtimestamp(validator.valid_until) - datetime.utcnow()
@@ -292,7 +291,7 @@ def computeStart():
     payload = {
         "workflow": workflow,
         "providerSignature": provider_signature,
-        "agreementId": data.get("dataset").get("transferTxId"),
+        "agreementId": data["dataset"]["transferTxId"],
         "owner": consumer_address,
         "providerAddress": provider_wallet.address,
         "environment": compute_env,
