@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import logging
+import os
 
 from flask import jsonify, request
 from flask_sieve import validate
@@ -272,7 +273,10 @@ def download():
     asset = get_asset_from_metadatastore(get_metadata_url(), did)
     service = asset.get_service_by_id(service_id)
 
-    compute_address, compute_limits = get_compute_info()
+    compute_address, compute_limits = (
+        get_compute_info() if os.getenv("OPERATOR_SERVICE_URL") else None,
+        None,
+    )
 
     # allow our C2D to download a compute asset
     if service.type != ServiceType.ACCESS and Web3.toChecksumAddress(
