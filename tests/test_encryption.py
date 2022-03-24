@@ -40,7 +40,7 @@ def test_decrypt_with_plain_input(
 
     # Calculate DDO Hash
     ddo = ddo_sample1_v4
-    ddo_string = json.dumps(ddo)
+    ddo_string = json.dumps(ddo, ensure_ascii=False)
     ddo_bytes = ddo_string.encode("utf-8")
     ddo_bytes_hexstr = Web3.toHex(ddo_bytes)
     ddo_hash_hexstr = Web3.toHex(hashlib.sha256(ddo_bytes).digest())
@@ -110,7 +110,7 @@ def test_decrypt_with_compressed_input(
 
     # Calculate DDO Hash
     ddo = ddo_sample1_v4
-    ddo_string = json.dumps(ddo)
+    ddo_string = json.dumps(ddo, ensure_ascii=False)
     ddo_bytes = ddo_string.encode("utf-8")
     ddo_hash_hexstr = Web3.toHex(hashlib.sha256(ddo_bytes).digest())
 
@@ -183,7 +183,7 @@ def test_encrypt_and_decrypt_with_only_encryption(
 
     # Calculate DDO Hash
     ddo = ddo_sample1_v4
-    ddo_string = json.dumps(ddo)
+    ddo_string = json.dumps(ddo, ensure_ascii=False)
     ddo_bytes = ddo_string.encode("utf-8")
     ddo_hash_hexstr = Web3.toHex(hashlib.sha256(ddo_bytes).digest())
 
@@ -266,7 +266,7 @@ def test_encrypt_and_decrypt_with_compression_and_encryption(
 
     # Calculate DDO Hash
     ddo = ddo_sample1_v4
-    ddo_string = json.dumps(ddo)
+    ddo_string = json.dumps(ddo, ensure_ascii=False)
     ddo_bytes = ddo_string.encode("utf-8")
     ddo_hash_hexstr = Web3.toHex(hashlib.sha256(ddo_bytes).digest())
 
@@ -338,6 +338,7 @@ def decrypt_ddo_using_transaction_id(
         f"{set_metadata_tx_id}{decrypter_wallet.address}{chain_id}{nonce}"
     )
     signature = sign_message(message_to_be_signed, decrypter_wallet)
+
     return client.post(
         BaseURLs.SERVICES_URL + "/decrypt",
         json={

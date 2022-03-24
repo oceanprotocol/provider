@@ -10,7 +10,7 @@ json_dict = {
     "metadata": {
         "created": "2000-10-31T01:30:00.000-05:00",
         "updated": "2000-10-31T01:30:00.000-05:00",
-        "name": "Ocean protocol white paper",
+        "name": "Ocean protocol white paper with șpecial chărăctărs",
         "type": "dataset",
         "description": "Ocean protocol white paper -- description",
         "author": "Ocean Protocol Foundation Ltd.",

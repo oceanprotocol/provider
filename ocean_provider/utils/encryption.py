@@ -14,7 +14,7 @@ from ocean_provider.utils.accounts import get_private_key
 
 
 def do_encrypt(
-    document: Union[HexStr, str, bytes],
+    document: bytes,
     wallet: LocalAccount = None,
     public_key: str = None,
 ) -> HexStr:
@@ -25,11 +25,7 @@ def do_encrypt(
     :return: Encrypted String
     """
     key = get_private_key(wallet).public_key.to_hex() if wallet else public_key
-    if isinstance(document, str):
-        if is_0x_prefixed(document):
-            document = Web3.toBytes(hexstr=document)
-        else:
-            document = Web3.toBytes(text=document)
+    document = Web3.toBytes(document)
     encrypted_document = ecies.encrypt(key, document)
     return Web3.toHex(encrypted_document)
 
