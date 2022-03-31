@@ -379,6 +379,7 @@ def computeResult():
     nonce, provider_signature = sign_for_compute(
         provider_wallet, consumer_address, job_id
     )
+    web3 = get_web3()
     params = {
         "index": data.get("index"),
         "owner": data.get("consumerAddress"),
@@ -386,6 +387,7 @@ def computeResult():
         "consumerSignature": data.get("signature"),
         "providerSignature": provider_signature,
         "nonce": nonce,
+        "chainId": web3.chain_id,
     }
     req = PreparedRequest()
     req.prepare_url(url, params)

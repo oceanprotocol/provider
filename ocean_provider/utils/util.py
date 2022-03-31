@@ -266,6 +266,8 @@ def process_compute_request(data):
     nonce, provider_signature = sign_for_compute(provider_wallet, owner, job_id)
     body["providerSignature"] = provider_signature
     body["nonce"] = nonce
+    web3 = get_web3()
+    body["chainId"] = web3.chain_id
 
     return body
 
