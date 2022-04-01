@@ -2,13 +2,13 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
-from datetime import datetime
-import flask
 import functools
 import json
 import logging
 import os
+from datetime import datetime
 
+import flask
 from flask import Response, jsonify, request
 from flask_sieve import validate
 from ocean_provider.requests_session import get_requests_session
@@ -357,6 +357,9 @@ def computeResult():
         in: query
         description: Result index
         required: true
+      - name: nonce
+        in: query
+        description: The UTC timestamp, used to prevent replay attacks
       - name: signature
         in: query
         description: Signature of (consumerAddress+jobId+index+nonce) to verify that the consumer has rights to download the result
