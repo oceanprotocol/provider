@@ -73,7 +73,7 @@ def encrypt():
         )
 
     data = request.get_data()
-    logger.info(f"encrypt called. arguments = {data}")
+    logger.debug(f"encrypt called. arguments = {data}")
 
     return _encrypt(data)
 
