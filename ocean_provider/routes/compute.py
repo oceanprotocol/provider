@@ -298,7 +298,7 @@ def computeStart():
 
     workflow = validator.workflow
     # workflow is ready, push it to operator
-    logger.info("Sending: %s", workflow)
+    logger.debug("Sending: %s", workflow)
 
     compute_env = data.get("environment")
     seconds = (

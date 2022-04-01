@@ -91,7 +91,7 @@ def fileinfo():
     return: list of file info (index, valid, contentLength, contentType)
     """
     data = get_request_data(request)
-    logger.info(f"fileinfo called. arguments = {data}")
+    logger.debug(f"fileinfo called. arguments = {data}")
     did = data.get("did")
     service_id = data.get("serviceId")
 
@@ -314,7 +314,7 @@ def download():
     valid, details = check_url_details(url_object["url"])
     content_type = details["contentType"] if valid else None
 
-    logger.info(
+    logger.debug(
         f"Done processing consume request for asset {did}, " f" url {download_url}"
     )
     update_nonce(consumer_address, data.get("nonce"))
