@@ -33,9 +33,11 @@ def verify_signature(signer_address, signature, original_msg, nonce):
     # address = Account.recover_message(encode_defunct(text=message), signature=signature)
     logger.info(f"Signature: {signature}")
     signature_bytes = Web3.toBytes(hexstr=signature)
-    if signature_bytes[64] >= 27:
-        signature_bytes[64] = signature_bytes[64] - 27
-    signature = keys.Signature(signature_bytes=signature_bytes)
+    new_signature = signature_bytes[0:64] + bytes(
+        (signature_bytes[64] - 27) if signature_bytes[64] >= 27 else signature_bytes[64]
+    )
+    logger.info(f"new_signature: {new_signature}")
+    signature = keys.Signature(signature_bytes=new_signature)
     message_hash = Web3.solidityKeccak(
         ["bytes"],
         [Web3.toHex(Web3.toBytes(text=message))],
