@@ -4,15 +4,17 @@
 #
 import logging
 
-import eth_keys
 from eth_account.account import Account
 from eth_account.messages import encode_defunct
+from eth_keys import KeyAPI
+from eth_keys.backends import NativeECCBackend
 from ocean_provider.exceptions import InvalidSignatureError
 from ocean_provider.user_nonce import get_nonce
-from ocean_provider.utils.basics import get_web3
+from ocean_provider.utils.basics import get_web3, get_provider_wallet
 from web3 import Web3
 
 logger = logging.getLogger(__name__)
+keys = KeyAPI(NativeECCBackend)
 
 
 def verify_signature(signer_address, signature, original_msg, nonce):
@@ -28,18 +30,31 @@ def verify_signature(signer_address, signature, original_msg, nonce):
         raise InvalidSignatureError(msg)
 
     message = f"{original_msg}{str(nonce)}"
-    address = Account.recover_message(encode_defunct(text=message), signature=signature)
-
-    if address.lower() == signer_address.lower():
-        return True
-
-    msg = (
-        f"Invalid signature {signature} for "
-        f"ethereum address {signer_address}, message {original_msg} "
-        f"and nonce {nonce}. Expected: {signer_address.lower()} but got {address.lower()}"
+    # address = Account.recover_message(encode_defunct(text=message), signature=signature)
+    logger.info(f"Signature: {signature}")
+    signature = keys.Signature(signature_bytes=Web3.toBytes(hexstr=signature))
+    message_hash = Web3.solidityKeccak(
+        ["bytes"],
+        [Web3.toHex(Web3.toBytes(text=message))],
     )
-    logger.error(msg)
-    raise InvalidSignatureError(msg)
+
+    prefix = "\x19Ethereum Signed Message:\n32"
+    signable_hash = Web3.solidityKeccak(
+        ["bytes", "bytes"], [Web3.toBytes(text=prefix), Web3.toBytes(message_hash)]
+    )
+    vkey = keys.ecdsa_recover(signable_hash, signature)
+    if Web3.toChecksumAddress(signer_address) != Web3.toChecksumAddress(
+        vkey.to_address()
+    ):
+        msg = (
+            f"Invalid signature {signature} for "
+            f"ethereum address {signer_address}, message {original_msg} "
+            f"and nonce {nonce}. Got {vkey.to_address()}"
+        )
+        logger.error(msg)
+        raise InvalidSignatureError(msg)
+
+    return True
 
 
 def get_private_key(wallet):
@@ -47,7 +62,7 @@ def get_private_key(wallet):
     pk = wallet.key
     if not isinstance(pk, bytes):
         pk = Web3.toBytes(hexstr=pk)
-    return eth_keys.KeyAPI.PrivateKey(pk)
+    return keys.PrivateKey(pk)
 
 
 def sign_message(message, wallet):

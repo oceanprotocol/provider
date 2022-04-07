@@ -30,6 +30,7 @@ jobs:
           OPERATOR_SERVICE_VERSION: compute_envs
           OPERATOR_ENGINE_VERSION: compute_envs
           CONTRACTS_VERSION: v1.0.0-alpha.28
+          AQUARIUS_VERSION: refactor_signatures
         run: |
           bash -x start_ocean.sh --no-dashboard 2>&1 --with-rbac --with-provider2 --with-c2d > start_ocean.log &
           for i in $(seq 1 150); do
