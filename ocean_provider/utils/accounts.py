@@ -33,19 +33,9 @@ def verify_signature(signer_address, signature, original_msg, nonce):
     # address = Account.recover_message(encode_defunct(text=message), signature=signature)
     signature_bytes = Web3.toBytes(hexstr=signature)
     if signature_bytes[64] == 27:
-        new_signature = b"".join(
-            [
-                signature_bytes[0:64],
-                b'\x00'
-            ]
-        )
+        new_signature = b"".join([signature_bytes[0:64], b"\x00"])
     elif signature_bytes[64] == 28:
-        new_signature = b"".join(
-            [
-                signature_bytes[0:64],
-                b'\x01'
-            ]
-        )
+        new_signature = b"".join([signature_bytes[0:64], b"\x01"])
     else:
         new_signature = signature_bytes
     signature = keys.Signature(signature_bytes=new_signature)
