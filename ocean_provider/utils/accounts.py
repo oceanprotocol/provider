@@ -33,14 +33,14 @@ def verify_signature(signer_address, signature, original_msg, nonce):
     # address = Account.recover_message(encode_defunct(text=message), signature=signature)
     logger.info(f"Signature: {signature}")
     signature_bytes = Web3.toBytes(hexstr=signature)
-    if signature_bytes[65]>=27:
-        signature_bytes[65] = signature_bytes[65]-27
+    if signature_bytes[65] >= 27:
+        signature_bytes[65] = signature_bytes[65] - 27
     signature = keys.Signature(signature_bytes=signature_bytes)
     message_hash = Web3.solidityKeccak(
         ["bytes"],
         [Web3.toHex(Web3.toBytes(text=message))],
     )
-
+    logger.info(f"Signature: {signature}")
     prefix = "\x19Ethereum Signed Message:\n32"
     signable_hash = Web3.solidityKeccak(
         ["bytes", "bytes"], [Web3.toBytes(text=prefix), Web3.toBytes(message_hash)]
