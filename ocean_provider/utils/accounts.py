@@ -4,15 +4,17 @@
 #
 import logging
 
-import eth_keys
 from eth_account.account import Account
 from eth_account.messages import encode_defunct
+from eth_keys import KeyAPI
+from eth_keys.backends import NativeECCBackend
 from ocean_provider.exceptions import InvalidSignatureError
 from ocean_provider.user_nonce import get_nonce
-from ocean_provider.utils.basics import get_web3
+from ocean_provider.utils.basics import get_web3, get_provider_wallet
 from web3 import Web3
 
 logger = logging.getLogger(__name__)
+keys = KeyAPI(NativeECCBackend)
 
 
 def verify_signature(signer_address, signature, original_msg, nonce):
@@ -21,21 +23,43 @@ def verify_signature(signer_address, signature, original_msg, nonce):
     """
     db_nonce = get_nonce(signer_address)
     if db_nonce and float(nonce) < float(db_nonce):
-        raise InvalidSignatureError("Invalid signature expected nonce > current nonce.")
+        msg = (
+            f"Invalid signature expected nonce ({db_nonce}) > current nonce ({nonce})."
+        )
+        logger.error(msg)
+        raise InvalidSignatureError(msg)
 
     message = f"{original_msg}{str(nonce)}"
-    address = Account.recover_message(encode_defunct(text=message), signature=signature)
-
-    if address.lower() == signer_address.lower():
-        return True
-
-    msg = (
-        f"Invalid signature {signature} for "
-        f"ethereum address {signer_address}, message {original_msg} "
-        f"and nonce {nonce}. Expected: {signer_address.lower()} but got {address.lower()}"
+    # address = Account.recover_message(encode_defunct(text=message), signature=signature)
+    signature_bytes = Web3.toBytes(hexstr=signature)
+    if signature_bytes[64] == 27:
+        new_signature = b"".join([signature_bytes[0:64], b"\x00"])
+    elif signature_bytes[64] == 28:
+        new_signature = b"".join([signature_bytes[0:64], b"\x01"])
+    else:
+        new_signature = signature_bytes
+    signature = keys.Signature(signature_bytes=new_signature)
+    message_hash = Web3.solidityKeccak(
+        ["bytes"],
+        [Web3.toHex(Web3.toBytes(text=message))],
     )
-    logger.error(msg)
-    raise InvalidSignatureError(msg)
+    prefix = "\x19Ethereum Signed Message:\n32"
+    signable_hash = Web3.solidityKeccak(
+        ["bytes", "bytes"], [Web3.toBytes(text=prefix), Web3.toBytes(message_hash)]
+    )
+    vkey = keys.ecdsa_recover(signable_hash, signature)
+    if Web3.toChecksumAddress(signer_address) != Web3.toChecksumAddress(
+        vkey.to_address()
+    ):
+        msg = (
+            f"Invalid signature {signature} for "
+            f"ethereum address {signer_address}, message {original_msg} "
+            f"and nonce {nonce}. Got {vkey.to_address()}"
+        )
+        logger.error(msg)
+        raise InvalidSignatureError(msg)
+
+    return True
 
 
 def get_private_key(wallet):
@@ -43,18 +67,33 @@ def get_private_key(wallet):
     pk = wallet.key
     if not isinstance(pk, bytes):
         pk = Web3.toBytes(hexstr=pk)
-    return eth_keys.KeyAPI.PrivateKey(pk)
+    return keys.PrivateKey(pk)
 
 
 def sign_message(message, wallet):
     """
     :param message: str
     :param wallet: Wallet instance
-    :return: `hex` value of the signed message
+    :return: signature
     """
-    w3 = get_web3()
-    signed = w3.eth.account.sign_message(
-        encode_defunct(text=message), private_key=wallet.key
+    # w3 = get_web3()
+    # signed = w3.eth.account.sign_message(
+    #    encode_defunct(text=message), private_key=wallet.key
+    # )
+    # return signed.signature.hex()
+    keys_pk = keys.PrivateKey(wallet.key)
+    message_hash = Web3.solidityKeccak(
+        ["bytes"],
+        [Web3.toHex(Web3.toBytes(text=message))],
     )
-
-    return signed.signature.hex()
+    prefix = "\x19Ethereum Signed Message:\n32"
+    signable_hash = Web3.solidityKeccak(
+        ["bytes", "bytes"], [Web3.toBytes(text=prefix), Web3.toBytes(message_hash)]
+    )
+    prefix = "\x19Ethereum Signed Message:\n32"
+    signed = keys.ecdsa_sign(message_hash=signable_hash, private_key=keys_pk)
+    v = str(Web3.toHex(Web3.toBytes(signed.v)))
+    r = str(Web3.toHex(Web3.toBytes(signed.r).rjust(32, b"\0")))
+    s = str(Web3.toHex(Web3.toBytes(signed.s).rjust(32, b"\0")))
+    signature = "0x" + r[2:] + s[2:] + v[2:]
+    return signature

@@ -2,10 +2,13 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
-from datetime import datetime
+import functools
 import json
 import logging
+import os
+from datetime import datetime
 
+import flask
 from flask import Response, jsonify, request
 from flask_sieve import validate
 from ocean_provider.requests_session import get_requests_session
@@ -41,7 +44,20 @@ logger = logging.getLogger(__name__)
 standard_headers = {"Content-type": "application/json", "Connection": "close"}
 
 
+def validate_compute_request(f):
+    @functools.wraps(f)
+    def decorated_function(*args, **kws):
+        # Do something with your request here
+        if not os.getenv("OPERATOR_SERVICE_URL"):
+            flask.abort(404)
+
+        return f(*args, **kws)
+
+    return decorated_function
+
+
 @services.route("/compute", methods=["DELETE"])
+@validate_compute_request
 @validate(ComputeRequest)
 def computeDelete():
     """Deletes a workflow.
@@ -97,6 +113,7 @@ def computeDelete():
 
 
 @services.route("/compute", methods=["PUT"])
+@validate_compute_request
 @validate(ComputeRequest)
 def computeStop():
     """Stop the execution of a workflow.
@@ -157,6 +174,7 @@ def computeStop():
 
 
 @services.route("/compute", methods=["GET"])
+@validate_compute_request
 @validate(UnsignedComputeRequest)
 def computeStatus():
     """Get status for a specific jobId/documentId/owner
@@ -211,6 +229,7 @@ def computeStatus():
 
 
 @services.route("/compute", methods=["POST"])
+@validate_compute_request
 @validate(ComputeStartRequest)
 def computeStart():
     """Call the execution of a workflow.
@@ -279,26 +298,25 @@ def computeStart():
 
     workflow = validator.workflow
     # workflow is ready, push it to operator
-    logger.info("Sending: %s", workflow)
+    logger.debug("Sending: %s", workflow)
 
-    tx_id = data.get("transferTxId")
-    did = data.get("documentId")
     compute_env = data.get("environment")
     seconds = (
         datetime.fromtimestamp(validator.valid_until) - datetime.utcnow()
     ).seconds
 
     nonce, provider_signature = sign_for_compute(provider_wallet, consumer_address)
+    web3 = get_web3()
     payload = {
         "workflow": workflow,
         "providerSignature": provider_signature,
-        "documentId": did,
-        "agreementId": tx_id,
+        "agreementId": data["dataset"]["transferTxId"],
         "owner": consumer_address,
         "providerAddress": provider_wallet.address,
         "environment": compute_env,
         "maxDuration": seconds,
         "nonce": nonce,
+        "chainId": web3.chain_id,
     }
 
     response = requests_session.post(
@@ -314,6 +332,7 @@ def computeStart():
 
 
 @services.route("/computeResult", methods=["GET"])
+@validate_compute_request
 @validate(ComputeGetResult)
 def computeResult():
     """Allows download of asset data file.
@@ -338,6 +357,9 @@ def computeResult():
         in: query
         description: Result index
         required: true
+      - name: nonce
+        in: query
+        description: The UTC timestamp, used to prevent replay attacks
       - name: signature
         in: query
         description: Signature of (consumerAddress+jobId+index+nonce) to verify that the consumer has rights to download the result
@@ -360,6 +382,7 @@ def computeResult():
     nonce, provider_signature = sign_for_compute(
         provider_wallet, consumer_address, job_id
     )
+    web3 = get_web3()
     params = {
         "index": data.get("index"),
         "owner": data.get("consumerAddress"),
@@ -367,6 +390,7 @@ def computeResult():
         "consumerSignature": data.get("signature"),
         "providerSignature": provider_signature,
         "nonce": nonce,
+        "chainId": web3.chain_id,
     }
     req = PreparedRequest()
     req.prepare_url(url, params)
@@ -375,7 +399,7 @@ def computeResult():
     update_nonce(data.get("consumerAddress"), data.get("nonce"))
 
     response = build_download_response(
-        request, requests_session, result_url, result_url, None
+        request, requests_session, result_url, result_url, None, validate_url=False
     )
     logger.info(f"computeResult response = {response}")
 
@@ -383,6 +407,7 @@ def computeResult():
 
 
 @services.route("/computeEnvironments", methods=["GET"])
+@validate_compute_request
 def computeEnvironments():
     """Get compute environments
 

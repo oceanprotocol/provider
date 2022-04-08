@@ -75,9 +75,14 @@ def get_provider_fees(
 
 
 def get_c2d_environments() -> List:
+    if not os.getenv("OPERATOR_SERVICE_URL"):
+        return []
+
     standard_headers = {"Content-type": "application/json", "Connection": "close"}
+    web3 = get_web3()
+    params = {"chainId": web3.chain_id}
     response = requests_session.get(
-        get_compute_environments_endpoint(), headers=standard_headers
+        get_compute_environments_endpoint(), headers=standard_headers, params=params
     )
 
     # loop envs and add provider token from config

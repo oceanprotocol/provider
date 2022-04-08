@@ -90,7 +90,9 @@ def test_download_service(
     _msg = f"{asset.did}{nonce}"
     payload["signature"] = sign_message(_msg, consumer_wallet)
     payload["nonce"] = nonce
-    response = client.get(download_endpoint, query_string=payload)
+    response = client.get(
+        service.service_endpoint + download_endpoint, query_string=payload
+    )
     assert response.status_code == 200, f"{response.data}"
 
     if not userdata and not erc20_enterprise:

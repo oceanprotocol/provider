@@ -99,6 +99,8 @@ def deploy_data_nft(
         additional_erc20_deployer,
         additional_metadata_updater,
         base_uri,
+        True,
+        from_wallet.address,
     ).buildTransaction({"from": from_wallet.address, "gasPrice": get_gas_price(web3)})
     _, deploy_data_nft_receipt = sign_send_and_wait_for_receipt(
         web3, deploy_data_nft_tx, from_wallet

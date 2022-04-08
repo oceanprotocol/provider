@@ -4,6 +4,7 @@
 #
 import json
 import logging
+import os
 
 from flask import jsonify, request
 from flask_sieve import validate
@@ -92,7 +93,7 @@ def fileinfo():
     return: list of file info (index, valid, contentLength, contentType)
     """
     data = get_request_data(request)
-    logger.info(f"fileinfo called. arguments = {data}")
+    logger.debug(f"fileinfo called. arguments = {data}")
     did = data.get("did")
     service_id = data.get("serviceId")
 
@@ -274,7 +275,10 @@ def download():
     asset = get_asset_from_metadatastore(get_metadata_url(), did)
     service = asset.get_service_by_id(service_id)
 
-    compute_address, compute_limits = get_compute_info()
+    compute_address, compute_limits = (
+        get_compute_info() if os.getenv("OPERATOR_SERVICE_URL") else None,
+        None,
+    )
 
     # allow our C2D to download a compute asset
     if service.type != ServiceType.ACCESS and Web3.toChecksumAddress(
@@ -312,7 +316,7 @@ def download():
     valid, details = check_url_details(url_object["url"])
     content_type = details["contentType"] if valid else None
 
-    logger.info(
+    logger.debug(
         f"Done processing consume request for asset {did}, " f" url {download_url}"
     )
     update_nonce(consumer_address, data.get("nonce"))

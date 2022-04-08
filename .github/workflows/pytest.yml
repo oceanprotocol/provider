@@ -27,8 +27,10 @@ jobs:
       - name: Run Barge
         working-directory: ${{ github.workspace }}/barge
         env:
-          OPERATOR_SERVICE_VERSION: compute_envs
-          OPERATOR_ENGINE_VERSION: compute_envs
+          OPERATOR_SERVICE_VERSION: refactor_signatures
+          CONTRACTS_VERSION: v1.0.0-alpha.28
+          AQUARIUS_VERSION: refactor_signatures
+          PROVIDER_VERSION: refactor_signatures
         run: |
           bash -x start_ocean.sh --no-dashboard 2>&1 --with-rbac --with-provider2 --with-c2d > start_ocean.log &
           for i in $(seq 1 150); do
@@ -46,11 +48,14 @@ jobs:
           coverage run --source ocean_provider -m pytest
           coverage report
           coverage xml
+      - name:  docker logs
+        run: docker logs ocean_aquarius_1 && docker logs ocean_provider_1 && docker logs ocean_provider2_1 && docker logs ocean_computetodata_1
+        if: ${{ failure() }}
       - name: Publish code coverage
         uses: paambaati/codeclimate-action@v2.7.5
         env:
           CC_TEST_REPORTER_ID: b0d75c25d5176c59e8ea665bf74396d9ee1bdf2c97f11ccc6869f9e91d80a6c7
-  
+
   dockerbuild:
     runs-on: ubuntu-latest
     needs: [build]

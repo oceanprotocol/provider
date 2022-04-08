@@ -17,6 +17,8 @@ import werkzeug
 from jsonsempai import magic  # noqa: F401
 from artifacts import ERC721Template
 from eth_account.signers.local import LocalAccount
+from eth_keys import KeyAPI
+from eth_keys.backends import NativeECCBackend
 from eth_typing.encoding import HexStr
 from flask import Response
 from ocean_provider.utils.accounts import sign_message
@@ -28,11 +30,13 @@ from ocean_provider.utils.datatoken import verify_order_tx
 from ocean_provider.utils.encryption import do_decrypt
 from ocean_provider.utils.services import Service
 from ocean_provider.utils.url import is_safe_url
+from web3 import Web3
 from websockets import ConnectionClosed
 from web3.main import Web3
 from web3.types import TxParams, TxReceipt
 
 logger = logging.getLogger(__name__)
+keys = KeyAPI(NativeECCBackend)
 
 
 def get_metadata_url():
@@ -51,10 +55,16 @@ def msg_hash(message: str):
 
 
 def build_download_response(
-    request, requests_session, url, download_url, content_type=None, method="GET"
+    request,
+    requests_session,
+    url,
+    download_url,
+    content_type=None,
+    method="GET",
+    validate_url=True,
 ):
     try:
-        if not is_safe_url(url):
+        if validate_url and not is_safe_url(url):
             raise ValueError(f"Unsafe url {url}")
         download_request_headers = {}
         download_response_headers = {}
@@ -264,6 +274,8 @@ def process_compute_request(data):
     nonce, provider_signature = sign_for_compute(provider_wallet, owner, job_id)
     body["providerSignature"] = provider_signature
     body["nonce"] = nonce
+    web3 = get_web3()
+    body["chainId"] = web3.chain_id
 
     return body
 
@@ -329,7 +341,22 @@ def sign_for_compute(wallet, owner, job_id=None):
         msg = f"{owner}{job_id}{nonce}"
     else:
         msg = f"{owner}{nonce}"
-    signature = sign_message(msg, wallet)
+    # signature = sign_message(msg, wallet)
+    keys_pk = keys.PrivateKey(wallet.key)
+    message_hash = Web3.solidityKeccak(
+        ["bytes"],
+        [Web3.toHex(Web3.toBytes(text=msg))],
+    )
+    prefix = "\x19Ethereum Signed Message:\n32"
+    signable_hash = Web3.solidityKeccak(
+        ["bytes", "bytes"], [Web3.toBytes(text=prefix), Web3.toBytes(message_hash)]
+    )
+    prefix = "\x19Ethereum Signed Message:\n32"
+    signed = keys.ecdsa_sign(message_hash=signable_hash, private_key=keys_pk)
+    v = str(Web3.toHex(Web3.toBytes(signed.v)))
+    r = str(Web3.toHex(Web3.toBytes(signed.r).rjust(32, b"\0")))
+    s = str(Web3.toHex(Web3.toBytes(signed.s).rjust(32, b"\0")))
+    signature = "0x" + r[2:] + s[2:] + v[2:]
 
     return nonce, signature
 

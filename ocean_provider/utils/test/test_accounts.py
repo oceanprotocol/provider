@@ -51,4 +51,4 @@ def test_verify_signature(consumer_wallet, publisher_wallet):
     with pytest.raises(InvalidSignatureError) as e_info:
         verify_signature(consumer_wallet.address, signature, msg_w_nonce, nonce)
 
-    assert e_info.value.args[0] == "Invalid signature expected nonce > current nonce."
+    assert e_info.value.args[0].startswith("Invalid signature expected nonce")
