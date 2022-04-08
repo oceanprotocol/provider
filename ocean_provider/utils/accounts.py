@@ -76,11 +76,11 @@ def sign_message(message, wallet):
     :param wallet: Wallet instance
     :return: signature
     """
-    #w3 = get_web3()
-    #signed = w3.eth.account.sign_message(
+    # w3 = get_web3()
+    # signed = w3.eth.account.sign_message(
     #    encode_defunct(text=message), private_key=wallet.key
-    #)
-    #return signed.signature.hex()
+    # )
+    # return signed.signature.hex()
     keys_pk = keys.PrivateKey(wallet.key)
     message_hash = Web3.solidityKeccak(
         ["bytes"],
@@ -97,4 +97,3 @@ def sign_message(message, wallet):
     s = str(Web3.toHex(Web3.toBytes(signed.s).rjust(32, b"\0")))
     signature = "0x" + r[2:] + s[2:] + v[2:]
     return signature
-    
