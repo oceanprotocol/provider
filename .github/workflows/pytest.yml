@@ -27,8 +27,7 @@ jobs:
       - name: Run Barge
         working-directory: ${{ github.workspace }}/barge
         env:
-          OPERATOR_SERVICE_VERSION: compute_envs
-          OPERATOR_ENGINE_VERSION: compute_envs
+          OPERATOR_SERVICE_VERSION: refactor_signatures
           CONTRACTS_VERSION: v1.0.0-alpha.28
           AQUARIUS_VERSION: refactor_signatures
         run: |
