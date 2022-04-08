@@ -16,6 +16,8 @@ import werkzeug
 from jsonsempai import magic  # noqa: F401
 from artifacts import ERC721Template
 from eth_account.signers.local import LocalAccount
+from eth_keys import KeyAPI
+from eth_keys.backends import NativeECCBackend
 from flask import Response
 from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.basics import get_config, get_provider_wallet, get_web3
@@ -26,9 +28,11 @@ from ocean_provider.utils.datatoken import verify_order_tx
 from ocean_provider.utils.encryption import do_decrypt
 from ocean_provider.utils.services import Service
 from ocean_provider.utils.url import is_safe_url
+from web3 import Web3
 from websockets import ConnectionClosed
 
 logger = logging.getLogger(__name__)
+keys = KeyAPI(NativeECCBackend)
 
 
 def get_metadata_url():
@@ -333,6 +337,21 @@ def sign_for_compute(wallet, owner, job_id=None):
         msg = f"{owner}{job_id}{nonce}"
     else:
         msg = f"{owner}{nonce}"
-    signature = sign_message(msg, wallet)
+    # signature = sign_message(msg, wallet)
+    keys_pk = keys.PrivateKey(wallet.key)
+    message_hash = Web3.solidityKeccak(
+        ["bytes"],
+        [Web3.toHex(Web3.toBytes(text=msg))],
+    )
+    prefix = "\x19Ethereum Signed Message:\n32"
+    signable_hash = Web3.solidityKeccak(
+        ["bytes", "bytes"], [Web3.toBytes(text=prefix), Web3.toBytes(message_hash)]
+    )
+    prefix = "\x19Ethereum Signed Message:\n32"
+    signed = keys.ecdsa_sign(message_hash=signable_hash, private_key=keys_pk)
+    v = str(Web3.toHex(Web3.toBytes(signed.v)))
+    r = str(Web3.toHex(Web3.toBytes(signed.r).rjust(32, b"\0")))
+    s = str(Web3.toHex(Web3.toBytes(signed.s).rjust(32, b"\0")))
+    signature = "0x" + r[2:] + s[2:] + v[2:]
 
     return nonce, signature
