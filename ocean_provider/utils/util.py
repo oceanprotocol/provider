@@ -10,6 +10,7 @@ import os
 from cgi import parse_header
 from urllib.parse import urljoin
 from datetime import datetime
+from typing import Tuple
 
 import requests
 import werkzeug
@@ -18,6 +19,7 @@ from artifacts import ERC721Template
 from eth_account.signers.local import LocalAccount
 from eth_keys import KeyAPI
 from eth_keys.backends import NativeECCBackend
+from eth_typing.encoding import HexStr
 from flask import Response
 from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.basics import get_config, get_provider_wallet, get_web3
@@ -29,6 +31,7 @@ from ocean_provider.utils.encryption import do_decrypt
 from ocean_provider.utils.services import Service
 from ocean_provider.utils.url import is_safe_url
 from web3 import Web3
+from web3.types import TxParams, TxReceipt
 from websockets import ConnectionClosed
 
 logger = logging.getLogger(__name__)
@@ -337,3 +340,29 @@ def sign_for_compute(wallet, owner, job_id=None):
     signature = sign_message(msg, wallet)
 
     return nonce, signature
+
+
+def sign_tx(web3, tx, private_key):
+    """
+    :param web3: Web3 object instance
+    :param tx: transaction
+    :param private_key: Private key of the account
+    :return: rawTransaction (str)
+    """
+    account = web3.eth.account.from_key(private_key)
+    nonce = web3.eth.get_transaction_count(account.address)
+    tx["nonce"] = nonce
+    signed_tx = web3.eth.account.sign_transaction(tx, private_key)
+
+    return signed_tx.rawTransaction
+
+
+def sign_send_and_wait_for_receipt(
+    web3: Web3, transaction: TxParams, from_account: LocalAccount
+) -> Tuple[HexStr, TxReceipt]:
+    """Returns the transaction id and transaction receipt."""
+    transaction_signed = sign_tx(web3, transaction, from_account.key)
+    transaction_hash = web3.eth.send_raw_transaction(transaction_signed)
+    transaction_id = Web3.toHex(transaction_hash)
+
+    return (transaction_id, web3.eth.wait_for_transaction_receipt(transaction_hash))
