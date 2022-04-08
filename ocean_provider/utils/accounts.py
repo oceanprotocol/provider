@@ -30,7 +30,7 @@ def verify_signature(signer_address, signature, original_msg, nonce):
         raise InvalidSignatureError(msg)
 
     message = f"{original_msg}{str(nonce)}"
-    # address = Account.recover_message(encode_defunct(text=message), signature=signature)
+
     signature_bytes = Web3.toBytes(hexstr=signature)
     if signature_bytes[64] == 27:
         new_signature = b"".join([signature_bytes[0:64], b"\x00"])
@@ -38,6 +38,7 @@ def verify_signature(signer_address, signature, original_msg, nonce):
         new_signature = b"".join([signature_bytes[0:64], b"\x01"])
     else:
         new_signature = signature_bytes
+
     signature = keys.Signature(signature_bytes=new_signature)
     message_hash = Web3.solidityKeccak(
         ["bytes"],
@@ -48,6 +49,7 @@ def verify_signature(signer_address, signature, original_msg, nonce):
         ["bytes", "bytes"], [Web3.toBytes(text=prefix), Web3.toBytes(message_hash)]
     )
     vkey = keys.ecdsa_recover(signable_hash, signature)
+
     if Web3.toChecksumAddress(signer_address) != Web3.toChecksumAddress(
         vkey.to_address()
     ):
@@ -76,11 +78,6 @@ def sign_message(message, wallet):
     :param wallet: Wallet instance
     :return: signature
     """
-    # w3 = get_web3()
-    # signed = w3.eth.account.sign_message(
-    #    encode_defunct(text=message), private_key=wallet.key
-    # )
-    # return signed.signature.hex()
     keys_pk = keys.PrivateKey(wallet.key)
     message_hash = Web3.solidityKeccak(
         ["bytes"],
@@ -92,8 +89,11 @@ def sign_message(message, wallet):
     )
     prefix = "\x19Ethereum Signed Message:\n32"
     signed = keys.ecdsa_sign(message_hash=signable_hash, private_key=keys_pk)
+
     v = str(Web3.toHex(Web3.toBytes(signed.v)))
     r = str(Web3.toHex(Web3.toBytes(signed.r).rjust(32, b"\0")))
     s = str(Web3.toHex(Web3.toBytes(signed.s).rjust(32, b"\0")))
+
     signature = "0x" + r[2:] + s[2:] + v[2:]
+
     return signature
