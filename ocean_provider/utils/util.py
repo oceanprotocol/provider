@@ -333,25 +333,7 @@ def sign_for_compute(wallet, owner, job_id=None):
     nonce = datetime.utcnow().timestamp()
 
     # prepare consumer signature on did
-    if job_id:
-        msg = f"{owner}{job_id}{nonce}"
-    else:
-        msg = f"{owner}{nonce}"
-    # signature = sign_message(msg, wallet)
-    keys_pk = keys.PrivateKey(wallet.key)
-    message_hash = Web3.solidityKeccak(
-        ["bytes"],
-        [Web3.toHex(Web3.toBytes(text=msg))],
-    )
-    prefix = "\x19Ethereum Signed Message:\n32"
-    signable_hash = Web3.solidityKeccak(
-        ["bytes", "bytes"], [Web3.toBytes(text=prefix), Web3.toBytes(message_hash)]
-    )
-    prefix = "\x19Ethereum Signed Message:\n32"
-    signed = keys.ecdsa_sign(message_hash=signable_hash, private_key=keys_pk)
-    v = str(Web3.toHex(Web3.toBytes(signed.v)))
-    r = str(Web3.toHex(Web3.toBytes(signed.r).rjust(32, b"\0")))
-    s = str(Web3.toHex(Web3.toBytes(signed.s).rjust(32, b"\0")))
-    signature = "0x" + r[2:] + s[2:] + v[2:]
+    msg = f"{owner}{job_id}{nonce}" if job_id else f"{owner}{nonce}"
+    signature = sign_message(msg, wallet)
 
     return nonce, signature
