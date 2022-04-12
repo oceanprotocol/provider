@@ -4,8 +4,6 @@
 #
 import logging
 
-from eth_account.account import Account
-from eth_account.messages import encode_defunct
 from eth_keys import KeyAPI
 from eth_keys.backends import NativeECCBackend
 from ocean_provider.exceptions import InvalidSignatureError
