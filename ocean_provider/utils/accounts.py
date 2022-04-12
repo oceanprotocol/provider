@@ -10,7 +10,6 @@ from eth_keys import KeyAPI
 from eth_keys.backends import NativeECCBackend
 from ocean_provider.exceptions import InvalidSignatureError
 from ocean_provider.user_nonce import get_nonce
-from ocean_provider.utils.basics import get_web3, get_provider_wallet
 from web3 import Web3
 
 logger = logging.getLogger(__name__)
@@ -30,7 +29,6 @@ def verify_signature(signer_address, signature, original_msg, nonce):
         raise InvalidSignatureError(msg)
 
     message = f"{original_msg}{str(nonce)}"
-    # address = Account.recover_message(encode_defunct(text=message), signature=signature)
     signature_bytes = Web3.toBytes(hexstr=signature)
     if signature_bytes[64] == 27:
         new_signature = b"".join([signature_bytes[0:64], b"\x00"])
@@ -41,7 +39,7 @@ def verify_signature(signer_address, signature, original_msg, nonce):
     signature = keys.Signature(signature_bytes=new_signature)
     message_hash = Web3.solidityKeccak(
         ["bytes"],
-        [Web3.toHex(Web3.toBytes(text=message))],
+        [Web3.toBytes(text=message)],
     )
     prefix = "\x19Ethereum Signed Message:\n32"
     signable_hash = Web3.solidityKeccak(
@@ -84,13 +82,12 @@ def sign_message(message, wallet):
     keys_pk = keys.PrivateKey(wallet.key)
     message_hash = Web3.solidityKeccak(
         ["bytes"],
-        [Web3.toHex(Web3.toBytes(text=message))],
+        [Web3.toBytes(text=message)],
     )
     prefix = "\x19Ethereum Signed Message:\n32"
     signable_hash = Web3.solidityKeccak(
         ["bytes", "bytes"], [Web3.toBytes(text=prefix), Web3.toBytes(message_hash)]
     )
-    prefix = "\x19Ethereum Signed Message:\n32"
     signed = keys.ecdsa_sign(message_hash=signable_hash, private_key=keys_pk)
     v = str(Web3.toHex(Web3.toBytes(signed.v)))
     r = str(Web3.toHex(Web3.toBytes(signed.r).rjust(32, b"\0")))
