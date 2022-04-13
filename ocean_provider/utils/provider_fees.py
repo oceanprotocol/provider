@@ -1,14 +1,14 @@
-from datetime import datetime
 import json
 import logging
 import os
+from datetime import datetime
 from typing import Any, Dict, List
 
 from eth_keys import KeyAPI
 from eth_keys.backends import NativeECCBackend
 from ocean_provider.requests_session import get_requests_session
 from ocean_provider.utils.basics import LocalFileAdapter, get_provider_wallet, get_web3
-from ocean_provider.utils.currency import to_wei
+from ocean_provider.utils.currency import parse_units
 from ocean_provider.utils.datatoken import get_datatoken_contract
 from ocean_provider.utils.services import Service
 from ocean_provider.utils.util import get_compute_environments_endpoint, get_environment
@@ -107,4 +107,4 @@ def get_provider_fee_amount(valid_until, compute_env, web3, provider_fee_token):
     dt = get_datatoken_contract(web3, provider_fee_token)
     decimals = dt.caller.decimals()
 
-    return to_wei(str(provider_fee_amount), decimals)
+    return parse_units(str(provider_fee_amount), decimals)
