@@ -2,7 +2,7 @@ from decimal import ROUND_DOWN, Context, Decimal, localcontext
 from typing import Union
 
 """The maximum uint256 value."""
-MAX_UINT256 = 2 ** 256 - 1
+MAX_UINT256 = 2**256 - 1
 
 """decimal.Context tuned to accomadate MAX_WEI.
 * precision=78 because there are 78 digits in MAX_WEI (MAX_UINT256).
