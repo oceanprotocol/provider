@@ -280,8 +280,7 @@ def download():
         [
             True
             for env in c2d_environments
-            if service.id == env["id"]
-            and Web3.toChecksumAddress(env["consumerAddress"])
+            if Web3.toChecksumAddress(env["consumerAddress"])
             == Web3.toChecksumAddress(consumer_address)
         ]
     )

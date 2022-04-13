@@ -265,7 +265,6 @@ def test_download_compute_asset_by_c2d(client, publisher_wallet, consumer_wallet
     with patch("ocean_provider.routes.consume.get_c2d_environments") as mock:
         mock.return_value = [
             {
-                "id": service.id,
                 "priceMin": 60,
                 "consumerAddress": consumer_wallet.address,
             }
@@ -322,7 +321,6 @@ def test_download_compute_asset_by_user_fails(
     with patch("ocean_provider.routes.consume.get_c2d_environments") as mock:
         mock.return_value = [
             {
-                "id": service.id,
                 "priceMin": 60,
                 "consumerAddress": "0x0000000000000000000000000000000000000123",
             }
