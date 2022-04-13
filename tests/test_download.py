@@ -245,8 +245,6 @@ def test_download_compute_asset_by_c2d(client, publisher_wallet, consumer_wallet
     nonce = str(datetime.utcnow().timestamp())
     _msg = f"{asset.did}{nonce}"
 
-    # Consume using url index and auth token
-    # (let the provider do the decryption)
     payload = {
         "documentId": asset.did,
         "serviceId": service.id,
@@ -257,15 +255,14 @@ def test_download_compute_asset_by_c2d(client, publisher_wallet, consumer_wallet
         "nonce": nonce,
     }
 
-    def other_service(*args, **kwargs):
+    def other_service(_):
         new_service = copy.deepcopy(service)
-        new_service.__setattr__("type", "compute")
+        new_service.type = "compute"
         return new_service
 
     with patch("ocean_provider.routes.consume.get_c2d_environments") as mock:
         mock.return_value = [
             {
-                "priceMin": 60,
                 "consumerAddress": consumer_wallet.address,
             }
         ]
@@ -301,8 +298,6 @@ def test_download_compute_asset_by_user_fails(
     nonce = str(datetime.utcnow().timestamp())
     _msg = f"{asset.did}{nonce}"
 
-    # Consume using url index and auth token
-    # (let the provider do the decryption)
     payload = {
         "documentId": asset.did,
         "serviceId": service.id,
@@ -313,15 +308,14 @@ def test_download_compute_asset_by_user_fails(
         "nonce": nonce,
     }
 
-    def other_service(*args, **kwargs):
+    def other_service(_):
         new_service = copy.deepcopy(service)
-        new_service.__setattr__("type", "compute")
+        new_service.type = "compute"
         return new_service
 
     with patch("ocean_provider.routes.consume.get_c2d_environments") as mock:
         mock.return_value = [
             {
-                "priceMin": 60,
                 "consumerAddress": "0x0000000000000000000000000000000000000123",
             }
         ]
