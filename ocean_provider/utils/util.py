@@ -16,6 +16,8 @@ import werkzeug
 from jsonsempai import magic  # noqa: F401
 from artifacts import ERC721Template
 from eth_account.signers.local import LocalAccount
+from eth_keys import KeyAPI
+from eth_keys.backends import NativeECCBackend
 from flask import Response
 from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.basics import get_config, get_provider_wallet, get_web3
@@ -26,9 +28,11 @@ from ocean_provider.utils.datatoken import verify_order_tx
 from ocean_provider.utils.encryption import do_decrypt
 from ocean_provider.utils.services import Service
 from ocean_provider.utils.url import is_safe_url
+from web3 import Web3
 from websockets import ConnectionClosed
 
 logger = logging.getLogger(__name__)
+keys = KeyAPI(NativeECCBackend)
 
 
 def get_metadata_url():
@@ -329,10 +333,7 @@ def sign_for_compute(wallet, owner, job_id=None):
     nonce = datetime.utcnow().timestamp()
 
     # prepare consumer signature on did
-    if job_id:
-        msg = f"{owner}{job_id}{nonce}"
-    else:
-        msg = f"{owner}{nonce}"
+    msg = f"{owner}{job_id}{nonce}" if job_id else f"{owner}{nonce}"
     signature = sign_message(msg, wallet)
 
     return nonce, signature
