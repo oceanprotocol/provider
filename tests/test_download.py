@@ -2,7 +2,9 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
+import copy
 from datetime import datetime
+from unittest.mock import patch
 
 import pytest
 from ocean_provider.constants import BaseURLs
@@ -220,3 +222,111 @@ def test_download_multiple_files(client, publisher_wallet, consumer_wallet, web3
     download_endpoint = BaseURLs.SERVICES_URL + "/download"
     response = client.get(download_endpoint, query_string=payload)
     assert response.status_code == 200, f"{response.data}"
+
+
+@pytest.mark.integration
+def test_download_compute_asset_by_c2d(client, publisher_wallet, consumer_wallet, web3):
+    asset = get_dataset_ddo_with_multiple_files(client, publisher_wallet)
+    service = get_first_service_by_type(asset, ServiceType.ACCESS)
+
+    mint_100_datatokens(
+        web3, service.datatoken_address, consumer_wallet.address, publisher_wallet
+    )
+
+    tx_id, _ = start_order(
+        web3,
+        service.datatoken_address,
+        consumer_wallet.address,
+        service.index,
+        get_provider_fees(asset.did, service, consumer_wallet.address, 0),
+        consumer_wallet,
+    )
+
+    nonce = str(datetime.utcnow().timestamp())
+    _msg = f"{asset.did}{nonce}"
+
+    payload = {
+        "documentId": asset.did,
+        "serviceId": service.id,
+        "consumerAddress": consumer_wallet.address,
+        "signature": sign_message(_msg, consumer_wallet),
+        "transferTxId": tx_id,
+        "fileIndex": 0,
+        "nonce": nonce,
+    }
+
+    def other_service(_):
+        new_service = copy.deepcopy(service)
+        new_service.type = "compute"
+        return new_service
+
+    with patch("ocean_provider.routes.consume.get_c2d_environments") as mock:
+        mock.return_value = [
+            {
+                "consumerAddress": consumer_wallet.address,
+            }
+        ]
+        with patch(
+            "ocean_provider.utils.asset.Asset.get_service_by_id",
+            side_effect=other_service,
+        ):
+            download_endpoint = BaseURLs.SERVICES_URL + "/download"
+            response = client.get(download_endpoint, query_string=payload)
+            assert response.status_code == 200, f"{response.data}"
+
+
+@pytest.mark.integration
+def test_download_compute_asset_by_user_fails(
+    client, publisher_wallet, consumer_wallet, web3
+):
+    asset = get_dataset_ddo_with_multiple_files(client, publisher_wallet)
+    service = get_first_service_by_type(asset, ServiceType.ACCESS)
+
+    mint_100_datatokens(
+        web3, service.datatoken_address, consumer_wallet.address, publisher_wallet
+    )
+
+    tx_id, _ = start_order(
+        web3,
+        service.datatoken_address,
+        consumer_wallet.address,
+        service.index,
+        get_provider_fees(asset.did, service, consumer_wallet.address, 0),
+        consumer_wallet,
+    )
+
+    nonce = str(datetime.utcnow().timestamp())
+    _msg = f"{asset.did}{nonce}"
+
+    payload = {
+        "documentId": asset.did,
+        "serviceId": service.id,
+        "consumerAddress": consumer_wallet.address,
+        "signature": sign_message(_msg, consumer_wallet),
+        "transferTxId": tx_id,
+        "fileIndex": 0,
+        "nonce": nonce,
+    }
+
+    def other_service(_):
+        new_service = copy.deepcopy(service)
+        new_service.type = "compute"
+        return new_service
+
+    with patch("ocean_provider.routes.consume.get_c2d_environments") as mock:
+        mock.return_value = [
+            {
+                "consumerAddress": "0x0000000000000000000000000000000000000123",
+            }
+        ]
+        with patch(
+            "ocean_provider.utils.asset.Asset.get_service_by_id",
+            side_effect=other_service,
+        ):
+            download_endpoint = BaseURLs.SERVICES_URL + "/download"
+            response = client.get(download_endpoint, query_string=payload)
+            assert response.status_code == 400, f"{response.data}"
+            assert (
+                response.json["error"]
+                == f"Service with index={service.id} is not an access service."
+            )

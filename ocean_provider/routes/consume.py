@@ -273,15 +273,19 @@ def download():
     asset = get_asset_from_metadatastore(get_metadata_url(), did)
     service = asset.get_service_by_id(service_id)
 
-    compute_address, compute_limits = (
-        get_compute_info() if os.getenv("OPERATOR_SERVICE_URL") else None,
-        None,
+    # allow our C2D to download a compute asset
+    c2d_environments = get_c2d_environments()
+
+    is_c2d_consumer_address = bool(
+        [
+            True
+            for env in c2d_environments
+            if Web3.toChecksumAddress(env["consumerAddress"])
+            == Web3.toChecksumAddress(consumer_address)
+        ]
     )
 
-    # allow our C2D to download a compute asset
-    if service.type != ServiceType.ACCESS and Web3.toChecksumAddress(
-        consumer_address
-    ) != Web3.toChecksumAddress(compute_address):
+    if service.type != ServiceType.ACCESS and not is_c2d_consumer_address:
         return error_response(
             f"Service with index={service_id} is not an access service.", 400, logger
         )
