@@ -58,4 +58,6 @@ def send_proof(
         {"from": provider_wallet.address, "gasPrice": int(web3.eth.gas_price * 1.1)}
     )
 
-    sign_send_and_wait_for_receipt(web3, tx, provider_wallet)
+    transaction_id, _ = sign_send_and_wait_for_receipt(web3, tx, provider_wallet)
+
+    return transaction_id
