@@ -34,6 +34,8 @@ def send_proof(
 
         try:
             requests.post(os.getenv("USE_HTTP_PROOF"), payload)
+
+            return True
         except Exception:
             pass
 
