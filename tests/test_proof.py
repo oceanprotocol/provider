@@ -21,7 +21,7 @@ from tests.test_helpers import (
     deploy_data_nft,
     deploy_datatoken,
     get_ocean_token_address,
-    start_order
+    start_order,
 )
 
 
@@ -41,14 +41,14 @@ def test_http_proof(client, monkeypatch):
         response.status_code = 200
         mock.return_value = response
 
-        assert send_proof(None, b'1', provider_data, None, None, None, None) is True
+        assert send_proof(None, b"1", provider_data, None, None, None, None) is True
 
     mock.assert_called_once()
 
     with patch("requests.post") as mock:
         mock.side_effect = Exception("Boom!")
 
-        assert send_proof(None, b'1', provider_data, None, None, None, None) is None
+        assert send_proof(None, b"1", provider_data, None, None, None, None) is None
 
     mock.assert_called_once()
 
@@ -77,4 +77,12 @@ def test_chain_proof(client, monkeypatch, web3, publisher_wallet, consumer_walle
     consumer_data = _msg = f"{asset.did}{nonce}"
     signature = sign_message(_msg, consumer_wallet)
 
-    assert send_proof(web3, receipt.transactionHash, provider_data, consumer_data, signature, consumer_wallet.address, service.datatoken_address)
+    assert send_proof(
+        web3,
+        receipt.transactionHash,
+        provider_data,
+        consumer_data,
+        signature,
+        consumer_wallet.address,
+        service.datatoken_address,
+    )
