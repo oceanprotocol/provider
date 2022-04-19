@@ -1,8 +1,10 @@
 from decimal import ROUND_DOWN, Context, Decimal, localcontext
 from typing import Union
 
+from eth_utils.currency import units
+
 """The maximum uint256 value."""
-MAX_UINT256 = 2**256 - 1
+MAX_UINT256 = 2 ** 256 - 1
 
 """decimal.Context tuned to accomadate MAX_WEI.
 * precision=78 because there are 78 digits in MAX_WEI (MAX_UINT256).
@@ -29,20 +31,6 @@ MIN_ETHER = Decimal("0.000000000000000001")
 """The maximum possible token amount on Ethereum-compatible blockchains, denoted in ether"""
 MAX_ETHER = Decimal(MAX_WEI).scaleb(-18, context=ETHEREUM_DECIMAL_CONTEXT)
 
-UNITS = [
-    "wei",
-    "kwei",
-    "mwei",
-    "gwei",
-    "szabo",
-    "finney",
-    "ether",
-    "kether",
-    "mether",
-    "gether",
-    "tether",
-]
-
 
 def to_wei(amount_in_ether: Union[Decimal, str, int]) -> int:
     return parse_units(amount_in_ether, DECIMALS_18)
@@ -56,7 +44,7 @@ def parse_units(
     float input is purposfully not supported
     """
     num_decimals = (
-        UNITS.index(unit_name) * 3 if isinstance(unit_name, str) else unit_name
+        int(units[unit_name].log10()) if isinstance(unit_name, str) else unit_name
     )
 
     decimal_amount = normalize_and_validate_unit(amount, num_decimals)
