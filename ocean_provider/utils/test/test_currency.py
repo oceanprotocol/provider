@@ -55,9 +55,9 @@ def test_to_wei():
         to_wei(MAX_ETHER) == MAX_WEI
     ), "Conversion from maximum ether to maximum wei failed."
 
-    with pytest.raises(ValueError):
-        # Use ETHEREUM_DECIMAL_CONTEXT when performing arithmetic on MAX_ETHER
-        with localcontext(ETHEREUM_DECIMAL_CONTEXT):
+    # Use ETHEREUM_DECIMAL_CONTEXT when performing arithmetic on MAX_ETHER
+    with localcontext(ETHEREUM_DECIMAL_CONTEXT):
+        with pytest.raises(ValueError):
             to_wei(MAX_ETHER + 1)
 
 
@@ -71,9 +71,9 @@ def test_parse_units():
     assert parse_units(MIN_USDT, USDT_DECIMALS) == MIN_WEI
     assert parse_units(MAX_USDT, USDT_DECIMALS) == MAX_WEI
 
-    with pytest.raises(ValueError):
-        # Use ETHEREUM_DECIMAL_CONTEXT when performing arithmetic on MAX_USDT
-        with localcontext(ETHEREUM_DECIMAL_CONTEXT):
+    # Use ETHEREUM_DECIMAL_CONTEXT when performing arithmetic on MAX_USDT
+    with localcontext(ETHEREUM_DECIMAL_CONTEXT):
+        with pytest.raises(ValueError):
             parse_units(MAX_USDT + 1, USDT_DECIMALS)
 
     assert parse_units("0", "mwei") == 0
@@ -83,9 +83,9 @@ def test_parse_units():
     assert parse_units(MIN_USDT, "mwei") == MIN_WEI
     assert parse_units(MAX_USDT, "mwei") == MAX_WEI
 
-    with pytest.raises(ValueError):
-        # Use ETHEREUM_DECIMAL_CONTEXT when performing arithmetic on MAX_USDT
-        with localcontext(ETHEREUM_DECIMAL_CONTEXT):
+    # Use ETHEREUM_DECIMAL_CONTEXT when performing arithmetic on MAX_USDT
+    with localcontext(ETHEREUM_DECIMAL_CONTEXT):
+        with pytest.raises(ValueError):
             parse_units(MAX_USDT + 1, "mwei")
 
     assert parse_units("0", SEVEN_DECIMALS) == 0
