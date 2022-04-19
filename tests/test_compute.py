@@ -242,7 +242,7 @@ def test_compute(client, publisher_wallet, consumer_wallet):
     tries = 0
     while tries < 200:
         job_info = get_compute_job_info(client, compute_endpoint, payload)
-        if job_info["dateFinished"] and int(job_info["dateFinished"]) > 0:
+        if job_info["dateFinished"] and float(job_info["dateFinished"]) > 0:
             break
         tries = tries + 1
         time.sleep(5)
