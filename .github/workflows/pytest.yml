@@ -27,10 +27,7 @@ jobs:
       - name: Run Barge
         working-directory: ${{ github.workspace }}/barge
         env:
-          OPERATOR_SERVICE_VERSION: refactor_signatures
           CONTRACTS_VERSION: v1.0.0-alpha.28
-          AQUARIUS_VERSION: refactor_signatures
-          PROVIDER_VERSION: refactor_signatures
         run: |
           bash -x start_ocean.sh --no-dashboard 2>&1 --with-rbac --with-provider2 --with-c2d > start_ocean.log &
           for i in $(seq 1 150); do
