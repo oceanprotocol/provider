@@ -393,6 +393,7 @@ def test_compute_additional_input(
             consumer_wallet.address,
             get_future_valid_until(),
             environments[0]["id"],
+            force_zero=True
         ),
         consumer_wallet,
     )
