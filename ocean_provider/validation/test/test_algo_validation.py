@@ -16,6 +16,7 @@ from tests.test_helpers import get_first_service_by_type
 provider_fees_event = Mock()
 provider_fees_event.args.providerData = {"environment": "ocean-compute"}
 provider_fees_event.args.validUntil = get_future_valid_until()
+provider_fees_event.args.providerFeeAmount = 0
 
 
 @pytest.mark.unit

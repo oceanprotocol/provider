@@ -84,7 +84,7 @@ def build_and_send_ddo_with_compute_service(
             consumer_wallet.address,
             get_future_valid_until(),
             environments[0]["id"],
-            force_zero=True
+            force_zero=True,
         ),
         consumer_wallet,
     )
