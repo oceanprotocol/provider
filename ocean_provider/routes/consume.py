@@ -2,8 +2,8 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
+from distutils.util import strtobool
 import logging
-import os
 
 from flask import jsonify, request
 from flask_sieve import validate
@@ -149,6 +149,7 @@ def initialize():
     consumer_address = data.get("consumerAddress")
     compute_env = data.get("environment")
     valid_until = data.get("validUntil", 0)
+    pay_provider_fees = bool(strtobool(data.get("payProviderFee", "False")))
 
     asset = get_asset_from_metadatastore(get_metadata_url(), did)
     consumable, message = check_asset_consumable(asset, consumer_address, logger)
@@ -208,7 +209,12 @@ def initialize():
         "datatoken": token_address,
         "nonce": get_nonce(consumer_address),
         "providerFee": get_provider_fees(
-            did, service, consumer_address, int(valid_until), compute_env
+            did,
+            service,
+            consumer_address,
+            int(valid_until),
+            compute_env,
+            force_zero=(not pay_provider_fees),
         ),
     }
     response = jsonify(approve_params), 200
