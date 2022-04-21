@@ -1002,3 +1002,56 @@ def test_fail_missing_algo_meta_documentId(provider_wallet, consumer_address, we
                 validator.error
                 == "both meta and documentId are missing from algorithm input, at least one of these is required."
             )
+
+
+@pytest.mark.unit
+@patch("ocean_provider.validation.algo.check_asset_consumable", return_value=(True, ""))
+@patch(
+    "ocean_provider.validation.algo.validate_order",
+    return_value=(None, None, provider_fees_event),
+)
+@patch(
+    "ocean_provider.validation.algo.get_service_files_list",
+    return_value=[{"url": "dummy"}],
+)
+def test_fee_amount_not_paid(provider_wallet, consumer_address, web3):
+    """Tests happy flow of validator with algo ddo."""
+    ddo = Asset(ddo_dict)
+    alg_ddo = Asset(alg_ddo_dict)
+    sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
+    sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
+
+    data = {
+        "dataset": {
+            "documentId": ddo.did,
+            "serviceId": sa.id,
+            "transferTxId": "tx_id",
+        },
+        "algorithm": {
+            "documentId": alg_ddo.did,
+            "serviceId": sa_compute.id,
+            "transferTxId": "alg_tx_id",
+        },
+    }
+
+    def side_effect(*args, **kwargs):
+        nonlocal ddo, alg_ddo
+        if ddo.did == args[1]:
+            return ddo
+        if alg_ddo.did == args[1]:
+            return alg_ddo
+
+    with patch(
+        "ocean_provider.validation.algo.get_asset_from_metadatastore",
+        side_effect=side_effect,
+    ):
+        with patch(
+            "ocean_provider.validation.algo.get_provider_fee_amount",
+        ) as mock:
+            mock.return_value = 10**18
+            validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
+            assert validator.validate() is False
+            assert (
+                validator.error
+                == "Provider fees must be paid on the asset, OR on the algorithm ordered, OR on any additional input."
+            )
