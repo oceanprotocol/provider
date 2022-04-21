@@ -4,10 +4,12 @@
 #
 import json
 import logging
+import os
 
 from ocean_provider.constants import BaseURLs
 from ocean_provider.serializers import StageAlgoSerializer
 from ocean_provider.utils.basics import get_asset_from_metadatastore, get_config
+from ocean_provider.utils.provider_fees import get_provider_fee_amount
 from ocean_provider.utils.url import append_userdata
 from ocean_provider.utils.util import (
     check_asset_consumable,
@@ -73,6 +75,7 @@ class WorkflowValidator:
 
         self.validated_inputs = []
         valid_until_list = []
+        provider_fee_amounts = []
 
         for index, input_item in enumerate(all_data):
             input_item["algorithm"] = algo_data
@@ -93,13 +96,33 @@ class WorkflowValidator:
 
             self.validated_inputs.append(input_item_validator.validated_inputs)
             valid_until_list.append(input_item_validator.valid_until)
+            provider_fee_amounts.append(input_item_validator.provider_fee_amount)
 
             if index == 0:
                 self.service_endpoint = input_item_validator.service.service_endpoint
 
-        self.valid_until = min(valid_until_list)
         status = self._build_and_validate_algo(algo_data)
         if not status:
+            return False
+
+        if algo_data.get("documentId"):
+            valid_until_list.append(self.algo_valid_until)
+            provider_fee_amounts.append(self.algo_fee_amount)
+
+        self.valid_until = min(valid_until_list)
+
+        provider_fee_token = os.environ.get(
+            "PROVIDER_FEE_TOKEN", "0x0000000000000000000000000000000000000000"
+        )
+        required_provider_fee = get_provider_fee_amount(
+            self.valid_until,
+            self.data.get("environment"),
+            self.web3,
+            provider_fee_token,
+        )
+
+        if required_provider_fee not in provider_fee_amounts:
+            self.error = "Provider fees must be paid on the asset, OR on the algorithm ordered, OR on any additional input."
             return False
 
         return True
@@ -170,6 +193,8 @@ class WorkflowValidator:
                     algo,
                     self.algo_service,
                 )
+                self.algo_valid_until = _provider_fees_log.args.validUntil
+                self.algo_fee_amount = _provider_fees_log.args.providerFeeAmount
                 validate_transfer_not_used_for_other_service(
                     algorithm_did,
                     self.algo_service.id,
@@ -427,6 +452,7 @@ class InputItemValidator:
                 self.extra_data,
             )
             self.valid_until = _provider_fees_log.args.validUntil
+            self.provider_fee_amount = _provider_fees_log.args.providerFeeAmount
             validate_transfer_not_used_for_other_service(
                 self.did, self.service.id, tx_id, self.consumer_address, token_address
             )
