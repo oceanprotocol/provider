@@ -21,7 +21,10 @@ from ocean_provider.utils.basics import (
     get_asset_from_metadatastore,
 )
 from ocean_provider.utils.error_responses import error_response
-from ocean_provider.utils.provider_fees import get_c2d_environments, get_provider_fees
+from ocean_provider.utils.provider_fees import (
+    get_c2d_environments,
+    get_provider_fees_or_remote,
+)
 from ocean_provider.utils.util import (
     build_download_response,
     check_environment_exists,
@@ -111,18 +114,17 @@ def initializeCompute():
 
         service = input_item_validator.service
         did = input_item_validator.did
+
         approve_params["datasets"].append(
-            {
-                "datatoken": service.datatoken_address,
-                "providerFee": get_provider_fees(
-                    did,
-                    service,
-                    consumer_address,
-                    valid_until,
-                    compute_env,
-                    force_zero=bool(i),
-                ),
-            }
+            get_provider_fees_or_remote(
+                did,
+                service,
+                consumer_address,
+                valid_until,
+                compute_env,
+                bool(i),
+                dataset,
+            )
         )
 
     if algorithm.get("documentId"):
@@ -139,19 +141,16 @@ def initializeCompute():
             return error_response("DID is not a valid algorithm", 400, logger)
 
         algo_service = algo.get_service_by_id(algorithm.get("serviceId"))
-        approve_params["algorithm"] = {
-            "datatoken": algo_service.datatoken_address,
-            "providerFee": get_provider_fees(
-                algorithm.get("documentId"),
-                algo_service,
-                consumer_address,
-                valid_until,
-                compute_env,
-                force_zero=True,
-            ),
-        }
+        approve_params["algorithm"] = get_provider_fees_or_remote(
+            algorithm.get("documentId"),
+            algo_service,
+            consumer_address,
+            valid_until,
+            compute_env,
+            True,
+            algorithm,
+        )
 
-        # TODO: if access and remote provider, get fees from other provider
         # TODO: handle order reused
 
 

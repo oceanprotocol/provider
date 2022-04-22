@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import requests
 from datetime import datetime
 from typing import Any, Dict, List
 
@@ -11,7 +12,11 @@ from ocean_provider.utils.basics import LocalFileAdapter, get_provider_wallet, g
 from ocean_provider.utils.currency import parse_units
 from ocean_provider.utils.datatoken import get_datatoken_contract
 from ocean_provider.utils.services import Service
-from ocean_provider.utils.util import get_compute_environments_endpoint, get_environment
+from ocean_provider.utils.util import (
+    get_compute_environments_endpoint,
+    get_environment,
+    get_service_files_list,
+)
 
 logger = logging.getLogger(__name__)
 keys = KeyAPI(NativeECCBackend)
@@ -73,6 +78,31 @@ def get_provider_fees(
     }
     logger.debug(f"Returning provider_fees: {provider_fee}")
     return provider_fee
+
+
+def get_provider_fees_or_remote(
+    did, service, consumer_address, valid_until, compute_env, force_zero, dataset
+):
+    provider_wallet = get_provider_wallet()
+    asset_urls = get_service_files_list(service, provider_wallet)
+
+    if asset_urls:
+        return {
+            "datatoken": service.datatoken_address,
+            "providerFee": get_provider_fees(
+                did,
+                service,
+                consumer_address,
+                valid_until,
+                compute_env,
+                force_zero=force_zero,
+            ),
+        }
+
+    # delegate to different provider
+    response = requests.get(service.service_endpoint, query=dataset)
+
+    return response.json()
 
 
 def get_c2d_environments() -> List:
