@@ -98,6 +98,7 @@ def initializeCompute():
 
     for i, dataset in enumerate(datasets):
         dataset["algorithm"] = algorithm
+        dataset["consumerAddress"] = consumer_address
         input_item_validator = InputItemValidator(
             web3,
             consumer_address,
@@ -141,6 +142,8 @@ def initializeCompute():
             return error_response("DID is not a valid algorithm", 400, logger)
 
         algo_service = algo.get_service_by_id(algorithm.get("serviceId"))
+        algorithm["consumerAddress"] = consumer_address
+
         approve_params["algorithm"] = get_provider_fees_or_remote(
             algorithm.get("documentId"),
             algo_service,

@@ -12,10 +12,10 @@ from ocean_provider.utils.basics import LocalFileAdapter, get_provider_wallet, g
 from ocean_provider.utils.currency import parse_units
 from ocean_provider.utils.datatoken import get_datatoken_contract
 from ocean_provider.utils.services import Service
+from ocean_provider.utils.url import is_this_same_provider
 from ocean_provider.utils.util import (
     get_compute_environments_endpoint,
     get_environment,
-    get_service_files_list,
 )
 
 logger = logging.getLogger(__name__)
@@ -83,10 +83,7 @@ def get_provider_fees(
 def get_provider_fees_or_remote(
     did, service, consumer_address, valid_until, compute_env, force_zero, dataset
 ):
-    provider_wallet = get_provider_wallet()
-    asset_urls = get_service_files_list(service, provider_wallet)
-
-    if asset_urls:
+    if is_this_same_provider(service.service_endpoint):
         return {
             "datatoken": service.datatoken_address,
             "providerFee": get_provider_fees(
@@ -100,7 +97,9 @@ def get_provider_fees_or_remote(
         }
 
     # delegate to different provider
-    response = requests.get(service.service_endpoint, query=dataset)
+    response = requests.get(
+        service.service_endpoint + "/api/services/initialize", params=dataset
+    )
 
     return response.json()
 

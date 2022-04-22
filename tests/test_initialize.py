@@ -18,7 +18,10 @@ from tests.test_helpers import (
     initialize_service,
     mint_100_datatokens,
 )
-from tests.helpers.compute_helpers import build_and_send_ddo_with_compute_service, get_future_valid_until
+from tests.helpers.compute_helpers import (
+    build_and_send_ddo_with_compute_service,
+    get_future_valid_until,
+)
 
 
 @pytest.mark.integration
@@ -117,43 +120,43 @@ def test_can_not_initialize_compute_service_with_simple_initialize(
 
 
 @pytest.mark.integration
-def test_initialize_compute_works(
-    client, publisher_wallet, consumer_wallet, web3
-):
+def test_initialize_compute_works(client, publisher_wallet, consumer_wallet, web3):
     environments = get_c2d_environments()
     ddo, alg_ddo = build_and_send_ddo_with_compute_service(
         client,
         publisher_wallet,
         consumer_wallet,
-        False,
+        True,
         None,
         environments[0]["consumerAddress"],
-        do_send=False
+        do_send=False,
     )
     service = get_first_service_by_type(ddo, ServiceType.COMPUTE)
     sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
 
     response = client.post(
         BaseURLs.SERVICES_URL + "/initializeCompute",
-        data=json.dumps({
-            "datasets": [
-                {
-                    "documentId": ddo.did,
-                    "serviceId": service.id,
-                    "userdata": '{"dummy_userdata":"XXX", "age":12}',
+        data=json.dumps(
+            {
+                "datasets": [
+                    {
+                        "documentId": ddo.did,
+                        "serviceId": service.id,
+                        "userdata": '{"dummy_userdata":"XXX", "age":12}',
+                    },
+                ],
+                "algorithm": {
+                    "documentId": alg_ddo.did,
+                    "serviceId": sa_compute.id,
                 },
-            ],
-            "algorithm" : {
-                "documentId": alg_ddo.did,
-                "serviceId": sa_compute.id,
-            },
-            "consumerAddress": consumer_wallet.address,
-            "compute": {
-                "env": environments[0]["id"],
-                "validUntil": get_future_valid_until()
+                "consumerAddress": consumer_wallet.address,
+                "compute": {
+                    "env": environments[0]["id"],
+                    "validUntil": get_future_valid_until(),
+                },
             }
-        }),
-        content_type="application/json"
+        ),
+        content_type="application/json",
     )
 
     assert response.status_code == 200
