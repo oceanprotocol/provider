@@ -159,6 +159,9 @@ def initialize():
     service = asset.get_service_by_id(service_id)
 
     if service.type == "compute":
+        return error_response("Use the initializeCompute endpoint to initialize compute jobs.", 400, logger)
+
+        '''
         if not (compute_env and valid_until):
             return error_response(
                 "The environment and validUntil are mandatory when initializing a compute service.",
@@ -178,6 +181,7 @@ def initialize():
 
         if not check_environment_exists(get_c2d_environments(), compute_env):
             return error_response("Compute environment does not exist", 400, logger)
+        '''
 
     token_address = service.datatoken_address
 
