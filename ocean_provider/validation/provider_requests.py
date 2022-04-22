@@ -314,10 +314,12 @@ class InitializeRequest(CustomJsonRequest):
 class InitializeComputeRequest(CustomJsonRequest):
     def rules(self):
         return {
-            "datasets.documentId": ["bail", "required"],
-            "datasets.serviceId": ["bail", "required"],
-            "datasetsfileIndex": ["sometimes", "integer", "min:0"],
-            "algorithm": ["required"],
+            "datasets": ["required"],
+            "algorithm.documentId": [
+                "required_without:algorithm.meta",
+                "required_with_all:algorithm.serviceId,algorithm.transferTxId",
+            ],
+            "algorithm.meta": ["required_without:algorithm.documentId"],
             "compute.env": ["required"],
             "compute.validUntil": ["required", "integer"],
             "consumerAddress": ["required"],

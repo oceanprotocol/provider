@@ -96,7 +96,7 @@ def initializeCompute():
     web3 = get_web3()
     approve_params = {"datasets": []} if datasets else {}
 
-    for i, dataset in datasets:
+    for i, dataset in enumerate(datasets):
         dataset["algorithm"] = algorithm
         input_item_validator = InputItemValidator(
             web3,
@@ -151,7 +151,8 @@ def initializeCompute():
             algorithm,
         )
 
-        # TODO: handle order reused
+    return jsonify(approve_params), 200
+    # TODO: handle order reused
 
 
 @services.route("/compute", methods=["DELETE"])

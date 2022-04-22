@@ -288,7 +288,7 @@ class InputItemValidator:
         self.check_usage = check_usage
 
     def validate(self):
-        required_keys = ["documentId", "transferTxId"]
+        required_keys = ["documentId", "transferTxId"] if self.check_usage else ["documentId"]
 
         for req_item in required_keys:
             if not self.data.get(req_item):

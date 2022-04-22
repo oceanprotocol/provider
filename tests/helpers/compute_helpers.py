@@ -23,6 +23,7 @@ def build_and_send_ddo_with_compute_service(
     alg_diff=False,
     asset_type=None,
     c2d_address=None,
+    do_send=True,
 ):
     web3 = get_web3()
     algo_metadata = build_metadata_dict_type_algorithm()
@@ -73,6 +74,10 @@ def build_and_send_ddo_with_compute_service(
     mint_100_datatokens(web3, datatoken, consumer_wallet.address, publisher_wallet)
 
     environments = get_c2d_environments()
+
+    if not do_send:
+        return (dataset_ddo_w_compute_service, alg_ddo)
+
     tx_id, _ = start_order(
         web3,
         datatoken,
@@ -89,6 +94,7 @@ def build_and_send_ddo_with_compute_service(
     )
 
     alg_service = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
+
     alg_tx_id, _ = start_order(
         web3,
         alg_service.datatoken_address,
