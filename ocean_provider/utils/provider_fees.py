@@ -25,7 +25,7 @@ def get_provider_fees(
     consumer_address: str,
     valid_until: int,
     compute_env: str = None,
-    force_zero: bool = False
+    force_zero: bool = False,
 ) -> Dict[str, Any]:
     web3 = get_web3()
     provider_wallet = get_provider_wallet()

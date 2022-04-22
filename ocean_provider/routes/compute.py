@@ -13,14 +13,18 @@ from flask import Response, jsonify, request
 from flask_sieve import validate
 from ocean_provider.requests_session import get_requests_session
 from ocean_provider.user_nonce import update_nonce
-from ocean_provider.utils.basics import LocalFileAdapter, get_provider_wallet, get_web3, validate_timestamp, get_asset_from_metadatastore
+from ocean_provider.utils.basics import (
+    LocalFileAdapter,
+    get_provider_wallet,
+    get_web3,
+    validate_timestamp,
+    get_asset_from_metadatastore,
+)
 from ocean_provider.utils.error_responses import error_response
 from ocean_provider.utils.provider_fees import get_c2d_environments, get_provider_fees
 from ocean_provider.utils.util import (
     build_download_response,
-    check_asset_consumable,
     check_environment_exists,
-    check_url_valid,
     get_compute_endpoint,
     get_compute_result_endpoint,
     get_metadata_url,
@@ -98,7 +102,7 @@ def initializeCompute():
             dataset,
             {"environment": compute_env},
             i,
-            check_usage=False
+            check_usage=False,
         )
         status = input_item_validator.validate()
         if not status:
@@ -107,15 +111,24 @@ def initializeCompute():
 
         service = input_item_validator.service
         did = input_item_validator.did
-        approve_params["datasets"].append({
-            "datatoken": service.datatoken_address,
-            "providerFee": get_provider_fees(
-                did, service, consumer_address, valid_until, compute_env, force_zero=bool(i)
-            ),
-        })
+        approve_params["datasets"].append(
+            {
+                "datatoken": service.datatoken_address,
+                "providerFee": get_provider_fees(
+                    did,
+                    service,
+                    consumer_address,
+                    valid_until,
+                    compute_env,
+                    force_zero=bool(i),
+                ),
+            }
+        )
 
-    if (algorithm.get("documentId")):
-        algo = get_asset_from_metadatastore(get_metadata_url(), algorithm.get("documentId"))
+    if algorithm.get("documentId"):
+        algo = get_asset_from_metadatastore(
+            get_metadata_url(), algorithm.get("documentId")
+        )
 
         try:
             asset_type = algo.metadata["type"]
@@ -129,7 +142,12 @@ def initializeCompute():
         approve_params["algorithm"] = {
             "datatoken": algo_service.datatoken_address,
             "providerFee": get_provider_fees(
-                algorithm.get("documentId"), algo_service, consumer_address, valid_until, compute_env, force_zero=True
+                algorithm.get("documentId"),
+                algo_service,
+                consumer_address,
+                valid_until,
+                compute_env,
+                force_zero=True,
             ),
         }
 

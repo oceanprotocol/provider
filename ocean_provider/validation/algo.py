@@ -269,7 +269,14 @@ def validate_formatted_algorithm_dict(algorithm_dict, algorithm_did):
 
 class InputItemValidator:
     def __init__(
-        self, web3, consumer_address, provider_wallet, data, extra_data, index, check_usage=True
+        self,
+        web3,
+        consumer_address,
+        provider_wallet,
+        data,
+        extra_data,
+        index,
+        check_usage=True,
     ):
         """Initializes the input item validator."""
         self.web3 = web3

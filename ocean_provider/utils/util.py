@@ -352,8 +352,7 @@ def check_url_valid(service, file_index, data):
 
     if not valid:
         logger.error(
-            f"Error: Asset URL not found or not available. \n"
-            f"Payload was: {data}",
+            f"Error: Asset URL not found or not available. \n" f"Payload was: {data}",
             exc_info=1,
         )
 

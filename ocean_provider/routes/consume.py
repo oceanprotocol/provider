@@ -27,7 +27,7 @@ from ocean_provider.utils.util import (
     get_service_files_list,
     validate_order,
     validate_url_object,
-    check_url_valid
+    check_url_valid,
 )
 from ocean_provider.validation.provider_requests import (
     DownloadRequest,
@@ -153,7 +153,11 @@ def initialize():
     service = asset.get_service_by_id(service_id)
 
     if service.type == "compute":
-        return error_response("Use the initializeCompute endpoint to initialize compute jobs.", 400, logger)
+        return error_response(
+            "Use the initializeCompute endpoint to initialize compute jobs.",
+            400,
+            logger,
+        )
 
     token_address = service.datatoken_address
 
@@ -171,9 +175,7 @@ def initialize():
     approve_params = {
         "datatoken": token_address,
         "nonce": get_nonce(consumer_address),
-        "providerFee": get_provider_fees(
-            did, service, consumer_address, 0
-        ),
+        "providerFee": get_provider_fees(did, service, consumer_address, 0),
     }
     response = jsonify(approve_params), 200
     logger.info(f"initialize response = {response}")

@@ -96,7 +96,6 @@ def test_empty_payload(client):
     assert consume.status_code == 400
 
 
-
 @pytest.mark.integration
 def test_download_multiple_files(client, publisher_wallet, consumer_wallet, web3):
     asset = get_dataset_ddo_with_multiple_files(client, publisher_wallet)
