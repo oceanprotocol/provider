@@ -13,13 +13,17 @@ from flask import Response, jsonify, request
 from flask_sieve import validate
 from ocean_provider.requests_session import get_requests_session
 from ocean_provider.user_nonce import update_nonce
-from ocean_provider.utils.basics import LocalFileAdapter, get_provider_wallet, get_web3
+from ocean_provider.utils.basics import LocalFileAdapter, get_provider_wallet, get_web3, validate_timestamp, get_asset_from_metadatastore
 from ocean_provider.utils.error_responses import error_response
 from ocean_provider.utils.provider_fees import get_c2d_environments
 from ocean_provider.utils.util import (
     build_download_response,
+    check_asset_consumable,
+    check_environment_exists,
+    check_url_valid,
     get_compute_endpoint,
     get_compute_result_endpoint,
+    get_metadata_url,
     get_request_data,
     process_compute_request,
     sign_for_compute,
@@ -29,6 +33,7 @@ from ocean_provider.validation.provider_requests import (
     ComputeGetResult,
     ComputeRequest,
     ComputeStartRequest,
+    InitializeComputeRequest,
     UnsignedComputeRequest,
 )
 from requests.models import PreparedRequest
@@ -54,6 +59,52 @@ def validate_compute_request(f):
         return f(*args, **kws)
 
     return decorated_function
+
+
+@services.route("/initializeCompute", methods=["GET"])
+@validate(InitializeComputeRequest)
+def initializeCompute():
+    data = get_request_data(request)
+    logger.info(f"initializeCompute called. arguments = {data}")
+
+    datasets = data.get("datasets")
+    algorithm = data["algorithm"]
+    compute_env = data["compute"]["env"]
+    valid_until = data["compute"]["validUntil"]
+    consumer_address = data.get("consumerAddress")
+
+    timestamp_ok = validate_timestamp(valid_until)
+    valid_until = int(valid_until)
+
+    if not timestamp_ok:
+        return error_response(
+            "The validUntil value is not correct.",
+            400,
+            logger,
+        )
+
+    if not check_environment_exists(get_c2d_environments(), compute_env):
+        return error_response("Compute environment does not exist", 400, logger)
+
+    for i, dataset in datasets:
+        did = dataset["documentId"]
+        asset = get_asset_from_metadatastore(get_metadata_url(), did)
+        consumable, message = check_asset_consumable(asset, consumer_address, logger)
+        if not consumable:
+            return error_response(f"Error at dataset index {i}: {message}", 400, logger)
+
+        # TODO: consider deducing if orderTxId exists
+        service_id = dataset.get("serviceId")
+        service = asset.get_service_by_id(service_id)
+
+        file_index = int(dataset.get("fileIndex", "-1"))
+        # we check if the file is valid only if we have fileIndex
+        if file_index > -1:
+            valid, message = check_url_valid(service, file_index, data)
+            if not valid:
+                return error_response(f"Error at dataset index {i} for fileIndex: {message}", 400, logger)
+
+    # TODO: validate algo trusted etc
 
 
 @services.route("/compute", methods=["DELETE"])

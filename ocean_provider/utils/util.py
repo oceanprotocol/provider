@@ -27,8 +27,7 @@ from ocean_provider.utils.data_nft import get_data_nft_contract
 from ocean_provider.utils.datatoken import verify_order_tx
 from ocean_provider.utils.encryption import do_decrypt
 from ocean_provider.utils.services import Service
-from ocean_provider.utils.url import is_safe_url
-from web3 import Web3
+from ocean_provider.utils.url import is_safe_url, append_userdata, check_url_details
 from websockets import ConnectionClosed
 
 logger = logging.getLogger(__name__)
@@ -337,3 +336,28 @@ def sign_for_compute(wallet, owner, job_id=None):
     signature = sign_message(msg, wallet)
 
     return nonce, signature
+
+
+def check_url_valid(service, file_index, data):
+    provider_wallet = get_provider_wallet()
+
+    url_object = get_service_files_list(service, provider_wallet)[file_index]
+    url_valid, message = validate_url_object(url_object, service.id)
+    if not url_valid:
+        return False, message
+
+    download_url = get_download_url(url_object)
+    download_url = append_userdata(download_url, data)
+    valid, url_details = check_url_details(download_url)
+
+    if not valid:
+        logger.error(
+            f"Error: Asset URL not found or not available. \n"
+            f"Payload was: {data}",
+            exc_info=1,
+        )
+
+        if not url_details:
+            url_details = "Asset URL not found or not available."
+
+    return valid, url_details

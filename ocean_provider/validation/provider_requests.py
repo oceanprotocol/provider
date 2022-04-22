@@ -309,3 +309,16 @@ class InitializeRequest(CustomJsonRequest):
             "consumerAddress": ["required"],
             "fileIndex": ["sometimes", "integer", "min:0"],
         }
+
+
+class InitializeComputeRequest(CustomJsonRequest):
+    def rules(self):
+        return {
+            "datasets.documentId": ["bail", "required"],
+            "datasets.serviceId": ["bail", "required"],
+            "datasetsfileIndex": ["sometimes", "integer", "min:0"],
+            "algorithm": ["required"],
+            "compute.env": ["required"],
+            "compute.validUntil": ["required", "integer"],
+            "consumerAddress": ["required"],
+        }
