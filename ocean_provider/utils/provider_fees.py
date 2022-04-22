@@ -25,6 +25,7 @@ def get_provider_fees(
     consumer_address: str,
     valid_until: int,
     compute_env: str = None,
+    force_zero: bool = False
 ) -> Dict[str, Any]:
     web3 = get_web3()
     provider_wallet = get_provider_wallet()
@@ -33,7 +34,7 @@ def get_provider_fees(
         "PROVIDER_FEE_TOKEN", "0x0000000000000000000000000000000000000000"
     )
 
-    if compute_env:
+    if compute_env and not force_zero:
         provider_fee_amount = get_provider_fee_amount(
             valid_until, compute_env, web3, provider_fee_token
         )

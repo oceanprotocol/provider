@@ -244,7 +244,7 @@ def validate_formatted_algorithm_dict(algorithm_dict, algorithm_did):
 
 class InputItemValidator:
     def __init__(
-        self, web3, consumer_address, provider_wallet, data, extra_data, index
+        self, web3, consumer_address, provider_wallet, data, extra_data, index, check_usage=True
     ):
         """Initializes the input item validator."""
         self.web3 = web3
@@ -253,6 +253,7 @@ class InputItemValidator:
         self.data = data
         self.extra_data = extra_data
         self.index = index
+        self.check_usage = check_usage
 
     def validate(self):
         required_keys = ["documentId", "transferTxId"]
@@ -324,7 +325,7 @@ class InputItemValidator:
             if userdata:
                 self.validate_inputs["remote"]["userdata"] = userdata
 
-        return self.validate_usage()
+        return self.validate_usage() if self.check_usage else True
 
     def _validate_trusted_algos(
         self, algorithm_did, trusted_algorithms, trusted_publishers

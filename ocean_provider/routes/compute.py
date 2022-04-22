@@ -15,7 +15,7 @@ from ocean_provider.requests_session import get_requests_session
 from ocean_provider.user_nonce import update_nonce
 from ocean_provider.utils.basics import LocalFileAdapter, get_provider_wallet, get_web3, validate_timestamp, get_asset_from_metadatastore
 from ocean_provider.utils.error_responses import error_response
-from ocean_provider.utils.provider_fees import get_c2d_environments
+from ocean_provider.utils.provider_fees import get_c2d_environments, get_provider_fees
 from ocean_provider.utils.util import (
     build_download_response,
     check_asset_consumable,
@@ -28,7 +28,7 @@ from ocean_provider.utils.util import (
     process_compute_request,
     sign_for_compute,
 )
-from ocean_provider.validation.algo import WorkflowValidator
+from ocean_provider.validation.algo import WorkflowValidator, InputItemValidator
 from ocean_provider.validation.provider_requests import (
     ComputeGetResult,
     ComputeRequest,
@@ -61,7 +61,7 @@ def validate_compute_request(f):
     return decorated_function
 
 
-@services.route("/initializeCompute", methods=["GET"])
+@services.route("/initializeCompute", methods=["POST"])
 @validate(InitializeComputeRequest)
 def initializeCompute():
     data = get_request_data(request)
@@ -86,25 +86,55 @@ def initializeCompute():
     if not check_environment_exists(get_c2d_environments(), compute_env):
         return error_response("Compute environment does not exist", 400, logger)
 
+    web3 = get_web3()
+    approve_params = {"datasets": []} if datasets else {}
+
     for i, dataset in datasets:
-        did = dataset["documentId"]
-        asset = get_asset_from_metadatastore(get_metadata_url(), did)
-        consumable, message = check_asset_consumable(asset, consumer_address, logger)
-        if not consumable:
-            return error_response(f"Error at dataset index {i}: {message}", 400, logger)
+        dataset["algorithm"] = algorithm
+        input_item_validator = InputItemValidator(
+            web3,
+            consumer_address,
+            provider_wallet,
+            dataset,
+            {"environment": compute_env},
+            i,
+            check_usage=False
+        )
+        status = input_item_validator.validate()
+        if not status:
+            prefix = f"Error in input at index {i}: "
+            return error_response(prefix + input_item_validator.error, 400, logger)
 
-        # TODO: consider deducing if orderTxId exists
-        service_id = dataset.get("serviceId")
-        service = asset.get_service_by_id(service_id)
+        service = input_item_validator.service
+        did = input_item_validator.did
+        approve_params["datasets"].append({
+            "datatoken": service.datatoken_address,
+            "providerFee": get_provider_fees(
+                did, service, consumer_address, valid_until, compute_env, force_zero=bool(i)
+            ),
+        })
 
-        file_index = int(dataset.get("fileIndex", "-1"))
-        # we check if the file is valid only if we have fileIndex
-        if file_index > -1:
-            valid, message = check_url_valid(service, file_index, data)
-            if not valid:
-                return error_response(f"Error at dataset index {i} for fileIndex: {message}", 400, logger)
+    if (algorithm.get("documentId")):
+        algo = get_asset_from_metadatastore(get_metadata_url(), algorithm.get("documentId"))
 
-    # TODO: validate algo trusted etc
+        try:
+            asset_type = algo.metadata["type"]
+        except ValueError:
+            asset_type = None
+
+        if asset_type != "algorithm":
+            return error_response("DID is not a valid algorithm", 400, logger)
+
+        algo_service = algo.get_service_by_id(algorithm.get("serviceId"))
+        approve_params["algorithm"] = {
+            "datatoken": algo_service.datatoken_address,
+            "providerFee": get_provider_fees(
+                algorithm.get("documentId"), algo_service, consumer_address, valid_until, compute_env, force_zero=True
+            ),
+        }
+
+        # TODO: if access and remote provider, get fees from other provider
+        # TODO: handle order reused
 
 
 @services.route("/compute", methods=["DELETE"])
