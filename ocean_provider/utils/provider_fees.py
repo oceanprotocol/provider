@@ -16,7 +16,7 @@ from ocean_provider.utils.url import is_this_same_provider
 from ocean_provider.utils.util import (
     get_compute_environments_endpoint,
     get_environment,
-    validate_order
+    validate_order,
 )
 
 logger = logging.getLogger(__name__)

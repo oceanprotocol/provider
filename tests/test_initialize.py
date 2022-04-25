@@ -168,7 +168,9 @@ def test_initialize_compute_works(client, publisher_wallet, consumer_wallet, web
 
 
 @pytest.mark.integration
-def test_initialize_compute_order_reused(client, publisher_wallet, consumer_wallet, web3):
+def test_initialize_compute_order_reused(
+    client, publisher_wallet, consumer_wallet, web3
+):
     environments = get_c2d_environments()
     ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
         client,
@@ -193,7 +195,7 @@ def test_initialize_compute_order_reused(client, publisher_wallet, consumer_wall
         "algorithm": {
             "documentId": alg_ddo.did,
             "serviceId": sa_compute.id,
-            "transferTxId": alg_tx_id
+            "transferTxId": alg_tx_id,
         },
         "consumerAddress": consumer_wallet.address,
         "compute": {
