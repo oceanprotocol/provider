@@ -114,11 +114,10 @@ def initializeCompute():
             return error_response(prefix + input_item_validator.error, 400, logger)
 
         service = input_item_validator.service
-        did = input_item_validator.did
 
         approve_params["datasets"].append(
             get_provider_fees_or_remote(
-                did,
+                input_item_validator.asset,
                 service,
                 consumer_address,
                 valid_until,
@@ -145,7 +144,7 @@ def initializeCompute():
         algorithm["consumerAddress"] = consumer_address
 
         approve_params["algorithm"] = get_provider_fees_or_remote(
-            algorithm.get("documentId"),
+            algo,
             algo_service,
             consumer_address,
             valid_until,

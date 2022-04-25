@@ -16,6 +16,7 @@ from ocean_provider.utils.url import is_this_same_provider
 from ocean_provider.utils.util import (
     get_compute_environments_endpoint,
     get_environment,
+    validate_order
 )
 
 logger = logging.getLogger(__name__)
@@ -81,13 +82,31 @@ def get_provider_fees(
 
 
 def get_provider_fees_or_remote(
-    did, service, consumer_address, valid_until, compute_env, force_zero, dataset
+    asset, service, consumer_address, valid_until, compute_env, force_zero, dataset
 ):
+    if "transferTxId" in dataset:
+        web3 = get_web3()
+        try:
+            _tx, _order_log, _provider_fees_log = validate_order(
+                web3,
+                consumer_address,
+                dataset["transferTxId"],
+                asset,
+                service,
+                {"environment": compute_env},
+            )
+            # already paid provider fees
+            # TODO: should we add something else instead? e.g. tx_id back
+            return {}
+        except Exception:
+            # order does not exist or is expired, so we need new provider fees
+            pass
+
     if is_this_same_provider(service.service_endpoint):
         return {
             "datatoken": service.datatoken_address,
             "providerFee": get_provider_fees(
-                did,
+                asset.did,
                 service,
                 consumer_address,
                 valid_until,

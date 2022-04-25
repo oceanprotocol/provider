@@ -165,3 +165,60 @@ def test_initialize_compute_works(client, publisher_wallet, consumer_wallet, web
     assert "providerFee" in response.json["datasets"][0].keys()
     assert "datatoken" in response.json["algorithm"].keys()
     assert "providerFee" in response.json["algorithm"].keys()
+
+
+@pytest.mark.integration
+def test_initialize_compute_order_reused(client, publisher_wallet, consumer_wallet, web3):
+    environments = get_c2d_environments()
+    ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
+        client,
+        publisher_wallet,
+        consumer_wallet,
+        True,
+        None,
+        environments[0]["consumerAddress"],
+    )
+    service = get_first_service_by_type(ddo, ServiceType.COMPUTE)
+    sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
+
+    payload = {
+        "datasets": [
+            {
+                "documentId": ddo.did,
+                "serviceId": service.id,
+                "transferTxId": tx_id,
+                "userdata": '{"dummy_userdata":"XXX", "age":12}',
+            },
+        ],
+        "algorithm": {
+            "documentId": alg_ddo.did,
+            "serviceId": sa_compute.id,
+            "transferTxId": alg_tx_id
+        },
+        "consumerAddress": consumer_wallet.address,
+        "compute": {
+            "env": environments[0]["id"],
+            "validUntil": get_future_valid_until(),
+        },
+    }
+
+    response = client.post(
+        BaseURLs.SERVICES_URL + "/initializeCompute",
+        data=json.dumps(payload),
+        content_type="application/json",
+    )
+
+    assert response.status_code == 200
+    assert response.json["algorithm"] == {}
+    assert response.json["datasets"] == [{}]
+
+    payload["datasets"][0]["transferTxId"] = "wrong_tx_id"
+    response = client.post(
+        BaseURLs.SERVICES_URL + "/initializeCompute",
+        data=json.dumps(payload),
+        content_type="application/json",
+    )
+
+    assert response.status_code == 200
+    assert "datatoken" in response.json["datasets"][0].keys()
+    assert "providerFee" in response.json["datasets"][0].keys()
