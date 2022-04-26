@@ -84,6 +84,7 @@ def get_provider_fees(
 def get_provider_fees_or_remote(
     asset, service, consumer_address, valid_until, compute_env, force_zero, dataset
 ):
+    valid_order = None
     if "transferTxId" in dataset:
         web3 = get_web3()
         try:
@@ -94,16 +95,20 @@ def get_provider_fees_or_remote(
                 asset,
                 service,
                 {"environment": compute_env},
+                allow_expired_provider_fee=True
             )
-            # already paid provider fees
-            # TODO: should we add something else instead? e.g. tx_id back
-            return {}
+            log_valid_until = _provider_fees_log.args.validUntil
+            if datetime.utcnow().timestamp() <= log_valid_until:
+                # already paid provider fees and both order and provider fees are still valid
+                return {"validOrder": _order_log.transactionHash.hex()}
+            else:
+                valid_order = _order_log.transactionHash.hex()
         except Exception:
             # order does not exist or is expired, so we need new provider fees
             pass
 
     if is_this_same_provider(service.service_endpoint):
-        return {
+        result = {
             "datatoken": service.datatoken_address,
             "providerFee": get_provider_fees(
                 asset.did,
@@ -114,13 +119,18 @@ def get_provider_fees_or_remote(
                 force_zero=force_zero,
             ),
         }
+    else:
+        # delegate to different provider
+        response = requests.get(
+            service.service_endpoint + "/api/services/initialize", params=dataset
+        )
 
-    # delegate to different provider
-    response = requests.get(
-        service.service_endpoint + "/api/services/initialize", params=dataset
-    )
+        result = response.json()
 
-    return response.json()
+    if valid_order:
+        result["validOrder"] = valid_order
+
+    return result
 
 
 def get_c2d_environments() -> List:

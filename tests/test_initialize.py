@@ -211,8 +211,8 @@ def test_initialize_compute_order_reused(
     )
 
     assert response.status_code == 200
-    assert response.json["algorithm"] == {}
-    assert response.json["datasets"] == [{}]
+    assert response.json["algorithm"] == {"validOrder": alg_tx_id}
+    assert response.json["datasets"] == [{"validOrder": tx_id}]
 
     payload["datasets"][0]["transferTxId"] = "wrong_tx_id"
     response = client.post(
