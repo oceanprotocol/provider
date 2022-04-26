@@ -188,7 +188,15 @@ def get_compute_info():
         return None, None
 
 
-def validate_order(web3, sender, tx_id, asset, service, extra_data=None, allow_expired_provider_fee=False):
+def validate_order(
+    web3,
+    sender,
+    tx_id,
+    asset,
+    service,
+    extra_data=None,
+    allow_expired_provider_fee=False,
+):
     did = asset.did
     token_address = service.datatoken_address
     num_tokens = 1
@@ -209,7 +217,14 @@ def validate_order(web3, sender, tx_id, asset, service, extra_data=None, allow_e
         i += 1
         try:
             tx, order_event, provider_fees_event = verify_order_tx(
-                web3, token_address, tx_id, service, amount, sender, extra_data, allow_expired_provider_fee
+                web3,
+                token_address,
+                tx_id,
+                service,
+                amount,
+                sender,
+                extra_data,
+                allow_expired_provider_fee,
             )
             logger.debug(
                 f"validate_order succeeded for: did={did}, service_id={service.id}, tx_id={tx_id}, "

@@ -95,7 +95,7 @@ def get_provider_fees_or_remote(
                 asset,
                 service,
                 {"environment": compute_env},
-                allow_expired_provider_fee=True
+                allow_expired_provider_fee=True,
             )
             log_valid_until = _provider_fees_log.args.validUntil
             if datetime.utcnow().timestamp() <= log_valid_until:

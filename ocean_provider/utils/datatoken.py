@@ -44,7 +44,7 @@ def verify_order_tx(
     amount: int,
     sender: HexAddress,
     extra_data: None,
-    allow_expired_provider_fees=False
+    allow_expired_provider_fees=False,
 ):
     provider_wallet = get_provider_wallet()
     try:
@@ -86,7 +86,10 @@ def verify_order_tx(
             )
 
         valid_until = provider_fee_order_log.args.validUntil
-        if datetime.utcnow().timestamp() >= valid_until and not allow_expired_provider_fees:
+        if (
+            datetime.utcnow().timestamp() >= valid_until
+            and not allow_expired_provider_fees
+        ):
             raise AssertionError("Ordered c2d time was exceeded, check validUntil.")
 
     if Web3.toChecksumAddress(
