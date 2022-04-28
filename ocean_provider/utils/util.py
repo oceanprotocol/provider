@@ -9,9 +9,7 @@ import mimetypes
 import os
 from cgi import parse_header
 from urllib.parse import urljoin
-from datetime import datetime
 
-import requests
 import werkzeug
 from jsonsempai import magic  # noqa: F401
 from artifacts import ERC721Template
@@ -19,8 +17,7 @@ from eth_account.signers.local import LocalAccount
 from eth_keys import KeyAPI
 from eth_keys.backends import NativeECCBackend
 from flask import Response
-from ocean_provider.utils.accounts import sign_message
-from ocean_provider.utils.basics import get_config, get_provider_wallet, get_web3
+from ocean_provider.utils.basics import get_config, get_web3
 from ocean_provider.utils.consumable import ConsumableCodes
 from ocean_provider.utils.currency import to_wei
 from ocean_provider.utils.data_nft import get_data_nft_contract
@@ -28,7 +25,6 @@ from ocean_provider.utils.datatoken import verify_order_tx
 from ocean_provider.utils.encryption import do_decrypt
 from ocean_provider.utils.services import Service
 from ocean_provider.utils.url import is_safe_url
-from web3 import Web3
 from websockets import ConnectionClosed
 
 logger = logging.getLogger(__name__)
@@ -163,28 +159,6 @@ def get_download_url(url_object):
     return urljoin(os.getenv("IPFS_GATEWAY"), urljoin("ipfs/", url_object["hash"]))
 
 
-def get_compute_endpoint():
-    return urljoin(get_config().operator_service_url, "api/v1/operator/compute")
-
-
-def get_compute_result_endpoint():
-    return urljoin(get_config().operator_service_url, "api/v1/operator/getResult")
-
-
-def get_compute_info():
-    try:
-        compute_info = requests.get(get_config().operator_service_url).json()
-        limits = {
-            "algoTimeLimit": compute_info.get("algoTimeLimit"),
-            "storageExpiry": compute_info.get("storageExpiry"),
-        }
-        compute_address = compute_info.get("address", None)
-        return compute_address, limits
-    except Exception as e:
-        logger.error(f"Error getting CtD address: {str(e)}")
-        return None, None
-
-
 def validate_order(web3, sender, tx_id, asset, service, extra_data=None):
     did = asset.did
     token_address = service.datatoken_address
@@ -249,29 +223,6 @@ def record_consume_request(
     return
 
 
-def process_compute_request(data):
-    provider_wallet = get_provider_wallet()
-    did = data.get("documentId")
-    owner = data.get("consumerAddress")
-    job_id = data.get("jobId")
-    body = dict()
-    body["providerAddress"] = provider_wallet.address
-    if owner is not None:
-        body["owner"] = owner
-    if job_id is not None:
-        body["jobId"] = job_id
-    if did is not None:
-        body["documentId"] = did
-
-    nonce, provider_signature = sign_for_compute(provider_wallet, owner, job_id)
-    body["providerSignature"] = provider_signature
-    body["nonce"] = nonce
-    web3 = get_web3()
-    body["chainId"] = web3.chain_id
-
-    return body
-
-
 def check_asset_consumable(asset, consumer_address, logger, custom_url=None):
     if not asset.nft or "address" not in asset.nft:
         return False, "Asset malformed"
@@ -292,13 +243,3 @@ def check_asset_consumable(asset, consumer_address, logger, custom_url=None):
     logger.error(message, exc_info=1)
 
     return False, message
-
-
-def sign_for_compute(wallet, owner, job_id=None):
-    nonce = datetime.utcnow().timestamp()
-
-    # prepare consumer signature on did
-    msg = f"{owner}{job_id}{nonce}" if job_id else f"{owner}{nonce}"
-    signature = sign_message(msg, wallet)
-
-    return nonce, signature

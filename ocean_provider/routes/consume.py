@@ -24,7 +24,6 @@ from ocean_provider.utils.url import append_userdata, check_url_details
 from ocean_provider.utils.util import (
     build_download_response,
     check_asset_consumable,
-    get_compute_info,
     get_download_url,
     get_metadata_url,
     get_request_data,
