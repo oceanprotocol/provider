@@ -17,22 +17,14 @@ from eth_account.signers.local import LocalAccount
 from eth_keys import KeyAPI
 from eth_keys.backends import NativeECCBackend
 from flask import Response
-from ocean_provider.utils.basics import get_config, get_web3
+from ocean_provider.utils.basics import get_web3
 from ocean_provider.utils.consumable import ConsumableCodes
-from ocean_provider.utils.currency import to_wei
-from ocean_provider.utils.data_nft import get_data_nft_contract
-from ocean_provider.utils.datatoken import verify_order_tx
 from ocean_provider.utils.encryption import do_decrypt
 from ocean_provider.utils.services import Service
 from ocean_provider.utils.url import is_safe_url
-from websockets import ConnectionClosed
 
 logger = logging.getLogger(__name__)
 keys = KeyAPI(NativeECCBackend)
-
-
-def get_metadata_url():
-    return get_config().aquarius_url
 
 
 def get_request_data(request):
@@ -157,70 +149,6 @@ def get_download_url(url_object):
         raise Exception("No IPFS_GATEWAY defined, can not resolve ipfs hash.")
 
     return urljoin(os.getenv("IPFS_GATEWAY"), urljoin("ipfs/", url_object["hash"]))
-
-
-def validate_order(web3, sender, tx_id, asset, service, extra_data=None):
-    did = asset.did
-    token_address = service.datatoken_address
-    num_tokens = 1
-
-    logger.debug(
-        f"validate_order: did={did}, service_id={service.id}, tx_id={tx_id}, "
-        f"sender={sender}, num_tokens={num_tokens}, token_address={token_address}"
-    )
-
-    nft_contract = get_data_nft_contract(web3, asset.nft["address"])
-    assert nft_contract.caller.isDeployed(token_address)
-
-    amount = to_wei(num_tokens)
-    num_tries = 3
-    i = 0
-    while i < num_tries:
-        logger.debug(f"validate_order is on trial {i + 1} in {num_tries}.")
-        i += 1
-        try:
-            tx, order_event, provider_fees_event = verify_order_tx(
-                web3, token_address, tx_id, service, amount, sender, extra_data
-            )
-            logger.debug(
-                f"validate_order succeeded for: did={did}, service_id={service.id}, tx_id={tx_id}, "
-                f"sender={sender}, num_tokens={num_tokens}, token_address={token_address}. "
-                f"result is: tx={tx}, order_event={order_event}."
-            )
-
-            return tx, order_event, provider_fees_event
-        except ConnectionClosed:
-            logger.debug("got ConnectionClosed error on validate_order.")
-            if i == num_tries:
-                logger.debug(
-                    "reached max no. of tries, raise ConnectionClosed in validate_order."
-                )
-                raise
-        except Exception:
-            raise
-
-
-def validate_transfer_not_used_for_other_service(
-    did, service_id, transfer_tx_id, consumer_address, token_address
-):
-    logger.debug(
-        f"validate_transfer_not_used_for_other_service: "
-        f"did={did}, service_id={service_id}, transfer_tx_id={transfer_tx_id},"
-        f" consumer_address={consumer_address}, token_address={token_address}"
-    )
-    return
-
-
-def record_consume_request(
-    did, service_id, order_tx_id, consumer_address, token_address, amount
-):
-    logger.debug(
-        f"record_consume_request: "
-        f"did={did}, service_id={service_id}, transfer_tx_id={order_tx_id}, "
-        f"consumer_address={consumer_address}, token_address={token_address}, "
-        f"amount={amount}"
-    )
-    return
 
 
 def check_asset_consumable(asset, consumer_address, logger, custom_url=None):

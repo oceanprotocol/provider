@@ -8,16 +8,17 @@ import logging
 from ocean_provider.constants import BaseURLs
 from ocean_provider.serializers import StageAlgoSerializer
 from ocean_provider.utils.asset import get_asset_from_metadatastore
-from ocean_provider.utils.basics import get_config
-from ocean_provider.utils.url import append_userdata
-from ocean_provider.utils.util import (
-    check_asset_consumable,
-    get_metadata_url,
-    get_service_files_list,
-    msg_hash,
+from ocean_provider.utils.basics import get_config, get_metadata_url
+from ocean_provider.utils.datatoken import (
     record_consume_request,
     validate_order,
     validate_transfer_not_used_for_other_service,
+)
+from ocean_provider.utils.url import append_userdata
+from ocean_provider.utils.util import (
+    check_asset_consumable,
+    get_service_files_list,
+    msg_hash,
 )
 
 logger = logging.getLogger(__name__)
@@ -470,5 +471,3 @@ def decode_from_data(data, key, dec_type="list"):
             return -1
 
     return data
-
-

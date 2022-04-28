@@ -28,6 +28,10 @@ def get_config(config_file: Optional[str] = None) -> Config:
     )
 
 
+def get_metadata_url():
+    return get_config().aquarius_url
+
+
 def get_provider_wallet(web3: Optional[Web3] = None):
     """
     :return: Wallet instance

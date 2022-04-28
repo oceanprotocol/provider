@@ -11,7 +11,10 @@ from ocean_provider.utils.basics import LocalFileAdapter, get_provider_wallet, g
 from ocean_provider.utils.currency import parse_units
 from ocean_provider.utils.datatoken import get_datatoken_contract
 from ocean_provider.utils.services import Service
-from ocean_provider.utils.compute_environments import get_c2d_environments, get_environment
+from ocean_provider.utils.compute_environments import (
+    get_c2d_environments,
+    get_environment,
+)
 
 logger = logging.getLogger(__name__)
 keys = KeyAPI(NativeECCBackend)

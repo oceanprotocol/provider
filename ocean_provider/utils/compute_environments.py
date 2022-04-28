@@ -46,5 +46,3 @@ def get_environment(envs, env_id):
 
     matching_envs = [env for env in envs if env["id"] == env_id]
     return matching_envs[0] if len(matching_envs) > 0 else None
-
-
