@@ -7,11 +7,11 @@ import logging
 
 from ocean_provider.constants import BaseURLs
 from ocean_provider.serializers import StageAlgoSerializer
-from ocean_provider.utils.basics import get_asset_from_metadatastore, get_config
+from ocean_provider.utils.asset import get_asset_from_metadatastore
+from ocean_provider.utils.basics import get_config
 from ocean_provider.utils.url import append_userdata
 from ocean_provider.utils.util import (
     check_asset_consumable,
-    decode_from_data,
     get_metadata_url,
     get_service_files_list,
     msg_hash,
@@ -453,3 +453,22 @@ def build_stage_output_dict(output_def, service_endpoint, owner, provider_wallet
         service_endpoint = service_endpoint.split(BaseURLs.SERVICES_URL)[0]
 
     return dict({"metadataUri": config.aquarius_url})
+
+
+def decode_from_data(data, key, dec_type="list"):
+    """Retrieves a dictionary key as a decoded dictionary or list."""
+    default_value = list() if dec_type == "list" else dict()
+    data = data.get(key, default_value)
+
+    if data == "":
+        return default_value
+
+    if data and isinstance(data, str):
+        try:
+            data = json.loads(data)
+        except json.decoder.JSONDecodeError:
+            return -1
+
+    return data
+
+

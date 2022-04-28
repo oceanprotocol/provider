@@ -167,10 +167,6 @@ def get_compute_endpoint():
     return urljoin(get_config().operator_service_url, "api/v1/operator/compute")
 
 
-def get_compute_environments_endpoint():
-    return urljoin(get_config().operator_service_url, "api/v1/operator/environments")
-
-
 def get_compute_result_endpoint():
     return urljoin(get_config().operator_service_url, "api/v1/operator/getResult")
 
@@ -276,23 +272,6 @@ def process_compute_request(data):
     return body
 
 
-def decode_from_data(data, key, dec_type="list"):
-    """Retrieves a dictionary key as a decoded dictionary or list."""
-    default_value = list() if dec_type == "list" else dict()
-    data = data.get(key, default_value)
-
-    if data == "":
-        return default_value
-
-    if data and isinstance(data, str):
-        try:
-            data = json.loads(data)
-        except json.decoder.JSONDecodeError:
-            return -1
-
-    return data
-
-
 def check_asset_consumable(asset, consumer_address, logger, custom_url=None):
     if not asset.nft or "address" not in asset.nft:
         return False, "Asset malformed"
@@ -313,20 +292,6 @@ def check_asset_consumable(asset, consumer_address, logger, custom_url=None):
     logger.error(message, exc_info=1)
 
     return False, message
-
-
-def check_environment_exists(envs, env_id):
-    """Checks if environment with id exists in environments list."""
-    return bool(get_environment(envs, env_id))
-
-
-def get_environment(envs, env_id):
-    """Gets environment with id exists in environments list."""
-    if not envs or not isinstance(envs, list):
-        return False
-
-    matching_envs = [env for env in envs if env["id"] == env_id]
-    return matching_envs[0] if len(matching_envs) > 0 else None
 
 
 def sign_for_compute(wallet, owner, job_id=None):

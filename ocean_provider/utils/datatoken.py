@@ -32,7 +32,7 @@ def get_datatoken_contract(web3: Web3, address: Optional[str] = None) -> Contrac
     return web3.eth.contract(address=address, abi=ERC20Template.abi)
 
 
-def get_tx_receipt(web3, tx_hash):
+def _get_tx_receipt(web3, tx_hash):
     return web3.eth.wait_for_transaction_receipt(HexBytes(tx_hash), timeout=120)
 
 
@@ -47,10 +47,10 @@ def verify_order_tx(
 ):
     provider_wallet = get_provider_wallet()
     try:
-        tx_receipt = get_tx_receipt(web3, tx_id)
+        tx_receipt = _get_tx_receipt(web3, tx_id)
     except ConnectionClosed:
         # try again in this case
-        tx_receipt = get_tx_receipt(web3, tx_id)
+        tx_receipt = _get_tx_receipt(web3, tx_id)
     if tx_receipt is None:
         raise AssertionError(
             "Failed to get tx receipt for the `startOrder` transaction.."
@@ -141,10 +141,10 @@ def verify_order_tx(
     order_log = event_logs[0] if event_logs else None
     if order_log and order_log.args.orderTxId:
         try:
-            tx_receipt = get_tx_receipt(web3, order_log.args.orderTxId)
+            tx_receipt = _get_tx_receipt(web3, order_log.args.orderTxId)
         except ConnectionClosed:
             # try again in this case
-            tx_receipt = get_tx_receipt(web3, order_log.args.orderTxId)
+            tx_receipt = _get_tx_receipt(web3, order_log.args.orderTxId)
         if tx_receipt is None:
             raise AssertionError("Failed to get tx receipt referenced in OrderReused..")
         if tx_receipt.status == 0:
