@@ -46,7 +46,10 @@ def handle_error(error):
     response.status_code = code
     response.headers["Connection"] = "close"
 
-    logger.error(f"error: {error}, payload: {request.data}", exc_info=1)
+    if code != 404:
+        logger.error(f"error: {error}, payload: {request.data}", exc_info=1)
+    else:
+        logger.info(f"error: {str(error)}, payload: {request.data}")
 
     return response
 
