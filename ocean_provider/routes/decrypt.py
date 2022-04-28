@@ -8,7 +8,6 @@ from hashlib import sha256
 from typing import Optional, Tuple
 
 from eth_typing.encoding import HexStr
-from eth_typing.evm import HexAddress
 from flask import Response, request
 from flask_sieve import validate
 from ocean_provider.requests_session import get_requests_session
@@ -42,6 +41,62 @@ logger = logging.getLogger(__name__)
 @services.route("/decrypt", methods=["POST"])
 @validate(DecryptRequest)
 def decrypt():
+    """Decrypts an encrypted document based on transaction Id or dataNftAddress.
+
+    ---
+    consumes:
+      - application/json
+    parameters:
+      - name: decrypterAddress
+        description: address of agent requesting decrypt
+        type: string
+        required: true
+      - name: chainId
+        description: chainId selection for decrption
+        type: int
+        required: true
+      - name: transactionId
+        description: transaction Id for document,
+            required if dataNftAddress, encryptedDocument and flags parameters missing
+        required: false
+        type: string
+      - name: dataNftAddress
+        description: NFT address of the document,
+            required if the transactionId parameter is missing
+        required: false
+        type: string
+      - name: encryptedDocument
+        description: encrypted document contents,
+            required if the transactionId parameter is missing
+        required: false
+        type: string
+      - name: flags
+        description: encryption flags,
+            required if the transactionId parameter is missing
+        required: false
+        type: int
+      - name: documentHash
+        description: document hashed used for integrity check,
+            required if the transactionId parameter is missing
+        required: false
+        type: int
+      - name: nonce
+        description: user nonce (timestamp)
+        required: true
+        type: decimal
+      - name: signature
+        description: user signature based on
+            transactionId+dataNftAddress+decrypterAddress+chainId+nonce
+        required: true
+        type: string
+    responses:
+      201:
+        description: decrypted document
+      400:
+        description: One or more of the required attributes are missing or invalid.
+      503:
+        description: Service Unavailable
+    """
     data = get_request_data(request)
     logger.info(f"decrypt called. arguments = {data}")
 
@@ -72,13 +127,13 @@ def _decrypt(
     # Check if given chain_id matches Provider's chain_id
     web3 = get_web3()
     if web3.chain_id != chain_id:
-        return error_response(f"Unsupported chain ID", 400, logger)
+        return error_response(f"Unsupported chain ID {chain_id}", 400, logger)
 
     # Check if decrypter is authorized
     authorized_decrypters = get_config().authorized_decrypters
     logger.info(f"authorized_decrypters = {authorized_decrypters}")
     if authorized_decrypters and decrypter_address not in authorized_decrypters:
-        return error_response(f"Decrypter not authorized", 403, logger)
+        return error_response("Decrypter not authorized", 403, logger)
 
     if not transaction_id:
         try:
@@ -86,9 +141,7 @@ def _decrypt(
                 encrypted_document, flags, document_hash
             )
         except Exception:
-            return error_response(
-                f"Failed to convert input args to bytes.", 400, logger
-            )
+            return error_response("Failed to convert input args to bytes.", 400, logger)
     else:
         try:
             (
@@ -97,7 +150,7 @@ def _decrypt(
                 document_hash,
             ) = _get_args_from_transaction_id(web3, transaction_id, data_nft_address)
         except Exception:
-            return error_response(f"Failed to process transaction id.", 400, logger)
+            return error_response("Failed to process transaction id.", 400, logger)
     logger.info(
         f"data_nft_address = {data_nft_address}, "
         f"encrypted_document as bytes = {encrypted_document}, "
@@ -111,13 +164,13 @@ def _decrypt(
     if metadata_state in [MetadataState.ACTIVE, MetadataState.TEMPORARILY_DISABLED]:
         pass
     elif metadata_state == MetadataState.END_OF_LIFE:
-        return error_response(f"Asset end of life", 403, logger)
+        return error_response("Asset end of life", 403, logger)
     elif metadata_state == MetadataState.DEPRECATED:
-        return error_response(f"Asset deprecated", 403, logger)
+        return error_response("Asset deprecated", 403, logger)
     elif metadata_state == MetadataState.REVOKED:
-        return error_response(f"Asset revoked", 403, logger)
+        return error_response("Asset revoked", 403, logger)
     else:
-        return error_response(f"Invalid MetadataState", 400, logger)
+        return error_response("Invalid MetadataState", 400, logger)
 
     working_document = encrypted_document
 
@@ -127,7 +180,7 @@ def _decrypt(
             working_document = do_decrypt(working_document, get_provider_wallet())
             logger.info("Successfully decrypted document.")
         except Exception:
-            return error_response(f"Failed to decrypt.", 400, logger)
+            return error_response("Failed to decrypt.", 400, logger)
     else:
         logger.warning(
             "Document not encrypted (flags bit 2 not set). Skipping decryption."
@@ -139,7 +192,7 @@ def _decrypt(
             working_document = lzma.decompress(working_document)
             logger.info("Successfully decompressed document.")
         except Exception:
-            return error_response(f"Failed to decompress", 400, logger)
+            return error_response("Failed to decompress", 400, logger)
 
     document = working_document
     logger.info(f"document = {document}")
@@ -147,7 +200,7 @@ def _decrypt(
     # Verify checksum matches
     if sha256(document).hexdigest() != document_hash.hex():
         return error_response("Checksum doesn't match.", 400, logger)
-    logger.info(f"Checksum matches.")
+    logger.info("Checksum matches.")
 
     response = Response(document, 201, {"Content-type": "text/plain"})
     logger.info(f"decrypt response = {response}")

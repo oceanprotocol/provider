@@ -32,34 +32,17 @@ def encrypt():
     tags:
       - services
     consumes:
-      - application/json
+      - application/octet-stream
     parameters:
       - in: body
         name: body
         required: true
-        description: Asset urls encryption.
-        schema:
-          type: object
-          required:
-            - documentId
-            - document
-            - publisherAddress:
-          properties:
-            documentId:
-              description: Identifier of the asset to be registered in ocean.
-              type: string
-              example: 'did:op:08a429b8529856d59867503f8056903a680935a76950bb9649785cc97869a43d'
-            ddo:
-              description: document description object (DDO)
-              type: string
-              example: See https://github.com/oceanprotocol/docs/blob/feature/ddo_v4/content/concepts/did-ddo.md
-            publisherAddress:
-              description: Publisher address.
-              type: string
-              example: '0x00a329c0648769A73afAc7F9381E08FB43dBEA72'
+        description: Binary document contents to encrypt.
     responses:
       201:
         description: DDO successfully encrypted.
+      400:
+        description: Invalid request content type or failure to encrypt.
       503:
         description: Service Unavailable
 
@@ -83,7 +66,7 @@ def _encrypt(data: bytes) -> Response:
         encrypted_data = do_encrypt(data, provider_wallet)
         logger.info(f"encrypted_data = {encrypted_data}")
     except Exception:
-        return error_response(f"Failed to encrypt.", 400, logger)
+        return error_response("Failed to encrypt.", 400, logger)
 
     response = Response(
         encrypted_data,

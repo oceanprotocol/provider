@@ -114,7 +114,7 @@ class LocalFileAdapter(requests.adapters.HTTPAdapter):
 
 def get_asset_from_metadatastore(metadata_url, document_id):
     """
-    :return: `Ddo` instance
+    :return: `Asset` instance or None
     """
     url = f"{metadata_url}/api/aquarius/assets/ddo/{document_id}"
     response = requests.get(url)
@@ -123,6 +123,7 @@ def get_asset_from_metadatastore(metadata_url, document_id):
 
 
 def send_ether(web3, from_wallet: Account, to_address: str, amount: int):
+    """Sends ether from wallet to the address."""
     if not Web3.isChecksumAddress(to_address):
         to_address = Web3.toChecksumAddress(to_address)
 
@@ -145,6 +146,7 @@ def send_ether(web3, from_wallet: Account, to_address: str, amount: int):
 
 
 def validate_timestamp(value):
+    """Checks whether a timestamp is valid (correctly formed and in the future)."""
     try:
         valid_until = datetime.fromtimestamp(int(value))
         now = datetime.utcnow()

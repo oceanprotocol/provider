@@ -13,6 +13,7 @@ STRIPPED_URL_MSG = "<URL stripped for security reasons>"
 
 
 def error_response(err_str: str, status: int, custom_logger=None):
+    """Logs error and returns an error response."""
     err_str = strip_and_replace_urls(str(err_str))
 
     this_logger = custom_logger if custom_logger else logger
@@ -24,6 +25,7 @@ def error_response(err_str: str, status: int, custom_logger=None):
 
 
 def strip_and_replace_urls(err_str: str) -> str:
+    """Strips sensitive data from urls to be logged/returned."""
     tokens = []
     for token in err_str.split():
         tokens += [STRIPPED_URL_MSG] if is_url(token) else [token]
