@@ -104,7 +104,7 @@ setup(
     url="https://github.com/oceanprotocol/provider-py",
     # fmt: off
     # bumpversion needs single quotes
-    version='1.0.5',
+    version='1.0.6',
     # fmt: on
     zip_safe=False,
 )
