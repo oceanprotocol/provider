@@ -27,7 +27,7 @@ jobs:
       - name: Run Barge
         working-directory: ${{ github.workspace }}/barge
         env:
-          CONTRACTS_VERSION: v1.0.0-alpha.28
+          CONTRACTS_VERSION: v1.0.0-alpha.31
         run: |
           bash -x start_ocean.sh --no-dashboard 2>&1 --with-rbac --with-provider2 --with-c2d > start_ocean.log &
           for i in $(seq 1 150); do
