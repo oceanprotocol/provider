@@ -1,7 +1,7 @@
-from decimal import ROUND_DOWN, Context, Decimal
+from decimal import ROUND_DOWN, Context, Decimal, localcontext
 from typing import Union
 
-from web3.main import Web3
+from eth_utils.currency import units
 
 """The maximum uint256 value."""
 MAX_UINT256 = 2**256 - 1
@@ -32,28 +32,43 @@ MIN_ETHER = Decimal("0.000000000000000001")
 MAX_ETHER = Decimal(MAX_WEI).scaleb(-18, context=ETHEREUM_DECIMAL_CONTEXT)
 
 
-def to_wei(
-    amount_in_ether: Union[Decimal, str, int], decimals: int = DECIMALS_18
+def to_wei(amount_in_ether: Union[Decimal, str, int]) -> int:
+    return parse_units(amount_in_ether, DECIMALS_18)
+
+
+def parse_units(
+    amount: Union[Decimal, str, int], unit_name: Union[str, int] = DECIMALS_18
 ) -> int:
     """
-    Convert token amount to wei from ether, quantized to the specified number of decimal places
+    Convert token amount from a formatted unit to an EVM-compatible integer.
     float input is purposfully not supported
     """
-    amount_in_ether = normalize_and_validate_ether(amount_in_ether)
-    decimal_places = Decimal(10) ** -abs(decimals)
-    return Web3.toWei(
-        amount_in_ether.quantize(decimal_places, context=ETHEREUM_DECIMAL_CONTEXT),
-        "ether",
+    num_decimals = (
+        int(units[unit_name].log10()) if isinstance(unit_name, str) else unit_name
     )
 
+    decimal_amount = normalize_and_validate_unit(amount, num_decimals)
 
-def normalize_and_validate_ether(amount_in_ether: Union[Decimal, str, int]) -> Decimal:
+    if decimal_amount == Decimal(0):
+        return 0
+
+    unit_value = Decimal(10) ** num_decimals
+
+    with localcontext(ETHEREUM_DECIMAL_CONTEXT):
+        return int(decimal_amount * unit_value)
+
+
+def normalize_and_validate_unit(
+    amount: Union[Decimal, str, int], decimals: int = DECIMALS_18
+) -> Decimal:
     """Returns an amount in ether, encoded as a Decimal
     Takes Decimal, str, or int as input. Purposefully does not support float."""
-    if isinstance(amount_in_ether, str) or isinstance(amount_in_ether, int):
-        amount_in_ether = Decimal(amount_in_ether)
+    if isinstance(amount, str) or isinstance(amount, int):
+        amount = Decimal(amount)
 
-    if abs(amount_in_ether) > MAX_ETHER:
-        raise ValueError("Token abs(amount_in_ether) exceeds MAX_ETHER.")
+    if abs(amount) > Decimal(MAX_WEI).scaleb(
+        -decimals, context=ETHEREUM_DECIMAL_CONTEXT
+    ):
+        raise ValueError("Token amount exceeds maximum.")
 
-    return amount_in_ether
+    return amount
