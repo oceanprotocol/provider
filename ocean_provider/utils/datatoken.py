@@ -11,6 +11,8 @@ from eth_typing.encoding import HexStr
 from eth_typing.evm import HexAddress
 from hexbytes import HexBytes
 from ocean_provider.utils.basics import get_provider_wallet
+from ocean_provider.utils.currency import to_wei
+from ocean_provider.utils.data_nft import get_data_nft_contract
 from ocean_provider.utils.services import Service
 from web3.contract import Contract
 from web3.logs import DISCARD
@@ -32,7 +34,7 @@ def get_datatoken_contract(web3: Web3, address: Optional[str] = None) -> Contrac
     return web3.eth.contract(address=address, abi=ERC20Template.abi)
 
 
-def get_tx_receipt(web3, tx_hash):
+def _get_tx_receipt(web3, tx_hash):
     return web3.eth.wait_for_transaction_receipt(HexBytes(tx_hash), timeout=120)
 
 
@@ -47,10 +49,10 @@ def verify_order_tx(
 ):
     provider_wallet = get_provider_wallet()
     try:
-        tx_receipt = get_tx_receipt(web3, tx_id)
+        tx_receipt = _get_tx_receipt(web3, tx_id)
     except ConnectionClosed:
         # try again in this case
-        tx_receipt = get_tx_receipt(web3, tx_id)
+        tx_receipt = _get_tx_receipt(web3, tx_id)
     if tx_receipt is None:
         raise AssertionError(
             "Failed to get tx receipt for the `startOrder` transaction.."
@@ -122,7 +124,7 @@ def verify_order_tx(
     pk = keys.PrivateKey(provider_wallet.key)
     if not keys.ecdsa_verify(signable_hash, signature, pk.public_key):
         raise AssertionError(
-            f"Provider was not able to check the signed message in ProviderFees event\n"
+            "Provider was not able to check the signed message in ProviderFees event\n"
         )
 
     # check duration
@@ -130,7 +132,7 @@ def verify_order_tx(
         timestamp_now = datetime.utcnow().timestamp()
         if provider_fee_order_log.args.validUntil < timestamp_now:
             raise AssertionError(
-                f"Validity in transaction exceeds current UTC timestamp"
+                "Validity in transaction exceeds current UTC timestamp"
             )
     # end check provider fees
 
@@ -141,10 +143,10 @@ def verify_order_tx(
     order_log = event_logs[0] if event_logs else None
     if order_log and order_log.args.orderTxId:
         try:
-            tx_receipt = get_tx_receipt(web3, order_log.args.orderTxId)
+            tx_receipt = _get_tx_receipt(web3, order_log.args.orderTxId)
         except ConnectionClosed:
             # try again in this case
-            tx_receipt = get_tx_receipt(web3, order_log.args.orderTxId)
+            tx_receipt = _get_tx_receipt(web3, order_log.args.orderTxId)
         if tx_receipt is None:
             raise AssertionError("Failed to get tx receipt referenced in OrderReused..")
         if tx_receipt.status == 0:
@@ -184,3 +186,67 @@ def verify_order_tx(
     tx = web3.eth.get_transaction(HexBytes(tx_id))
 
     return tx, order_log, provider_fee_order_log
+
+
+def validate_order(web3, sender, tx_id, asset, service, extra_data=None):
+    did = asset.did
+    token_address = service.datatoken_address
+    num_tokens = 1
+
+    logger.debug(
+        f"validate_order: did={did}, service_id={service.id}, tx_id={tx_id}, "
+        f"sender={sender}, num_tokens={num_tokens}, token_address={token_address}"
+    )
+
+    nft_contract = get_data_nft_contract(web3, asset.nft["address"])
+    assert nft_contract.caller.isDeployed(token_address)
+
+    amount = to_wei(num_tokens)
+    num_tries = 3
+    i = 0
+    while i < num_tries:
+        logger.debug(f"validate_order is on trial {i + 1} in {num_tries}.")
+        i += 1
+        try:
+            tx, order_event, provider_fees_event = verify_order_tx(
+                web3, token_address, tx_id, service, amount, sender, extra_data
+            )
+            logger.debug(
+                f"validate_order succeeded for: did={did}, service_id={service.id}, tx_id={tx_id}, "
+                f"sender={sender}, num_tokens={num_tokens}, token_address={token_address}. "
+                f"result is: tx={tx}, order_event={order_event}."
+            )
+
+            return tx, order_event, provider_fees_event
+        except ConnectionClosed:
+            logger.debug("got ConnectionClosed error on validate_order.")
+            if i == num_tries:
+                logger.debug(
+                    "reached max no. of tries, raise ConnectionClosed in validate_order."
+                )
+                raise
+        except Exception:
+            raise
+
+
+def validate_transfer_not_used_for_other_service(
+    did, service_id, transfer_tx_id, consumer_address, token_address
+):
+    logger.debug(
+        f"validate_transfer_not_used_for_other_service: "
+        f"did={did}, service_id={service_id}, transfer_tx_id={transfer_tx_id},"
+        f" consumer_address={consumer_address}, token_address={token_address}"
+    )
+    return
+
+
+def record_consume_request(
+    did, service_id, order_tx_id, consumer_address, token_address, amount
+):
+    logger.debug(
+        f"record_consume_request: "
+        f"did={did}, service_id={service_id}, transfer_tx_id={order_tx_id}, "
+        f"consumer_address={consumer_address}, token_address={token_address}, "
+        f"amount={amount}"
+    )
+    return

@@ -17,8 +17,8 @@ from eth_typing.evm import HexAddress
 from flask.testing import FlaskClient
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.address import get_contract_address
+from ocean_provider.utils.asset import get_asset_from_metadatastore
 from ocean_provider.utils.basics import (
-    get_asset_from_metadatastore,
     get_config,
     get_provider_wallet,
     get_web3,

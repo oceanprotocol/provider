@@ -15,7 +15,7 @@ from ocean_provider.utils.error_responses import strip_and_replace_urls
 from ocean_provider.myapp import app
 from ocean_provider.routes import services
 from ocean_provider.utils.basics import get_provider_wallet, get_web3
-from ocean_provider.utils.util import get_compute_info, get_request_data
+from ocean_provider.utils.util import get_request_data
 
 config = Config(filename=app.config["PROVIDER_CONFIG_FILE"])
 provider_url = config.get(ConfigSections.RESOURCES, "ocean_provider.url")
@@ -46,7 +46,10 @@ def handle_error(error):
     response.status_code = code
     response.headers["Connection"] = "close"
 
-    logger.error(f"error: {error}, payload: {request.data}", exc_info=1)
+    if code != 404:
+        logger.error(f"error: {error}, payload: {request.data}", exc_info=1)
+    else:
+        logger.info(f"error: {str(error)}, payload: {request.data}")
 
     return response
 
