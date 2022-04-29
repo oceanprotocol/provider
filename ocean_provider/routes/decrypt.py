@@ -23,7 +23,7 @@ from ocean_provider.utils.data_nft import (
     get_metadata,
     get_metadata_logs_from_tx_receipt,
 )
-from ocean_provider.utils.data_nft_factory import get_data_nft_factory_contract
+from ocean_provider.utils.data_nft_factory import is_nft_deployed_from_factory
 from ocean_provider.utils.encryption import do_decrypt
 from ocean_provider.utils.error_responses import error_response
 from ocean_provider.utils.util import get_request_data
@@ -80,8 +80,7 @@ def _decrypt(
     if authorized_decrypters and decrypter_address not in authorized_decrypters:
         return error_response("Decrypter not authorized", 403, logger)
 
-    factory_contract = get_data_nft_factory_contract(web3)
-    if factory_contract.caller.erc721List(data_nft_address) != data_nft_address:
+    if not is_nft_deployed_from_factory(web3, data_nft_address):
         return error_response(
             "Asset not deployed by the data NFT factory.", 400, logger
         )
