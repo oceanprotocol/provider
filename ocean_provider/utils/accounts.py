@@ -16,7 +16,7 @@ keys = KeyAPI(NativeECCBackend)
 
 def verify_signature(signer_address, signature, original_msg, nonce):
     """
-    :return: True if signature is valid
+    :return: True if signature is valid, throws InvalidSignatureError otherwise
     """
     db_nonce = get_nonce(signer_address)
     if db_nonce and float(nonce) < float(db_nonce):
@@ -61,7 +61,7 @@ def verify_signature(signer_address, signature, original_msg, nonce):
 
 
 def get_private_key(wallet):
-    """Returns private key of the given wallet"""
+    """Returns the private key of the given wallet."""
     pk = wallet.key
     if not isinstance(pk, bytes):
         pk = Web3.toBytes(hexstr=pk)
@@ -70,6 +70,8 @@ def get_private_key(wallet):
 
 def sign_message(message, wallet):
     """
+    Signs the message with the private key of the given Wallet
+
     :param message: str
     :param wallet: Wallet instance
     :return: signature

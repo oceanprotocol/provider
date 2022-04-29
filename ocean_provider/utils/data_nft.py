@@ -56,6 +56,7 @@ def get_metadata(web3: Web3, address: str) -> Tuple[str, str, MetadataState, boo
 def get_metadata_logs_from_tx_receipt(
     web3: Web3, tx_receipt: TxReceipt, data_nft_address
 ) -> Iterable[EventData]:
+    """Selects MetadataCreated or MetadataUpdated log based on tx receipt."""
     data_nft_contract = get_data_nft_contract(web3, data_nft_address)
     logs = data_nft_contract.events.MetadataCreated().processReceipt(
         tx_receipt, errors=DISCARD

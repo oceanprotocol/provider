@@ -61,7 +61,7 @@ standard_headers = {"Content-type": "application/json", "Connection": "close"}
 def validate_compute_request(f):
     @functools.wraps(f)
     def decorated_function(*args, **kws):
-        # Do something with your request here
+        # refuse compute requests for download-only providers
         if not os.getenv("OPERATOR_SERVICE_URL"):
             flask.abort(404)
 
@@ -192,7 +192,7 @@ def computeDelete():
       200:
         description: Call to the operator-service was successful.
       400:
-        description: One of the required attributes is missing.
+        description: One or more of the required attributes are missing or invalid.
       401:
         description: Invalid asset data.
       503:
@@ -252,7 +252,7 @@ def computeStop():
       200:
         description: Call to the operator-service was successful.
       400:
-        description: One of the required attributes is missing.
+        description: One or more of the required attributes are missing or invallid.
       401:
         description: Consumer signature is invalid or failed verification.
       503:
@@ -308,7 +308,7 @@ def computeStatus():
       200:
         description: Call to the operator-service was successful.
       400:
-        description: One of the required attributes is missing.
+        description: One or more of the required attributes are missing or invalid.
       401:
         description: Consumer signature is invalid or failed verification.
       503:
@@ -375,14 +375,14 @@ def computeStart():
         type: json string
       - name: output
         in: query
-        description: json object that define the output section
+        description: json object that defines the output section
         required: true
         type: json string
     responses:
       200:
         description: Call to the operator-service was successful.
       400:
-        description: One of the required attributes is missing.
+        description: One or more of the required attributes are missing or invalid.
       401:
         description: Consumer signature is invalid or failed verification
       503:
@@ -437,7 +437,7 @@ def computeStart():
 @validate_compute_request
 @validate(ComputeGetResult)
 def computeResult():
-    """Allows download of asset data file.
+    """Allows download of asset data result file.
 
     ---
     tags:
@@ -452,7 +452,7 @@ def computeResult():
         type: string
       - name: jobId
         in: query
-        description: JobId
+        description: jobId
         required: true
         type: string
       - name: index
@@ -469,7 +469,7 @@ def computeResult():
       200:
         description: Content of the result
       400:
-        description: One of the required attributes is missing.
+        description: One or more of the required attributes are missing or invalid.
       404:
         description: Result not found
       503:
@@ -511,7 +511,7 @@ def computeResult():
 @services.route("/computeEnvironments", methods=["GET"])
 @validate_compute_request
 def computeEnvironments():
-    """Get compute environments
+    """Get list of compute environments
 
     ---
     tags:
@@ -524,6 +524,7 @@ def computeEnvironments():
         description: Call to the operator-service was successful.
       503:
         description: Service Unavailable
+    return: list of objects containing information about each compute environment
     """
 
     response = jsonify(get_c2d_environments())

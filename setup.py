@@ -30,7 +30,7 @@ install_requirements = [
     "flask-swagger-ui==3.25.0",
     "Jinja2>=2.10.1,<3.1",
     "gunicorn==20.0.4",
-    "ocean-contracts==1.0.0a28",
+    "ocean-contracts==1.0.0a31",
     "coloredlogs==15.0.1",
     "Werkzeug==0.16.1",
     "requests_testadapter",
@@ -104,7 +104,7 @@ setup(
     url="https://github.com/oceanprotocol/provider-py",
     # fmt: off
     # bumpversion needs single quotes
-    version='1.0.5',
+    version='1.0.6',
     # fmt: on
     zip_safe=False,
 )

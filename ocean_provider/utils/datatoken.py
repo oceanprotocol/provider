@@ -48,6 +48,7 @@ def verify_order_tx(
     extra_data: None,
     allow_expired_provider_fees=False,
 ):
+    """Check order tx and provider fees validity on-chain for the given parameters."""
     provider_wallet = get_provider_wallet()
     try:
         tx_receipt = _get_tx_receipt(web3, tx_id)

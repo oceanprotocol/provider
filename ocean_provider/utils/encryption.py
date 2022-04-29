@@ -25,12 +25,14 @@ def do_encrypt(
     :return: Encrypted String
     """
     key = get_private_key(wallet).public_key.to_hex() if wallet else public_key
+
     if isinstance(document, str):
         if is_0x_prefixed(document):
             document = Web3.toBytes(hexstr=document)
         else:
             document = Web3.toBytes(text=document)
     encrypted_document = ecies.encrypt(key, document)
+
     return Web3.toHex(encrypted_document)
 
 
