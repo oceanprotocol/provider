@@ -3,20 +3,19 @@ import logging
 import os
 import requests
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 from eth_keys import KeyAPI
 from eth_keys.backends import NativeECCBackend
 from ocean_provider.requests_session import get_requests_session
 from ocean_provider.utils.basics import LocalFileAdapter, get_provider_wallet, get_web3
 from ocean_provider.utils.currency import parse_units
-from ocean_provider.utils.datatoken import get_datatoken_contract
+from ocean_provider.utils.datatoken import get_datatoken_contract, validate_order
 from ocean_provider.utils.services import Service
 from ocean_provider.utils.url import is_this_same_provider
-from ocean_provider.utils.util import (
-    get_compute_environments_endpoint,
+from ocean_provider.utils.compute_environments import (
+    get_c2d_environments,
     get_environment,
-    validate_order,
 )
 
 logger = logging.getLogger(__name__)
@@ -95,7 +94,7 @@ def get_provider_fees_or_remote(
                 asset,
                 service,
                 {"environment": compute_env},
-                allow_expired_provider_fee=True,
+                allow_expired_provider_fees=True,
             )
             log_valid_until = _provider_fees_log.args.validUntil
             if datetime.utcnow().timestamp() <= log_valid_until:
@@ -131,27 +130,6 @@ def get_provider_fees_or_remote(
         result["validOrder"] = valid_order
 
     return result
-
-
-def get_c2d_environments() -> List:
-    if not os.getenv("OPERATOR_SERVICE_URL"):
-        return []
-
-    standard_headers = {"Content-type": "application/json", "Connection": "close"}
-    web3 = get_web3()
-    params = {"chainId": web3.chain_id}
-    response = requests_session.get(
-        get_compute_environments_endpoint(), headers=standard_headers, params=params
-    )
-
-    # loop envs and add provider token from config
-    envs = response.json()
-    for env in envs:
-        env["feeToken"] = os.getenv(
-            "PROVIDER_FEE_TOKEN", "0x0000000000000000000000000000000000000000"
-        )
-
-    return envs
 
 
 def get_provider_fee_amount(valid_until, compute_env, web3, provider_fee_token):

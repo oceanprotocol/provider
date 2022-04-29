@@ -8,18 +8,19 @@ import os
 
 from ocean_provider.constants import BaseURLs
 from ocean_provider.serializers import StageAlgoSerializer
-from ocean_provider.utils.basics import get_asset_from_metadatastore, get_config
+from ocean_provider.utils.asset import get_asset_from_metadatastore
+from ocean_provider.utils.basics import get_config, get_metadata_url
+from ocean_provider.utils.datatoken import (
+    record_consume_request,
+    validate_order,
+    validate_transfer_not_used_for_other_service,
+)
 from ocean_provider.utils.provider_fees import get_provider_fee_amount
 from ocean_provider.utils.url import append_userdata
 from ocean_provider.utils.util import (
     check_asset_consumable,
-    decode_from_data,
-    get_metadata_url,
     get_service_files_list,
     msg_hash,
-    record_consume_request,
-    validate_order,
-    validate_transfer_not_used_for_other_service,
 )
 
 logger = logging.getLogger(__name__)
@@ -357,7 +358,7 @@ class InputItemValidator:
 
             userdata = self.data.get("userdata")
             if userdata:
-                self.validate_inputs["remote"]["userdata"] = userdata
+                self.validated_inputs["remote"]["userdata"] = userdata
 
         return self.validate_usage() if self.check_usage else True
 
@@ -489,3 +490,20 @@ def build_stage_output_dict(output_def, service_endpoint, owner, provider_wallet
         service_endpoint = service_endpoint.split(BaseURLs.SERVICES_URL)[0]
 
     return dict({"metadataUri": config.aquarius_url})
+
+
+def decode_from_data(data, key, dec_type="list"):
+    """Retrieves a dictionary key as a decoded dictionary or list."""
+    default_value = list() if dec_type == "list" else dict()
+    data = data.get(key, default_value)
+
+    if data == "":
+        return default_value
+
+    if data and isinstance(data, str):
+        try:
+            data = json.loads(data)
+        except json.decoder.JSONDecodeError:
+            return -1
+
+    return data

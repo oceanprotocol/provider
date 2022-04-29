@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import copy
+import requests
 from typing import Optional
 
 from ocean_provider.utils.consumable import ConsumableCodes
@@ -78,3 +79,35 @@ class Asset:
             return manager.validate_access(credential)
 
         return ConsumableCodes.OK
+
+
+def get_asset_from_metadatastore(metadata_url, document_id):
+    """
+    :return: `Ddo` instance
+    """
+    url = f"{metadata_url}/api/aquarius/assets/ddo/{document_id}"
+    response = requests.get(url)
+
+    return Asset(response.json()) if response.status_code == 200 else None
+
+
+def check_asset_consumable(asset, consumer_address, logger, custom_url=None):
+    if not asset.nft or "address" not in asset.nft:
+        return False, "Asset malformed"
+
+    dt_contract = get_web3().eth.contract(
+        abi=ERC721Template.abi, address=asset.nft["address"]
+    )
+
+    if dt_contract.caller.getMetaData()[2] != 0:
+        return False, "Asset is not consumable."
+
+    code = asset.is_consumable({"type": "address", "value": consumer_address})
+
+    if code == ConsumableCodes.OK:  # is consumable
+        return True, ""
+
+    message = f"Error: Access to asset {asset.did} was denied with code: {code}."
+    logger.error(message, exc_info=1)
+
+    return False, message

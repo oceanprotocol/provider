@@ -13,27 +13,29 @@ from flask import Response, jsonify, request
 from flask_sieve import validate
 from ocean_provider.requests_session import get_requests_session
 from ocean_provider.user_nonce import update_nonce
+from ocean_provider.utils.asset import get_asset_from_metadatastore
 from ocean_provider.utils.basics import (
     LocalFileAdapter,
+    get_metadata_url,
     get_provider_wallet,
     get_web3,
     validate_timestamp,
-    get_asset_from_metadatastore,
 )
-from ocean_provider.utils.error_responses import error_response
-from ocean_provider.utils.provider_fees import (
-    get_c2d_environments,
-    get_provider_fees_or_remote,
-)
-from ocean_provider.utils.util import (
-    build_download_response,
-    check_environment_exists,
-    get_compute_endpoint,
-    get_compute_result_endpoint,
-    get_metadata_url,
-    get_request_data,
+from ocean_provider.utils.compute import (
     process_compute_request,
     sign_for_compute,
+    get_compute_result_endpoint,
+    get_compute_endpoint,
+)
+from ocean_provider.utils.compute_environments import (
+    get_c2d_environments,
+    check_environment_exists,
+)
+from ocean_provider.utils.error_responses import error_response
+from ocean_provider.utils.provider_fees import get_provider_fees_or_remote
+from ocean_provider.utils.util import (
+    build_download_response,
+    get_request_data,
 )
 from ocean_provider.validation.algo import WorkflowValidator, InputItemValidator
 from ocean_provider.validation.provider_requests import (
@@ -154,7 +156,6 @@ def initializeCompute():
         )
 
     return jsonify(approve_params), 200
-    # TODO: handle order reused
 
 
 @services.route("/compute", methods=["DELETE"])
