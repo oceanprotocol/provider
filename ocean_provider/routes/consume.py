@@ -119,7 +119,7 @@ def fileinfo():
 @services.route("/initialize", methods=["GET"])
 @validate(InitializeRequest)
 def initialize():
-    """Initialize a service request.
+    """Initialize a service access request.
     In order to consume a data service the user is required to send
     one datatoken to the provider.
 

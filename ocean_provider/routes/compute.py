@@ -73,6 +73,36 @@ def validate_compute_request(f):
 @services.route("/initializeCompute", methods=["POST"])
 @validate(InitializeComputeRequest)
 def initializeCompute():
+    """Initialize a compute service request, with possible additional access requests.
+    In order to consume a data service the user is required to send
+    one datatoken to the provider, as well as provider fees for the compute job.
+
+    The datatoken is transferred via the ethereum blockchain network
+    by requesting the user to sign an ERC20 approval transaction
+    where the approval is given to the provider's ethereum account for
+    the number of tokens required by the service.
+
+    Accepts a payload similar to startCompute: a list of datasets (json object),
+    algorithm (algorithm description object), validUntil and env parameters.
+    Adding a transferTxId value to a dataset object will attempt to reuse that order
+    and return renewed provider fees if necessary.
+
+    responses:
+      400:
+        description: One or more of the required attributes are missing or invalid.
+      503:
+        description: Service Unavailable.
+
+    return:
+        json object as follows:
+        ```JSON
+        {
+            "datatoken": <data-token-contract-address>,
+            "providerFee": <object containing provider fees>,
+            "validOrder": <validated transfer if order can be reused.>
+        }
+        ```
+    """
     data = get_request_data(request)
     logger.info(f"initializeCompute called. arguments = {data}")
 
