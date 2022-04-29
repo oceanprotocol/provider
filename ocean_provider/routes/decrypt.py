@@ -42,6 +42,62 @@ logger = logging.getLogger(__name__)
 @services.route("/decrypt", methods=["POST"])
 @validate(DecryptRequest)
 def decrypt():
+    """Decrypts an encrypted document based on transaction Id or dataNftAddress.
+
+    ---
+    consumes:
+      - application/json
+    parameters:
+      - name: decrypterAddress
+        description: address of agent requesting decrypt
+        type: string
+        required: true
+      - name: chainId
+        description: chainId of the chain on which the encrypted document is stored
+        type: int
+        required: true
+      - name: transactionId
+        description: transaction Id where the document was created or last updated,
+            required if dataNftAddress, encryptedDocument and flags parameters missing
+        required: false
+        type: string
+      - name: dataNftAddress
+        description: NFT address of the document,
+            required if the transactionId parameter is missing
+        required: false
+        type: string
+      - name: encryptedDocument
+        description: encrypted document contents,
+            required if the transactionId parameter is missing
+        required: false
+        type: string
+      - name: flags
+        description: encryption and compression flags,
+            required if the transactionId parameter is missing
+        required: false
+        type: int
+      - name: documentHash
+        description: hash of the original document used for integrity check,
+            required if the transactionId parameter is missing
+        required: false
+        type: int
+      - name: nonce
+        description: user nonce (timestamp)
+        required: true
+        type: decimal
+      - name: signature
+        description: user signature based on
+            transactionId+dataNftAddress+decrypterAddress+chainId+nonce
+        required: true
+        type: string
+    responses:
+      201:
+        description: decrypted document
+      400:
+        description: One or more of the required attributes are missing or invalid.
+      503:
+        description: Service Unavailable
+    """
     data = get_request_data(request)
     logger.info(f"decrypt called. arguments = {data}")
 
@@ -72,7 +128,7 @@ def _decrypt(
     # Check if given chain_id matches Provider's chain_id
     web3 = get_web3()
     if web3.chain_id != chain_id:
-        return error_response("Unsupported chain ID", 400, logger)
+        return error_response(f"Unsupported chain ID {chain_id}", 400, logger)
 
     # Check if decrypter is authorized
     authorized_decrypters = get_config().authorized_decrypters

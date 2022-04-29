@@ -53,7 +53,7 @@ standard_headers = {"Content-type": "application/json", "Connection": "close"}
 @services.route("/nonce", methods=["GET"])
 @validate(NonceRequest)
 def nonce():
-    """Returns a `nonce` for the given account address."""
+    """Returns a decimal `nonce` for the given account address."""
     logger.info("nonce endpoint called")
     data = get_request_data(request)
     address = data.get("userAddress")
@@ -85,6 +85,8 @@ def fileinfo():
         description: the URL(s) could be analysed (returns the result).
       400:
         description: the URL(s) could not be analysed (bad request).
+      503:
+        description: Service Unavailable.
 
     return: list of file info (index, valid, contentLength, contentType)
     """
@@ -121,21 +123,26 @@ def fileinfo():
 def initialize():
     """Initialize a service request.
     In order to consume a data service the user is required to send
-    a number of datatokens to the provider as defined in the Asset's
-    service description in the Asset's DDO document.
+    one datatoken to the provider.
 
-    The datatokens are transferred via the ethereum blockchain network
-    by requesting the user to sign an ERC20 `approveAndLock` transaction
+    The datatoken is transferred via the ethereum blockchain network
+    by requesting the user to sign an ERC20 approval transaction
     where the approval is given to the provider's ethereum account for
     the number of tokens required by the service.
 
-    :return:
+    responses:
+      400:
+        description: One or more of the required attributes are missing or invalid.
+      503:
+        description: Service Unavailable.
+
+    return:
         json object as follows:
         ```JSON
         {
             "datatoken": <data-token-contract-address>,
             "nonce": <nonce-used-in-consumer-signature>,
-            "providerFee": <object containing provider fees
+            "providerFee": <object containing provider fees>,
             "computeAddress": <compute address>
         }
         ```
@@ -236,12 +243,6 @@ def download():
         description: The ID of the asset/document (the DID).
         required: true
         type: string
-      - name: url
-        in: query
-        description: This URL is only valid if Provider acts as a proxy.
-                     Consumer can't download using the URL if it's not through the Provider.
-        required: true
-        type: string
       - name: signature
         in: query
         description: Signature of the documentId to verify that the consumer has rights to download the asset.
@@ -252,7 +253,7 @@ def download():
       200:
         description: Redirect to valid asset url.
       400:
-        description: One of the required attributes is missing.
+        description: One or more of the required attributes are missing or invalid.
       401:
         description: Invalid asset data.
       503:

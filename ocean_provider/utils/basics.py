@@ -6,7 +6,6 @@ from datetime import datetime
 import os
 from typing import Optional, Union
 
-import artifacts
 import requests
 from eth_account import Account
 from hexbytes import HexBytes
@@ -115,6 +114,7 @@ class LocalFileAdapter(requests.adapters.HTTPAdapter):
 
 
 def send_ether(web3, from_wallet: Account, to_address: str, amount: int):
+    """Sends ether from wallet to the address."""
     if not Web3.isChecksumAddress(to_address):
         to_address = Web3.toChecksumAddress(to_address)
 
@@ -137,6 +137,7 @@ def send_ether(web3, from_wallet: Account, to_address: str, amount: int):
 
 
 def validate_timestamp(value):
+    """Checks whether a timestamp is valid (correctly formed and in the future)."""
     try:
         valid_until = datetime.fromtimestamp(int(value))
         now = datetime.utcnow()

@@ -47,6 +47,7 @@ def verify_order_tx(
     sender: HexAddress,
     extra_data: None,
 ):
+    """Check order tx and provider fees validity on-chain for the given parameters."""
     provider_wallet = get_provider_wallet()
     try:
         tx_receipt = _get_tx_receipt(web3, tx_id)

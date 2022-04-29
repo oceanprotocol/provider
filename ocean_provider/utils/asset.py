@@ -83,7 +83,7 @@ class Asset:
 
 def get_asset_from_metadatastore(metadata_url, document_id):
     """
-    :return: `Ddo` instance
+    :return: `Asset` instance or None
     """
     url = f"{metadata_url}/api/aquarius/assets/ddo/{document_id}"
     response = requests.get(url)
