@@ -52,11 +52,11 @@ def decrypt():
         type: string
         required: true
       - name: chainId
-        description: chainId selection for decrption
+        description: chainId of the chain on which the encrypted document is stored
         type: int
         required: true
       - name: transactionId
-        description: transaction Id for document,
+        description: transaction Id where the document was created or last updated,
             required if dataNftAddress, encryptedDocument and flags parameters missing
         required: false
         type: string
@@ -71,12 +71,12 @@ def decrypt():
         required: false
         type: string
       - name: flags
-        description: encryption flags,
+        description: encryption and compression flags,
             required if the transactionId parameter is missing
         required: false
         type: int
       - name: documentHash
-        description: document hashed used for integrity check,
+        description: hash of the original document used for integrity check,
             required if the transactionId parameter is missing
         required: false
         type: int

@@ -2,7 +2,7 @@ import json
 import logging
 import os
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 from eth_keys import KeyAPI
 from eth_keys.backends import NativeECCBackend
@@ -11,7 +11,10 @@ from ocean_provider.utils.basics import LocalFileAdapter, get_provider_wallet, g
 from ocean_provider.utils.currency import parse_units
 from ocean_provider.utils.datatoken import get_datatoken_contract
 from ocean_provider.utils.services import Service
-from ocean_provider.utils.util import get_compute_environments_endpoint, get_environment
+from ocean_provider.utils.compute_environments import (
+    get_c2d_environments,
+    get_environment,
+)
 
 logger = logging.getLogger(__name__)
 keys = KeyAPI(NativeECCBackend)
@@ -72,27 +75,6 @@ def get_provider_fees(
     }
     logger.debug(f"Returning provider_fees: {provider_fee}")
     return provider_fee
-
-
-def get_c2d_environments() -> List:
-    if not os.getenv("OPERATOR_SERVICE_URL"):
-        return []
-
-    standard_headers = {"Content-type": "application/json", "Connection": "close"}
-    web3 = get_web3()
-    params = {"chainId": web3.chain_id}
-    response = requests_session.get(
-        get_compute_environments_endpoint(), headers=standard_headers, params=params
-    )
-
-    # loop envs and add provider token from config
-    envs = response.json()
-    for env in envs:
-        env["feeToken"] = os.getenv(
-            "PROVIDER_FEE_TOKEN", "0x0000000000000000000000000000000000000000"
-        )
-
-    return envs
 
 
 def get_provider_fee_amount(valid_until, compute_env, web3, provider_fee_token):

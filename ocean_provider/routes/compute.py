@@ -14,15 +14,17 @@ from flask_sieve import validate
 from ocean_provider.requests_session import get_requests_session
 from ocean_provider.user_nonce import update_nonce
 from ocean_provider.utils.basics import LocalFileAdapter, get_provider_wallet, get_web3
-from ocean_provider.utils.error_responses import error_response
-from ocean_provider.utils.provider_fees import get_c2d_environments
-from ocean_provider.utils.util import (
-    build_download_response,
+from ocean_provider.utils.compute import (
     get_compute_endpoint,
     get_compute_result_endpoint,
-    get_request_data,
     process_compute_request,
     sign_for_compute,
+)
+from ocean_provider.utils.compute_environments import get_c2d_environments
+from ocean_provider.utils.error_responses import error_response
+from ocean_provider.utils.util import (
+    build_download_response,
+    get_request_data,
 )
 from ocean_provider.validation.algo import WorkflowValidator
 from ocean_provider.validation.provider_requests import (
@@ -150,7 +152,7 @@ def computeStop():
       200:
         description: Call to the operator-service was successful.
       400:
-        description: One or more of the required attributes are missing.
+        description: One or more of the required attributes are missing or invallid.
       401:
         description: Consumer signature is invalid or failed verification.
       503:
@@ -206,7 +208,7 @@ def computeStatus():
       200:
         description: Call to the operator-service was successful.
       400:
-        description: One or more of the required attributes are missing.
+        description: One or more of the required attributes are missing or invalid.
       401:
         description: Consumer signature is invalid or failed verification.
       503:
@@ -280,7 +282,7 @@ def computeStart():
       200:
         description: Call to the operator-service was successful.
       400:
-        description: One or more of the required attributes are missing.
+        description: One or more of the required attributes are missing or invalid.
       401:
         description: Consumer signature is invalid or failed verification
       503:
@@ -367,7 +369,7 @@ def computeResult():
       200:
         description: Content of the result
       400:
-        description: One or more of the required attributes are missing.
+        description: One or more of the required attributes are missing or invalid.
       404:
         description: Result not found
       503:
@@ -409,7 +411,7 @@ def computeResult():
 @services.route("/computeEnvironments", methods=["GET"])
 @validate_compute_request
 def computeEnvironments():
-    """Get list compute environments
+    """Get list of compute environments
 
     ---
     tags:

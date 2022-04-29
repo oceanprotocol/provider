@@ -70,7 +70,7 @@ def get_private_key(wallet):
 
 def sign_message(message, wallet):
     """
-    Signs message based on the wallet
+    Signs the message with the private key of the given Wallet
 
     :param message: str
     :param wallet: Wallet instance

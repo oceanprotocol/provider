@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import copy
+import requests
 from typing import Optional
 
 from ocean_provider.utils.consumable import ConsumableCodes
@@ -78,3 +79,13 @@ class Asset:
             return manager.validate_access(credential)
 
         return ConsumableCodes.OK
+
+
+def get_asset_from_metadatastore(metadata_url, document_id):
+    """
+    :return: `Asset` instance or None
+    """
+    url = f"{metadata_url}/api/aquarius/assets/ddo/{document_id}"
+    response = requests.get(url)
+
+    return Asset(response.json()) if response.status_code == 200 else None

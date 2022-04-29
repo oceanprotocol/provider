@@ -3,20 +3,22 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import logging
-import os
 
 from flask import jsonify, request
 from flask_sieve import validate
 from ocean_provider.myapp import app
 from ocean_provider.requests_session import get_requests_session
 from ocean_provider.user_nonce import get_nonce, update_nonce
+from ocean_provider.utils.asset import get_asset_from_metadatastore
 from ocean_provider.utils.basics import (
     LocalFileAdapter,
-    get_asset_from_metadatastore,
     get_provider_wallet,
     get_web3,
+    get_metadata_url,
     validate_timestamp,
 )
+from ocean_provider.utils.compute_environments import check_environment_exists
+from ocean_provider.utils.datatoken import validate_order
 from ocean_provider.utils.error_responses import error_response
 from ocean_provider.utils.provider_fees import get_provider_fees, get_c2d_environments
 from ocean_provider.utils.services import ServiceType
@@ -24,13 +26,9 @@ from ocean_provider.utils.url import append_userdata, check_url_details
 from ocean_provider.utils.util import (
     build_download_response,
     check_asset_consumable,
-    check_environment_exists,
-    get_compute_info,
     get_download_url,
-    get_metadata_url,
     get_request_data,
     get_service_files_list,
-    validate_order,
     validate_url_object,
 )
 from ocean_provider.validation.provider_requests import (
@@ -125,16 +123,16 @@ def fileinfo():
 def initialize():
     """Initialize a service request.
     In order to consume a data service the user is required to send
-    a number of datatokens to the provider.
+    one datatoken to the provider.
 
-    The datatokens are transferred via the ethereum blockchain network
+    The datatoken is transferred via the ethereum blockchain network
     by requesting the user to sign an ERC20 approval transaction
     where the approval is given to the provider's ethereum account for
     the number of tokens required by the service.
 
     responses:
       400:
-        description: One or more of the required attributes are missing.
+        description: One or more of the required attributes are missing or invalid.
       503:
         description: Service Unavailable.
 
@@ -255,7 +253,7 @@ def download():
       200:
         description: Redirect to valid asset url.
       400:
-        description: One or more of the required attributes are missing.
+        description: One or more of the required attributes are missing or invalid.
       401:
         description: Invalid asset data.
       503:

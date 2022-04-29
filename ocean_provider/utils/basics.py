@@ -4,16 +4,13 @@
 #
 from datetime import datetime
 import os
-from pathlib import Path
 from typing import Optional, Union
 
-import artifacts
 import requests
 from eth_account import Account
 from hexbytes import HexBytes
 from ocean_provider.config import Config
 from ocean_provider.http_provider import CustomHTTPProvider
-from ocean_provider.utils.asset import Asset
 from requests_testadapter import Resp
 from web3 import WebsocketProvider
 from web3.main import Web3
@@ -28,6 +25,10 @@ def get_config(config_file: Optional[str] = None) -> Config:
         if config_file is not None
         else os.getenv("PROVIDER_CONFIG_FILE", "config.ini")
     )
+
+
+def get_metadata_url():
+    return get_config().aquarius_url
 
 
 def get_provider_wallet(web3: Optional[Web3] = None):
@@ -110,16 +111,6 @@ class LocalFileAdapter(requests.adapters.HTTPAdapter):
     ):
 
         return self.build_response_from_file(request)
-
-
-def get_asset_from_metadatastore(metadata_url, document_id):
-    """
-    :return: `Asset` instance or None
-    """
-    url = f"{metadata_url}/api/aquarius/assets/ddo/{document_id}"
-    response = requests.get(url)
-
-    return Asset(response.json()) if response.status_code == 200 else None
 
 
 def send_ether(web3, from_wallet: Account, to_address: str, amount: int):
