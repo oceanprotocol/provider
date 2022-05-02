@@ -3,7 +3,7 @@ import requests
 from ocean_provider.utils.basics import get_provider_wallet
 from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.datatoken import get_datatoken_contract
-from ocean_provider.utils.util import sign_send_and_wait_for_receipt
+from ocean_provider.utils.util import sign_and_send
 from web3.main import Web3
 
 
@@ -58,6 +58,6 @@ def send_proof(
         {"from": provider_wallet.address, "gasPrice": int(web3.eth.gas_price * 1.1)}
     )
 
-    transaction_id, _ = sign_send_and_wait_for_receipt(web3, tx, provider_wallet)
+    _, transaction_id = sign_and_send(web3, tx, provider_wallet)
 
     return transaction_id

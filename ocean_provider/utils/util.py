@@ -167,12 +167,21 @@ def sign_tx(web3, tx, private_key):
     return signed_tx.rawTransaction
 
 
-def sign_send_and_wait_for_receipt(
+def sign_and_send(
     web3: Web3, transaction: TxParams, from_account: LocalAccount
 ) -> Tuple[HexStr, TxReceipt]:
     """Returns the transaction id and transaction receipt."""
     transaction_signed = sign_tx(web3, transaction, from_account.key)
     transaction_hash = web3.eth.send_raw_transaction(transaction_signed)
     transaction_id = Web3.toHex(transaction_hash)
+
+    return transaction_hash, transaction_id
+
+
+def sign_send_and_wait_for_receipt(
+    web3: Web3, transaction: TxParams, from_account: LocalAccount
+) -> Tuple[HexStr, TxReceipt]:
+    """Returns the transaction id and transaction receipt."""
+    transaction_id, transaction_hash = sign_and_send(web3, transaction, from_account)
 
     return (transaction_id, web3.eth.wait_for_transaction_receipt(transaction_hash))
