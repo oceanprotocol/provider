@@ -188,7 +188,7 @@ def initializeCompute():
             consumer_address,
             valid_until,
             compute_env,
-            (index_for_provider_fees == len(datasets)),
+            (index_for_provider_fees != len(datasets)),
             algorithm,
         )
 
