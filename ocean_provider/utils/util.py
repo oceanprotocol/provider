@@ -182,6 +182,6 @@ def sign_send_and_wait_for_receipt(
     web3: Web3, transaction: TxParams, from_account: LocalAccount
 ) -> Tuple[HexStr, TxReceipt]:
     """Returns the transaction id and transaction receipt."""
-    transaction_id, transaction_hash = sign_and_send(web3, transaction, from_account)
+    transaction_hash, transaction_id = sign_and_send(web3, transaction, from_account)
 
     return (transaction_id, web3.eth.wait_for_transaction_receipt(transaction_hash))

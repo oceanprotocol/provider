@@ -10,7 +10,10 @@ from flask_sieve import validate
 from ocean_provider.myapp import app
 from ocean_provider.requests_session import get_requests_session
 from ocean_provider.user_nonce import get_nonce, update_nonce
-from ocean_provider.utils.asset import get_asset_from_metadatastore, check_asset_consumable
+from ocean_provider.utils.asset import (
+    get_asset_from_metadatastore,
+    check_asset_consumable,
+)
 from ocean_provider.utils.basics import (
     LocalFileAdapter,
     get_provider_wallet,
