@@ -77,9 +77,11 @@ def sign_message(message, wallet):
     :return: signature
     """
     keys_pk = keys.PrivateKey(wallet.key)
+    hexable = Web3.toBytes(text=message) if isinstance(message, str) else message
+
     message_hash = Web3.solidityKeccak(
         ["bytes"],
-        [Web3.toBytes(text=message)],
+        [Web3.toHex(hexable)],
     )
     prefix = "\x19Ethereum Signed Message:\n32"
     signable_hash = Web3.solidityKeccak(

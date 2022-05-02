@@ -6,6 +6,9 @@ import copy
 import requests
 from typing import Optional
 
+from jsonsempai import magic  # noqa: F401
+from artifacts import ERC721Template
+from ocean_provider.utils.basics import get_web3
 from ocean_provider.utils.consumable import ConsumableCodes
 from ocean_provider.utils.credentials import AddressCredential
 from ocean_provider.utils.services import Service
@@ -89,3 +92,25 @@ def get_asset_from_metadatastore(metadata_url, document_id):
     response = requests.get(url)
 
     return Asset(response.json()) if response.status_code == 200 else None
+
+
+def check_asset_consumable(asset, consumer_address, logger, custom_url=None):
+    if not asset.nft or "address" not in asset.nft:
+        return False, "Asset malformed"
+
+    dt_contract = get_web3().eth.contract(
+        abi=ERC721Template.abi, address=asset.nft["address"]
+    )
+
+    if dt_contract.caller.getMetaData()[2] != 0:
+        return False, "Asset is not consumable."
+
+    code = asset.is_consumable({"type": "address", "value": consumer_address})
+
+    if code == ConsumableCodes.OK:  # is consumable
+        return True, ""
+
+    message = f"Error: Access to asset {asset.did} was denied with code: {code}."
+    logger.error(message, exc_info=1)
+
+    return False, message
