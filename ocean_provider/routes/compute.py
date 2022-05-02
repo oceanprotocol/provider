@@ -32,7 +32,10 @@ from ocean_provider.utils.compute_environments import (
     check_environment_exists,
 )
 from ocean_provider.utils.error_responses import error_response
-from ocean_provider.utils.provider_fees import get_provider_fees_or_remote
+from ocean_provider.utils.provider_fees import (
+    get_provider_fees_or_remote,
+    comb_for_valid_transfer_and_fees,
+)
 from ocean_provider.utils.util import (
     build_download_response,
     get_request_data,
@@ -128,6 +131,10 @@ def initializeCompute():
     web3 = get_web3()
     approve_params = {"datasets": []} if datasets else {}
 
+    index_for_provider_fees = comb_for_valid_transfer_and_fees(
+        datasets + [algorithm], compute_env
+    )
+
     for i, dataset in enumerate(datasets):
         dataset["algorithm"] = algorithm
         dataset["consumerAddress"] = consumer_address
@@ -154,7 +161,7 @@ def initializeCompute():
                 consumer_address,
                 valid_until,
                 compute_env,
-                bool(i),
+                (i != index_for_provider_fees),
                 dataset,
             )
         )
@@ -181,7 +188,7 @@ def initializeCompute():
             consumer_address,
             valid_until,
             compute_env,
-            True,
+            (index_for_provider_fees == len(datasets)),
             algorithm,
         )
 

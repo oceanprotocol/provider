@@ -8,7 +8,13 @@ from typing import Any, Dict
 from eth_keys import KeyAPI
 from eth_keys.backends import NativeECCBackend
 from ocean_provider.requests_session import get_requests_session
-from ocean_provider.utils.basics import LocalFileAdapter, get_provider_wallet, get_web3
+from ocean_provider.utils.asset import get_asset_from_metadatastore
+from ocean_provider.utils.basics import (
+    LocalFileAdapter,
+    get_provider_wallet,
+    get_metadata_url,
+    get_web3,
+)
 from ocean_provider.utils.currency import parse_units
 from ocean_provider.utils.datatoken import get_datatoken_contract, validate_order
 from ocean_provider.utils.services import Service
@@ -78,6 +84,37 @@ def get_provider_fees(
     }
     logger.debug(f"Returning provider_fees: {provider_fee}")
     return provider_fee
+
+
+def comb_for_valid_transfer_and_fees(all_datasets, compute_env):
+    web3 = get_web3()
+
+    for i, dataset in enumerate(all_datasets):
+        if "transferTxId" not in dataset:
+            continue
+
+        asset = get_asset_from_metadatastore(
+            get_metadata_url(), dataset.get("documentId")
+        )
+        service = asset.get_service_by_id(dataset["serviceId"])
+
+        try:
+            _tx, _order_log, _provider_fees_log = validate_order(
+                web3,
+                dataset["consumerAddress"],
+                dataset["transferTxId"],
+                asset,
+                service,
+                {"environment": compute_env},
+                allow_expired_provider_fees=False,
+            )
+        except Exception:
+            # order does not exist or is expired, so we need new provider fees
+            continue
+
+        return i
+
+    return 0
 
 
 def get_provider_fees_or_remote(
