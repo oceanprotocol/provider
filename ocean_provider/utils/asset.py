@@ -6,6 +6,9 @@ import copy
 import requests
 from typing import Optional
 
+from jsonsempai import magic  # noqa: F401
+from artifacts import ERC721Template
+from ocean_provider.utils.basics import get_web3
 from ocean_provider.utils.consumable import ConsumableCodes
 from ocean_provider.utils.credentials import AddressCredential
 from ocean_provider.utils.services import Service

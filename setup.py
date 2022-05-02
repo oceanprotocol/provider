@@ -68,6 +68,7 @@ dev_requirements = [
     "flake8",
     "isort",
     "black==22.1.0",
+    "click==8.0.4",
     "pre-commit",
     "licenseheaders",
     "pytest-env",

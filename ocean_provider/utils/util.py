@@ -9,19 +9,20 @@ import mimetypes
 import os
 from cgi import parse_header
 from urllib.parse import urljoin
-
+from typing import Tuple
 import werkzeug
-from jsonsempai import magic  # noqa: F401
-from artifacts import ERC721Template
+
 from eth_account.signers.local import LocalAccount
 from eth_keys import KeyAPI
 from eth_keys.backends import NativeECCBackend
+from eth_typing.encoding import HexStr
 from flask import Response
-from ocean_provider.utils.basics import get_web3, get_provider_wallet
-from ocean_provider.utils.consumable import ConsumableCodes
+from ocean_provider.utils.basics import get_provider_wallet
 from ocean_provider.utils.encryption import do_decrypt
 from ocean_provider.utils.services import Service
-from ocean_provider.utils.url import append_userdata, is_safe_url, check_url_details
+from ocean_provider.utils.url import is_safe_url, append_userdata, check_url_details
+from web3 import Web3
+from web3.types import TxParams, TxReceipt
 
 logger = logging.getLogger(__name__)
 keys = KeyAPI(NativeECCBackend)
@@ -175,23 +176,36 @@ def check_url_valid(service, file_index, data):
     return valid, url_details
 
 
-def check_asset_consumable(asset, consumer_address, logger, custom_url=None):
-    if not asset.nft or "address" not in asset.nft:
-        return False, "Asset malformed"
+def sign_tx(web3, tx, private_key):
+    """
+    :param web3: Web3 object instance
+    :param tx: transaction
+    :param private_key: Private key of the account
+    :return: rawTransaction (str)
+    """
+    account = web3.eth.account.from_key(private_key)
+    nonce = web3.eth.get_transaction_count(account.address)
+    tx["nonce"] = nonce
+    signed_tx = web3.eth.account.sign_transaction(tx, private_key)
 
-    dt_contract = get_web3().eth.contract(
-        abi=ERC721Template.abi, address=asset.nft["address"]
-    )
+    return signed_tx.rawTransaction
 
-    if dt_contract.caller.getMetaData()[2] != 0:
-        return False, "Asset is not consumable."
 
-    code = asset.is_consumable({"type": "address", "value": consumer_address})
+def sign_and_send(
+    web3: Web3, transaction: TxParams, from_account: LocalAccount
+) -> Tuple[HexStr, TxReceipt]:
+    """Returns the transaction id and transaction receipt."""
+    transaction_signed = sign_tx(web3, transaction, from_account.key)
+    transaction_hash = web3.eth.send_raw_transaction(transaction_signed)
+    transaction_id = Web3.toHex(transaction_hash)
 
-    if code == ConsumableCodes.OK:  # is consumable
-        return True, ""
+    return transaction_hash, transaction_id
 
-    message = f"Error: Access to asset {asset.did} was denied with code: {code}."
-    logger.error(message, exc_info=1)
 
-    return False, message
+def sign_send_and_wait_for_receipt(
+    web3: Web3, transaction: TxParams, from_account: LocalAccount
+) -> Tuple[HexStr, TxReceipt]:
+    """Returns the transaction id and transaction receipt."""
+    transaction_hash, transaction_id = sign_and_send(web3, transaction, from_account)
+
+    return (transaction_id, web3.eth.wait_for_transaction_receipt(transaction_hash))

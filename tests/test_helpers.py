@@ -30,6 +30,7 @@ from ocean_provider.utils.datatoken import get_datatoken_contract
 from ocean_provider.utils.did import compute_did_from_data_nft_address_and_chain_id
 from ocean_provider.utils.encryption import do_encrypt
 from ocean_provider.utils.services import Service, ServiceType
+from ocean_provider.utils.util import sign_send_and_wait_for_receipt, sign_tx
 from tests.helpers.ddo_dict_builders import (
     build_credentials_dict,
     build_ddo_dict,
@@ -40,7 +41,7 @@ from tests.helpers.ddo_dict_builders import (
 )
 from web3.logs import DISCARD
 from web3.main import Web3
-from web3.types import TxParams, TxReceipt
+from web3.types import TxReceipt
 
 logger = logging.getLogger(__name__)
 BLACK_HOLE_ADDRESS = "0x0000000000000000000000000000000000000000"
@@ -48,20 +49,6 @@ BLACK_HOLE_ADDRESS = "0x0000000000000000000000000000000000000000"
 
 def get_gas_price(web3) -> int:
     return int(web3.eth.gas_price * 1.1)
-
-
-def sign_tx(web3, tx, private_key):
-    """
-    :param web3: Web3 object instance
-    :param tx: transaction
-    :param private_key: Private key of the account
-    :return: rawTransaction (str)
-    """
-    account = web3.eth.account.from_key(private_key)
-    nonce = web3.eth.get_transaction_count(account.address)
-    tx["nonce"] = nonce
-    signed_tx = web3.eth.account.sign_transaction(tx, private_key)
-    return signed_tx.rawTransaction
 
 
 def deploy_contract(w3, _json, private_key, *args):
@@ -92,16 +79,6 @@ def deploy_contract(w3, _json, private_key, *args):
 
 def get_ocean_token_address(web3: Web3) -> HexAddress:
     return get_contract_address(get_config().address_file, "Ocean", 8996)
-
-
-def sign_send_and_wait_for_receipt(
-    web3: Web3, transaction: TxParams, from_account: LocalAccount
-) -> Tuple[HexStr, TxReceipt]:
-    """Returns the transaction id and transaction receipt."""
-    transaction_signed = sign_tx(web3, transaction, from_account.key)
-    transaction_hash = web3.eth.send_raw_transaction(transaction_signed)
-    transaction_id = Web3.toHex(transaction_hash)
-    return (transaction_id, web3.eth.wait_for_transaction_receipt(transaction_hash))
 
 
 def deploy_data_nft(
