@@ -13,7 +13,6 @@ from ocean_provider.myapp import app
 from ocean_provider.requests_session import get_requests_session
 from ocean_provider.user_nonce import get_nonce, increment_nonce
 from ocean_provider.utils.basics import (
-    LocalFileAdapter,
     get_asset_from_metadatastore,
     get_datatoken_minter,
     get_provider_wallet,
@@ -53,7 +52,6 @@ from . import services
 setup_logging()
 provider_wallet = get_provider_wallet()
 requests_session = get_requests_session()
-requests_session.mount("file://", LocalFileAdapter())
 
 logger = logging.getLogger(__name__)
 

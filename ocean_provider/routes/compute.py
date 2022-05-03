@@ -12,7 +12,7 @@ from ocean_provider.log import setup_logging
 from ocean_provider.requests_session import get_requests_session
 from ocean_provider.user_nonce import get_nonce, increment_nonce
 from ocean_provider.utils.accounts import sign_message, verify_signature
-from ocean_provider.utils.basics import LocalFileAdapter, get_provider_wallet, get_web3
+from ocean_provider.utils.basics import get_provider_wallet, get_web3
 from ocean_provider.utils.error_responses import service_unavailable
 from ocean_provider.utils.util import (
     build_download_response,
@@ -35,7 +35,6 @@ from . import services
 setup_logging()
 provider_wallet = get_provider_wallet()
 requests_session = get_requests_session()
-requests_session.mount("file://", LocalFileAdapter())
 
 logger = logging.getLogger(__name__)
 
