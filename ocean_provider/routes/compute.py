@@ -13,7 +13,7 @@ from flask import Response, jsonify, request
 from flask_sieve import validate
 from ocean_provider.requests_session import get_requests_session
 from ocean_provider.user_nonce import update_nonce
-from ocean_provider.utils.basics import LocalFileAdapter, get_provider_wallet, get_web3
+from ocean_provider.utils.basics import get_provider_wallet, get_web3
 from ocean_provider.utils.compute import (
     get_compute_endpoint,
     get_compute_result_endpoint,
@@ -39,7 +39,6 @@ from . import services
 
 provider_wallet = get_provider_wallet()
 requests_session = get_requests_session()
-requests_session.mount("file://", LocalFileAdapter())
 
 logger = logging.getLogger(__name__)
 

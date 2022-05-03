@@ -7,7 +7,7 @@ from typing import Any, Dict
 from eth_keys import KeyAPI
 from eth_keys.backends import NativeECCBackend
 from ocean_provider.requests_session import get_requests_session
-from ocean_provider.utils.basics import LocalFileAdapter, get_provider_wallet, get_web3
+from ocean_provider.utils.basics import get_provider_wallet, get_web3
 from ocean_provider.utils.currency import parse_units
 from ocean_provider.utils.datatoken import get_datatoken_contract
 from ocean_provider.utils.services import Service
@@ -19,7 +19,6 @@ from ocean_provider.utils.compute_environments import (
 logger = logging.getLogger(__name__)
 keys = KeyAPI(NativeECCBackend)
 requests_session = get_requests_session()
-requests_session.mount("file://", LocalFileAdapter())
 
 
 def get_provider_fees(
