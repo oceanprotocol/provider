@@ -14,7 +14,6 @@ from ocean_provider.utils.asset import (
     check_asset_consumable,
 )
 from ocean_provider.utils.basics import (
-    LocalFileAdapter,
     get_provider_wallet,
     get_web3,
     get_metadata_url,
@@ -45,7 +44,6 @@ from . import services
 
 provider_wallet = get_provider_wallet()
 requests_session = get_requests_session()
-requests_session.mount("file://", LocalFileAdapter())
 
 logger = logging.getLogger(__name__)
 

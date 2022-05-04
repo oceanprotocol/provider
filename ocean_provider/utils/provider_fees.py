@@ -10,7 +10,6 @@ from eth_keys.backends import NativeECCBackend
 from ocean_provider.requests_session import get_requests_session
 from ocean_provider.utils.asset import get_asset_from_metadatastore
 from ocean_provider.utils.basics import (
-    LocalFileAdapter,
     get_provider_wallet,
     get_metadata_url,
     get_web3,
@@ -27,7 +26,6 @@ from ocean_provider.utils.compute_environments import (
 logger = logging.getLogger(__name__)
 keys = KeyAPI(NativeECCBackend)
 requests_session = get_requests_session()
-requests_session.mount("file://", LocalFileAdapter())
 
 
 def get_provider_fees(
