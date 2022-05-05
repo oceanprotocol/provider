@@ -133,7 +133,7 @@ def verify_order_tx(
         )
 
     # check duration
-    if provider_fee_order_log.args.validUntil > 0:
+    if provider_fee_order_log.args.validUntil > 0 and not allow_expired_provider_fees:
         timestamp_now = datetime.utcnow().timestamp()
         if provider_fee_order_log.args.validUntil < timestamp_now:
             raise AssertionError(

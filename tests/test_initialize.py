@@ -179,6 +179,7 @@ def test_initialize_compute_order_reused(
         True,
         None,
         environments[0]["consumerAddress"],
+        short_valid_until=True,
     )
     service = get_first_service_by_type(ddo, ServiceType.COMPUTE)
     sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
@@ -200,7 +201,7 @@ def test_initialize_compute_order_reused(
         "consumerAddress": consumer_wallet.address,
         "compute": {
             "env": environments[0]["id"],
-            "validUntil": get_future_valid_until(),
+            "validUntil": get_future_valid_until(short=True),
         },
     }
 
@@ -213,6 +214,24 @@ def test_initialize_compute_order_reused(
     assert response.status_code == 200
     assert response.json["algorithm"] == {"validOrder": alg_tx_id}
     assert response.json["datasets"] == [{"validOrder": tx_id}]
+    assert "providerFee" not in response.json["datasets"][0]
+    assert "providerFee" not in response.json["algorithm"]
+
+    import time
+
+    time.sleep(30)
+    payload["compute"]["validUntil"] = get_future_valid_until()
+    response = client.post(
+        BaseURLs.SERVICES_URL + "/initializeCompute",
+        data=json.dumps(payload),
+        content_type="application/json",
+    )
+
+    assert response.status_code == 200
+    assert response.json["algorithm"]["validOrder"] == alg_tx_id
+    assert response.json["datasets"][0]["validOrder"] == tx_id
+    assert "providerFee" in response.json["datasets"][0]
+    assert "providerFee" in response.json["algorithm"]
 
     payload["datasets"][0]["transferTxId"] = "wrong_tx_id"
     response = client.post(
