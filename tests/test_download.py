@@ -119,9 +119,9 @@ def test_download_timeout(client, publisher_wallet, consumer_wallet, web3, timeo
     )
 
     if timeout == 1:
-        assert response.status_code == 400, f"{response.content}"
+        assert response.status_code == 400, f"{response.data}"
     else:
-        assert response.status_code == 200, f"{response.content}"
+        assert response.status_code == 200, f"{response.data}"
 
 
 @pytest.mark.unit
