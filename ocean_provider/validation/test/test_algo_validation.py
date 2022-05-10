@@ -3,13 +3,13 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import copy
-import pytest
 from unittest.mock import Mock, patch
 
+import pytest
 from ocean_provider.utils.asset import Asset
-from ocean_provider.utils.services import ServiceType, Service
+from ocean_provider.utils.services import Service, ServiceType
 from ocean_provider.validation.algo import WorkflowValidator
-from tests.ddo.ddo_sample1_compute import ddo_dict, alg_ddo_dict
+from tests.ddo.ddo_sample1_compute import alg_ddo_dict, ddo_dict
 from tests.helpers.compute_helpers import get_future_valid_until
 from tests.test_helpers import get_first_service_by_type
 
@@ -37,11 +37,7 @@ def test_passes_algo_ddo(provider_wallet, consumer_address, web3):
     sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
 
     data = {
-        "dataset": {
-            "documentId": ddo.did,
-            "serviceId": sa.id,
-            "transferTxId": "tx_id",
-        },
+        "dataset": {"documentId": ddo.did, "serviceId": sa.id, "transferTxId": "tx_id"},
         "algorithm": {
             "documentId": alg_ddo.did,
             "serviceId": sa_compute.id,
@@ -79,11 +75,7 @@ def test_passes_raw(provider_wallet, consumer_address, web3):
     ddo = Asset(ddo_dict)
     sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
     data = {
-        "dataset": {
-            "documentId": ddo.did,
-            "serviceId": sa.id,
-            "transferTxId": "tx_id",
-        },
+        "dataset": {"documentId": ddo.did, "serviceId": sa.id, "transferTxId": "tx_id"},
         "algorithm": {
             "serviceId": sa.id,
             "meta": {
@@ -123,11 +115,7 @@ def test_fails_not_an_algo(provider_wallet, consumer_address, web3):
     sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
 
     data = {
-        "dataset": {
-            "documentId": did,
-            "transferTxId": "tx_id",
-            "serviceId": sa.id,
-        },
+        "dataset": {"documentId": did, "transferTxId": "tx_id", "serviceId": sa.id},
         "algorithm": {
             "documentId": did,
             "serviceId": sa_compute.id,
@@ -167,15 +155,8 @@ def test_fails_meta_issues(provider_wallet, consumer_address, web3):
     sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
     """Tests happy flow of validator with algo ddo and raw algo."""
     data = {
-        "dataset": {
-            "documentId": ddo.did,
-            "serviceId": sa.id,
-            "transferTxId": "tx_id",
-        },
-        "algorithm": {
-            "serviceId": sa.id,
-            "meta": {},
-        },
+        "dataset": {"documentId": ddo.did, "serviceId": sa.id, "transferTxId": "tx_id"},
+        "algorithm": {"serviceId": sa.id, "meta": {}},
     }
 
     with patch(
@@ -190,11 +171,7 @@ def test_fails_meta_issues(provider_wallet, consumer_address, web3):
 
     # algorithmMeta container is empty
     data = {
-        "dataset": {
-            "documentId": ddo.did,
-            "transferTxId": "tx_id",
-            "serviceId": sa.id,
-        },
+        "dataset": {"documentId": ddo.did, "transferTxId": "tx_id", "serviceId": sa.id},
         "algorithm": {
             "serviceId": sa.id,
             "meta": {
@@ -218,11 +195,7 @@ def test_fails_meta_issues(provider_wallet, consumer_address, web3):
 
     # algorithmMeta container is missing image
     data = {
-        "dataset": {
-            "documentId": ddo.did,
-            "transferTxId": "tx_id",
-            "serviceId": sa.id,
-        },
+        "dataset": {"documentId": ddo.did, "transferTxId": "tx_id", "serviceId": sa.id},
         "algorithm": {
             "serviceId": sa.id,
             "meta": {
@@ -262,11 +235,7 @@ def test_additional_datasets(provider_wallet, consumer_address, web3):
     sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
 
     data = {
-        "dataset": {
-            "documentId": ddo.did,
-            "serviceId": sa.id,
-            "transferTxId": "tx_id",
-        },
+        "dataset": {"documentId": ddo.did, "serviceId": sa.id, "transferTxId": "tx_id"},
         "algorithm": {
             "documentId": alg_ddo.did,
             "serviceId": sa_compute.id,
@@ -292,11 +261,7 @@ def test_additional_datasets(provider_wallet, consumer_address, web3):
 
     # additional input is invalid
     data = {
-        "dataset": {
-            "documentId": ddo.did,
-            "transferTxId": "tx_id",
-            "serviceId": sa.id,
-        },
+        "dataset": {"documentId": ddo.did, "transferTxId": "tx_id", "serviceId": sa.id},
         "algorithm": {
             "serviceId": sa_compute.id,
             "documentId": alg_ddo.did,
@@ -313,11 +278,7 @@ def test_additional_datasets(provider_wallet, consumer_address, web3):
 
     # Missing did in additional input
     data = {
-        "dataset": {
-            "documentId": did,
-            "transferTxId": "tx_id",
-            "serviceId": sa.id,
-        },
+        "dataset": {"documentId": did, "transferTxId": "tx_id", "serviceId": sa.id},
         "algorithm": {
             "serviceId": sa_compute.id,
             "documentId": alg_ddo.did,
@@ -338,11 +299,7 @@ def test_additional_datasets(provider_wallet, consumer_address, web3):
 
     # Did is not valid
     data = {
-        "dataset": {
-            "documentId": did,
-            "transferTxId": "tx_id",
-            "serviceId": sa.id,
-        },
+        "dataset": {"documentId": did, "transferTxId": "tx_id", "serviceId": sa.id},
         "algorithm": {
             "serviceId": sa_compute.id,
             "documentId": alg_ddo.did,
@@ -369,11 +326,7 @@ def test_additional_datasets(provider_wallet, consumer_address, web3):
         )
 
     data = {
-        "dataset": {
-            "documentId": did,
-            "transferTxId": "tx_id",
-            "serviceId": sa.id,
-        },
+        "dataset": {"documentId": did, "transferTxId": "tx_id", "serviceId": sa.id},
         "algorithm": {
             "serviceId": sa_compute.id,
             "documentId": alg_ddo.did,
@@ -417,11 +370,7 @@ def test_service_not_compute(provider_wallet, consumer_address, web3):
     sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
 
     data = {
-        "dataset": {
-            "documentId": ddo.did,
-            "transferTxId": "tx_id",
-            "serviceId": sa.id,
-        },
+        "dataset": {"documentId": ddo.did, "transferTxId": "tx_id", "serviceId": sa.id},
         "algorithm": {
             "serviceId": sa_compute.id,
             "documentId": alg_ddo.did,
@@ -444,7 +393,7 @@ def test_service_not_compute(provider_wallet, consumer_address, web3):
             datatoken_address="0xa",
             service_endpoint="test",
             encrypted_files="",
-            timeout=0,
+            timeout=3600,
         )
 
     with patch(
@@ -496,11 +445,7 @@ def test_fails_trusted(provider_wallet, consumer_address, web3):
             return trust_ddo
 
     data = {
-        "dataset": {
-            "documentId": ddo.did,
-            "transferTxId": "tx_id",
-            "serviceId": sa.id,
-        },
+        "dataset": {"documentId": ddo.did, "transferTxId": "tx_id", "serviceId": sa.id},
         "algorithm": {
             "serviceId": sa_compute.id,
             "documentId": alg_ddo.did,
@@ -529,9 +474,7 @@ def test_fails_trusted(provider_wallet, consumer_address, web3):
     # Additional input has other trusted publishers
     _copy = copy.deepcopy(ddo_dict)
     _copy["id"] = "0xtrust"
-    _copy["services"][0]["compute"]["publisherTrustedAlgorithmPublishers"] = [
-        "0xabc",
-    ]
+    _copy["services"][0]["compute"]["publisherTrustedAlgorithmPublishers"] = ["0xabc"]
     _copy["services"][0]["id"] = "compute_2"
     trust_ddo = Asset(_copy)
     trust_sa = get_first_service_by_type(trust_ddo, ServiceType.COMPUTE)
@@ -574,23 +517,13 @@ def test_fails_trusted(provider_wallet, consumer_address, web3):
     "ocean_provider.validation.algo.validate_order",
     return_value=(None, None, provider_fees_event),
 )
-@patch(
-    "ocean_provider.validation.algo.get_service_files_list",
-    return_value=None,
-)
+@patch("ocean_provider.validation.algo.get_service_files_list", return_value=None)
 def test_fails_no_asset_url(provider_wallet, consumer_address, web3):
     ddo = Asset(ddo_dict)
     sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
     data = {
-        "dataset": {
-            "documentId": ddo.did,
-            "serviceId": sa.id,
-            "transferTxId": "tx_id",
-        },
-        "algorithm": {
-            "serviceId": sa.id,
-            "meta": {},
-        },
+        "dataset": {"documentId": ddo.did, "serviceId": sa.id, "transferTxId": "tx_id"},
+        "algorithm": {"serviceId": sa.id, "meta": {}},
     }
 
     with patch(
@@ -615,15 +548,8 @@ def test_fails_validate_order(provider_wallet, consumer_address, web3):
     ddo = Asset(ddo_dict)
     sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
     data = {
-        "dataset": {
-            "documentId": ddo.did,
-            "serviceId": sa.id,
-            "transferTxId": "tx_id",
-        },
-        "algorithm": {
-            "serviceId": sa.id,
-            "meta": {},
-        },
+        "dataset": {"documentId": ddo.did, "serviceId": sa.id, "transferTxId": "tx_id"},
+        "algorithm": {"serviceId": sa.id, "meta": {}},
     }
 
     with patch(
@@ -648,15 +574,8 @@ def test_fails_no_service_id(provider_wallet, consumer_address, web3):
     ddo = Asset(ddo_dict)
     sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
     data = {
-        "dataset": {
-            "documentId": ddo.did,
-            "serviceId": None,
-            "transferTxId": "tx_id",
-        },
-        "algorithm": {
-            "serviceId": sa.id,
-            "meta": {},
-        },
+        "dataset": {"documentId": ddo.did, "serviceId": None, "transferTxId": "tx_id"},
+        "algorithm": {"serviceId": sa.id, "meta": {}},
     }
 
     with patch(
@@ -688,11 +607,7 @@ def test_fails_invalid_algorithm_dict(provider_wallet, consumer_address, web3):
     sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
 
     data = {
-        "dataset": {
-            "documentId": ddo.did,
-            "serviceId": sa.id,
-            "transferTxId": "tx_id",
-        },
+        "dataset": {"documentId": ddo.did, "serviceId": sa.id, "transferTxId": "tx_id"},
         "algorithm": {
             "documentId": alg_ddo.did,
             "serviceId": sa_compute.id,
@@ -733,11 +648,7 @@ def test_fails_algorithm_in_use(provider_wallet, consumer_address, web3):
     sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
 
     data = {
-        "dataset": {
-            "documentId": ddo.did,
-            "serviceId": sa.id,
-            "transferTxId": "tx_id",
-        },
+        "dataset": {"documentId": ddo.did, "serviceId": sa.id, "transferTxId": "tx_id"},
         "algorithm": {
             "documentId": alg_ddo.did,
             "serviceId": sa_compute.id,
@@ -792,11 +703,7 @@ def test_fail_wrong_algo_type(provider_wallet, consumer_address, web3):
     sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
 
     data = {
-        "dataset": {
-            "documentId": ddo.did,
-            "transferTxId": "tx_id",
-            "serviceId": sa.id,
-        },
+        "dataset": {"documentId": ddo.did, "transferTxId": "tx_id", "serviceId": sa.id},
         "algorithm": {
             "serviceId": sa_compute.id,
             "documentId": alg_ddo.did,
@@ -819,7 +726,7 @@ def test_fail_wrong_algo_type(provider_wallet, consumer_address, web3):
             datatoken_address="0xa",
             service_endpoint="test",
             encrypted_files="",
-            timeout=0,
+            timeout=3600,
         )
 
     with patch(
@@ -852,11 +759,7 @@ def test_fail_allow_raw_false(provider_wallet, consumer_address, web3):
     sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
     ddo.services[0].compute_dict["allowRawAlgorithm"] = False
     data = {
-        "dataset": {
-            "documentId": ddo.did,
-            "transferTxId": "tx_id",
-            "serviceId": sa.id,
-        },
+        "dataset": {"documentId": ddo.did, "transferTxId": "tx_id", "serviceId": sa.id},
         "algorithm": {
             "serviceId": sa_compute.id,
             "meta": {
@@ -897,11 +800,7 @@ def test_success_multiple_services_types(provider_wallet, consumer_address, web3
     sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
 
     data = {
-        "dataset": {
-            "documentId": ddo.did,
-            "transferTxId": "tx_id",
-            "serviceId": sa.id,
-        },
+        "dataset": {"documentId": ddo.did, "transferTxId": "tx_id", "serviceId": sa.id},
         "algorithm": {
             "serviceId": sa_compute.id,
             "meta": {
@@ -912,11 +811,7 @@ def test_success_multiple_services_types(provider_wallet, consumer_address, web3
             },
         },
         "additionalDatasets": [
-            {
-                "documentId": ddo.did,
-                "transferTxId": "ddo.did",
-                "serviceId": "access_1",
-            }
+            {"documentId": ddo.did, "transferTxId": "ddo.did", "serviceId": "access_1"}
         ],
     }
 
@@ -957,21 +852,10 @@ def test_fail_missing_algo_meta_documentId(provider_wallet, consumer_address, we
     sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
 
     data = {
-        "dataset": {
-            "documentId": ddo.did,
-            "transferTxId": "tx_id",
-            "serviceId": sa.id,
-        },
-        "algorithm": {
-            "serviceId": None,
-            "meta": None,
-        },
+        "dataset": {"documentId": ddo.did, "transferTxId": "tx_id", "serviceId": sa.id},
+        "algorithm": {"serviceId": None, "meta": None},
         "additionalDatasets": [
-            {
-                "documentId": ddo.did,
-                "transferTxId": "ddo.did",
-                "serviceId": "access_1",
-            }
+            {"documentId": ddo.did, "transferTxId": "ddo.did", "serviceId": "access_1"}
         ],
     }
 
@@ -1022,11 +906,7 @@ def test_fee_amount_not_paid(provider_wallet, consumer_address, web3):
     sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
 
     data = {
-        "dataset": {
-            "documentId": ddo.did,
-            "serviceId": sa.id,
-            "transferTxId": "tx_id",
-        },
+        "dataset": {"documentId": ddo.did, "serviceId": sa.id, "transferTxId": "tx_id"},
         "algorithm": {
             "documentId": alg_ddo.did,
             "serviceId": sa_compute.id,
@@ -1045,10 +925,8 @@ def test_fee_amount_not_paid(provider_wallet, consumer_address, web3):
         "ocean_provider.validation.algo.get_asset_from_metadatastore",
         side_effect=side_effect,
     ):
-        with patch(
-            "ocean_provider.validation.algo.get_provider_fee_amount",
-        ) as mock:
-            mock.return_value = 10**18
+        with patch("ocean_provider.validation.algo.get_provider_fee_amount") as mock:
+            mock.return_value = 10 ** 18
             validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
             assert validator.validate() is False
             assert (

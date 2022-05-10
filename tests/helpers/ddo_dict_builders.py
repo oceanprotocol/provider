@@ -5,16 +5,13 @@
 import json
 import uuid
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 from eth_typing.encoding import HexStr
 from eth_typing.evm import HexAddress
-from web3.main import Web3
-
-from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.basics import get_provider_wallet
 from ocean_provider.utils.encryption import do_encrypt
-from ocean_provider.utils.services import Service
+from web3.main import Web3
 
 """Test helpers for building service dicts to be used in DDOs"""
 
@@ -70,7 +67,7 @@ def build_service_dict_type_access(
     datatoken_address: HexAddress,
     service_endpoint: str,
     encrypted_files: HexStr,
-    timeout: int = 3600,
+    timeout: int = 3600,  # 1 hour
 ) -> dict:
     """Build an access service dict, used for testing"""
     access_service = _build_service_dict_untyped(
