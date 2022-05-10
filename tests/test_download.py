@@ -119,6 +119,7 @@ def test_download_timeout(client, publisher_wallet, consumer_wallet, web3, timeo
         service.service_endpoint + download_endpoint, query_string=payload
     )
 
+    # Expect failure if timeout is only 1 second. Expect success otherwise
     if timeout == 1:
         assert response.status_code == 400, f"{response.data}"
     else:
