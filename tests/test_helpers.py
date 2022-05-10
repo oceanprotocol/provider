@@ -167,6 +167,7 @@ def get_registered_asset(
     custom_services_args=None,
     custom_service_endpoint=None,
     erc20_enterprise=False,
+    timeout=3600,
 ):
     web3 = get_web3()
     data_nft_address = deploy_data_nft(
@@ -231,16 +232,12 @@ def get_registered_asset(
                 datatoken_address=datatoken_address,
                 service_endpoint=service_endpoint,
                 encrypted_files=encrypted_files,
+                timeout=timeout,
             )
         ]
         if not custom_services
         else build_custom_services(
-            custom_services,
-            from_wallet,
-            datatoken_address,
-            service_endpoint,
-            encrypted_files,
-            custom_services_args,
+            custom_services, from_wallet, datatoken_address, custom_services_args
         )
     )
 
@@ -446,12 +443,7 @@ def start_order(
 
 
 def build_custom_services(
-    services_type,
-    from_wallet,
-    datatoken_address,
-    service_endpoint,
-    encrypted_files,
-    custom_services_args,
+    services_type, from_wallet, datatoken_address, custom_services_args
 ):
     if services_type == "vanilla_compute":
         return [
@@ -465,12 +457,6 @@ def build_custom_services(
     if services_type == "norawalgo":
         return [
             get_compute_service_no_rawalgo(from_wallet.address, 10, datatoken_address)
-        ]
-    if services_type == "access_service_with_short_timeout":
-        return [
-            build_service_dict_type_access(
-                datatoken_address, service_endpoint, encrypted_files, timeout=1
-            )
         ]
 
     return []

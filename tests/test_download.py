@@ -83,10 +83,9 @@ def test_download_service(
         assert response.status_code == 400, f"{response.data}"
 
 
-def test_download_expired_timeout(client, publisher_wallet, consumer_wallet, web3):
-    asset = get_registered_asset(
-        publisher_wallet, custom_services="access_service_with_short_timeout"
-    )
+@pytest.mark.parametrize("timeout", [0, 1, 3600])
+def test_download_timeout(client, publisher_wallet, consumer_wallet, web3, timeout):
+    asset = get_registered_asset(publisher_wallet, timeout=timeout)
     service = get_first_service_by_type(asset, ServiceType.ACCESS)
     mint_100_datatokens(
         web3, service.datatoken_address, consumer_wallet.address, publisher_wallet
@@ -118,7 +117,11 @@ def test_download_expired_timeout(client, publisher_wallet, consumer_wallet, web
     response = client.get(
         service.service_endpoint + download_endpoint, query_string=payload
     )
-    assert response.status_code == 400, f"{response.content}"
+
+    if timeout == 1:
+        assert response.status_code == 400, f"{response.content}"
+    else:
+        assert response.status_code == 200, f"{response.content}"
 
 
 @pytest.mark.unit
