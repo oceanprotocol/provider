@@ -187,7 +187,7 @@ def verify_order_tx(
 
     timestamp_now = datetime.utcnow().timestamp()
     timestamp_delta = timestamp_now - order_log.args.timestamp
-    if timestamp_delta < service.timeout:
+    if timestamp_delta > service.timeout:
         raise ValueError(
             f"The order has expired. \n"
             f"current timestamp={timestamp_now}\n"
