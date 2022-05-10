@@ -309,3 +309,18 @@ class InitializeRequest(CustomJsonRequest):
             "consumerAddress": ["required"],
             "fileIndex": ["sometimes", "integer", "min:0"],
         }
+
+
+class InitializeComputeRequest(CustomJsonRequest):
+    def rules(self):
+        return {
+            "datasets": ["required"],
+            "algorithm.documentId": [
+                "required_without:algorithm.meta",
+                "required_with_all:algorithm.serviceId,algorithm.transferTxId",
+            ],
+            "algorithm.meta": ["required_without:algorithm.documentId"],
+            "compute.env": ["required"],
+            "compute.validUntil": ["required", "integer"],
+            "consumerAddress": ["required"],
+        }

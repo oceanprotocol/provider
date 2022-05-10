@@ -23,6 +23,8 @@ def build_and_send_ddo_with_compute_service(
     alg_diff=False,
     asset_type=None,
     c2d_address=None,
+    do_send=True,
+    short_valid_until=True,
 ):
     web3 = get_web3()
     algo_metadata = build_metadata_dict_type_algorithm()
@@ -73,6 +75,10 @@ def build_and_send_ddo_with_compute_service(
     mint_100_datatokens(web3, datatoken, consumer_wallet.address, publisher_wallet)
 
     environments = get_c2d_environments()
+
+    if not do_send:
+        return (dataset_ddo_w_compute_service, alg_ddo)
+
     tx_id, _ = start_order(
         web3,
         datatoken,
@@ -82,13 +88,14 @@ def build_and_send_ddo_with_compute_service(
             dataset_ddo_w_compute_service.did,
             service,
             consumer_wallet.address,
-            get_future_valid_until(),
+            get_future_valid_until(short=short_valid_until),
             environments[0]["id"],
         ),
         consumer_wallet,
     )
 
     alg_service = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
+
     alg_tx_id, _ = start_order(
         web3,
         alg_service.datatoken_address,
@@ -98,8 +105,9 @@ def build_and_send_ddo_with_compute_service(
             alg_ddo.did,
             alg_service,
             consumer_wallet.address,
-            get_future_valid_until(),
+            get_future_valid_until(short=short_valid_until),
             environments[0]["id"],
+            force_zero=True,
         ),
         consumer_wallet,
     )
@@ -177,6 +185,7 @@ def get_compute_result(client, endpoint, params, raw_response=False):
     return response.data
 
 
-def get_future_valid_until():
-    # return a timestamp for one hour in the future
-    return int((datetime.utcnow() + timedelta(hours=1)).timestamp())
+def get_future_valid_until(short=False):
+    # return a timestamp for one hour in the future or 30s in the future if short
+    time_diff = timedelta(hours=1) if not short else timedelta(seconds=30)
+    return int((datetime.utcnow() + time_diff).timestamp())

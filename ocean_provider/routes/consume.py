@@ -7,7 +7,6 @@ import logging
 
 from flask import jsonify, request
 from flask_sieve import validate
-from ocean_provider.myapp import app
 from ocean_provider.requests_session import get_requests_session
 from ocean_provider.user_nonce import get_nonce, update_nonce
 from ocean_provider.utils.asset import (
@@ -18,9 +17,7 @@ from ocean_provider.utils.basics import (
     get_provider_wallet,
     get_web3,
     get_metadata_url,
-    validate_timestamp,
 )
-from ocean_provider.utils.compute_environments import check_environment_exists
 from ocean_provider.utils.datatoken import validate_order
 from ocean_provider.utils.error_responses import error_response
 from ocean_provider.utils.proof import send_proof
@@ -33,6 +30,7 @@ from ocean_provider.utils.util import (
     get_request_data,
     get_service_files_list,
     validate_url_object,
+    check_url_valid,
 )
 from ocean_provider.validation.provider_requests import (
     DownloadRequest,
@@ -123,7 +121,7 @@ def fileinfo():
 @services.route("/initialize", methods=["GET"])
 @validate(InitializeRequest)
 def initialize():
-    """Initialize a service request.
+    """Initialize a service access request.
     In order to consume a data service the user is required to send
     one datatoken to the provider.
 
@@ -154,8 +152,6 @@ def initialize():
 
     did = data.get("documentId")
     consumer_address = data.get("consumerAddress")
-    compute_env = data.get("environment")
-    valid_until = data.get("validUntil", 0)
 
     asset = get_asset_from_metadatastore(get_metadata_url(), did)
     consumable, message = check_asset_consumable(asset, consumer_address, logger)
@@ -166,46 +162,20 @@ def initialize():
     service = asset.get_service_by_id(service_id)
 
     if service.type == "compute":
-        if not (compute_env and valid_until):
-            return error_response(
-                "The environment and validUntil are mandatory when initializing a compute service.",
-                400,
-                logger,
-            )
-
-        timestamp_ok = validate_timestamp(valid_until)
-        valid_until = int(valid_until)
-
-        if not timestamp_ok:
-            return error_response(
-                "The validUntil value is not correct.",
-                400,
-                logger,
-            )
-
-        if not check_environment_exists(get_c2d_environments(), compute_env):
-            return error_response("Compute environment does not exist", 400, logger)
+        return error_response(
+            "Use the initializeCompute endpoint to initialize compute jobs.",
+            400,
+            logger,
+        )
 
     token_address = service.datatoken_address
 
     file_index = int(data.get("fileIndex", "-1"))
     # we check if the file is valid only if we have fileIndex
     if file_index > -1:
-        url_object = get_service_files_list(service, provider_wallet)[file_index]
-        url_valid, message = validate_url_object(url_object, service_id)
-        if not url_valid:
-            return error_response(message, 400, logger)
-        download_url = get_download_url(url_object)
-        download_url = append_userdata(download_url, data)
-        valid, url_details = check_url_details(download_url)
-
+        valid, message = check_url_valid(service, file_index, data)
         if not valid:
-            logger.error(
-                f"Error: Asset URL not found or not available. \n"
-                f"Payload was: {data}",
-                exc_info=1,
-            )
-            return error_response("Asset URL not found or not available.", 400, logger)
+            return error_response(message, 400, logger)
 
     # Prepare the `transfer` tokens transaction with the appropriate number
     # of tokens required for this service
@@ -214,9 +184,7 @@ def initialize():
     approve_params = {
         "datatoken": token_address,
         "nonce": get_nonce(consumer_address),
-        "providerFee": get_provider_fees(
-            did, service, consumer_address, int(valid_until), compute_env
-        ),
+        "providerFee": get_provider_fees(did, service, consumer_address, 0),
     }
     response = jsonify(approve_params), 200
     logger.info(f"initialize response = {response}")

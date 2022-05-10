@@ -17,12 +17,12 @@ from eth_keys import KeyAPI
 from eth_keys.backends import NativeECCBackend
 from eth_typing.encoding import HexStr
 from flask import Response
+from ocean_provider.utils.basics import get_provider_wallet
 from ocean_provider.utils.encryption import do_decrypt
 from ocean_provider.utils.services import Service
-from ocean_provider.utils.url import is_safe_url
+from ocean_provider.utils.url import is_safe_url, append_userdata, check_url_details
 from web3 import Web3
 from web3.types import TxParams, TxReceipt
-
 
 logger = logging.getLogger(__name__)
 keys = KeyAPI(NativeECCBackend)
@@ -150,6 +150,30 @@ def get_download_url(url_object):
         raise Exception("No IPFS_GATEWAY defined, can not resolve ipfs hash.")
 
     return urljoin(os.getenv("IPFS_GATEWAY"), urljoin("ipfs/", url_object["hash"]))
+
+
+def check_url_valid(service, file_index, data):
+    provider_wallet = get_provider_wallet()
+
+    url_object = get_service_files_list(service, provider_wallet)[file_index]
+    url_valid, message = validate_url_object(url_object, service.id)
+    if not url_valid:
+        return False, message
+
+    download_url = get_download_url(url_object)
+    download_url = append_userdata(download_url, data)
+    valid, url_details = check_url_details(download_url)
+
+    if not valid:
+        logger.error(
+            f"Error: Asset URL not found or not available. \n" f"Payload was: {data}",
+            exc_info=1,
+        )
+
+        if not url_details:
+            url_details = "Asset URL not found or not available."
+
+    return valid, url_details
 
 
 def sign_tx(web3, tx, private_key):

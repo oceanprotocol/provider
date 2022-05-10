@@ -46,6 +46,7 @@ def verify_order_tx(
     amount: int,
     sender: HexAddress,
     extra_data: None,
+    allow_expired_provider_fees=False,
 ):
     """Check order tx and provider fees validity on-chain for the given parameters."""
     provider_wallet = get_provider_wallet()
@@ -88,7 +89,10 @@ def verify_order_tx(
             )
 
         valid_until = provider_fee_order_log.args.validUntil
-        if datetime.utcnow().timestamp() >= valid_until:
+        if (
+            datetime.utcnow().timestamp() >= valid_until
+            and not allow_expired_provider_fees
+        ):
             raise AssertionError("Ordered c2d time was exceeded, check validUntil.")
 
     if Web3.toChecksumAddress(
@@ -129,7 +133,7 @@ def verify_order_tx(
         )
 
     # check duration
-    if provider_fee_order_log.args.validUntil > 0:
+    if provider_fee_order_log.args.validUntil > 0 and not allow_expired_provider_fees:
         timestamp_now = datetime.utcnow().timestamp()
         if provider_fee_order_log.args.validUntil < timestamp_now:
             raise AssertionError(
@@ -189,7 +193,15 @@ def verify_order_tx(
     return tx, order_log, provider_fee_order_log
 
 
-def validate_order(web3, sender, tx_id, asset, service, extra_data=None):
+def validate_order(
+    web3,
+    sender,
+    tx_id,
+    asset,
+    service,
+    extra_data=None,
+    allow_expired_provider_fees=False,
+):
     did = asset.did
     token_address = service.datatoken_address
     num_tokens = 1
@@ -210,7 +222,14 @@ def validate_order(web3, sender, tx_id, asset, service, extra_data=None):
         i += 1
         try:
             tx, order_event, provider_fees_event = verify_order_tx(
-                web3, token_address, tx_id, service, amount, sender, extra_data
+                web3,
+                token_address,
+                tx_id,
+                service,
+                amount,
+                sender,
+                extra_data,
+                allow_expired_provider_fees,
             )
             logger.debug(
                 f"validate_order succeeded for: did={did}, service_id={service.id}, tx_id={tx_id}, "

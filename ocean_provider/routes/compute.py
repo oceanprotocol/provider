@@ -13,24 +13,38 @@ from flask import Response, jsonify, request
 from flask_sieve import validate
 from ocean_provider.requests_session import get_requests_session
 from ocean_provider.user_nonce import update_nonce
-from ocean_provider.utils.basics import get_provider_wallet, get_web3
+from ocean_provider.utils.asset import get_asset_from_metadatastore
+from ocean_provider.utils.basics import (
+    get_metadata_url,
+    get_provider_wallet,
+    get_web3,
+    validate_timestamp,
+)
 from ocean_provider.utils.compute import (
-    get_compute_endpoint,
-    get_compute_result_endpoint,
     process_compute_request,
     sign_for_compute,
+    get_compute_result_endpoint,
+    get_compute_endpoint,
 )
-from ocean_provider.utils.compute_environments import get_c2d_environments
+from ocean_provider.utils.compute_environments import (
+    get_c2d_environments,
+    check_environment_exists,
+)
 from ocean_provider.utils.error_responses import error_response
+from ocean_provider.utils.provider_fees import (
+    get_provider_fees_or_remote,
+    comb_for_valid_transfer_and_fees,
+)
 from ocean_provider.utils.util import (
     build_download_response,
     get_request_data,
 )
-from ocean_provider.validation.algo import WorkflowValidator
+from ocean_provider.validation.algo import WorkflowValidator, InputItemValidator
 from ocean_provider.validation.provider_requests import (
     ComputeGetResult,
     ComputeRequest,
     ComputeStartRequest,
+    InitializeComputeRequest,
     UnsignedComputeRequest,
 )
 from requests.models import PreparedRequest
@@ -55,6 +69,128 @@ def validate_compute_request(f):
         return f(*args, **kws)
 
     return decorated_function
+
+
+@services.route("/initializeCompute", methods=["POST"])
+@validate(InitializeComputeRequest)
+def initializeCompute():
+    """Initialize a compute service request, with possible additional access requests.
+    In order to consume a data service the user is required to send
+    one datatoken to the provider, as well as provider fees for the compute job.
+
+    The datatoken is transferred via the ethereum blockchain network
+    by requesting the user to sign an ERC20 approval transaction
+    where the approval is given to the provider's ethereum account for
+    the number of tokens required by the service.
+
+    Accepts a payload similar to startCompute: a list of datasets (json object),
+    algorithm (algorithm description object), validUntil and env parameters.
+    Adding a transferTxId value to a dataset object will attempt to reuse that order
+    and return renewed provider fees if necessary.
+
+    responses:
+      400:
+        description: One or more of the required attributes are missing or invalid.
+      503:
+        description: Service Unavailable.
+
+    return:
+        json object as follows:
+        ```JSON
+        {
+            "datatoken": <data-token-contract-address>,
+            "providerFee": <object containing provider fees>,
+            "validOrder": <validated transfer if order can be reused.>
+        }
+        ```
+    """
+    data = get_request_data(request)
+    logger.info(f"initializeCompute called. arguments = {data}")
+
+    datasets = data.get("datasets")
+    algorithm = data["algorithm"]
+    compute_env = data["compute"]["env"]
+    valid_until = data["compute"]["validUntil"]
+    consumer_address = data.get("consumerAddress")
+
+    timestamp_ok = validate_timestamp(valid_until)
+    valid_until = int(valid_until)
+
+    if not timestamp_ok:
+        return error_response(
+            "The validUntil value is not correct.",
+            400,
+            logger,
+        )
+
+    if not check_environment_exists(get_c2d_environments(), compute_env):
+        return error_response("Compute environment does not exist", 400, logger)
+
+    web3 = get_web3()
+    approve_params = {"datasets": []} if datasets else {}
+
+    index_for_provider_fees = comb_for_valid_transfer_and_fees(
+        datasets + [algorithm], compute_env
+    )
+
+    for i, dataset in enumerate(datasets):
+        dataset["algorithm"] = algorithm
+        dataset["consumerAddress"] = consumer_address
+        input_item_validator = InputItemValidator(
+            web3,
+            consumer_address,
+            provider_wallet,
+            dataset,
+            {"environment": compute_env},
+            i,
+            check_usage=False,
+        )
+        status = input_item_validator.validate()
+        if not status:
+            prefix = f"Error in input at index {i}: "
+            return error_response(prefix + input_item_validator.error, 400, logger)
+
+        service = input_item_validator.service
+
+        approve_params["datasets"].append(
+            get_provider_fees_or_remote(
+                input_item_validator.asset,
+                service,
+                consumer_address,
+                valid_until,
+                compute_env,
+                (i != index_for_provider_fees),
+                dataset,
+            )
+        )
+
+    if algorithm.get("documentId"):
+        algo = get_asset_from_metadatastore(
+            get_metadata_url(), algorithm.get("documentId")
+        )
+
+        try:
+            asset_type = algo.metadata["type"]
+        except ValueError:
+            asset_type = None
+
+        if asset_type != "algorithm":
+            return error_response("DID is not a valid algorithm", 400, logger)
+
+        algo_service = algo.get_service_by_id(algorithm.get("serviceId"))
+        algorithm["consumerAddress"] = consumer_address
+
+        approve_params["algorithm"] = get_provider_fees_or_remote(
+            algo,
+            algo_service,
+            consumer_address,
+            valid_until,
+            compute_env,
+            (index_for_provider_fees != len(datasets)),
+            algorithm,
+        )
+
+    return jsonify(approve_params), 200
 
 
 @services.route("/compute", methods=["DELETE"])
