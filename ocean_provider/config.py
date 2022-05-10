@@ -14,6 +14,10 @@ import logging
 import os
 from pathlib import Path
 
+from jsonsempai import magic
+from addresses import address as contract_addresses
+
+
 NAME_NETWORK_URL = "network"
 NAME_ADDRESS_FILE = "address.file"
 
@@ -110,11 +114,11 @@ class Config(configparser.ConfigParser):
 
     @property
     def address_file(self):
-        file_path = self.get(self._section_name, NAME_ADDRESS_FILE)
+        file_path = self.get(self._section_name, NAME_ADDRESS_FILE, fallback=None)
         if file_path:
-            file_path = Path(file_path).expanduser().resolve()
+            return Path(file_path).expanduser().resolve()
 
-        return file_path
+        return Path(contract_addresses.__file__).expanduser().resolve()
 
     @property
     def network_url(self):
