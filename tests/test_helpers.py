@@ -466,6 +466,12 @@ def build_custom_services(
         return [
             get_compute_service_no_rawalgo(from_wallet.address, 10, datatoken_address)
         ]
+    if services_type == "access_service_with_zero_timeout":
+        return [
+            build_service_dict_type_access(
+                datatoken_address, service_endpoint, encrypted_files, timeout=0
+            )
+        ]
 
     return []
 
