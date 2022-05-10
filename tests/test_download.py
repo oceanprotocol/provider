@@ -85,7 +85,7 @@ def test_download_service(
 
 def test_download_expired_timeout(client, publisher_wallet, consumer_wallet, web3):
     asset = get_registered_asset(
-        publisher_wallet, custom_services="access_service_with_zero_timeout"
+        publisher_wallet, custom_services="access_service_with_short_timeout"
     )
     service = get_first_service_by_type(asset, ServiceType.ACCESS)
     mint_100_datatokens(
