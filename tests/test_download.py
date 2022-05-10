@@ -118,7 +118,7 @@ def test_download_expired_timeout(client, publisher_wallet, consumer_wallet, web
     response = client.get(
         service.service_endpoint + download_endpoint, query_string=payload
     )
-    assert response.status_code == 400, f"{response.data}"
+    assert response.status_code == 400, f"{response.content}"
 
 
 @pytest.mark.unit
