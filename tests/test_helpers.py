@@ -18,11 +18,7 @@ from flask.testing import FlaskClient
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.address import get_contract_address
 from ocean_provider.utils.asset import get_asset_from_metadatastore
-from ocean_provider.utils.basics import (
-    get_config,
-    get_provider_wallet,
-    get_web3,
-)
+from ocean_provider.utils.basics import get_config, get_provider_wallet, get_web3
 from ocean_provider.utils.currency import to_wei
 from ocean_provider.utils.data_nft import Flags, MetadataState, get_data_nft_contract
 from ocean_provider.utils.data_nft_factory import get_data_nft_factory_contract
@@ -239,7 +235,12 @@ def get_registered_asset(
         ]
         if not custom_services
         else build_custom_services(
-            custom_services, from_wallet, web3, data_nft_address, custom_services_args
+            custom_services,
+            from_wallet,
+            datatoken_address,
+            service_endpoint,
+            encrypted_files,
+            custom_services_args,
         )
     )
 
@@ -445,23 +446,13 @@ def start_order(
 
 
 def build_custom_services(
-    services_type, from_wallet, web3, data_nft_address, custom_services_args
+    services_type,
+    from_wallet,
+    datatoken_address,
+    service_endpoint,
+    encrypted_files,
+    custom_services_args,
 ):
-    datatoken_address = deploy_datatoken(
-        web3=web3,
-        data_nft_address=data_nft_address,
-        template_index=1,
-        name="Datatoken 1",
-        symbol="DT1",
-        minter=from_wallet.address,
-        fee_manager=from_wallet.address,
-        publishing_market=BLACK_HOLE_ADDRESS,
-        publishing_market_fee_token=get_ocean_token_address(web3),
-        cap=to_wei(1000),
-        publishing_market_fee_amount=0,
-        from_wallet=from_wallet,
-    )
-
     if services_type == "vanilla_compute":
         return [
             get_compute_service(
