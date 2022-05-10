@@ -926,7 +926,7 @@ def test_fee_amount_not_paid(provider_wallet, consumer_address, web3):
         side_effect=side_effect,
     ):
         with patch("ocean_provider.validation.algo.get_provider_fee_amount") as mock:
-            mock.return_value = 10 ** 18
+            mock.return_value = 10**18
             validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
             assert validator.validate() is False
             assert (
