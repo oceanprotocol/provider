@@ -90,6 +90,10 @@ def test_download_service(
 @pytest.mark.integration
 @pytest.mark.parametrize("timeout", [0, 1, 3600])
 def test_download_timeout(client, publisher_wallet, consumer_wallet, web3, timeout):
+    """
+    If timeout == 0, order is valid forever
+    else reject request if current timestamp - order timestamp > timeout
+    """
     asset = get_registered_asset(publisher_wallet, timeout=timeout)
     service = get_first_service_by_type(asset, ServiceType.ACCESS)
     mint_100_datatokens(
@@ -123,7 +127,7 @@ def test_download_timeout(client, publisher_wallet, consumer_wallet, web3, timeo
         service.service_endpoint + download_endpoint, query_string=payload
     )
 
-    # Expect failure if timeout is only 1 second. Expect success otherwise
+    # Expect failure if timeout is 1 second. Expect success otherwise
     if timeout == 1:
         assert response.status_code == 400, f"{response.data}"
     else:
