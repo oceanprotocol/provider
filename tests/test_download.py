@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import copy
+import time
 from datetime import datetime
 from unittest.mock import patch
 
@@ -41,6 +42,9 @@ def test_download_service(
         get_provider_fees(asset.did, service, consumer_wallet.address, 0),
         consumer_wallet,
     )
+
+    # Sleept for 1 second (give the order time to expire)
+    time.sleep(1)
 
     payload = {
         "documentId": asset.did,
