@@ -43,9 +43,6 @@ def test_download_service(
         consumer_wallet,
     )
 
-    # Sleept for 1 second (give the order time to expire)
-    time.sleep(1)
-
     payload = {
         "documentId": asset.did,
         "serviceId": service.id,
@@ -107,6 +104,9 @@ def test_download_timeout(client, publisher_wallet, consumer_wallet, web3, timeo
         get_provider_fees(asset.did, service, consumer_wallet.address, 0),
         consumer_wallet,
     )
+
+    # Sleep for 1 second (give the order time to expire)
+    time.sleep(1)
 
     payload = {
         "documentId": asset.did,
