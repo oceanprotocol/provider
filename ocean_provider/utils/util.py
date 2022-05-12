@@ -215,9 +215,9 @@ def get_compute_info():
         return None, None
 
 
-def validate_order(web3, sender, token_address, num_tokens, tx_id, did, service_id):
+def validate_order(web3, sender, token_address, num_tokens, tx_id, did, service):
     logger.debug(
-        f"validate_order: did={did}, service_id={service_id}, tx_id={tx_id}, "
+        f"validate_order: did={did}, service_id={service.index}, tx_id={tx_id}, "
         f"sender={sender}, num_tokens={num_tokens}, token_address={token_address}"
     )
 
@@ -231,10 +231,10 @@ def validate_order(web3, sender, token_address, num_tokens, tx_id, did, service_
         i += 1
         try:
             tx, order_event, transfer_event = verify_order_tx(
-                web3, dt_contract, tx_id, did, int(service_id), amount, sender
+                web3, dt_contract, tx_id, did, service, amount, sender
             )
             logger.debug(
-                f"validate_order succeeded for: did={did}, service_id={service_id}, tx_id={tx_id}, "
+                f"validate_order succeeded for: did={did}, service_id={service.index}, tx_id={tx_id}, "
                 f"sender={sender}, num_tokens={num_tokens}, token_address={token_address}. "
                 f"result is: tx={tx}, order_event={order_event}, transfer_event={transfer_event}"
             )

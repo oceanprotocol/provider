@@ -183,7 +183,7 @@ class WorkflowValidator:
                     add_0x_prefix(did_to_id(algorithm_did))
                     if algorithm_did.startswith("did:")
                     else algorithm_did,
-                    self.algo_service.index,
+                    self.algo_service,
                 )
                 validate_transfer_not_used_for_other_service(
                     algorithm_did,
@@ -436,7 +436,7 @@ class InputItemValidator:
                 add_0x_prefix(did_to_id(self.did))
                 if self.did.startswith("did:")
                 else self.did,
-                self.service.index,
+                self.service,
             )
             validate_transfer_not_used_for_other_service(
                 self.did,

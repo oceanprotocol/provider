@@ -4,12 +4,9 @@ from jsonsempai import magic  # noqa: F401
 from artifacts import DataTokenTemplate
 from eth_utils import remove_0x_prefix
 from hexbytes import HexBytes
-from ocean_provider.utils.basics import (
-    get_asset_from_metadatastore,
-    get_metadata_url,
-    get_web3,
-)
+from ocean_provider.utils.basics import get_web3
 from ocean_provider.utils.currency import to_wei
+from ocean_provider.utils.services import Service
 from web3.logs import DISCARD
 from websockets import ConnectionClosed
 
@@ -49,7 +46,7 @@ def mint(web3, contract, receiver_address, amount, minter_wallet):
 
 
 def verify_order_tx(
-    web3, contract, tx_id: str, did: str, service_id, amount, sender: str
+    web3, contract, tx_id: str, did: str, service: Service, amount, sender: str
 ):
     try:
         tx_receipt = get_tx_receipt(web3, tx_id)
@@ -82,27 +79,26 @@ def verify_order_tx(
     assert (
         asset_id == remove_0x_prefix(contract.address).lower()
     ), "asset-id does not match the datatoken id."
-    if str(order_log.args.serviceId) != str(service_id):
+    if str(order_log.args.serviceId) != str(service.index):
         raise AssertionError(
             f"The asset id (DID) or service id in the event does "
             f"not match the requested asset. \n"
-            f"requested: (did={did}, serviceId={service_id}\n"
+            f"requested: (did={did}, serviceId={service.index}\n"
             f"event: (serviceId={order_log.args.serviceId}"
         )
 
     # Check if order expired. timeout == 0 means order is valid forever
-    asset = get_asset_from_metadatastore(get_metadata_url(), did)
-    service = asset.get_service_by_index(service_id)
-    if service.timeout != 0:
+    service_timeout = service.main["timeout"]
+    if service_timeout != 0:
         timestamp_now = datetime.utcnow().timestamp()
         timestamp_delta = timestamp_now - order_log.args.timestamp
-        if timestamp_delta > service.timeout:
+        if timestamp_delta > service_timeout:
             raise ValueError(
                 f"The order has expired. \n"
                 f"current timestamp={timestamp_now}\n"
                 f"order timestamp={order_log.args.timestamp}\n"
                 f"timestamp delta={timestamp_delta}\n"
-                f"service timeout={service.timeout}"
+                f"service timeout={service_timeout}"
             )
 
     target_amount = amount - contract.caller.calculateFee(amount, OPF_FEE_PER_TOKEN)

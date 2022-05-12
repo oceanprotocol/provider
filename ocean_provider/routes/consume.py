@@ -336,7 +336,7 @@ def download():
             service.get_cost(),
             tx_id,
             did,
-            service_id,
+            service,
         )
         validate_transfer_not_used_for_other_service(
             did, service_id, tx_id, consumer_address, token_address

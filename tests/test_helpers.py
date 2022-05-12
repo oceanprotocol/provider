@@ -12,10 +12,10 @@ from datetime import datetime
 from pathlib import Path
 
 import ipfshttpclient
-from jsonsempai import magic  # noqa: F401
 from artifacts import DataTokenTemplate, Metadata
 from eth_account import Account
 from eth_utils import add_0x_prefix, remove_0x_prefix
+from jsonsempai import magic  # noqa: F401
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.asset import Asset
 from ocean_provider.utils.basics import get_asset_from_metadatastore, get_web3
@@ -455,6 +455,6 @@ def send_order(client, ddo, datatoken, service, cons_wallet, expect_failure=Fals
     web3.eth.wait_for_transaction_receipt(tx_id)
 
     verify_order_tx(
-        web3, datatoken, tx_id, ddo.asset_id, service.index, amount, cons_wallet.address
+        web3, datatoken, tx_id, ddo.asset_id, service, amount, cons_wallet.address
     )
     return tx_id
