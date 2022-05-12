@@ -452,6 +452,8 @@ def send_order(client, ddo, datatoken, service, cons_wallet, expect_failure=Fals
     }
     tx_id = contract_fn.transact(_transact).hex()
 
+    web3.eth.wait_for_transaction_receipt(tx_id)
+
     verify_order_tx(
         web3, datatoken, tx_id, ddo.asset_id, service.index, amount, cons_wallet.address
     )
