@@ -82,8 +82,8 @@ def test_download_timeout(client, publisher_wallet, consumer_wallet, web3, timeo
 
     tx_id = send_order(client, asset, dt_token, service, consumer_wallet)
 
-    # Sleep for 1 second (give the order time to expire)
-    time.sleep(1)
+    # Sleep for 2 seconds (give the order time to expire)
+    time.sleep(2)
 
     # Consume using url index and auth token
     # (let the provider do the decryption)
