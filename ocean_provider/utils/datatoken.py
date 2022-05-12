@@ -1,12 +1,15 @@
 import datetime
 
-from jsonsempai import magic  # noqa: F401
 from artifacts import DataTokenTemplate
 from eth_utils import remove_0x_prefix
 from hexbytes import HexBytes
-from ocean_provider.utils.basics import get_asset_from_metadatastore, get_web3
+from jsonsempai import magic  # noqa: F401
+from ocean_provider.utils.basics import (
+    get_asset_from_metadatastore,
+    get_metadata_url,
+    get_web3,
+)
 from ocean_provider.utils.currency import to_wei
-from ocean_provider.utils.util import get_metadata_url
 from web3.logs import DISCARD
 from websockets import ConnectionClosed
 

@@ -9,12 +9,12 @@ from eth_utils import add_0x_prefix
 from flask import Response, jsonify, request
 from flask_sieve import validate
 from ocean_provider.log import setup_logging
-from ocean_provider.myapp import app
 from ocean_provider.requests_session import get_requests_session
 from ocean_provider.user_nonce import get_nonce, increment_nonce
 from ocean_provider.utils.basics import (
     get_asset_from_metadatastore,
     get_datatoken_minter,
+    get_metadata_url,
     get_provider_wallet,
     get_web3,
 )
@@ -27,11 +27,10 @@ from ocean_provider.utils.util import (
     build_download_response,
     check_asset_consumable,
     get_asset_download_urls,
-    get_asset_urls,
     get_asset_url_at_index,
+    get_asset_urls,
     get_compute_info,
     get_download_url,
-    get_metadata_url,
     get_request_data,
     process_consume_request,
     record_consume_request,

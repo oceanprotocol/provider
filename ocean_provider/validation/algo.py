@@ -6,12 +6,13 @@ import json
 import logging
 
 from eth_utils import add_0x_prefix
-from web3.logs import DISCARD
-
 from ocean_provider.constants import BaseURLs
-from ocean_provider.myapp import app
 from ocean_provider.serializers import StageAlgoSerializer
-from ocean_provider.utils.basics import get_asset_from_metadatastore, get_config
+from ocean_provider.utils.basics import (
+    get_asset_from_metadatastore,
+    get_config,
+    get_metadata_url,
+)
 from ocean_provider.utils.datatoken import get_dt_contract, get_tx_receipt
 from ocean_provider.utils.did import did_to_id
 from ocean_provider.utils.url import append_userdata
@@ -21,12 +22,12 @@ from ocean_provider.utils.util import (
     filter_dictionary,
     filter_dictionary_starts_with,
     get_asset_download_urls,
-    get_metadata_url,
     msg_hash,
     record_consume_request,
     validate_order,
     validate_transfer_not_used_for_other_service,
 )
+from web3.logs import DISCARD
 
 logger = logging.getLogger(__name__)
 
@@ -346,7 +347,7 @@ class InputItemValidator:
 
         if trusted_publishers:
             algo_ddo = get_asset_from_metadatastore(get_metadata_url(), algorithm_did)
-            if not algo_ddo.publisher in trusted_publishers:
+            if algo_ddo.publisher not in trusted_publishers:
                 self.error = "this algorithm is not from a trusted publisher"
                 return False
 

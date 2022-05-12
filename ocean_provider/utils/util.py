@@ -17,6 +17,7 @@ from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.basics import (
     get_asset_from_metadatastore,
     get_config,
+    get_metadata_url,
     get_provider_wallet,
 )
 from ocean_provider.utils.consumable import ConsumableCodes
@@ -28,10 +29,6 @@ from websockets import ConnectionClosed
 
 setup_logging()
 logger = logging.getLogger(__name__)
-
-
-def get_metadata_url():
-    return get_config().aquarius_url
 
 
 def get_request_data(request):
