@@ -1,9 +1,9 @@
 import datetime
 
+from jsonsempai import magic  # noqa: F401
 from artifacts import DataTokenTemplate
 from eth_utils import remove_0x_prefix
 from hexbytes import HexBytes
-from jsonsempai import magic  # noqa: F401
 from ocean_provider.utils.basics import (
     get_asset_from_metadatastore,
     get_metadata_url,
