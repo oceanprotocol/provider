@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 
 from jsonsempai import magic  # noqa: F401
 from artifacts import DataTokenTemplate
