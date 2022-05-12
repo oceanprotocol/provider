@@ -16,8 +16,8 @@ from jsonsempai import magic  # noqa: F401
 from artifacts import DataTokenTemplate, Metadata
 from eth_account import Account
 from eth_utils import add_0x_prefix, remove_0x_prefix
-from web3.main import Web3
 from ocean_provider.constants import BaseURLs
+from ocean_provider.utils.asset import Asset
 from ocean_provider.utils.basics import (
     get_asset_from_metadatastore,
     get_datatoken_minter,
@@ -29,6 +29,7 @@ from ocean_provider.utils.encryption import do_encrypt
 from ocean_provider.utils.services import Service
 from ocean_provider.utils.util import checksum
 from tests.helpers.service_definitions import get_access_service
+from web3.main import Web3
 
 
 def get_gas_price(web3: Web3) -> int:
@@ -209,7 +210,7 @@ def send_create_tx(web3, did, flags, data, account):
     return receipt
 
 
-def get_dataset_ddo_with_access_service(client, wallet):
+def get_dataset_ddo_with_access_service(client, wallet) -> Asset:
     metadata = get_sample_ddo()["service"][0]["attributes"]
     metadata["main"]["files"][0]["checksum"] = str(uuid.uuid4())
     service = get_access_service(wallet.address, metadata)
