@@ -18,13 +18,14 @@ from eth_account import Account
 from eth_utils import add_0x_prefix, remove_0x_prefix
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.asset import Asset
-from ocean_provider.utils.basics import (
-    get_asset_from_metadatastore,
-    get_datatoken_minter,
-    get_web3,
-)
+from ocean_provider.utils.basics import get_asset_from_metadatastore, get_web3
 from ocean_provider.utils.currency import to_wei
-from ocean_provider.utils.datatoken import get_tx_receipt, mint, verify_order_tx
+from ocean_provider.utils.datatoken import (
+    get_datatoken_minter,
+    get_tx_receipt,
+    mint,
+    verify_order_tx,
+)
 from ocean_provider.utils.encryption import do_encrypt
 from ocean_provider.utils.services import Service
 from ocean_provider.utils.util import checksum

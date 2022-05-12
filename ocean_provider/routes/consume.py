@@ -13,12 +13,11 @@ from ocean_provider.requests_session import get_requests_session
 from ocean_provider.user_nonce import get_nonce, increment_nonce
 from ocean_provider.utils.basics import (
     get_asset_from_metadatastore,
-    get_datatoken_minter,
     get_metadata_url,
     get_provider_wallet,
     get_web3,
 )
-from ocean_provider.utils.datatoken import get_dt_contract
+from ocean_provider.utils.datatoken import get_datatoken_minter, get_dt_contract
 from ocean_provider.utils.did import did_to_id
 from ocean_provider.utils.encryption import do_encrypt
 from ocean_provider.utils.error_responses import service_unavailable
