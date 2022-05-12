@@ -4,7 +4,7 @@ from jsonsempai import magic  # noqa: F401
 from artifacts import DataTokenTemplate
 from eth_utils import remove_0x_prefix
 from hexbytes import HexBytes
-from ocean_provider.utils.basics import get_asset_from_metadatastore
+from ocean_provider.utils.basics import get_asset_from_metadatastore, get_web3
 from ocean_provider.utils.currency import to_wei
 from ocean_provider.utils.util import get_metadata_url
 from web3.logs import DISCARD
@@ -22,6 +22,15 @@ def get_dt_contract(web3, address):
 
 def get_tx_receipt(web3, tx_hash):
     return web3.eth.wait_for_transaction_receipt(HexBytes(tx_hash), timeout=120)
+
+
+def get_datatoken_minter(datatoken_address):
+    """
+    :return: Eth account address of the Datatoken minter
+    """
+    dt = get_dt_contract(get_web3(), datatoken_address)
+    publisher = dt.caller.minter()
+    return publisher
 
 
 def mint(web3, contract, receiver_address, amount, minter_wallet):
