@@ -20,7 +20,7 @@ from ocean_provider.utils.basics import (
 from ocean_provider.utils.datatoken import get_datatoken_minter, get_dt_contract
 from ocean_provider.utils.did import did_to_id
 from ocean_provider.utils.encryption import do_encrypt
-from ocean_provider.utils.error_responses import service_unavailable
+from ocean_provider.utils.error_responses import error_response, service_unavailable
 from ocean_provider.utils.url import append_userdata, check_url_details
 from ocean_provider.utils.util import (
     build_download_response,
@@ -329,15 +329,23 @@ def download():
             return jsonify(error=message), 400
 
         logger.info("validate_order called from download endpoint.")
-        _tx, _order_log, _transfer_log = validate_order(
-            get_web3(),
-            consumer_address,
-            token_address,
-            service.get_cost(),
-            tx_id,
-            did,
-            service,
-        )
+        try:
+            _tx, _order_log, _transfer_log = validate_order(
+                get_web3(),
+                consumer_address,
+                token_address,
+                service.get_cost(),
+                tx_id,
+                did,
+                service,
+            )
+        except Exception as e:
+            return error_response(
+                f"=Order with tx_id {tx_id} could not be validated due to error: {e}",
+                400,
+                logger,
+            )
+
         validate_transfer_not_used_for_other_service(
             did, service_id, tx_id, consumer_address, token_address
         )
