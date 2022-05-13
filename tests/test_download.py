@@ -76,14 +76,15 @@ def test_download_timeout(client, publisher_wallet, consumer_wallet, web3, timeo
     """
     asset = get_dataset_ddo_with_access_service(client, publisher_wallet)
     service = asset.get_service("access")
+    service.main["timeout"] = timeout
 
     dt_token = get_dt_contract(web3, asset.data_token_address)
     mint_tokens_and_wait(dt_token, consumer_wallet, publisher_wallet)
 
     tx_id = send_order(client, asset, dt_token, service, consumer_wallet)
 
-    # Sleep for 2 seconds (give the order time to expire)
-    time.sleep(2)
+    # Sleep for 1 seconds (give the order time to expire)
+    time.sleep(1)
 
     # Consume using url index and auth token
     # (let the provider do the decryption)
