@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 
 from jsonsempai import magic  # noqa: F401
@@ -12,6 +13,8 @@ from websockets import ConnectionClosed
 
 OPF_FEE_PER_TOKEN = to_wei("0.001")  # 0.1%
 MAX_MARKET_FEE_PER_TOKEN = to_wei("0.001")
+
+logger = logging.getLogger(__name__)
 
 
 def get_dt_contract(web3, address):
@@ -89,9 +92,11 @@ def verify_order_tx(
 
     # Check if order expired. timeout == 0 means order is valid forever
     service_timeout = service.main["timeout"]
+    logger.info(f"service timeout = {service_timeout}")
     if service_timeout != 0:
         timestamp_now = datetime.utcnow().timestamp()
         timestamp_delta = timestamp_now - order_log.args.timestamp
+        logger.info(f"timestamp delta = {timestamp_delta}")
         if timestamp_delta > service_timeout:
             raise ValueError(
                 f"The order has expired. \n"
