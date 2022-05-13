@@ -3,11 +3,16 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import json
-import pytest
+import time
 
+import pytest
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.provider_fees import get_c2d_environments
 from ocean_provider.utils.services import ServiceType
+from tests.helpers.compute_helpers import (
+    build_and_send_ddo_with_compute_service,
+    get_future_valid_until,
+)
 from tests.test_helpers import (
     get_dataset_ddo_disabled,
     get_dataset_ddo_with_denied_consumer,
@@ -17,10 +22,6 @@ from tests.test_helpers import (
     get_registered_asset,
     initialize_service,
     mint_100_datatokens,
-)
-from tests.helpers.compute_helpers import (
-    build_and_send_ddo_with_compute_service,
-    get_future_valid_until,
 )
 
 
@@ -120,7 +121,8 @@ def test_can_not_initialize_compute_service_with_simple_initialize(
 
 
 @pytest.mark.integration
-def test_initialize_compute_works(client, publisher_wallet, consumer_wallet, web3):
+@pytest.mark.parametrize("timeout", [0, 1, 3600])
+def test_initialize_compute_works(client, publisher_wallet, consumer_wallet, timeout):
     environments = get_c2d_environments()
     ddo, alg_ddo = build_and_send_ddo_with_compute_service(
         client,
@@ -130,9 +132,13 @@ def test_initialize_compute_works(client, publisher_wallet, consumer_wallet, web
         None,
         environments[0]["consumerAddress"],
         do_send=False,
+        timeout=timeout,
     )
     service = get_first_service_by_type(ddo, ServiceType.COMPUTE)
     sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
+
+    # Sleep for 1 second (give the order time to expire)
+    time.sleep(1)
 
     response = client.post(
         BaseURLs.SERVICES_URL + "/initializeCompute",
@@ -143,12 +149,9 @@ def test_initialize_compute_works(client, publisher_wallet, consumer_wallet, web
                         "documentId": ddo.did,
                         "serviceId": service.id,
                         "userdata": '{"dummy_userdata":"XXX", "age":12}',
-                    },
+                    }
                 ],
-                "algorithm": {
-                    "documentId": alg_ddo.did,
-                    "serviceId": sa_compute.id,
-                },
+                "algorithm": {"documentId": alg_ddo.did, "serviceId": sa_compute.id},
                 "consumerAddress": consumer_wallet.address,
                 "compute": {
                     "env": environments[0]["id"],
@@ -159,7 +162,7 @@ def test_initialize_compute_works(client, publisher_wallet, consumer_wallet, web
         content_type="application/json",
     )
 
-    assert response.status_code == 200
+    assert response.status_code == 200, f"{response.data}"
 
     assert "datatoken" in response.json["datasets"][0].keys()
     assert "providerFee" in response.json["datasets"][0].keys()
@@ -168,8 +171,9 @@ def test_initialize_compute_works(client, publisher_wallet, consumer_wallet, web
 
 
 @pytest.mark.integration
+@pytest.mark.parametrize("timeout", [0, 1, 3600])
 def test_initialize_compute_order_reused(
-    client, publisher_wallet, consumer_wallet, web3
+    client, publisher_wallet, consumer_wallet, timeout
 ):
     environments = get_c2d_environments()
     ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
@@ -180,6 +184,7 @@ def test_initialize_compute_order_reused(
         None,
         environments[0]["consumerAddress"],
         short_valid_until=True,
+        timeout=timeout,
     )
     service = get_first_service_by_type(ddo, ServiceType.COMPUTE)
     sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
@@ -191,7 +196,7 @@ def test_initialize_compute_order_reused(
                 "serviceId": service.id,
                 "transferTxId": tx_id,
                 "userdata": '{"dummy_userdata":"XXX", "age":12}',
-            },
+            }
         ],
         "algorithm": {
             "documentId": alg_ddo.did,
