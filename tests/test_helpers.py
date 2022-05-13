@@ -211,10 +211,11 @@ def send_create_tx(web3, did, flags, data, account):
     return receipt
 
 
-def get_dataset_ddo_with_access_service(client, wallet) -> Asset:
+def get_dataset_ddo_with_access_service(client, wallet, timeout=3600) -> Asset:
     metadata = get_sample_ddo()["service"][0]["attributes"]
     metadata["main"]["files"][0]["checksum"] = str(uuid.uuid4())
     service = get_access_service(wallet.address, metadata)
+    service.main["timeout"] = timeout
     metadata["main"].pop("cost")
     return get_registered_ddo(client, wallet, metadata, service)
 

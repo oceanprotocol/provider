@@ -74,9 +74,8 @@ def test_download_timeout(client, publisher_wallet, consumer_wallet, web3, timeo
     If timeout == 0, order is valid forever
     else reject request if current timestamp - order timestamp > timeout
     """
-    asset = get_dataset_ddo_with_access_service(client, publisher_wallet)
+    asset = get_dataset_ddo_with_access_service(client, publisher_wallet, timeout)
     service = asset.get_service("access")
-    service.main["timeout"] = timeout
 
     dt_token = get_dt_contract(web3, asset.data_token_address)
     mint_tokens_and_wait(dt_token, consumer_wallet, publisher_wallet)
