@@ -97,15 +97,14 @@ def verify_order_tx(
     logger.debug(
         f"verify_order_tx: service timeout = {service_timeout}, timestamp delta = {timestamp_delta}"
     )
-    if service_timeout != 0:
-        if timestamp_delta > service_timeout:
-            raise ValueError(
-                f"The order has expired. \n"
-                f"current timestamp={timestamp_now}\n"
-                f"order timestamp={order_log.args.timestamp}\n"
-                f"timestamp delta={timestamp_delta}\n"
-                f"service timeout={service_timeout}"
-            )
+    if service_timeout != 0 and timestamp_delta > service_timeout:
+        raise ValueError(
+            f"The order has expired. \n"
+            f"current timestamp={timestamp_now}\n"
+            f"order timestamp={order_log.args.timestamp}\n"
+            f"timestamp delta={timestamp_delta}\n"
+            f"service timeout={service_timeout}"
+        )
 
     target_amount = amount - contract.caller.calculateFee(amount, OPF_FEE_PER_TOKEN)
     if order_log.args.mrktFeeCollector and order_log.args.marketFee > 0:
