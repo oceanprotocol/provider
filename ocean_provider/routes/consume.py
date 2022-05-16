@@ -337,7 +337,8 @@ def download():
                 service.get_cost(),
                 tx_id,
                 did,
-                service,
+                service_id,
+                service.main["timeout"],
             )
         except Exception as e:
             return error_response(

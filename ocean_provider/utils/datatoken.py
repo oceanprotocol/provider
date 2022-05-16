@@ -7,7 +7,6 @@ from eth_utils import remove_0x_prefix
 from hexbytes import HexBytes
 from ocean_provider.utils.basics import get_web3
 from ocean_provider.utils.currency import to_wei
-from ocean_provider.utils.services import Service
 from web3.logs import DISCARD
 from websockets import ConnectionClosed
 
@@ -49,7 +48,14 @@ def mint(web3, contract, receiver_address, amount, minter_wallet):
 
 
 def verify_order_tx(
-    web3, contract, tx_id: str, did: str, service: Service, amount, sender: str
+    web3,
+    contract,
+    tx_id: str,
+    did: str,
+    service_id: int,
+    amount,
+    sender: str,
+    service_timeout: int,
 ):
     try:
         tx_receipt = get_tx_receipt(web3, tx_id)
@@ -82,16 +88,15 @@ def verify_order_tx(
     assert (
         asset_id == remove_0x_prefix(contract.address).lower()
     ), "asset-id does not match the datatoken id."
-    if str(order_log.args.serviceId) != str(service.index):
+    if str(order_log.args.serviceId) != str(service_id):
         raise AssertionError(
             f"The asset id (DID) or service id in the event does "
             f"not match the requested asset. \n"
-            f"requested: (did={did}, serviceId={service.index}\n"
+            f"requested: (did={did}, serviceId={service_id}\n"
             f"event: (serviceId={order_log.args.serviceId}"
         )
 
     # Check if order expired. timeout == 0 means order is valid forever
-    service_timeout = service.main["timeout"]
     timestamp_now = datetime.utcnow().timestamp()
     timestamp_delta = timestamp_now - order_log.args.timestamp
     logger.debug(
