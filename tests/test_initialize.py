@@ -242,6 +242,7 @@ def test_initialize_compute_order_reused(client, publisher_wallet, consumer_wall
     assert "providerFee" not in response.json["datasets"][0]
     assert "providerFee" not in response.json["algorithm"]
 
+    # Sleep long enough for provider fees to expire
     time.sleep(30)
 
     payload["compute"]["validUntil"] = get_future_valid_until()
@@ -258,7 +259,8 @@ def test_initialize_compute_order_reused(client, publisher_wallet, consumer_wall
     assert "providerFee" in response.json["datasets"][0]
     assert "providerFee" in response.json["algorithm"]
 
-    time.sleep(30)
+    # Sleep long enough for orders to expire
+    time.sleep(60)
 
     # Case 3: expired orders, expired provider fees
     assert response.status_code == 200
