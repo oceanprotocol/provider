@@ -172,9 +172,7 @@ def test_initialize_compute_works(client, publisher_wallet, consumer_wallet):
 
 
 @pytest.mark.integration
-def test_initialize_compute_order_reused(
-    client, publisher_wallet, consumer_wallet, timeout
-):
+def test_initialize_compute_order_reused(client, publisher_wallet, consumer_wallet):
     """Call `initializeCompute` when there ARE reusable orders
 
     Enumerate all cases:
