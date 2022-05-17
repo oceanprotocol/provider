@@ -121,8 +121,11 @@ def test_can_not_initialize_compute_service_with_simple_initialize(
 
 
 @pytest.mark.integration
-@pytest.mark.parametrize("timeout", [0, 1, 3600])
-def test_initialize_compute_works(client, publisher_wallet, consumer_wallet, timeout):
+def test_initialize_compute_works(client, publisher_wallet, consumer_wallet):
+    """Call `initializeCompute` when there are NO reusable orders
+    Assert response contains `datatoken` and `providerFee` and does not contain
+    `validOrder` for both dataset and algorithm.
+    """
     environments = get_c2d_environments()
     ddo, alg_ddo = build_and_send_ddo_with_compute_service(
         client,
@@ -132,13 +135,10 @@ def test_initialize_compute_works(client, publisher_wallet, consumer_wallet, tim
         None,
         environments[0]["consumerAddress"],
         do_send=False,
-        timeout=timeout,
+        timeout=3600,
     )
     service = get_first_service_by_type(ddo, ServiceType.COMPUTE)
     sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
-
-    # Sleep for 1 second (give the order time to expire)
-    time.sleep(1)
 
     response = client.post(
         BaseURLs.SERVICES_URL + "/initializeCompute",
@@ -163,19 +163,40 @@ def test_initialize_compute_works(client, publisher_wallet, consumer_wallet, tim
     )
 
     assert response.status_code == 200, f"{response.data}"
-
-    assert "datatoken" in response.json["datasets"][0].keys()
-    assert "providerFee" in response.json["datasets"][0].keys()
-    assert "datatoken" in response.json["algorithm"].keys()
-    assert "providerFee" in response.json["algorithm"].keys()
+    assert "datatoken" in response.json["datasets"][0]
+    assert "providerFee" in response.json["datasets"][0]
+    assert "validOrder" not in response.json["datasets"][0]
+    assert "datatoken" in response.json["algorithm"]
+    assert "providerFee" in response.json["algorithm"]
+    assert "validOrder" not in response.json["algorithm"]
 
 
 @pytest.mark.integration
-@pytest.mark.parametrize("timeout", [0, 1, 3600])
 def test_initialize_compute_order_reused(
     client, publisher_wallet, consumer_wallet, timeout
 ):
+    """Call `initializeCompute` when there ARE reusable orders
+
+    Enumerate all cases:
+
+    Case 1:
+        valid orders
+        valid provider fees
+
+    Case 2:
+        valid orders
+        expired provider fees
+
+    Case 3:
+        expired orders
+        expired provider fees
+
+    Case 4:
+        wrong tx id for dataset order
+    """
     environments = get_c2d_environments()
+
+    # Order asset, valid for 60 seconds
     ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
         client,
         publisher_wallet,
@@ -184,7 +205,7 @@ def test_initialize_compute_order_reused(
         None,
         environments[0]["consumerAddress"],
         short_valid_until=True,
-        timeout=timeout,
+        timeout=60,
     )
     service = get_first_service_by_type(ddo, ServiceType.COMPUTE)
     sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
@@ -216,15 +237,15 @@ def test_initialize_compute_order_reused(
         content_type="application/json",
     )
 
+    # Case 1: valid orders, valid provider fees
     assert response.status_code == 200
     assert response.json["algorithm"] == {"validOrder": alg_tx_id}
     assert response.json["datasets"] == [{"validOrder": tx_id}]
     assert "providerFee" not in response.json["datasets"][0]
     assert "providerFee" not in response.json["algorithm"]
 
-    import time
-
     time.sleep(30)
+
     payload["compute"]["validUntil"] = get_future_valid_until()
     response = client.post(
         BaseURLs.SERVICES_URL + "/initializeCompute",
@@ -232,12 +253,25 @@ def test_initialize_compute_order_reused(
         content_type="application/json",
     )
 
+    # Case 2: valid orders, expired provider fees
     assert response.status_code == 200
     assert response.json["algorithm"]["validOrder"] == alg_tx_id
     assert response.json["datasets"][0]["validOrder"] == tx_id
     assert "providerFee" in response.json["datasets"][0]
     assert "providerFee" in response.json["algorithm"]
 
+    time.sleep(30)
+
+    # Case 3: expired orders, expired provider fees
+    assert response.status_code == 200
+    assert "datatoken" in response.json["datasets"][0]
+    assert "providerFee" in response.json["datasets"][0]
+    assert "validOrder" not in response.json["datasets"][0]
+    assert "datatoken" in response.json["algorithm"]
+    assert "providerFee" in response.json["algorithm"]
+    assert "validOrder" not in response.json["algorithm"]
+
+    # Case 4: wrong tx id for dataset order
     payload["datasets"][0]["transferTxId"] = "wrong_tx_id"
     response = client.post(
         BaseURLs.SERVICES_URL + "/initializeCompute",
