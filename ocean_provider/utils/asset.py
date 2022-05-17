@@ -78,7 +78,7 @@ class Asset:
 
         self.other_values = values
 
-    def get_service(self, service_type: str):
+    def get_service(self, service_type: str) -> Service:
         """Return a service using."""
         return next(
             (service for service in self.services if service.type == service_type), None

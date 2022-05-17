@@ -2,8 +2,9 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
-import pytest
+import time
 
+import pytest
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import generate_auth_token, sign_message
 from ocean_provider.utils.datatoken import get_dt_contract
@@ -65,6 +66,46 @@ def test_download_service(client, publisher_wallet, consumer_wallet, web3, userd
     payload["signature"] = sign_message(_msg, consumer_wallet)
     response = client.get(download_endpoint, query_string=payload)
     assert response.status_code == 200, f"{response.data}"
+
+
+@pytest.mark.parametrize("timeout", [0, 1, 3600])
+def test_download_timeout(client, publisher_wallet, consumer_wallet, web3, timeout):
+    """
+    If timeout == 0, order is valid forever
+    else reject request if current timestamp - order timestamp > timeout
+    """
+    asset = get_dataset_ddo_with_access_service(client, publisher_wallet, timeout)
+    service = asset.get_service("access")
+
+    dt_token = get_dt_contract(web3, asset.data_token_address)
+    mint_tokens_and_wait(dt_token, consumer_wallet, publisher_wallet)
+
+    tx_id = send_order(client, asset, dt_token, service, consumer_wallet)
+
+    # Sleep for 1 seconds (give the order time to expire)
+    time.sleep(1)
+
+    # Consume using url index and auth token
+    # (let the provider do the decryption)
+    payload = {
+        "documentId": asset.did,
+        "serviceId": service.index,
+        "serviceType": service.type,
+        "dataToken": asset.data_token_address,
+        "consumerAddress": consumer_wallet.address,
+        "signature": generate_auth_token(consumer_wallet),
+        "transferTxId": tx_id,
+        "fileIndex": 0,
+    }
+
+    download_endpoint = BaseURLs.ASSETS_URL + "/download"
+    response = client.get(download_endpoint, query_string=payload)
+
+    # Expect failure if timeout is 1 second. Expect success otherwise
+    if timeout == 1:
+        assert response.status_code == 400, f"{response.data}"
+    else:
+        assert response.status_code == 200, f"{response.data}"
 
 
 def test_empty_payload(client):

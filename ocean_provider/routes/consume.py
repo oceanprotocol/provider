@@ -9,29 +9,27 @@ from eth_utils import add_0x_prefix
 from flask import Response, jsonify, request
 from flask_sieve import validate
 from ocean_provider.log import setup_logging
-from ocean_provider.myapp import app
 from ocean_provider.requests_session import get_requests_session
 from ocean_provider.user_nonce import get_nonce, increment_nonce
 from ocean_provider.utils.basics import (
     get_asset_from_metadatastore,
-    get_datatoken_minter,
+    get_metadata_url,
     get_provider_wallet,
     get_web3,
 )
-from ocean_provider.utils.datatoken import get_dt_contract
+from ocean_provider.utils.datatoken import get_datatoken_minter, get_dt_contract
 from ocean_provider.utils.did import did_to_id
 from ocean_provider.utils.encryption import do_encrypt
-from ocean_provider.utils.error_responses import service_unavailable
+from ocean_provider.utils.error_responses import error_response, service_unavailable
 from ocean_provider.utils.url import append_userdata, check_url_details
 from ocean_provider.utils.util import (
     build_download_response,
     check_asset_consumable,
     get_asset_download_urls,
-    get_asset_urls,
     get_asset_url_at_index,
+    get_asset_urls,
     get_compute_info,
     get_download_url,
-    get_metadata_url,
     get_request_data,
     process_consume_request,
     record_consume_request,
@@ -331,15 +329,24 @@ def download():
             return jsonify(error=message), 400
 
         logger.info("validate_order called from download endpoint.")
-        _tx, _order_log, _transfer_log = validate_order(
-            get_web3(),
-            consumer_address,
-            token_address,
-            service.get_cost(),
-            tx_id,
-            did,
-            service_id,
-        )
+        try:
+            _tx, _order_log, _transfer_log = validate_order(
+                get_web3(),
+                consumer_address,
+                token_address,
+                service.get_cost(),
+                tx_id,
+                did,
+                service_id,
+                service.main["timeout"],
+            )
+        except Exception as e:
+            return error_response(
+                f"=Order with tx_id {tx_id} could not be validated due to error: {e}",
+                400,
+                logger,
+            )
+
         validate_transfer_not_used_for_other_service(
             did, service_id, tx_id, consumer_address, token_address
         )

@@ -1,14 +1,19 @@
-from eth_utils import remove_0x_prefix
-from hexbytes import HexBytes
-from web3.logs import DISCARD
-from websockets import ConnectionClosed
-from ocean_provider.utils.currency import to_wei
+import logging
+from datetime import datetime
 
 from jsonsempai import magic  # noqa: F401
 from artifacts import DataTokenTemplate
+from eth_utils import remove_0x_prefix
+from hexbytes import HexBytes
+from ocean_provider.utils.basics import get_web3
+from ocean_provider.utils.currency import to_wei
+from web3.logs import DISCARD
+from websockets import ConnectionClosed
 
 OPF_FEE_PER_TOKEN = to_wei("0.001")  # 0.1%
 MAX_MARKET_FEE_PER_TOKEN = to_wei("0.001")
+
+logger = logging.getLogger(__name__)
 
 
 def get_dt_contract(web3, address):
@@ -19,6 +24,15 @@ def get_dt_contract(web3, address):
 
 def get_tx_receipt(web3, tx_hash):
     return web3.eth.wait_for_transaction_receipt(HexBytes(tx_hash), timeout=120)
+
+
+def get_datatoken_minter(datatoken_address):
+    """
+    :return: Eth account address of the Datatoken minter
+    """
+    dt = get_dt_contract(get_web3(), datatoken_address)
+    publisher = dt.caller.minter()
+    return publisher
 
 
 def mint(web3, contract, receiver_address, amount, minter_wallet):
@@ -34,7 +48,14 @@ def mint(web3, contract, receiver_address, amount, minter_wallet):
 
 
 def verify_order_tx(
-    web3, contract, tx_id: str, did: str, service_id, amount, sender: str
+    web3,
+    contract,
+    tx_id: str,
+    did: str,
+    service_id: int,
+    amount,
+    sender: str,
+    service_timeout: int,
 ):
     try:
         tx_receipt = get_tx_receipt(web3, tx_id)
@@ -73,6 +94,21 @@ def verify_order_tx(
             f"not match the requested asset. \n"
             f"requested: (did={did}, serviceId={service_id}\n"
             f"event: (serviceId={order_log.args.serviceId}"
+        )
+
+    # Check if order expired. timeout == 0 means order is valid forever
+    timestamp_now = datetime.utcnow().timestamp()
+    timestamp_delta = timestamp_now - order_log.args.timestamp
+    logger.debug(
+        f"verify_order_tx: service timeout = {service_timeout}, timestamp delta = {timestamp_delta}"
+    )
+    if service_timeout != 0 and timestamp_delta > service_timeout:
+        raise ValueError(
+            f"The order has expired. \n"
+            f"current timestamp={timestamp_now}\n"
+            f"order timestamp={order_log.args.timestamp}\n"
+            f"timestamp delta={timestamp_delta}\n"
+            f"service timeout={service_timeout}"
         )
 
     target_amount = amount - contract.caller.calculateFee(amount, OPF_FEE_PER_TOKEN)
