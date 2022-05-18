@@ -260,7 +260,13 @@ def test_initialize_compute_order_reused(client, publisher_wallet, consumer_wall
     assert "providerFee" in response.json["algorithm"]
 
     # Sleep long enough for orders to expire
-    time.sleep(60)
+    time.sleep(30)
+
+    response = client.post(
+        BaseURLs.SERVICES_URL + "/initializeCompute",
+        data=json.dumps(payload),
+        content_type="application/json",
+    )
 
     # Case 3: expired orders, expired provider fees
     assert response.status_code == 200
