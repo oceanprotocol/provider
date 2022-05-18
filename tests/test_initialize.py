@@ -242,15 +242,20 @@ def test_initialize_compute_order_reused(client, publisher_wallet, consumer_wall
     assert "providerFee" not in response.json["datasets"][0]
     assert "providerFee" not in response.json["algorithm"]
 
-    # Sleep long enough for provider fees to expire
-    time.sleep(30)
-
+    # Update payload "validUntil" to 1 hour from now
     payload["compute"]["validUntil"] = get_future_valid_until()
-    response = client.post(
-        BaseURLs.SERVICES_URL + "/initializeCompute",
-        data=json.dumps(payload),
-        content_type="application/json",
-    )
+
+    # Sleep long enough for provider fees to expire
+    timeout = time.time() + (30 * 4)
+    while True:
+        response = client.post(
+            BaseURLs.SERVICES_URL + "/initializeCompute",
+            data=json.dumps(payload),
+            content_type="application/json",
+        )
+        if "providerFee" in response.json["algorithm"] or time.time() > timeout:
+            break
+        time.sleep(1)
 
     # Case 2: valid orders, expired provider fees
     assert response.status_code == 200
@@ -260,13 +265,15 @@ def test_initialize_compute_order_reused(client, publisher_wallet, consumer_wall
     assert "providerFee" in response.json["algorithm"]
 
     # Sleep long enough for orders to expire
-    time.sleep(30)
-
-    response = client.post(
-        BaseURLs.SERVICES_URL + "/initializeCompute",
-        data=json.dumps(payload),
-        content_type="application/json",
-    )
+    while True:
+        response = client.post(
+            BaseURLs.SERVICES_URL + "/initializeCompute",
+            data=json.dumps(payload),
+            content_type="application/json",
+        )
+        if "validOrder" not in response.json["algorithm"] or time.time() > timeout:
+            break
+        time.sleep(1)
 
     # Case 3: expired orders, expired provider fees
     assert response.status_code == 200
