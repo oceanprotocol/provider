@@ -8,8 +8,8 @@ from ocean_provider.utils.services import ServiceType
 from ocean_provider.utils.util import msg_hash
 from tests.helpers.ddo_dict_builders import build_metadata_dict_type_algorithm
 from tests.test_helpers import (
-    get_registered_asset,
     get_first_service_by_type,
+    get_registered_asset,
     get_web3,
     mint_100_datatokens,
     start_order,
@@ -25,6 +25,7 @@ def build_and_send_ddo_with_compute_service(
     c2d_address=None,
     do_send=True,
     short_valid_until=True,
+    timeout=3600,
 ):
     web3 = get_web3()
     algo_metadata = build_metadata_dict_type_algorithm()
@@ -35,9 +36,12 @@ def build_and_send_ddo_with_compute_service(
             publisher_wallet,
             custom_metadata=algo_metadata,
             custom_service_endpoint="http://172.15.0.7:8030",
+            timeout=timeout,
         )
     else:
-        alg_ddo = get_registered_asset(publisher_wallet, custom_metadata=algo_metadata)
+        alg_ddo = get_registered_asset(
+            publisher_wallet, custom_metadata=algo_metadata, timeout=timeout
+        )
 
     # publish an algorithm asset (asset with metadata of type `algorithm`)
     service = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
@@ -48,7 +52,10 @@ def build_and_send_ddo_with_compute_service(
     # publish a dataset asset
     if asset_type == "allow_all_published":
         dataset_ddo_w_compute_service = get_registered_asset(
-            publisher_wallet, custom_services="vanilla_compute", custom_services_args=[]
+            publisher_wallet,
+            custom_services="vanilla_compute",
+            custom_services_args=[],
+            timeout=timeout,
         )
     else:
         dataset_ddo_w_compute_service = get_registered_asset(
@@ -66,6 +73,7 @@ def build_and_send_ddo_with_compute_service(
                     ),
                 }
             ],
+            timeout=timeout,
         )
 
     service = get_first_service_by_type(

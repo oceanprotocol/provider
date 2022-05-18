@@ -264,9 +264,9 @@ def download():
         _tx, _order_log, _ = validate_order(
             get_web3(), consumer_address, tx_id, asset, service
         )
-    except Exception:
+    except Exception as e:
         return error_response(
-            f"=Order with tx_id {tx_id} is not found on chain.",
+            f"=Order with tx_id {tx_id} could not be validated due to error: {e}",
             400,
             logger,
         )

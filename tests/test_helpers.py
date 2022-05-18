@@ -237,7 +237,11 @@ def get_registered_asset(
         ]
         if not custom_services
         else build_custom_services(
-            custom_services, from_wallet, datatoken_address, custom_services_args
+            custom_services,
+            from_wallet,
+            datatoken_address,
+            custom_services_args,
+            timeout,
         )
     )
 
@@ -443,7 +447,7 @@ def start_order(
 
 
 def build_custom_services(
-    services_type, from_wallet, datatoken_address, custom_services_args
+    services_type, from_wallet, datatoken_address, custom_services_args, timeout
 ):
     if services_type == "vanilla_compute":
         return [
@@ -452,11 +456,14 @@ def build_custom_services(
                 10,
                 datatoken_address,
                 trusted_algos=custom_services_args,
+                timeout=timeout,
             )
         ]
     if services_type == "norawalgo":
         return [
-            get_compute_service_no_rawalgo(from_wallet.address, 10, datatoken_address)
+            get_compute_service_no_rawalgo(
+                from_wallet.address, 10, datatoken_address, timeout
+            )
         ]
 
     return []

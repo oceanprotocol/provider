@@ -135,7 +135,12 @@ def build_credentials_dict() -> dict:
 
 
 def get_compute_service(
-    address, price, datatoken_address, trusted_algos=None, trusted_publishers=None
+    address,
+    price,
+    datatoken_address,
+    trusted_algos=None,
+    trusted_publishers=None,
+    timeout=3600,
 ):
     trusted_algos = [] if not trusted_algos else trusted_algos
     trusted_publishers = [] if not trusted_publishers else trusted_publishers
@@ -166,14 +171,14 @@ def get_compute_service(
         "name": "compute_1",
         "description": "compute_1",
         "datatokenAddress": datatoken_address,
-        "timeout": 3600,
+        "timeout": timeout,
         "serviceEndpoint": "http://172.15.0.4:8030/",
         "files": encrypted_files,
         "compute": compute_service_attributes,
     }
 
 
-def get_compute_service_no_rawalgo(address, price, datatoken_address):
+def get_compute_service_no_rawalgo(address, price, datatoken_address, timeout=3600):
     compute_service_attributes = {
         "namespace": "test",
         "allowRawAlgorithm": False,
@@ -201,7 +206,7 @@ def get_compute_service_no_rawalgo(address, price, datatoken_address):
         "name": "compute_1",
         "description": "compute_1",
         "datatokenAddress": datatoken_address,
-        "timeout": 3600,
+        "timeout": timeout,
         "serviceEndpoint": "http://172.15.0.4:8030/",
         "files": encrypted_files,
         "compute": compute_service_attributes,
