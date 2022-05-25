@@ -128,6 +128,16 @@ class WorkflowValidator:
             self.error = "Provider fees must be paid on the asset, OR on the algorithm ordered, OR on any additional input."
             return False
 
+        paid_provider_fees_index = provider_fee_amounts.index(required_provider_fee)
+
+        self.agreement_id = None
+        for index, input_item in enumerate(all_data):
+            if index == paid_provider_fees_index:
+                self.agreement_id = input_item["transferTxId"]
+
+        if not self.agreement_id:
+            self.agreement_id = algo_data["transferTxId"]
+
         return True
 
     def validate_output(self):
