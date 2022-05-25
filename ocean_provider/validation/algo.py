@@ -353,24 +353,18 @@ class InputItemValidator:
             if not self.validate_algo():
                 return False
 
-        if asset_urls:
-            asset_urls = [append_userdata(a_url, self.data) for a_url in asset_urls]
-            self.validated_inputs = dict(
-                {"index": self.index, "id": self.did, "url": asset_urls}
-            )
-        else:
-            self.validated_inputs = {
-                "index": self.index,
-                "id": self.did,
-                "remote": {
-                    "txid": self.data.get("transferTxId"),
-                    "serviceId": self.service.id,
-                },
-            }
+        self.validated_inputs = {
+            "index": self.index,
+            "id": self.did,
+            "remote": {
+                "txid": self.data.get("transferTxId"),
+                "serviceId": self.service.id,
+            },
+        }
 
-            userdata = self.data.get("userdata")
-            if userdata:
-                self.validated_inputs["remote"]["userdata"] = userdata
+        userdata = self.data.get("userdata")
+        if userdata:
+            self.validated_inputs["remote"]["userdata"] = userdata
 
         return self.validate_usage() if self.check_usage else True
 
