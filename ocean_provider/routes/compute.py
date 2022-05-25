@@ -447,7 +447,7 @@ def computeStart():
     payload = {
         "workflow": workflow,
         "providerSignature": provider_signature,
-        "agreementId": data["dataset"]["transferTxId"],
+        "agreementId": validator.agreement_id,
         "owner": consumer_address,
         "providerAddress": provider_wallet.address,
         "environment": compute_env,
