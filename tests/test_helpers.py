@@ -388,18 +388,23 @@ def initialize_service(
     from_wallet: LocalAccount,
     raw_response=False,
     file_index=0,
+    reuse_order=None,
 ):
     service_id = service.id
+    payload = {
+        "documentId": did,
+        "serviceId": service_id,
+        "consumerAddress": from_wallet.address,
+        "fileIndex": file_index,
+        "userdata": '{"dummy_userdata":"XXX", "age":12}',
+    }
+
+    if reuse_order:
+        payload["transferTxId"] = reuse_order
 
     response = client.get(
         BaseURLs.SERVICES_URL + "/initialize",
-        json={
-            "documentId": did,
-            "serviceId": service_id,
-            "consumerAddress": from_wallet.address,
-            "fileIndex": file_index,
-            "userdata": '{"dummy_userdata":"XXX", "age":12}',
-        },
+        json=payload,
     )
 
     if raw_response:

@@ -2,6 +2,7 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
+from datetime import datetime
 import json
 import logging
 
@@ -143,7 +144,8 @@ def initialize():
             "datatoken": <data-token-contract-address>,
             "nonce": <nonce-used-in-consumer-signature>,
             "providerFee": <object containing provider fees>,
-            "computeAddress": <compute address>
+            "computeAddress": <compute address>,
+            "transferTxId": <optional tx_id just to check an existing order>
         }
         ```
     """
@@ -168,6 +170,21 @@ def initialize():
             logger,
         )
 
+    valid_order = None
+    if "transferTxId" in data:
+        try:
+            _tx, _order_log, _ = validate_order(
+                get_web3(),
+                consumer_address,
+                data["transferTxId"],
+                asset,
+                service,
+                allow_expired_provider_fees=True,
+            )
+            return {"validOrder": _order_log.transactionHash.hex()}, 200
+        except Exception:
+            pass
+
     token_address = service.datatoken_address
 
     file_index = int(data.get("fileIndex", "-1"))
@@ -186,6 +203,10 @@ def initialize():
         "nonce": get_nonce(consumer_address),
         "providerFee": get_provider_fees(did, service, consumer_address, 0),
     }
+
+    if valid_order:
+        approve_params["validOrder"] = valid_order
+
     response = jsonify(approve_params), 200
     logger.info(f"initialize response = {response}")
 

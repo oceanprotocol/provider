@@ -308,6 +308,7 @@ class InitializeRequest(CustomJsonRequest):
             "serviceId": ["required"],
             "consumerAddress": ["required"],
             "fileIndex": ["sometimes", "integer", "min:0"],
+            "transferTxId": ["sometimes"],
         }
 
 
