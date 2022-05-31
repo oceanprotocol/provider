@@ -357,7 +357,7 @@ class InputItemValidator:
             "index": self.index,
             "id": self.did,
             "remote": {
-                "txid": self.data.get("transferTxId"),
+                "txId": self.data.get("transferTxId"),
                 "serviceId": self.service.id,
             },
         }
