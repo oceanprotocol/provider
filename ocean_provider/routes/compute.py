@@ -438,7 +438,6 @@ def computeStart():
     logger.debug("Sending: %s", workflow)
 
     compute_env = data.get("environment")
-    
 
     nonce, provider_signature = sign_for_compute(provider_wallet, consumer_address)
     web3 = get_web3()
