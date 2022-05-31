@@ -112,7 +112,7 @@ class WorkflowValidator:
             valid_until_list.append(self.algo_valid_until)
             provider_fee_amounts.append(self.algo_fee_amount)
 
-        self.valid_until = min(valid_until_list)
+        self.valid_until = max(valid_until_list)
 
         provider_fee_token = os.environ.get(
             "PROVIDER_FEE_TOKEN", "0x0000000000000000000000000000000000000000"
