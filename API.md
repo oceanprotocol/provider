@@ -2,19 +2,18 @@
 Copyright 2021 Ocean Protocol Foundation
 SPDX-License-Identifier: Apache-2.0
 -->
+
 # Ocean Provider Endpoints Specification
 
 This document specifies the endpoints for Ocean Provider to be implemented by the core
-developers. The final implementation and its documentation happens in Swagger
-inline code comments and the latest implemented API documentation can be
-accessed via:
-
-- [Docs: Provider API Reference](https://docs.oceanprotocol.com/references/ocean_provider/)
-
+developers.
 
 ## nonce endpoint
+
 ### GET /api/services/nonce
+
 Parameters
+
 ```
     userAddress: String object containing a user's ethereum address
 ```
@@ -23,6 +22,7 @@ Returns:
 Json object containing the nonce value.
 
 Example:
+
 ```
 POST /api/services/nonce?userAddress=0x990922334
 
@@ -39,13 +39,14 @@ Response:
 ## Encrypt endpoint
 
 ### GET /api/services/encrypt
+
 Body: binary application/octet-stream
 
 Returns:
 Bytes string containing the encrypted document.
 
-
 Example:
+
 ```
 POST /api/services/encrypt
 body: b'\xfd7zXZ\x00\x00\x04\xe6\xd6\xb4F\ ... \x00\x04YZ'
@@ -62,7 +63,9 @@ b'0x04b2bfab1f4e...7ed0573'
 ## Decrypt endpoint
 
 ### POST /api/services/decrypt
+
 Parameters
+
 ```
     decrypterAddress: String object containing the address of the decrypter (required)
     chainId: the chain id of the network the document is on (required)
@@ -78,8 +81,8 @@ Parameters
 Returns:
 Bytes string containing the decrypted document.
 
-
 Example:
+
 ```
 POST /api/services/decrypt
 payload: {
@@ -102,11 +105,12 @@ b'{"@context": ["https://w3id.org/did/v1"], "id": "did:op:0c184915b07b44c888d468
 
 ```
 
-
-
 ## Initial service request endpoint
+
 ### GET /api/services/initialize
+
 Parameters
+
 ```
     documentId: String object containing document id (e.g. a DID)
     serviceId: String, ID of the service the datatoken is attached to
@@ -119,8 +123,8 @@ Parameters
 Returns:
 Json document with a quote for amount of tokens to transfer to the provider account.
 
-
 Example:
+
 ```
 GET /api/services/initialize
 payload:
@@ -159,10 +163,12 @@ Response:
 }
 ```
 
-
 ## Download endpoint
+
 ### GET /api/services/download
+
 Parameters
+
 ```
     documentId: String object containing document id (e.g. a DID)
     serviceId: String, representing the list of `file` objects that describe each file in the dataset
@@ -177,8 +183,8 @@ Parameters
 Returns:
 File stream
 
-
 Example:
+
 ```
 POST /api/services/download
 payload:
@@ -201,11 +207,13 @@ Response:
 ```
 
 ## File info endpoint
+
 ### POST /api/services/fileinfo
 
 Retrieves Content-Type and Content-Length from the given URL or asset.
 
 Parameters
+
 ```
     type: String, either "url" or "asset"
     did: String, DID of the dataset
@@ -218,6 +226,7 @@ Returns:
 Json document file info object
 
 Example:
+
 ```
 POST /api/services/fileinfo
 payload:
@@ -242,10 +251,12 @@ Response:
 ```
 
 ## Compute endpoints
+
 All compute endpoints respond with an Array of status objects, each object
 describing a compute job info.
 
 Each status object will contain:
+
 ```
     owner:The owner of this compute job
     documentId: String object containing document id (e.g. a DID)
@@ -261,18 +272,18 @@ Each status object will contain:
 
 Status description (`statusText`): (see Operator-Service for full status list)
 
-| status    | Description                   |
-|-----------|-------------------------------|
-|  1        | Warming up                    |
-|  10       | Job started                   |
-|  20       | Configuring volumes           |
-|  30       | Provisioning success          |
-|  31       | Data provisioning failed      |
-|  32       | Algorithm provisioning failed |
-|  40       | Running algorith              |
-|  50       | Filtering results             |
-|  60       | Publishing results            |
-|  70       | Job completed                 |
+| status | Description                   |
+| ------ | ----------------------------- |
+| 1      | Warming up                    |
+| 10     | Job started                   |
+| 20     | Configuring volumes           |
+| 30     | Provisioning success          |
+| 31     | Data provisioning failed      |
+| 32     | Algorithm provisioning failed |
+| 40     | Running algorith              |
+| 50     | Filtering results             |
+| 60     | Publishing results            |
+| 70     | Job completed                 |
 
 ## Create new job or restart an existing stopped job
 
@@ -281,11 +292,12 @@ Status description (`statusText`): (see Operator-Service for full status list)
 Start a new job
 
 Parameters
+
 ```
     signature: String object containg user signature (signed message) (required)
     consumerAddress: String object containing consumer's ethereum address (required)
     nonce: Integer, Nonce (required)
-    environment: String representing a compute environment offered by the provider 
+    environment: String representing a compute environment offered by the provider
     dataset: Json object containing dataset information
         dataset.documentId: String, object containing document id (e.g. a DID) (required)
         dataset.serviceId: String, ID of the service the datatoken is attached to (required)
@@ -307,8 +319,8 @@ Parameters
 Returns:
 Array of `status` objects as described above, in this case the array will have only one object
 
-
 Example:
+
 ```
 POST /api/compute
 payload:
@@ -338,16 +350,14 @@ Response:
 ]
 ```
 
-
 ## Status and Result
 
-
 ### GET /api/services/compute
-
 
 Get all jobs and corresponding stats
 
 Parameters
+
 ```
     signature: String object containg user signature (signed message)
     documentId: String object containing document did  (optional)
@@ -361,8 +371,8 @@ Returns
 
 Array of `status` objects as described above
 
-
 Example:
+
 ```
 GET /api/services/compute?signature=0x00110011&documentId=did:op:1111&jobId=012023
 ```
@@ -371,47 +381,47 @@ Response:
 
 ```json
 [
-      {
-        "owner":"0x1111",
-        "documentId":"did:op:2222",
-        "jobId":"3333",
-        "dateCreated":"2020-10-01T01:00:00Z",
-        "dateFinished":"2020-10-01T01:00:00Z",
-        "status":5,
-        "statusText":"Job finished",
-        "algorithmLogUrl":"http://example.net/logs/algo.log",
-        "resultsUrls":[
-            "http://example.net/logs/output/0",
-            "http://example.net/logs/output/1"
-         ],
-         "resultsDid":"did:op:87bdaabb33354d2eb014af5091c604fb4b0f67dc6cca4d18a96547bffdc27bcf"
-       },
-       {
-        "owner":"0x1111",
-        "documentId":"did:op:2222",
-        "jobId":"3334",
-        "dateCreated":"2020-10-01T01:00:00Z",
-        "dateFinished":"2020-10-01T01:00:00Z",
-        "status":5,
-        "statusText":"Job finished",
-        "algorithmLogUrl":"http://example.net/logs2/algo.log",
-        "resultsUrls":[
-            "http://example.net/logs2/output/0",
-            "http://example.net/logs2/output/1"
-         ],
-         "resultsDid":""
-       }
- ]
- ```
+  {
+    "owner": "0x1111",
+    "documentId": "did:op:2222",
+    "jobId": "3333",
+    "dateCreated": "2020-10-01T01:00:00Z",
+    "dateFinished": "2020-10-01T01:00:00Z",
+    "status": 5,
+    "statusText": "Job finished",
+    "algorithmLogUrl": "http://example.net/logs/algo.log",
+    "resultsUrls": [
+      "http://example.net/logs/output/0",
+      "http://example.net/logs/output/1"
+    ],
+    "resultsDid": "did:op:87bdaabb33354d2eb014af5091c604fb4b0f67dc6cca4d18a96547bffdc27bcf"
+  },
+  {
+    "owner": "0x1111",
+    "documentId": "did:op:2222",
+    "jobId": "3334",
+    "dateCreated": "2020-10-01T01:00:00Z",
+    "dateFinished": "2020-10-01T01:00:00Z",
+    "status": 5,
+    "statusText": "Job finished",
+    "algorithmLogUrl": "http://example.net/logs2/algo.log",
+    "resultsUrls": [
+      "http://example.net/logs2/output/0",
+      "http://example.net/logs2/output/1"
+    ],
+    "resultsDid": ""
+  }
+]
+```
 
 ## Stop
-
 
 ### PUT /api/services/compute
 
 Stop a running compute job.
 
 Parameters
+
 ```
     signature: String object containg user signature (signed message)
     documentId: String object containing document did (optional)
@@ -426,6 +436,7 @@ Returns
 Array of `status` objects as described above
 
 Example:
+
 ```
 PUT /api/services/compute?signature=0x00110011&documentId=did:op:1111&jobId=012023
 ```
@@ -450,6 +461,7 @@ Response:
 Delete a compute job and all resources associated with the job. If job is running it will be stopped first.
 
 Parameters
+
 ```
     signature: String object containg user signature (signed message)
     documentId: String object containing document did (optional)
@@ -465,11 +477,13 @@ Returns
 Array of `status` objects as described above
 
 Example:
+
 ```
 DELETE /api/services/compute?signature=0x00110011&documentId=did:op:1111&jobId=012023
 ```
 
 Response:
+
 ```json
 [
     {
@@ -486,6 +500,7 @@ Response:
 Allows download of asset data file.
 
 Parameters
+
 ```
     jobId: String object containing workflowId (optional)
     index: Integer, index of the result to download (optional)
@@ -497,8 +512,8 @@ Parameters
 Returns:
 Bytes string containing the compute result.
 
-
 Example:
+
 ```
 GET /api/services/computeResult?index=0&consumerAddress=0xA78deb2Fa79463945C247991075E2a0e98Ba7A09&jobId=4d32947065bb46c8b87c1f7adfb7ed8b&nonce=1644317370
 ```
@@ -514,14 +529,16 @@ b'{"result": "0x0000000000000000000000000000000000000000000000000000000000000001
 Allows download of asset data file.
 
 Parameters
+
 ```
+
 ```
 
 Returns:
 List of compute environments.
 
-
 Example:
+
 ```
 GET /api/services/computeEnvironments
 ```
