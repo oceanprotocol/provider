@@ -26,6 +26,7 @@ def build_and_send_ddo_with_compute_service(
     do_send=True,
     short_valid_until=True,
     timeout=3600,
+    c2d_environment='ocean-compute'
 ):
     web3 = get_web3()
     algo_metadata = build_metadata_dict_type_algorithm()
@@ -82,8 +83,6 @@ def build_and_send_ddo_with_compute_service(
     datatoken = service.datatoken_address
     mint_100_datatokens(web3, datatoken, consumer_wallet.address, publisher_wallet)
 
-    environments = get_c2d_environments()
-
     if not do_send:
         return (dataset_ddo_w_compute_service, alg_ddo)
 
@@ -97,7 +96,7 @@ def build_and_send_ddo_with_compute_service(
             service,
             consumer_wallet.address,
             get_future_valid_until(short=short_valid_until),
-            environments[0]["id"],
+            c2d_environment,
         ),
         consumer_wallet,
     )
@@ -114,7 +113,7 @@ def build_and_send_ddo_with_compute_service(
             alg_service,
             consumer_wallet.address,
             get_future_valid_until(short=short_valid_until),
-            environments[0]["id"],
+            c2d_environment,
             force_zero=True,
         ),
         consumer_wallet,
