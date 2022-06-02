@@ -30,15 +30,12 @@ def get_contract_address(
         if chain_addresses["chainId"] == chain_id
     )
 
+
 def get_provider_fee_token(chain_id):
-    fee_token = os.environ.get(
-            "PROVIDER_FEE_TOKEN", get_ocean_address(chain_id)
-        )
+    fee_token = os.environ.get("PROVIDER_FEE_TOKEN", get_ocean_address(chain_id))
     if not fee_token:
         return "0x0000000000000000000000000000000000000000"
 
-def get_ocean_address(chain_id):
-    return get_contract_address(
-            get_config().address_file, "Ocean", chain_id
-    )
 
+def get_ocean_address(chain_id):
+    return get_contract_address(get_config().address_file, "Ocean", chain_id)

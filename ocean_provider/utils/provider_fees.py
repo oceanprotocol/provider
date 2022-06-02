@@ -41,7 +41,7 @@ def get_provider_fees(
     provider_wallet = get_provider_wallet()
     provider_fee_address = provider_wallet.address
     provider_fee_token = get_provider_fee_token(web3.chain_id)
-    
+
     if compute_env and not force_zero:
         provider_fee_amount = get_provider_fee_amount(
             valid_until, compute_env, web3, provider_fee_token
