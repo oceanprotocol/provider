@@ -28,6 +28,14 @@ from tests.helpers.ddo_dict_builders import build_metadata_dict_type_algorithm
 from tests.test_helpers import get_first_service_by_type
 
 
+def get_free_c2d_env():
+    environments = get_c2d_environments()
+    for env in environments:
+        if env["priceMin"] == 0:
+            return env
+    return None
+
+
 @pytest.mark.unit
 def test_compute_rejected(client, monkeypatch):
     monkeypatch.delenv("OPERATOR_SERVICE_URL")
@@ -37,14 +45,6 @@ def test_compute_rejected(client, monkeypatch):
 
 @pytest.mark.integration
 @pytest.mark.parametrize("allow_raw_algos", [True, False])
-def get_free_c2d_env():
-    environments = get_c2d_environments()
-    for env in environments:
-        if env["priceMin"] == 0:
-            return env
-    return None
-
-
 def test_compute_raw_algo(
     client, publisher_wallet, consumer_wallet, consumer_address, web3, allow_raw_algos
 ):
@@ -525,5 +525,6 @@ def test_compute_delete_job(
 def test_compute_environments(client):
     compute_envs_endpoint = BaseURLs.SERVICES_URL + "/computeEnvironments"
     response = client.get(compute_envs_endpoint)
-
-    assert response.json[0]["id"] == "ocean-compute"
+    for env in response.json:
+        if env["priceMin"] == 0:
+            assert env["id"] == "ocean-compute"
