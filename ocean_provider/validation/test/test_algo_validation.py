@@ -45,6 +45,7 @@ def test_passes_algo_ddo(provider_wallet, consumer_address, web3):
             "serviceId": sa_compute.id,
             "transferTxId": "alg_tx_id",
         },
+        "environment": "ocean-compute",
     }
 
     def side_effect(*args, **kwargs):
@@ -88,6 +89,7 @@ def test_passes_raw(provider_wallet, consumer_address, web3):
                 "container": {"entrypoint": "node $ALGO", "image": "node", "tag": "10"},
             },
         },
+        "environment": "ocean-compute",
     }
 
     with patch(
@@ -246,6 +248,7 @@ def test_additional_datasets(provider_wallet, consumer_address, web3):
             "transferTxId": "alg_tx_id",
         },
         "additionalDatasets": "",
+        "environment": "ocean-compute",
     }
 
     def side_effect(*args, **kwargs):
@@ -817,6 +820,7 @@ def test_success_multiple_services_types(provider_wallet, consumer_address, web3
         "additionalDatasets": [
             {"documentId": ddo.did, "transferTxId": "ddo.did", "serviceId": "access_1"}
         ],
+        "environment": "ocean-compute",
     }
 
     def side_effect(*args, **kwargs):
