@@ -145,8 +145,10 @@ def verify_order_tx(
     event_logs = datatoken_contract.events.OrderReused().processReceipt(
         tx_receipt, errors=DISCARD
     )
+    log_timestamp = None
     order_log = event_logs[0] if event_logs else None
     if order_log and order_log.args.orderTxId:
+        log_timestamp = order_log.args.timestamp
         try:
             tx_receipt = _get_tx_receipt(web3, order_log.args.orderTxId)
         except ConnectionClosed:
@@ -188,7 +190,9 @@ def verify_order_tx(
 
     # Check if order expired. timeout == 0 means order is valid forever
     timestamp_now = datetime.utcnow().timestamp()
-    timestamp_delta = timestamp_now - order_log.args.timestamp
+    # use orderReused timestamp if it exists
+    log_timestamp = log_timestamp if log_timestamp is not None else order_log.args.timestamp
+    timestamp_delta = timestamp_now - log_timestamp
     logger.debug(
         f"verify_order_tx: service timeout = {service.timeout}, timestamp delta = {timestamp_delta}"
     )
@@ -197,7 +201,7 @@ def verify_order_tx(
             raise ValueError(
                 f"The order has expired. \n"
                 f"current timestamp={timestamp_now}\n"
-                f"order timestamp={order_log.args.timestamp}\n"
+                f"order timestamp={log_timestamp}\n"
                 f"timestamp delta={timestamp_delta}\n"
                 f"service timeout={service.timeout}"
             )
