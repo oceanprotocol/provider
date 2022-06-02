@@ -191,7 +191,9 @@ def verify_order_tx(
     # Check if order expired. timeout == 0 means order is valid forever
     timestamp_now = datetime.utcnow().timestamp()
     # use orderReused timestamp if it exists
-    log_timestamp = log_timestamp if log_timestamp is not None else order_log.args.timestamp
+    log_timestamp = (
+        log_timestamp if log_timestamp is not None else order_log.args.timestamp
+    )
     timestamp_delta = timestamp_now - log_timestamp
     logger.debug(
         f"verify_order_tx: service timeout = {service.timeout}, timestamp delta = {timestamp_delta}"
