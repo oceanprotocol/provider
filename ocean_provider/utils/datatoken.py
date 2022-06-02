@@ -156,11 +156,11 @@ def verify_order_tx(
             raise AssertionError("Failed to get tx receipt referenced in OrderReused..")
         if tx_receipt.status == 0:
             raise AssertionError("order referenced in OrderReused failed.")
-    else:
-        event_logs = datatoken_contract.events.OrderStarted().processReceipt(
-            tx_receipt, errors=DISCARD
-        )
-        order_log = event_logs[0] if event_logs else None
+
+    event_logs = datatoken_contract.events.OrderStarted().processReceipt(
+        tx_receipt, errors=DISCARD
+    )
+    order_log = event_logs[0] if event_logs else None
 
     if not order_log:
         raise AssertionError(

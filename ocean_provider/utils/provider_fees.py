@@ -134,9 +134,9 @@ def get_provider_fees_or_remote(
             log_valid_until = _provider_fees_log.args.validUntil
             if datetime.utcnow().timestamp() <= log_valid_until:
                 # already paid provider fees and both order and provider fees are still valid
-                return {"validOrder": _order_log.transactionHash.hex()}
+                return {"validOrder": dataset["transferTxId"]}
             else:
-                valid_order = _order_log.transactionHash.hex()
+                valid_order = dataset["transferTxId"]
         except Exception:
             # order does not exist or is expired, so we need new provider fees
             pass
