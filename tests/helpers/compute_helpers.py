@@ -26,7 +26,7 @@ def build_and_send_ddo_with_compute_service(
     do_send=True,
     short_valid_until=True,
     timeout=3600,
-    c2d_environment='ocean-compute'
+    c2d_environment="ocean-compute",
 ):
     web3 = get_web3()
     algo_metadata = build_metadata_dict_type_algorithm()
