@@ -26,9 +26,6 @@ def get_contract_address(
 ) -> HexAddress:
     """Return the contract address with the given name and chain id"""
     address_json = get_address_json(address_path)
-    print(address_json)
-    print(contract_name)
-    print(chain_id)
     return next(
         chain_addresses[contract_name]
         for chain_addresses in address_json.values()
