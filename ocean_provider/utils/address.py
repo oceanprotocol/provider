@@ -9,6 +9,7 @@ from typing import Any, Dict, Union
 from eth_typing.evm import HexAddress
 from ocean_provider.utils.basics import get_config
 
+BLACK_HOLE_ADDRESS = "0x0000000000000000000000000000000000000000"
 
 def get_address_json(address_path: Union[str, Path]) -> Dict[str, Any]:
     """Return the json object of all Ocean contract addresses on all chains."""
@@ -34,7 +35,7 @@ def get_contract_address(
 def get_provider_fee_token(chain_id):
     fee_token = os.environ.get("PROVIDER_FEE_TOKEN", get_ocean_address(chain_id))
     if not fee_token:
-        return "0x0000000000000000000000000000000000000000"
+        return BLACK_HOLE_ADDRESS
 
 
 def get_ocean_address(chain_id):
