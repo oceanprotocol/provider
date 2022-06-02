@@ -7,6 +7,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 from ocean_provider.utils.asset import Asset
+from ocean_provider.utils.basics import get_web3
 from ocean_provider.utils.services import Service, ServiceType
 from ocean_provider.validation.algo import WorkflowValidator
 from tests.ddo.ddo_sample1_compute import alg_ddo_dict, ddo_dict
@@ -31,6 +32,7 @@ provider_fees_event.args.providerFeeAmount = 0
 )
 def test_passes_algo_ddo(provider_wallet, consumer_address, web3):
     """Tests happy flow of validator with algo ddo."""
+    web3 = get_web3()
     ddo = Asset(ddo_dict)
     alg_ddo = Asset(alg_ddo_dict)
     sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
@@ -72,6 +74,7 @@ def test_passes_algo_ddo(provider_wallet, consumer_address, web3):
 )
 def test_passes_raw(provider_wallet, consumer_address, web3):
     """Tests happy flow of validator with raw algo."""
+    web3 = get_web3()
     ddo = Asset(ddo_dict)
     sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
     data = {
@@ -229,6 +232,7 @@ def test_fails_meta_issues(provider_wallet, consumer_address, web3):
     return_value=[{"url": "dummy"}],
 )
 def test_additional_datasets(provider_wallet, consumer_address, web3):
+    web3 = get_web3()
     ddo = Asset(ddo_dict)
     alg_ddo = Asset(alg_ddo_dict)
     sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
@@ -900,6 +904,7 @@ def test_fail_missing_algo_meta_documentId(provider_wallet, consumer_address, we
 )
 def test_fee_amount_not_paid(provider_wallet, consumer_address, web3):
     """Tests happy flow of validator with algo ddo."""
+    web3 = get_web3()
     ddo = Asset(ddo_dict)
     alg_ddo = Asset(alg_ddo_dict)
     sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
