@@ -25,15 +25,7 @@ from tests.helpers.compute_helpers import (
     start_order,
 )
 from tests.helpers.ddo_dict_builders import build_metadata_dict_type_algorithm
-from tests.test_helpers import get_first_service_by_type
-
-
-def get_free_c2d_env():
-    environments = get_c2d_environments()
-    for env in environments:
-        if env["priceMin"] == 0:
-            return env
-    return None
+from tests.test_helpers import get_free_c2d_env, get_first_service_by_type
 
 
 @pytest.mark.unit
