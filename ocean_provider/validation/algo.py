@@ -12,6 +12,7 @@ from ocean_provider.utils.asset import (
     get_asset_from_metadatastore,
     check_asset_consumable,
 )
+from ocean_provider.utils.address import get_provider_fee_token
 from ocean_provider.utils.basics import get_config, get_metadata_url
 from ocean_provider.utils.datatoken import (
     record_consume_request,
@@ -114,9 +115,8 @@ class WorkflowValidator:
 
         self.valid_until = max(valid_until_list)
 
-        provider_fee_token = os.environ.get(
-            "PROVIDER_FEE_TOKEN", "0x0000000000000000000000000000000000000000"
-        )
+        provider_fee_token = get_provider_fee_token(self.web3.chain_id)
+
         required_provider_fee = get_provider_fee_amount(
             self.valid_until,
             self.data.get("environment"),
