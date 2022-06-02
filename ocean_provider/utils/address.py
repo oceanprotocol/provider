@@ -11,6 +11,7 @@ from ocean_provider.utils.basics import get_config
 
 BLACK_HOLE_ADDRESS = "0x0000000000000000000000000000000000000000"
 
+
 def get_address_json(address_path: Union[str, Path]) -> Dict[str, Any]:
     """Return the json object of all Ocean contract addresses on all chains."""
     if isinstance(address_path, str):
@@ -25,6 +26,9 @@ def get_contract_address(
 ) -> HexAddress:
     """Return the contract address with the given name and chain id"""
     address_json = get_address_json(address_path)
+    print(address_json)
+    print(contract_name)
+    print(chain_id)
     return next(
         chain_addresses[contract_name]
         for chain_addresses in address_json.values()
@@ -35,7 +39,8 @@ def get_contract_address(
 def get_provider_fee_token(chain_id):
     fee_token = os.environ.get("PROVIDER_FEE_TOKEN", get_ocean_address(chain_id))
     if not fee_token:
-        return BLACK_HOLE_ADDRESS
+        fee_token = BLACK_HOLE_ADDRESS
+    return fee_token
 
 
 def get_ocean_address(chain_id):
