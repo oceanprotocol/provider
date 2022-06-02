@@ -173,7 +173,7 @@ def get_provider_fee_amount(valid_until, compute_env, web3, provider_fee_token):
     if provider_fee_token == "0x0000000000000000000000000000000000000000":
         return 0
 
-    provider_fee_amount = float(seconds * env["priceMin"] / 60)
+    provider_fee_amount = float(seconds * float(env["priceMin"]) / 60)
 
     dt = get_datatoken_contract(web3, provider_fee_token)
     decimals = dt.caller.decimals()

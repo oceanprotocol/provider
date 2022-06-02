@@ -157,6 +157,7 @@ def test_compute(client, publisher_wallet, consumer_wallet):
         False,
         None,
         environments[0]["consumerAddress"],
+        environments[0]["id"],
     )
     sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
     sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
