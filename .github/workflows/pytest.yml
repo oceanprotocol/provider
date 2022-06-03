@@ -24,22 +24,31 @@ jobs:
           repository: "oceanprotocol/barge"
           path: 'barge'
           ref: v4
+      - name: Login to Docker Hub
+        if: ${{ env.DOCKERHUB_PASSWORD && env.DOCKERHUB_USERNAME }}
+        run: |
+          echo "Login to Docker Hub";echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
       - name: Run Barge
         working-directory: ${{ github.workspace }}/barge
         env:
           CONTRACTS_VERSION: v1.0.0-alpha.32
         run: |
           bash -x start_ocean.sh --no-dashboard 2>&1 --with-rbac --with-provider2 --with-c2d > start_ocean.log &
-          for i in $(seq 1 150); do
-            sleep 5
-            [ -f "$HOME/.ocean/ocean-contracts/artifacts/ready" -a -f "$HOME/.ocean/ocean/c2d/ready" ] && break
-            done
-          ls -la "$HOME/.ocean/ocean-contracts/artifacts/"
       - name: Install dependencies
         working-directory: ${{ github.workspace }}
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements_dev.txt
+      - name: Wait for contracts deployment and C2D cluster to be ready
+        working-directory: ${{ github.workspace }}/barge
+        run: |
+          for i in $(seq 1 250); do
+            sleep 10
+            [ -f "$HOME/.ocean/ocean-contracts/artifacts/ready" -a -f "$HOME/.ocean/ocean-c2d/ready" ] && break
+            done
       - name: Test with pytest
         run: |
           coverage run --source ocean_provider -m pytest

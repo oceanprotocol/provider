@@ -25,8 +25,10 @@ from ocean_provider.utils.data_nft_factory import get_data_nft_factory_contract
 from ocean_provider.utils.datatoken import get_datatoken_contract
 from ocean_provider.utils.did import compute_did_from_data_nft_address_and_chain_id
 from ocean_provider.utils.encryption import do_encrypt
+from ocean_provider.utils.provider_fees import get_c2d_environments
 from ocean_provider.utils.services import Service, ServiceType
 from ocean_provider.utils.util import sign_send_and_wait_for_receipt, sign_tx
+
 from tests.helpers.ddo_dict_builders import (
     build_credentials_dict,
     build_ddo_dict,

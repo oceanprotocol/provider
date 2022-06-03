@@ -438,9 +438,6 @@ def computeStart():
     logger.debug("Sending: %s", workflow)
 
     compute_env = data.get("environment")
-    seconds = (
-        datetime.fromtimestamp(validator.valid_until) - datetime.utcnow()
-    ).seconds
 
     nonce, provider_signature = sign_for_compute(provider_wallet, consumer_address)
     web3 = get_web3()
@@ -451,7 +448,7 @@ def computeStart():
         "owner": consumer_address,
         "providerAddress": provider_wallet.address,
         "environment": compute_env,
-        "maxDuration": seconds,
+        "validUntil": validator.valid_until,
         "nonce": nonce,
         "chainId": web3.chain_id,
     }
