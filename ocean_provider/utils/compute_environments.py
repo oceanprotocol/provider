@@ -3,6 +3,7 @@ from typing import List
 from urllib.parse import urljoin
 
 from ocean_provider.requests_session import get_requests_session
+from ocean_provider.utils.address import get_provider_fee_token
 from ocean_provider.utils.basics import get_config, get_web3
 
 
@@ -27,9 +28,7 @@ def get_c2d_environments() -> List:
     # loop envs and add provider token from config
     envs = response.json()
     for env in envs:
-        env["feeToken"] = os.getenv(
-            "PROVIDER_FEE_TOKEN", "0x0000000000000000000000000000000000000000"
-        )
+        env["feeToken"] = get_provider_fee_token(web3.chain_id)
 
     return envs
 

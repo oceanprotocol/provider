@@ -9,6 +9,7 @@ from eth_keys import KeyAPI
 from eth_keys.backends import NativeECCBackend
 from ocean_provider.requests_session import get_requests_session
 from ocean_provider.utils.asset import get_asset_from_metadatastore
+from ocean_provider.utils.address import get_provider_fee_token
 from ocean_provider.utils.basics import (
     get_provider_wallet,
     get_metadata_url,
@@ -39,9 +40,7 @@ def get_provider_fees(
     web3 = get_web3()
     provider_wallet = get_provider_wallet()
     provider_fee_address = provider_wallet.address
-    provider_fee_token = os.environ.get(
-        "PROVIDER_FEE_TOKEN", "0x0000000000000000000000000000000000000000"
-    )
+    provider_fee_token = get_provider_fee_token(web3.chain_id)
 
     if compute_env and not force_zero:
         provider_fee_amount = get_provider_fee_amount(
@@ -174,7 +173,7 @@ def get_provider_fee_amount(valid_until, compute_env, web3, provider_fee_token):
     if provider_fee_token == "0x0000000000000000000000000000000000000000":
         return 0
 
-    provider_fee_amount = float(seconds * env["priceMin"] / 60)
+    provider_fee_amount = float(seconds * float(env["priceMin"]) / 60)
 
     dt = get_datatoken_contract(web3, provider_fee_token)
     decimals = dt.caller.decimals()

@@ -10,6 +10,7 @@ from eth_account import Account
 
 from ocean_provider.run import app
 from ocean_provider.utils.basics import get_config, get_web3, send_ether
+from ocean_provider.utils.provider_fees import get_c2d_environments
 
 app = app
 
@@ -92,3 +93,10 @@ def setup_all(provider_address, consumer_address, ganache_wallet):
 @pytest.fixture
 def web3():
     return get_web3()
+
+
+@pytest.fixture
+def free_c2d_env():
+    environments = get_c2d_environments()
+
+    return next(env for env in environments if float(env["priceMin"]) == float(0))
