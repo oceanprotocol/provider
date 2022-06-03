@@ -133,6 +133,8 @@ def verify_order_tx(
             f"Multiple order events in the same transaction !!! {provider_fee_order_log}"
         )
 
+    nullify_pf_log_after_checks = False
+
     if extra_data:
         provider_data = json.loads(provider_fee_order_log.args.providerData)
         if extra_data["environment"] != provider_data["environment"]:
@@ -140,12 +142,14 @@ def verify_order_tx(
                 "Mismatch between ordered c2d environment and selected one."
             )
 
-        time_limit = log_datetime + timedelta(seconds=provider_fee_order_log.args.validUntil)
-        if (
-            datetime.utcnow() >= time_limit
-            and not allow_expired_provider_fees
-        ):
-            raise AssertionError("Ordered c2d time was exceeded, check duration.")
+        time_limit = log_datetime + timedelta(
+            seconds=provider_fee_order_log.args.validUntil
+        )
+        if datetime.utcnow() >= time_limit:
+            if not allow_expired_provider_fees:
+                raise AssertionError("Ordered c2d time was exceeded, check duration.")
+            else:
+                nullify_pf_log_after_checks = True
 
     if Web3.toChecksumAddress(
         provider_fee_order_log.args.providerFeeAddress
@@ -204,6 +208,9 @@ def verify_order_tx(
         raise ValueError("sender of order transaction is not the consumer/payer.")
 
     tx = web3.eth.get_transaction(HexBytes(tx_id))
+
+    if nullify_pf_log_after_checks:
+        provider_fee_order_log = None
 
     return tx, order_log, provider_fee_order_log
 

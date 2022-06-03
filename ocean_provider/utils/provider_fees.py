@@ -130,9 +130,7 @@ def get_provider_fees_or_remote(
                 {"environment": compute_env},
                 allow_expired_provider_fees=True,
             )
-            log_duration = _provider_fees_log.args.validUntil
-            # TODO!!!!
-            if datetime.utcnow().timestamp() <= log_duration:
+            if _provider_fees_log is not None:
                 # already paid provider fees and both order and provider fees are still valid
                 return {"validOrder": dataset["transferTxId"]}
             else:

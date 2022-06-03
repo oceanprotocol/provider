@@ -56,8 +56,6 @@ def test_get_provider_fee_amount(web3, publisher_wallet):
     with patch("ocean_provider.utils.provider_fees.get_c2d_environments") as mock:
         mock.return_value = [{"id": "ocean-compute", "priceMin": 60}]
         assert (
-            get_provider_fee_amount(
-                duration, "ocean-compute", web3, datatoken_address
-            )
+            get_provider_fee_amount(duration, "ocean-compute", web3, datatoken_address)
             == 3600000000000000000000
         )
