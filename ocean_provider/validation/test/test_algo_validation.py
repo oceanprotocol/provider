@@ -11,12 +11,12 @@ from ocean_provider.utils.basics import get_web3
 from ocean_provider.utils.services import Service, ServiceType
 from ocean_provider.validation.algo import WorkflowValidator
 from tests.ddo.ddo_sample1_compute import alg_ddo_dict, ddo_dict
-from tests.helpers.compute_helpers import get_future_valid_until
+from tests.helpers.compute_helpers import get_duration
 from tests.test_helpers import get_first_service_by_type
 
 provider_fees_event = Mock()
 provider_fees_event.args.providerData = {"environment": "ocean-compute"}
-provider_fees_event.args.validUntil = get_future_valid_until()
+provider_fees_event.args.validUntil = get_duration()
 provider_fees_event.args.providerFeeAmount = 0
 
 

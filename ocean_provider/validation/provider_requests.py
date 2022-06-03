@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import logging
-from datetime import datetime
 import os
 
 from flask import request as flask_request
@@ -42,7 +41,6 @@ class CustomJsonRequest(JsonRequest):
                     "signature.signature": "Invalid signature provided.",
                     "signature.download_signature": "Invalid signature provided.",
                     "signature.decrypt_signature": "Invalid signature provided.",
-                    "validUntil.timestamp": "Invalid timestamp provided.",
                 },
                 request=request,
             )
@@ -175,15 +173,6 @@ class CustomRulesProcessor(RulesProcessor):
             pass
 
         return False
-
-    def validate_timestamp(self, value):
-        try:
-            valid_until = datetime.fromtimestamp(value)
-            timestamp_now = int(datetime.utcnow().timestamp())
-
-            return valid_until > timestamp_now
-        except Exception:
-            return False
 
 
 class NonceRequest(CustomJsonRequest):
@@ -322,6 +311,6 @@ class InitializeComputeRequest(CustomJsonRequest):
             ],
             "algorithm.meta": ["required_without:algorithm.documentId"],
             "compute.env": ["required"],
-            "compute.validUntil": ["required", "integer"],
+            "compute.duration": ["required", "integer", "min:0"],
             "consumerAddress": ["required"],
         }

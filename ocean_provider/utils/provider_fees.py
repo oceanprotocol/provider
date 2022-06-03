@@ -33,7 +33,7 @@ def get_provider_fees(
     did: str,
     service: Service,
     consumer_address: str,
-    valid_until: int,
+    duration: int,
     compute_env: str = None,
     force_zero: bool = False,
 ) -> Dict[str, Any]:
@@ -44,7 +44,7 @@ def get_provider_fees(
 
     if compute_env and not force_zero:
         provider_fee_amount = get_provider_fee_amount(
-            valid_until, compute_env, web3, provider_fee_token
+            duration, compute_env, web3, provider_fee_token
         )
     else:
         provider_fee_amount = 0
@@ -57,7 +57,7 @@ def get_provider_fees(
             provider_fee_address,
             provider_fee_token,
             provider_fee_amount,
-            valid_until,
+            duration,
         ],
     )
 
@@ -77,7 +77,7 @@ def get_provider_fees(
         "v": (signed.v + 27) if signed.v <= 1 else signed.v,
         "r": web3.toHex(web3.toBytes(signed.r).rjust(32, b"\0")),
         "s": web3.toHex(web3.toBytes(signed.s).rjust(32, b"\0")),
-        "validUntil": valid_until,
+        "duration": duration,
     }
     logger.debug(f"Returning provider_fees: {provider_fee}")
     return provider_fee
@@ -115,7 +115,7 @@ def comb_for_valid_transfer_and_fees(all_datasets, compute_env):
 
 
 def get_provider_fees_or_remote(
-    asset, service, consumer_address, valid_until, compute_env, force_zero, dataset
+    asset, service, consumer_address, duration, compute_env, force_zero, dataset
 ):
     valid_order = None
     if "transferTxId" in dataset:
@@ -130,8 +130,9 @@ def get_provider_fees_or_remote(
                 {"environment": compute_env},
                 allow_expired_provider_fees=True,
             )
-            log_valid_until = _provider_fees_log.args.validUntil
-            if datetime.utcnow().timestamp() <= log_valid_until:
+            log_duration = _provider_fees_log.args.validUntil
+            # TODO!!!!
+            if datetime.utcnow().timestamp() <= log_duration:
                 # already paid provider fees and both order and provider fees are still valid
                 return {"validOrder": dataset["transferTxId"]}
             else:
@@ -147,7 +148,7 @@ def get_provider_fees_or_remote(
                 asset.did,
                 service,
                 consumer_address,
-                valid_until,
+                duration,
                 compute_env,
                 force_zero=force_zero,
             ),
@@ -166,14 +167,13 @@ def get_provider_fees_or_remote(
     return result
 
 
-def get_provider_fee_amount(valid_until, compute_env, web3, provider_fee_token):
-    seconds = (datetime.fromtimestamp(valid_until) - datetime.utcnow()).seconds
+def get_provider_fee_amount(duration, compute_env, web3, provider_fee_token):
     env = get_environment(get_c2d_environments(), compute_env)
 
     if provider_fee_token == "0x0000000000000000000000000000000000000000":
         return 0
 
-    provider_fee_amount = float(seconds * float(env["priceMin"]) / 60)
+    provider_fee_amount = float(duration * float(env["priceMin"]) / 60)
 
     dt = get_datatoken_contract(web3, provider_fee_token)
     decimals = dt.caller.decimals()

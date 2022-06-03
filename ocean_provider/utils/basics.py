@@ -116,14 +116,3 @@ def send_ether(web3, from_wallet: Account, to_address: str, amount: int):
     tx_hash = web3.eth.send_raw_transaction(raw_tx)
 
     return web3.eth.wait_for_transaction_receipt(HexBytes(tx_hash), timeout=120)
-
-
-def validate_timestamp(value):
-    """Checks whether a timestamp is valid (correctly formed and in the future)."""
-    try:
-        valid_until = datetime.fromtimestamp(int(value))
-        now = datetime.utcnow()
-
-        return valid_until > now
-    except Exception:
-        return False

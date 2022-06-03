@@ -439,7 +439,7 @@ def start_order(
             provider_fees["v"],
             provider_fees["r"],
             provider_fees["s"],
-            provider_fees["validUntil"],
+            provider_fees["duration"],
             provider_fees["providerData"],
         ),
         (

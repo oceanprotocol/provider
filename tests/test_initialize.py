@@ -11,7 +11,7 @@ from ocean_provider.utils.provider_fees import get_c2d_environments, get_provide
 from ocean_provider.utils.services import ServiceType
 from tests.helpers.compute_helpers import (
     build_and_send_ddo_with_compute_service,
-    get_future_valid_until,
+    get_duration,
 )
 from tests.test_helpers import (
     get_dataset_ddo_disabled,
@@ -206,7 +206,7 @@ def test_initialize_compute_works(client, publisher_wallet, consumer_wallet):
                 "consumerAddress": consumer_wallet.address,
                 "compute": {
                     "env": environments[0]["id"],
-                    "validUntil": get_future_valid_until(),
+                    "duration": get_duration(),
                 },
             }
         ),
@@ -277,7 +277,7 @@ def test_initialize_compute_order_reused(
         "consumerAddress": consumer_wallet.address,
         "compute": {
             "env": free_c2d_env["id"],
-            "validUntil": get_future_valid_until(short=True),
+            "duration": get_duration(short=True),
         },
     }
 
@@ -294,8 +294,8 @@ def test_initialize_compute_order_reused(
     assert "providerFee" not in response.json["datasets"][0]
     assert "providerFee" not in response.json["algorithm"]
 
-    # Update payload "validUntil" to 1 hour from now
-    payload["compute"]["validUntil"] = get_future_valid_until()
+    # Update payload "duration" to 1 hour from now
+    payload["compute"]["duration"] = get_duration()
 
     # Sleep long enough for provider fees to expire
     timeout = time.time() + (30 * 4)

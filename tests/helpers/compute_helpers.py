@@ -95,7 +95,7 @@ def build_and_send_ddo_with_compute_service(
             dataset_ddo_w_compute_service.did,
             service,
             consumer_wallet.address,
-            get_future_valid_until(short=short_valid_until),
+            get_duration(short=short_valid_until),
             c2d_environment,
         ),
         consumer_wallet,
@@ -112,7 +112,7 @@ def build_and_send_ddo_with_compute_service(
             alg_ddo.did,
             alg_service,
             consumer_wallet.address,
-            get_future_valid_until(short=short_valid_until),
+            get_duration(short=short_valid_until),
             c2d_environment,
             force_zero=True,
         ),
@@ -192,7 +192,8 @@ def get_compute_result(client, endpoint, params, raw_response=False):
     return response.data
 
 
-def get_future_valid_until(short=False):
-    # return a timestamp for one hour in the future or 30s in the future if short
+def get_duration(short=False):
+    # return no. seconds for one hour in the future or 30s in the future if short
     time_diff = timedelta(hours=1) if not short else timedelta(seconds=30)
-    return int((datetime.utcnow() + time_diff).timestamp())
+
+    return time_diff.seconds

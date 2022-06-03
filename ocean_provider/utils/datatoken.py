@@ -1,6 +1,6 @@
 import json
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional
 
 from jsonsempai import magic  # noqa: F401
@@ -63,8 +63,60 @@ def verify_order_tx(
     if tx_receipt.status == 0:
         raise AssertionError("order transaction failed.")
 
-    # check provider fees
+    # check if we have an OrderReused event. If so, get orderTxId and switch next checks to use that
     datatoken_contract = get_datatoken_contract(web3, datatoken_address)
+    event_logs = datatoken_contract.events.OrderReused().processReceipt(
+        tx_receipt, errors=DISCARD
+    )
+    log_timestamp = None
+    order_log = event_logs[0] if event_logs else None
+    if order_log and order_log.args.orderTxId:
+        log_timestamp = order_log.args.timestamp
+        try:
+            tx_receipt = _get_tx_receipt(web3, order_log.args.orderTxId)
+        except ConnectionClosed:
+            # try again in this case
+            tx_receipt = _get_tx_receipt(web3, order_log.args.orderTxId)
+        if tx_receipt is None:
+            raise AssertionError("Failed to get tx receipt referenced in OrderReused..")
+        if tx_receipt.status == 0:
+            raise AssertionError("order referenced in OrderReused failed.")
+
+    event_logs = datatoken_contract.events.OrderStarted().processReceipt(
+        tx_receipt, errors=DISCARD
+    )
+    order_log = event_logs[0] if event_logs else None
+
+    log_timestamp = (
+        log_timestamp if log_timestamp is not None else order_log.args.timestamp
+    )
+    log_datetime = datetime.fromtimestamp(log_timestamp)
+
+    if not order_log:
+        raise AssertionError(
+            f"Cannot find the event for the order transaction with tx id {tx_id}."
+        )
+    if len(event_logs) > 1:
+        raise AssertionError(
+            f"Multiple order events in the same transaction !!! {event_logs}"
+        )
+
+    if order_log.args.serviceIndex != service.index:
+        raise AssertionError(
+            f"The service id in the event does "
+            f"not match the requested asset. \n"
+            f"requested: serviceIndex={service.index}\n"
+            f"event: serviceIndex={order_log.args.serviceIndex}"
+        )
+
+    if order_log.args.amount < amount:
+        raise ValueError(
+            f"The amount in the event is less than the amount requested. \n"
+            f"requested: amount={amount}\n"
+            f"event: amount={order_log.args.amount}"
+        )
+
+    # check provider fees
     provider_fee_event_logs = datatoken_contract.events.ProviderFee().processReceipt(
         tx_receipt, errors=DISCARD
     )
@@ -88,12 +140,12 @@ def verify_order_tx(
                 "Mismatch between ordered c2d environment and selected one."
             )
 
-        valid_until = provider_fee_order_log.args.validUntil
+        time_limit = log_datetime + timedelta(seconds=provider_fee_order_log.args.validUntil)
         if (
-            datetime.utcnow().timestamp() >= valid_until
+            datetime.utcnow() >= time_limit
             and not allow_expired_provider_fees
         ):
-            raise AssertionError("Ordered c2d time was exceeded, check validUntil.")
+            raise AssertionError("Ordered c2d time was exceeded, check duration.")
 
     if Web3.toChecksumAddress(
         provider_fee_order_log.args.providerFeeAddress
@@ -132,80 +184,20 @@ def verify_order_tx(
             "Provider was not able to check the signed message in ProviderFees event\n"
         )
 
-    # check duration
-    if provider_fee_order_log.args.validUntil > 0 and not allow_expired_provider_fees:
-        timestamp_now = datetime.utcnow().timestamp()
-        if provider_fee_order_log.args.validUntil < timestamp_now:
-            raise AssertionError(
-                "Validity in transaction exceeds current UTC timestamp"
-            )
     # end check provider fees
 
-    # check if we have an OrderReused event. If so, get orderTxId and switch next checks to use that
-    event_logs = datatoken_contract.events.OrderReused().processReceipt(
-        tx_receipt, errors=DISCARD
-    )
-    log_timestamp = None
-    order_log = event_logs[0] if event_logs else None
-    if order_log and order_log.args.orderTxId:
-        log_timestamp = order_log.args.timestamp
-        try:
-            tx_receipt = _get_tx_receipt(web3, order_log.args.orderTxId)
-        except ConnectionClosed:
-            # try again in this case
-            tx_receipt = _get_tx_receipt(web3, order_log.args.orderTxId)
-        if tx_receipt is None:
-            raise AssertionError("Failed to get tx receipt referenced in OrderReused..")
-        if tx_receipt.status == 0:
-            raise AssertionError("order referenced in OrderReused failed.")
-
-    event_logs = datatoken_contract.events.OrderStarted().processReceipt(
-        tx_receipt, errors=DISCARD
-    )
-    order_log = event_logs[0] if event_logs else None
-
-    if not order_log:
-        raise AssertionError(
-            f"Cannot find the event for the order transaction with tx id {tx_id}."
-        )
-    if len(event_logs) > 1:
-        raise AssertionError(
-            f"Multiple order events in the same transaction !!! {event_logs}"
-        )
-
-    if order_log.args.serviceIndex != service.index:
-        raise AssertionError(
-            f"The service id in the event does "
-            f"not match the requested asset. \n"
-            f"requested: serviceIndex={service.index}\n"
-            f"event: serviceIndex={order_log.args.serviceIndex}"
-        )
-
-    if order_log.args.amount < amount:
-        raise ValueError(
-            f"The amount in the event is less than the amount requested. \n"
-            f"requested: amount={amount}\n"
-            f"event: amount={order_log.args.amount}"
-        )
-
     # Check if order expired. timeout == 0 means order is valid forever
-    timestamp_now = datetime.utcnow().timestamp()
-    # use orderReused timestamp if it exists
-    log_timestamp = (
-        log_timestamp if log_timestamp is not None else order_log.args.timestamp
-    )
-    timestamp_delta = timestamp_now - log_timestamp
+    order_time_limit = log_datetime + timedelta(seconds=service.timeout)
     logger.debug(
-        f"verify_order_tx: service timeout = {service.timeout}, timestamp delta = {timestamp_delta}"
+        f"verify_order_tx: service timeout = {service.timeout}, order time limit = {order_time_limit}"
     )
     if service.timeout != 0:
-        if timestamp_delta > service.timeout:
+        if datetime.utcnow() > order_time_limit:
             raise ValueError(
                 f"The order has expired. \n"
-                f"current timestamp={timestamp_now}\n"
                 f"order timestamp={log_timestamp}\n"
-                f"timestamp delta={timestamp_delta}\n"
-                f"service timeout={service.timeout}"
+                f"service timeout={service.timeout}\n"
+                f"order_time_limit={order_time_limit}"
             )
 
     if sender not in [order_log.args.consumer, order_log.args.payer]:

@@ -6,7 +6,6 @@ import functools
 import json
 import logging
 import os
-from datetime import datetime
 
 import flask
 from flask import Response, jsonify, request
@@ -18,7 +17,6 @@ from ocean_provider.utils.basics import (
     get_metadata_url,
     get_provider_wallet,
     get_web3,
-    validate_timestamp,
 )
 from ocean_provider.utils.compute import (
     process_compute_request,
@@ -110,18 +108,8 @@ def initializeCompute():
     datasets = data.get("datasets")
     algorithm = data["algorithm"]
     compute_env = data["compute"]["env"]
-    valid_until = data["compute"]["validUntil"]
+    duration = int(data["compute"]["duration"])
     consumer_address = data.get("consumerAddress")
-
-    timestamp_ok = validate_timestamp(valid_until)
-    valid_until = int(valid_until)
-
-    if not timestamp_ok:
-        return error_response(
-            "The validUntil value is not correct.",
-            400,
-            logger,
-        )
 
     if not check_environment_exists(get_c2d_environments(), compute_env):
         return error_response("Compute environment does not exist", 400, logger)
@@ -157,7 +145,7 @@ def initializeCompute():
                 input_item_validator.asset,
                 service,
                 consumer_address,
-                valid_until,
+                duration,
                 compute_env,
                 (i != index_for_provider_fees),
                 dataset,
@@ -184,7 +172,7 @@ def initializeCompute():
             algo,
             algo_service,
             consumer_address,
-            valid_until,
+            duration,
             compute_env,
             (index_for_provider_fees != len(datasets)),
             algorithm,
@@ -448,7 +436,7 @@ def computeStart():
         "owner": consumer_address,
         "providerAddress": provider_wallet.address,
         "environment": compute_env,
-        "validUntil": validator.valid_until,
+        "maxDuration": validator.duration,
         "nonce": nonce,
         "chainId": web3.chain_id,
     }

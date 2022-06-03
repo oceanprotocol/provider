@@ -3,7 +3,7 @@ import pytest
 
 from ocean_provider.utils.currency import to_wei
 from ocean_provider.utils.provider_fees import get_provider_fee_amount
-from tests.helpers.compute_helpers import get_future_valid_until
+from tests.helpers.compute_helpers import get_duration
 from tests.test_helpers import (
     BLACK_HOLE_ADDRESS,
     deploy_data_nft,
@@ -16,10 +16,10 @@ from unittest.mock import patch
 @pytest.mark.unit
 @freeze_time("Feb 11th, 2012 00:00")
 def test_get_provider_fee_amount(web3, publisher_wallet):
-    valid_until = get_future_valid_until()
+    duration = get_duration()
     assert (
         get_provider_fee_amount(
-            valid_until,
+            duration,
             "ocean-compute",
             web3,
             "0x0000000000000000000000000000000000000000",
@@ -57,7 +57,7 @@ def test_get_provider_fee_amount(web3, publisher_wallet):
         mock.return_value = [{"id": "ocean-compute", "priceMin": 60}]
         assert (
             get_provider_fee_amount(
-                valid_until, "ocean-compute", web3, datatoken_address
+                duration, "ocean-compute", web3, datatoken_address
             )
             == 3600000000000000000000
         )

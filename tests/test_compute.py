@@ -8,7 +8,7 @@ from datetime import datetime
 import pytest
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
-from ocean_provider.utils.provider_fees import get_c2d_environments, get_provider_fees
+from ocean_provider.utils.provider_fees import get_provider_fees
 from ocean_provider.utils.services import ServiceType
 from ocean_provider.validation.provider_requests import RBACValidator
 from tests.helpers.compute_helpers import (
@@ -16,7 +16,7 @@ from tests.helpers.compute_helpers import (
     get_compute_job_info,
     get_compute_result,
     get_compute_signature,
-    get_future_valid_until,
+    get_duration,
     get_possible_compute_job_status_text,
     get_registered_asset,
     get_web3,
@@ -72,7 +72,7 @@ def test_compute_raw_algo(
             dataset_ddo_w_compute_service.did,
             sa,
             consumer_wallet.address,
-            get_future_valid_until(),
+            get_duration(),
             free_c2d_env["id"],
         ),
         consumer_wallet,
@@ -398,7 +398,7 @@ def test_compute_additional_input(
             ddo2.did,
             sa2,
             consumer_wallet.address,
-            get_future_valid_until(),
+            get_duration(),
             free_c2d_env["id"],
             force_zero=True,
         ),
