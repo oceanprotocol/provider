@@ -25,7 +25,7 @@ from tests.helpers.compute_helpers import (
     start_order,
 )
 from tests.helpers.ddo_dict_builders import build_metadata_dict_type_algorithm
-from tests.test_helpers import get_free_c2d_env, get_first_service_by_type
+from tests.test_helpers import get_first_service_by_type
 
 
 @pytest.mark.unit
@@ -38,7 +38,13 @@ def test_compute_rejected(client, monkeypatch):
 @pytest.mark.integration
 @pytest.mark.parametrize("allow_raw_algos", [True, False])
 def test_compute_raw_algo(
-    client, publisher_wallet, consumer_wallet, consumer_address, web3, allow_raw_algos
+    client,
+    publisher_wallet,
+    consumer_wallet,
+    consumer_address,
+    web3,
+    allow_raw_algos,
+    free_c2d_env,
 ):
     custom_services = "vanilla_compute" if allow_raw_algos else "norawalgo"
 
@@ -57,19 +63,17 @@ def test_compute_raw_algo(
         "version": "0.1",
         "container": {"entrypoint": "node $ALGO", "image": "node", "tag": "10"},
     }
-    environment = get_free_c2d_env()
-    assert environment, f"Cannot find a free c2d env"
     tx_id, _ = start_order(
         web3,
         datatoken,
-        environment["consumerAddress"],
+        free_c2d_env["consumerAddress"],
         sa.index,
         get_provider_fees(
             dataset_ddo_w_compute_service.did,
             sa,
             consumer_wallet.address,
             get_future_valid_until(),
-            environment["id"],
+            free_c2d_env["id"],
         ),
         consumer_wallet,
     )
@@ -88,7 +92,7 @@ def test_compute_raw_algo(
         "signature": signature,
         "nonce": nonce,
         "consumerAddress": consumer_address,
-        "environment": environment["id"],
+        "environment": free_c2d_env["id"],
     }
 
     response = post_to_compute(client, payload)
@@ -104,18 +108,16 @@ def test_compute_raw_algo(
 
 @pytest.mark.integration
 def test_compute_specific_algo_dids(
-    client, publisher_wallet, consumer_wallet, consumer_address
+    client, publisher_wallet, consumer_wallet, consumer_address, free_c2d_env
 ):
-    environment = get_free_c2d_env()
-    assert environment, f"Cannot find a free c2d env"
     ddo, tx_id, alg_ddo, _ = build_and_send_ddo_with_compute_service(
         client,
         publisher_wallet,
         consumer_wallet,
         False,
         None,
-        environment["consumerAddress"],
-        environment["id"],
+        free_c2d_env["consumerAddress"],
+        free_c2d_env["id"],
     )
     sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
     nonce, signature = get_compute_signature(client, consumer_wallet, ddo.did)
@@ -136,7 +138,7 @@ def test_compute_specific_algo_dids(
         "signature": signature,
         "nonce": nonce,
         "consumerAddress": consumer_address,
-        "environment": environment["id"],
+        "environment": free_c2d_env["id"],
     }
 
     response = post_to_compute(client, payload)
@@ -151,17 +153,15 @@ def test_compute_specific_algo_dids(
 
 
 @pytest.mark.integration
-def test_compute(client, publisher_wallet, consumer_wallet):
-    environment = get_free_c2d_env()
-    assert environment, f"Cannot find a free c2d env"
+def test_compute(client, publisher_wallet, consumer_wallet, free_c2d_env):
     ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
         client,
         publisher_wallet,
         consumer_wallet,
         False,
         None,
-        environment["consumerAddress"],
-        environment["id"],
+        free_c2d_env["consumerAddress"],
+        free_c2d_env["id"],
     )
     sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
     sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
@@ -178,7 +178,7 @@ def test_compute(client, publisher_wallet, consumer_wallet):
         "signature": signature,
         "nonce": nonce,
         "consumerAddress": consumer_wallet.address,
-        "environment": environment["id"],
+        "environment": free_c2d_env["id"],
     }
 
     # Start compute using invalid signature (withOUT nonce), should fail
@@ -280,17 +280,15 @@ def test_compute(client, publisher_wallet, consumer_wallet):
 
 
 @pytest.mark.integration
-def test_compute_diff_provider(client, publisher_wallet, consumer_wallet):
-    environment = get_free_c2d_env()
-    assert environment, f"Cannot find a free c2d env"
+def test_compute_diff_provider(client, publisher_wallet, consumer_wallet, free_c2d_env):
     ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
         client,
         publisher_wallet,
         consumer_wallet,
         True,
         None,
-        environment["consumerAddress"],
-        environment["id"],
+        free_c2d_env["consumerAddress"],
+        free_c2d_env["id"],
     )
     sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
     sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
@@ -307,7 +305,7 @@ def test_compute_diff_provider(client, publisher_wallet, consumer_wallet):
         "signature": signature,
         "nonce": nonce,
         "consumerAddress": consumer_wallet.address,
-        "environment": environment["id"],
+        "environment": free_c2d_env["id"],
     }
 
     response = post_to_compute(client, payload)
@@ -315,17 +313,17 @@ def test_compute_diff_provider(client, publisher_wallet, consumer_wallet):
 
 
 @pytest.mark.integration
-def test_compute_allow_all_published(client, publisher_wallet, consumer_wallet):
-    environment = get_free_c2d_env()
-    assert environment, f"Cannot find a free c2d env"
+def test_compute_allow_all_published(
+    client, publisher_wallet, consumer_wallet, free_c2d_env
+):
     ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
         client,
         publisher_wallet,
         consumer_wallet,
         False,
         "allow_all_published",
-        environment["consumerAddress"],
-        environment["id"],
+        free_c2d_env["consumerAddress"],
+        free_c2d_env["id"],
     )
     sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
     sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
@@ -357,25 +355,23 @@ def test_compute_allow_all_published(client, publisher_wallet, consumer_wallet):
     )
 
     # Start on the correct environment
-    payload["environment"] = environment["id"]
+    payload["environment"] = free_c2d_env["id"]
     response = post_to_compute(client, payload)
     assert response.status == "200 OK"
 
 
 @pytest.mark.integration
 def test_compute_additional_input(
-    client, publisher_wallet, consumer_wallet, monkeypatch
+    client, publisher_wallet, consumer_wallet, monkeypatch, free_c2d_env
 ):
-    environment = get_free_c2d_env()
-    assert environment, f"Cannot find a free c2d env"
     ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
         client,
         publisher_wallet,
         consumer_wallet,
         False,
         None,
-        environment["consumerAddress"],
-        environment["id"],
+        free_c2d_env["consumerAddress"],
+        free_c2d_env["id"],
     )
     sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
     sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
@@ -396,14 +392,14 @@ def test_compute_additional_input(
     tx_id2, _ = start_order(
         web3,
         sa2.datatoken_address,
-        environment["consumerAddress"],
+        free_c2d_env["consumerAddress"],
         sa2.index,
         get_provider_fees(
             ddo2.did,
             sa2,
             consumer_wallet.address,
             get_future_valid_until(),
-            environment["id"],
+            free_c2d_env["id"],
             force_zero=True,
         ),
         consumer_wallet,
@@ -437,7 +433,7 @@ def test_compute_additional_input(
                 "userdata": {"test_key": "test_value"},
             }
         ],
-        "environment": environment["id"],
+        "environment": free_c2d_env["id"],
     }
 
     monkeypatch.setenv("RBAC_SERVER_URL", "http://172.15.0.8:3000")
@@ -450,18 +446,16 @@ def test_compute_additional_input(
 
 @pytest.mark.integration
 def test_compute_delete_job(
-    client, publisher_wallet, consumer_wallet, consumer_address
+    client, publisher_wallet, consumer_wallet, consumer_address, free_c2d_env
 ):
-    environment = get_free_c2d_env()
-    assert environment, f"Cannot find a free c2d env"
     ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
         client,
         publisher_wallet,
         consumer_wallet,
         False,
         None,
-        environment["consumerAddress"],
-        environment["id"],
+        free_c2d_env["consumerAddress"],
+        free_c2d_env["id"],
     )
     sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
     sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
@@ -478,7 +472,7 @@ def test_compute_delete_job(
         "signature": signature,
         "nonce": nonce,
         "consumerAddress": consumer_wallet.address,
-        "environment": environment["id"],
+        "environment": free_c2d_env["id"],
     }
 
     response = post_to_compute(client, payload)

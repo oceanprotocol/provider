@@ -20,7 +20,6 @@ from tests.test_helpers import (
     get_dataset_with_invalid_url_ddo,
     get_dataset_with_ipfs_url_ddo,
     get_first_service_by_type,
-    get_free_c2d_env,
     get_registered_asset,
     initialize_service,
     mint_100_datatokens,
@@ -224,7 +223,9 @@ def test_initialize_compute_works(client, publisher_wallet, consumer_wallet):
 
 
 @pytest.mark.integration
-def test_initialize_compute_order_reused(client, publisher_wallet, consumer_wallet):
+def test_initialize_compute_order_reused(
+    client, publisher_wallet, consumer_wallet, free_c2d_env
+):
     """Call `initializeCompute` when there ARE reusable orders
 
     Enumerate all cases:
@@ -244,8 +245,6 @@ def test_initialize_compute_order_reused(client, publisher_wallet, consumer_wall
     Case 4:
         wrong tx id for dataset order
     """
-    environment = get_free_c2d_env()
-    assert environment, f"Cannot find a free c2d env"
     # Order asset, valid for 60 seconds
     ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
         client,
@@ -253,10 +252,10 @@ def test_initialize_compute_order_reused(client, publisher_wallet, consumer_wall
         consumer_wallet,
         True,
         None,
-        environment["consumerAddress"],
+        free_c2d_env["consumerAddress"],
         short_valid_until=True,
         timeout=60,
-        c2d_environment=environment["id"],
+        c2d_environment=free_c2d_env["id"],
     )
     service = get_first_service_by_type(ddo, ServiceType.COMPUTE)
     sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
@@ -277,7 +276,7 @@ def test_initialize_compute_order_reused(client, publisher_wallet, consumer_wall
         },
         "consumerAddress": consumer_wallet.address,
         "compute": {
-            "env": environment["id"],
+            "env": free_c2d_env["id"],
             "validUntil": get_future_valid_until(short=True),
         },
     }
