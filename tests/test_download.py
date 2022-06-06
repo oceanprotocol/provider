@@ -86,11 +86,14 @@ def test_download_service(
 
 @pytest.mark.integration
 @pytest.mark.parametrize("timeout", [0, 1, 3600])
-def test_download_timeout(client, publisher_wallet, consumer_wallet, web3, timeout):
+def test_download_timeout(
+    client, publisher_wallet, consumer_wallet, web3, timeout, monkeypatch
+):
     """
     If timeout == 0, order is valid forever
     else reject request if current timestamp - order timestamp > timeout
     """
+    monkeypatch.setenv("C2D_BUFFER_DURATION", 0)
     asset = get_registered_asset(publisher_wallet, timeout=timeout)
     service = get_first_service_by_type(asset, ServiceType.ACCESS)
     mint_100_datatokens(

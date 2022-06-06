@@ -77,7 +77,7 @@ def get_provider_fees(
         "v": (signed.v + 27) if signed.v <= 1 else signed.v,
         "r": web3.toHex(web3.toBytes(signed.r).rjust(32, b"\0")),
         "s": web3.toHex(web3.toBytes(signed.s).rjust(32, b"\0")),
-        "duration": duration,
+        "validUntil": duration,
     }
     logger.debug(f"Returning provider_fees: {provider_fee}")
     return provider_fee

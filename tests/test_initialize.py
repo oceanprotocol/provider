@@ -224,7 +224,7 @@ def test_initialize_compute_works(client, publisher_wallet, consumer_wallet):
 
 @pytest.mark.integration
 def test_initialize_compute_order_reused(
-    client, publisher_wallet, consumer_wallet, free_c2d_env
+    client, publisher_wallet, consumer_wallet, free_c2d_env, monkeypatch
 ):
     """Call `initializeCompute` when there ARE reusable orders
 
@@ -245,6 +245,7 @@ def test_initialize_compute_order_reused(
     Case 4:
         wrong tx id for dataset order
     """
+    monkeypatch.setenv("C2D_BUFFER_DURATION", 0)
     # Order asset, valid for 60 seconds
     ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
         client,

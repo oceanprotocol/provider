@@ -1,6 +1,7 @@
 import json
 import logging
 from datetime import datetime, timedelta
+import os
 from typing import Optional
 
 from jsonsempai import magic  # noqa: F401
@@ -90,7 +91,11 @@ def verify_order_tx(
     log_timestamp = (
         log_timestamp if log_timestamp is not None else order_log.args.timestamp
     )
-    log_datetime = datetime.fromtimestamp(log_timestamp)
+
+    # buffer log datetime with a buffer to mitigate timestamp manipulation
+    log_datetime = datetime.fromtimestamp(log_timestamp) + timedelta(
+        seconds=int(os.getenv("C2D_BUFFER_DURATION", 120))
+    )
 
     if not order_log:
         raise AssertionError(
