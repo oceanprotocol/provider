@@ -54,8 +54,8 @@ def get_provider_fees(
         ["bytes", "address", "address", "uint256", "uint256"],
         [
             web3.toHex(web3.toBytes(text=provider_data)),
-            provider_fee_address,
-            provider_fee_token,
+            web3.toChecksumAddress(provider_fee_address),
+            web3.toChecksumAddress(provider_fee_token),
             provider_fee_amount,
             valid_until,
         ],
