@@ -20,7 +20,7 @@ def get_data_nft_factory_address(web3: Web3) -> str:
 def get_data_nft_factory_contract(web3: Web3) -> Contract:
     abi = ERC721Factory.abi
     data_nft_factory_address = get_data_nft_factory_address(web3)
-    return web3.eth.contract(address=data_nft_factory_address, abi=abi)
+    return web3.eth.contract(address=web3.toChecksumAddress(data_nft_factory_address), abi=abi)
 
 
 def is_nft_deployed_from_factory(web3: Web3, nft_address: str) -> bool:
