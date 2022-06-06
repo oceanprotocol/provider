@@ -42,7 +42,9 @@ def get_data_nft_contract(web3: Web3, address: Optional[str] = None) -> Contract
     of the `ERC721Factory` provides all the functionality needed by Provider,
     especially the `getMetaData` contract method.
     """
-    return web3.eth.contract(address=address, abi=ERC721Template.abi)
+    return web3.eth.contract(
+        address=web3.toChecksumAddress(address), abi=ERC721Template.abi
+    )
 
 
 def get_metadata(web3: Web3, address: str) -> Tuple[str, str, MetadataState, bool]:

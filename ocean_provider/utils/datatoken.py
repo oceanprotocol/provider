@@ -31,7 +31,9 @@ def get_datatoken_contract(web3: Web3, address: Optional[str] = None) -> Contrac
     `ERC721Factory` provides all the functionality needed by Provider,
     especially the `getMetaData` contract method.
     """
-    return web3.eth.contract(address=address, abi=ERC20Template.abi)
+    return web3.eth.contract(
+        address=web3.toChecksumAddress(address), abi=ERC20Template.abi
+    )
 
 
 def _get_tx_receipt(web3, tx_hash):

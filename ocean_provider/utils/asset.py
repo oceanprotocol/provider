@@ -97,9 +97,9 @@ def get_asset_from_metadatastore(metadata_url, document_id):
 def check_asset_consumable(asset, consumer_address, logger, custom_url=None):
     if not asset.nft or "address" not in asset.nft:
         return False, "Asset malformed"
-
-    dt_contract = get_web3().eth.contract(
-        abi=ERC721Template.abi, address=asset.nft["address"]
+    web3 = get_web3()
+    dt_contract = web3.eth.contract(
+        abi=ERC721Template.abi, address=web3.toChecksumAddress(asset.nft["address"])
     )
 
     if dt_contract.caller.getMetaData()[2] != 0:
