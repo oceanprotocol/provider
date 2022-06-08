@@ -20,8 +20,26 @@ REQUEST_TIMEOUT = 3
 CHUNK_SIZE = 8192
 
 
-def is_safe_url(url):
+def get_redirect(url):
     if not is_url(url):
+        return None
+
+    result = requests.head(url, allow_redirects=False)
+
+    if result.status_code == 405:
+        # HEAD not allowed, so defaulting to get
+        result = requests.get(url, allow_redirects=False)
+
+    if result.is_redirect:
+        return get_redirect(result.headers["Location"])
+
+    return url
+
+
+def is_safe_url(url):
+    url = get_redirect(url)
+
+    if not url:
         return False
 
     result = urlparse(url)
