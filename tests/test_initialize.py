@@ -299,7 +299,7 @@ def test_initialize_compute_order_reused(
     payload["compute"]["duration"] = get_duration()
 
     # Sleep long enough for provider fees to expire
-    timeout = time.time() + (30 * 4)
+    timeout = time.time() + (30 * 5)
     while True:
         response = client.post(
             BaseURLs.SERVICES_URL + "/initializeCompute",
