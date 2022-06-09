@@ -2,6 +2,7 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
+import cloudscraper
 import hashlib
 import ipaddress
 import json
@@ -43,8 +44,9 @@ def is_ip(address):
 
 def is_this_same_provider(url):
     result = urlparse(url)
+    scraper = cloudscraper.create_scraper()
     try:
-        provider_info = requests.get(f"{result.scheme}://{result.netloc}/").json()
+        provider_info = scraper.get(f"{result.scheme}://{result.netloc}/").json()
         address = provider_info["providerAddress"]
     except (requests.exceptions.RequestException, KeyError):
         address = None
@@ -171,8 +173,10 @@ def check_url_details(url, with_checksum=False):
 
 
 def _get_result_from_url(url, with_checksum=False):
+    scraper = cloudscraper.create_scraper()
+
     for method in ["head", "options"]:
-        func = getattr(requests, method)
+        func = getattr(scraper, method)
         result = func(url, timeout=REQUEST_TIMEOUT)
 
         if (
@@ -188,11 +192,11 @@ def _get_result_from_url(url, with_checksum=False):
 
     if not with_checksum:
         # fallback on GET request
-        return requests.get(url, stream=True, timeout=REQUEST_TIMEOUT), {}
+        return scraper.get(url, stream=True, timeout=REQUEST_TIMEOUT), {}
 
     sha = hashlib.sha256()
 
-    with requests.get(url, stream=True) as r:
+    with scraper.get(url, stream=True) as r:
         r.raise_for_status()
         for chunk in r.iter_content(chunk_size=CHUNK_SIZE):
             sha.update(chunk)

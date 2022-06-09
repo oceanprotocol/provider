@@ -41,6 +41,7 @@ install_requirements = [
     "SQLAlchemy==1.3.23",
     "json-sempai==0.4.0",
     "redis==4.0.2",
+    "cloudscraper==1.2.60",
 ]
 
 # Required to run setup.py:
