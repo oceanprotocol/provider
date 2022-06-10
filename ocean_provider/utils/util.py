@@ -114,7 +114,21 @@ def get_service_files_list(service: Service, provider_wallet: LocalAccount) -> l
         if not files_str:
             return None
         logger.debug(f"Got decrypted files str {files_str}")
-        files_list = json.loads(files_str)
+
+        files_json = json.loads(files_str)
+
+        for key in ["datatokenAddress", "type", "files"]:
+            if key not in files_json:
+                raise Exception(f"Key {key} not found in files.")
+
+        if (
+            Web3.toChecksumAddress(files_json["datatokenAddress"])
+            != Web3.toChecksumAddress(service.datatoken_address)
+            or files_json["type"] != service.type
+        ):
+            raise Exception(f"Mismatch of service details.")
+
+        files_list = files_json["files"]
         if not isinstance(files_list, list):
             raise TypeError(f"Expected a files list, got {type(files_list)}.")
 

@@ -150,7 +150,17 @@ def test_download_ipfs_file():
 @pytest.mark.unit
 def test_get_service_files_list(provider_wallet):
     service = Mock(template=Service)
-    encrypted_files_str = json.dumps(["test1", "test2"], separators=(",", ":"))
+    service.datatoken_address = "0x0000000000000000000000000000000000000000"
+    service.type = "access"
+
+    encrypted_files_str = json.dumps(
+        {
+            "datatokenAddress": "0x0000000000000000000000000000000000000000",
+            "type": "access",
+            "files": ["test1", "test2"],
+        },
+        separators=(",", ":"),
+    )
     service.encrypted_files = do_encrypt(
         Web3.toHex(text=encrypted_files_str), provider_wallet
     )
@@ -167,8 +177,47 @@ def test_get_service_files_list(provider_wallet):
     )
     assert get_service_files_list(service, provider_wallet) is None
 
-    # not a list
-    encrypted_files_str = json.dumps({"test": "test"}, separators=(",", ":"))
+    # not a dict
+    encrypted_files_str = json.dumps([], separators=(",", ":"))
+    service.encrypted_files = do_encrypt(
+        Web3.toHex(text=encrypted_files_str), provider_wallet
+    )
+
+    assert get_service_files_list(service, provider_wallet) is None
+
+    # files not a list
+    encrypted_files_str = json.dumps(
+        {
+            "datatokenAddress": "0x0000000000000000000000000000000000000000",
+            "type": "access",
+            "files": {"some_dict": "test"},
+        },
+        separators=(",", ":"),
+    )
+    service.encrypted_files = do_encrypt(
+        Web3.toHex(text=encrypted_files_str), provider_wallet
+    )
+
+    assert get_service_files_list(service, provider_wallet) is None
+
+    # missing type
+    encrypted_files_str = json.dumps(
+        {"type": "access", "files": ["test1", "test2"]}, separators=(",", ":")
+    )
+    service.encrypted_files = do_encrypt(
+        Web3.toHex(text=encrypted_files_str), provider_wallet
+    )
+
+    assert get_service_files_list(service, provider_wallet) is None
+
+    # type mismatch
+    encrypted_files_str = json.dumps(
+        {
+            "datatokenAddress": "0x0000000000000000000000000000000000000000",
+            "type": "compute",
+            "files": ["test1", "test2"],
+        },
+    )
     service.encrypted_files = do_encrypt(
         Web3.toHex(text=encrypted_files_str), provider_wallet
     )
