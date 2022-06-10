@@ -99,7 +99,7 @@ def fileinfo():
     if did:
         asset = get_asset_from_metadatastore(get_metadata_url(), did)
         service = asset.get_service_by_id(service_id)
-        files_list = get_service_files_list(service, provider_wallet)
+        files_list = get_service_files_list(service, provider_wallet, asset.version)
         url_list = [get_download_url(file_item) for file_item in files_list]
     else:
         url_list = [get_download_url(data)]
@@ -293,7 +293,7 @@ def download():
         )
 
     file_index = int(data.get("fileIndex"))
-    files_list = get_service_files_list(service, provider_wallet)
+    files_list = get_service_files_list(service, provider_wallet, asset.version)
     if file_index > len(files_list):
         return error_response(f"No such fileIndex {file_index}", 400, logger)
     url_object = files_list[file_index]

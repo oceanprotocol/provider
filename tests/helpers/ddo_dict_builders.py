@@ -30,7 +30,7 @@ def build_ddo_dict(
     return {
         "@context": ["https://w3id.org/did/v1"],
         "id": did,
-        "version": "4.0.0",
+        "version": "4.1.0",
         "nftAddress": nft_address,
         "chainId": chain_id,
         "metadata": metadata,
@@ -114,7 +114,7 @@ def build_algorithm_dict() -> dict:
     """Build an algorithm dict, used for testing."""
     return {
         "language": "python",
-        "version": "0.1.0",
+        "version": "4.1.0",
         "container": build_container_dict(),
     }
 

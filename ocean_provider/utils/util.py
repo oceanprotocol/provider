@@ -108,7 +108,12 @@ def build_download_response(
         raise
 
 
-def get_service_files_list(service: Service, provider_wallet: LocalAccount) -> list:
+def get_service_files_list(
+    service: Service, provider_wallet: LocalAccount, version="4.1.0"
+) -> list:
+    if version == "4.0.0":
+        return get_service_files_list_old_structure(service, provider_wallet)
+
     try:
         files_str = do_decrypt(service.encrypted_files, provider_wallet)
         if not files_str:
@@ -129,6 +134,24 @@ def get_service_files_list(service: Service, provider_wallet: LocalAccount) -> l
             raise Exception(f"Mismatch of service details.")
 
         files_list = files_json["files"]
+        if not isinstance(files_list, list):
+            raise TypeError(f"Expected a files list, got {type(files_list)}.")
+
+        return files_list
+    except Exception as e:
+        logger.error(f"Error decrypting service files {Service}: {str(e)}")
+        return None
+
+
+def get_service_files_list_old_structure(
+    service: Service, provider_wallet: LocalAccount
+) -> list:
+    try:
+        files_str = do_decrypt(service.encrypted_files, provider_wallet)
+        if not files_str:
+            return None
+        logger.debug(f"Got decrypted files str {files_str}")
+        files_list = json.loads(files_str)
         if not isinstance(files_list, list):
             raise TypeError(f"Expected a files list, got {type(files_list)}.")
 

@@ -20,6 +20,7 @@ from ocean_provider.utils.util import (
     build_download_response,
     get_download_url,
     get_service_files_list,
+    get_service_files_list_old_structure,
     msg_hash,
     validate_url_object,
 )
@@ -223,6 +224,37 @@ def test_get_service_files_list(provider_wallet):
     )
 
     assert get_service_files_list(service, provider_wallet) is None
+
+
+@pytest.mark.unit
+def test_get_service_files_list_old_structure(provider_wallet):
+    service = Mock(template=Service)
+    encrypted_files_str = json.dumps(["test1", "test2"], separators=(",", ":"))
+    service.encrypted_files = do_encrypt(
+        Web3.toHex(text=encrypted_files_str), provider_wallet
+    )
+    assert ["test1", "test2"] == get_service_files_list_old_structure(
+        service, provider_wallet
+    )
+
+    # empty and raw
+    service.encrypted_files = ""
+    assert get_service_files_list(service, provider_wallet) is None
+
+    # empty and encrypted
+    encrypted_files_str = ""
+    service.encrypted_files = do_encrypt(
+        Web3.toHex(text=encrypted_files_str), provider_wallet
+    )
+    assert get_service_files_list_old_structure(service, provider_wallet) is None
+
+    # not a list
+    encrypted_files_str = json.dumps({"test": "test"}, separators=(",", ":"))
+    service.encrypted_files = do_encrypt(
+        Web3.toHex(text=encrypted_files_str), provider_wallet
+    )
+
+    assert get_service_files_list_old_structure(service, provider_wallet) is None
 
 
 @pytest.mark.unit
