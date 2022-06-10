@@ -1,5 +1,5 @@
 #
-# Copyright 2021 Ocean Protocol Foundation
+# Copyright Ocean Protocol contributors
 # SPDX-License-Identifier: Apache-2.0
 #
 """Unites routes from compute and consume files."""
@@ -12,3 +12,4 @@ from .compute import *  # isort:skip
 from .consume import *  # isort:skip
 from .encrypt import *  # isort:skip
 from .decrypt import *  # isort:skip
+from .upload import *  # isort:skip

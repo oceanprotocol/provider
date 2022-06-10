@@ -1,11 +1,8 @@
 #
-# Copyright 2021 Ocean Protocol Foundation
+# Copyright Ocean Protocol contributors
 # SPDX-License-Identifier: Apache-2.0
 #
 """Config data."""
-
-#  Copyright 2018 Ocean Protocol Foundation
-#  SPDX-License-Identifier: Apache-2.0
 
 import configparser
 from distutils.util import strtobool
@@ -28,6 +25,9 @@ NAME_ALLOW_NON_PUBLIC_IP = "allow_non_public_ip"
 NAME_STORAGE_PATH = "storage.path"
 NAME_BLOCK_CONFIRMATIONS = "block_confirmations"
 NAME_AUTHORIZED_DECRYPTERS = "authorized_decrypters"
+NAME_UPLOADS_PATH = "uploads.path"
+NAME_ESTUARY_API_KEY = "estuary_api_key"
+NAME_UPLOAD_FEE = "upload.fee"
 
 environ_names = {
     NAME_NETWORK_URL: [
@@ -60,6 +60,11 @@ environ_names = {
     NAME_AUTHORIZED_DECRYPTERS: [
         "AUTHORIZED_DECRYPTERS",
         "List of authorized decrypters",
+        "resources",
+    ],
+    NAME_ESTUARY_API_KEY: [
+        "ESTUARY_API_KEY",
+        "Estuary API key",
         "resources",
     ],
 }
@@ -164,3 +169,15 @@ class Config(configparser.ConfigParser):
     @property
     def block_confirmations(self):
         return int(self.get("eth-network", NAME_BLOCK_CONFIRMATIONS, fallback=0))
+
+    @property
+    def uploads_path(self):
+        return self.get("resources", NAME_UPLOADS_PATH, fallback=None)
+
+    @property
+    def estuary_api_key(self):
+        return self.get("resources", NAME_ESTUARY_API_KEY, fallback=None)
+
+    @property
+    def upload_fee(self):
+        return self.get("resources", NAME_UPLOAD_FEE, fallback=None)

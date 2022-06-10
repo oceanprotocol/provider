@@ -1,5 +1,5 @@
 #
-# Copyright 2021 Ocean Protocol Foundation
+# Copyright Ocean Protocol contributors
 # SPDX-License-Identifier: Apache-2.0
 #
 import hashlib
@@ -16,8 +16,9 @@ from eth_account.signers.local import LocalAccount
 from eth_keys import KeyAPI
 from eth_keys.backends import NativeECCBackend
 from eth_typing.encoding import HexStr
-from flask import Response
-from ocean_provider.utils.basics import get_provider_wallet
+from flask import Response, jsonify
+from werkzeug.utils import secure_filename
+from ocean_provider.utils.basics import get_provider_wallet, get_config
 from ocean_provider.utils.encryption import do_decrypt
 from ocean_provider.utils.services import Service
 from ocean_provider.utils.url import is_safe_url, append_userdata, check_url_details
@@ -26,6 +27,8 @@ from web3.types import TxParams, TxReceipt
 
 logger = logging.getLogger(__name__)
 keys = KeyAPI(NativeECCBackend)
+
+ALLOWED_EXTENSIONS = {'csv', 'json', 'txt'}
 
 
 def get_request_data(request):
@@ -106,6 +109,45 @@ def build_download_response(
     except Exception as e:
         logger.error(f"Error preparing file download response: {str(e)}")
         raise
+
+
+
+def upload_to_estuary(file_path, requests_session):
+    url = 'https://shuttle-4.estuary.tech/content/add'
+    api_key = get_config().estuary_api_key
+    with open(file_path, 'rb') as f:
+        r = requests_session.post(url, files={'data': f}, headers={'Authorization': 'Bearer ' + api_key})
+        return r.json()["cid"]
+
+
+def allowed_extension(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def build_upload_response(request, requests_session):
+    cids = {"fileCids": [], "linkCids": []}
+    for filename in request.files:
+        try:
+            file = request.files[filename]
+            if file.filename == '':
+                continue
+            if file and allowed_extension(file.filename):
+                is_sample_file = file.filename.startswith('link')
+                secure_name = secure_filename(file.filename)
+                filepath = os.path.join(get_config().uploads_path, secure_name)
+                file.save(filepath)
+                cid = upload_to_estuary(filepath, requests_session)
+                os.remove(filepath)
+                if not is_sample_file:
+                    cids['fileCids'].append(cid)
+                else:
+                    cids['linkCids'].append(cid)
+        except Exception as e:
+            logger.error(f"Error preparing file upload response: {str(e)}")
+    if len(cids['fileCids']) == 0 and len(cids['linkCids']) == 0:
+        return jsonify({"error": "No files in request"}), 400
+    return jsonify({"cids": cids}), 201
 
 
 def get_service_files_list(service: Service, provider_wallet: LocalAccount) -> list:
