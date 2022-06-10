@@ -152,13 +152,17 @@ def get_compute_service(
         "publisherTrustedAlgorithms": trusted_algos,
     }
 
-    unencrypted_files_list = [
-        {
-            "type": "url",
-            "method": "GET",
-            "url": "https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt",
-        }
-    ]
+    unencrypted_files_list = {
+        "datatokenAddress": datatoken_address,
+        "type": "compute",
+        "files": [
+            {
+                "type": "url",
+                "method": "GET",
+                "url": "https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt",
+            }
+        ],
+    }
 
     encrypted_files_str = json.dumps(unencrypted_files_list, separators=(",", ":"))
     encrypted_files = do_encrypt(
@@ -187,13 +191,17 @@ def get_compute_service_no_rawalgo(address, price, datatoken_address, timeout=36
         "publisherTrustedAlgorithms": [],
     }
 
-    unencrypted_files_list = [
-        {
-            "type": "url",
-            "method": "GET",
-            "url": "https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt",
-        }
-    ]
+    unencrypted_files_list = {
+        "datatokenAddress": datatoken_address,
+        "type": "compute",
+        "files": [
+            {
+                "type": "url",
+                "method": "GET",
+                "url": "https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt",
+            }
+        ],
+    }
 
     encrypted_files_str = json.dumps(unencrypted_files_list, separators=(",", ":"))
     encrypted_files = do_encrypt(
