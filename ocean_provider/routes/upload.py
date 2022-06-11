@@ -6,8 +6,8 @@ import logging
 
 from eth_keys import KeyAPI
 from eth_keys.backends import NativeECCBackend
-from flask import jsonify, request
 
+from flask import jsonify, request
 from ocean_provider.requests_session import get_requests_session
 from ocean_provider.user_nonce import get_nonce, update_nonce
 from ocean_provider.utils.address import get_provider_fee_token
@@ -70,15 +70,19 @@ def validate_upload_order(web3, sender, tx_id):
         f"validate_order: tx_id={tx_id}, sender={sender}"
     )
     tx = web3.eth.get_transaction(tx_id)
-    tx_nonce = tx['nonce']
-    tx_sender = tx['from']
-    if tx_sender.lower() != sender.lower():
+
+    provider_wallet = get_provider_wallet()
+    if tx['to'].lower() != provider_wallet.address:
+        raise AssertionError(
+            "`uploadOrder` transaction was not sent to the provider's address.."
+        )
+    if tx['from'].lower() != sender.lower():
         raise AssertionError(
             "`uploadOrder` transaction was from a different sender than the one specified.."
         )
     cached_nonce = get_nonce(sender)
-    if not cached_nonce or int(cached_nonce) < tx_nonce:
-        update_nonce(sender, tx_nonce)
+    if not cached_nonce or int(cached_nonce) < tx['nonce']:
+        update_nonce(sender, tx['nonce'])
         return tx
     else:
         raise AssertionError(
@@ -155,7 +159,7 @@ def upload_file():
     try:
         consumer_address = data.get("consumerAddress")
         tx_id = data.get("transferTxId")
-    except Exception as e:
+    except Exception:
         return error_response(
             f"=Missing argument",
             400,
@@ -163,10 +167,10 @@ def upload_file():
         )
 
     try:
-        __ = validate_upload_order(
+        validate_upload_order(
             get_web3(), consumer_address, tx_id,
         )
-    except Exception:
+    except Exception as e:
         return error_response(
             f"=Order with tx_id {tx_id} could not be validated due to error: {e}",
             400,
