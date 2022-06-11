@@ -8,22 +8,23 @@ import logging
 import mimetypes
 import os
 from cgi import parse_header
-from urllib.parse import urljoin
 from typing import Tuple
-import werkzeug
+from urllib.parse import urljoin
 
 from eth_account.signers.local import LocalAccount
 from eth_keys import KeyAPI
 from eth_keys.backends import NativeECCBackend
 from eth_typing.encoding import HexStr
+
+import werkzeug
 from flask import Response, jsonify
-from werkzeug.utils import secure_filename
-from ocean_provider.utils.basics import get_provider_wallet, get_config
+from ocean_provider.utils.basics import get_config, get_provider_wallet
 from ocean_provider.utils.encryption import do_decrypt
 from ocean_provider.utils.services import Service
-from ocean_provider.utils.url import is_safe_url, append_userdata, check_url_details
+from ocean_provider.utils.url import append_userdata, check_url_details, is_safe_url
 from web3 import Web3
 from web3.types import TxParams, TxReceipt
+from werkzeug.utils import secure_filename
 
 logger = logging.getLogger(__name__)
 keys = KeyAPI(NativeECCBackend)
@@ -113,7 +114,7 @@ def build_download_response(
 
 
 def upload_to_estuary(file_path, requests_session):
-    url = 'https://shuttle-4.estuary.tech/content/add'
+    url = get_config().estuary_url
     api_key = get_config().estuary_api_key
     with open(file_path, 'rb') as f:
         r = requests_session.post(url, files={'data': f}, headers={'Authorization': 'Bearer ' + api_key})

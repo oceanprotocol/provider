@@ -5,15 +5,14 @@
 """Config data."""
 
 import configparser
-from distutils.util import strtobool
 import json
 import logging
 import os
+from distutils.util import strtobool
 from pathlib import Path
 
-from jsonsempai import magic
 from addresses import address as contract_addresses
-
+from jsonsempai import magic
 
 NAME_NETWORK_URL = "network"
 NAME_ADDRESS_FILE = "address.file"
@@ -27,6 +26,7 @@ NAME_BLOCK_CONFIRMATIONS = "block_confirmations"
 NAME_AUTHORIZED_DECRYPTERS = "authorized_decrypters"
 NAME_UPLOADS_PATH = "uploads.path"
 NAME_ESTUARY_API_KEY = "estuary_api_key"
+NAME_ESTUARY_URL = "estuary.url"
 NAME_UPLOAD_FEE = "upload.fee"
 
 environ_names = {
@@ -177,6 +177,10 @@ class Config(configparser.ConfigParser):
     @property
     def estuary_api_key(self):
         return self.get("resources", NAME_ESTUARY_API_KEY, fallback=None)
+
+    @property
+    def estuary_url(self):
+        return self.get("resources", NAME_ESTUARY_URL, fallback=None)
 
     @property
     def upload_fee(self):
