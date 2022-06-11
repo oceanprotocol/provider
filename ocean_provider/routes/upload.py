@@ -2,26 +2,19 @@
 # Copyright Ocean Protocol contributors
 # SPDX-License-Identifier: Apache-2.0
 #
-import functools
-import json
 import logging
-import os
-import requests
-from datetime import datetime
 
-from flask import Response, jsonify, request
 from eth_keys import KeyAPI
 from eth_keys.backends import NativeECCBackend
+from flask import jsonify, request
+
 from ocean_provider.requests_session import get_requests_session
 from ocean_provider.user_nonce import get_nonce, update_nonce
-from ocean_provider.utils.basics import (
-    get_config, 
-    get_provider_wallet, 
-    get_web3
-)
 from ocean_provider.utils.address import get_provider_fee_token
+from ocean_provider.utils.basics import get_config, get_provider_wallet, get_web3
 from ocean_provider.utils.error_responses import error_response
 from ocean_provider.utils.util import build_upload_response, get_request_data
+
 from . import services
 
 logger = logging.getLogger(__name__)
@@ -170,10 +163,10 @@ def upload_file():
         )
 
     try:
-        _tx = validate_upload_order(
+        __ = validate_upload_order(
             get_web3(), consumer_address, tx_id,
         )
-    except Exception as e:
+    except Exception:
         return error_response(
             f"=Order with tx_id {tx_id} could not be validated due to error: {e}",
             400,
