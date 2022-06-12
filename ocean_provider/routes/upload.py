@@ -80,6 +80,10 @@ def validate_upload_order(web3, sender, tx_id):
         raise AssertionError(
             "`uploadOrder` transaction was from a different sender than the one specified.."
         )
+    if tx['value'] < get_config().upload_fee:
+        raise AssertionError(
+            "`uploadOrder` transaction does fully cover upload_fee.."
+        )
     cached_nonce = get_nonce(sender)
     if not cached_nonce or int(cached_nonce) < tx['nonce']:
         update_nonce(sender, tx['nonce'])
