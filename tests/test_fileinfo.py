@@ -106,7 +106,7 @@ def test_check_arweave_good(client):
     assert isinstance(result, list)
     assert len(result) == 1
     for file_info in result:
-        assert file_info["contentLength"] == "1161"  # TODO update to actual content length
+        assert file_info["contentLength"] == "31976"
         assert file_info["contentType"] == "application/json"
         assert file_info["valid"] is True
 
