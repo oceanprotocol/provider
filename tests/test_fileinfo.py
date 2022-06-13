@@ -98,8 +98,21 @@ def test_check_url_bad(client):
 
 @pytest.mark.unit
 def test_check_arweave_good(client):
-    pass
+    payload = {"type": "arweave", "transactionId": "cZ6j5PmPVXCq5Az6YGcGqzffYjx2JnsnlSajaHNr20w"}
+    response = client.post(fileinfo_url, json=payload)
+    result = response.get_json()
+
+    assert isinstance(result, list)
+    assert len(result) == 1
+    assert response.status == "200 OK"
+    for file_info in result:
+        assert file_info["contentLength"] == "1161"  # TODO update to actual content length
+        assert file_info["contentType"] == "application/json"
+        assert file_info["valid"] is True
 
 @pytest.mark.unit
 def test_check_arweave_bad(client):
-    pass
+    payload = {"type": "arweave", "transactionId": "invalid"}
+    response = client.post(fileinfo_url, json=payload)
+    result = response.get_json()
+    assert response.status == "400 BAD REQUEST"
