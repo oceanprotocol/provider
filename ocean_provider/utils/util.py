@@ -123,7 +123,6 @@ def get_service_files_list(
         files_str = do_decrypt(service.encrypted_files, provider_wallet)
         if not files_str:
             return None
-        
 
         files_json = json.loads(files_str)
 
