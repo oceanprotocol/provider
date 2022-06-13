@@ -131,14 +131,17 @@ def get_service_files_list(
                 raise Exception(f"Key {key} not found in files.")
         if Web3.toChecksumAddress(
             files_json["datatokenAddress"]
-        ) != Web3.toChecksumAddress(
-            service.datatoken_address
-        ) or Web3.toChecksumAddress(
-            files_json["nftAddress"]
-        ) != Web3.toChecksumAddress(
+        ) != Web3.toChecksumAddress(service.datatoken_address):
+            raise Exception(
+                f"Mismatch of datatoken. Got {files_json['datatokenAddress']} vs expected {service.datatoken_address}"
+            )
+
+        if Web3.toChecksumAddress(files_json["nftAddress"]) != Web3.toChecksumAddress(
             asset.nftAddress
         ):
-            raise Exception(f"Mismatch of service datatoken or nft")
+            raise Exception(
+                f"Mismatch of nft. Got {files_json['nftAddress']} vs expected {asset.nftAddress}"
+            )
 
         files_list = files_json["files"]
         if not isinstance(files_list, list):
