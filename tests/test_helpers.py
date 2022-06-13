@@ -211,7 +211,7 @@ def get_registered_asset(
 
     unencrypted_files_list = {
         "datatokenAddress": datatoken_address,
-        "type": service_type,
+        "nftAddress": data_nft_address,
         "files": unencrypted_files_list,
     }
     encrypted_files_str = json.dumps(unencrypted_files_list, separators=(",", ":"))
@@ -247,6 +247,7 @@ def get_registered_asset(
         else build_custom_services(
             custom_services,
             from_wallet,
+            data_nft_address,
             datatoken_address,
             custom_services_args,
             timeout,
@@ -462,13 +463,19 @@ def start_order(
 
 
 def build_custom_services(
-    services_type, from_wallet, datatoken_address, custom_services_args, timeout
+    services_type,
+    from_wallet,
+    nft_address,
+    datatoken_address,
+    custom_services_args,
+    timeout,
 ):
     if services_type == "vanilla_compute":
         return [
             get_compute_service(
                 from_wallet.address,
                 10,
+                nft_address,
                 datatoken_address,
                 trusted_algos=custom_services_args,
                 timeout=timeout,
@@ -477,7 +484,7 @@ def build_custom_services(
     if services_type == "norawalgo":
         return [
             get_compute_service_no_rawalgo(
-                from_wallet.address, 10, datatoken_address, timeout
+                from_wallet.address, 10, nft_address, datatoken_address, timeout
             )
         ]
 

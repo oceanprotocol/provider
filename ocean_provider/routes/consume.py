@@ -99,7 +99,7 @@ def fileinfo():
     if did:
         asset = get_asset_from_metadatastore(get_metadata_url(), did)
         service = asset.get_service_by_id(service_id)
-        files_list = get_service_files_list(service, provider_wallet, asset.version)
+        files_list = get_service_files_list(service, provider_wallet, asset)
         url_list = [get_download_url(file_item) for file_item in files_list]
     else:
         url_list = [get_download_url(data)]
@@ -190,7 +190,7 @@ def initialize():
     file_index = int(data.get("fileIndex", "-1"))
     # we check if the file is valid only if we have fileIndex
     if file_index > -1:
-        valid, message = check_url_valid(service, file_index, data)
+        valid, message = check_url_valid(service, file_index, data, asset)
         if not valid:
             return error_response(message, 400, logger)
 
@@ -263,22 +263,26 @@ def download():
     asset = get_asset_from_metadatastore(get_metadata_url(), did)
     service = asset.get_service_by_id(service_id)
 
-    # allow our C2D to download a compute asset
-    c2d_environments = get_c2d_environments()
+    if service.type != ServiceType.ACCESS:
+        # allow our C2D to download a compute asset
+        c2d_environments = get_c2d_environments()
 
-    is_c2d_consumer_address = bool(
-        [
-            True
-            for env in c2d_environments
-            if Web3.toChecksumAddress(env["consumerAddress"])
-            == Web3.toChecksumAddress(consumer_address)
-        ]
-    )
-
-    if service.type != ServiceType.ACCESS and not is_c2d_consumer_address:
-        return error_response(
-            f"Service with index={service_id} is not an access service.", 400, logger
+        is_c2d_consumer_address = bool(
+            [
+                True
+                for env in c2d_environments
+                if Web3.toChecksumAddress(env["consumerAddress"])
+                == Web3.toChecksumAddress(consumer_address)
+            ]
         )
+
+        if not is_c2d_consumer_address:
+            return error_response(
+                f"Service with index={service_id} is not an access service.",
+                400,
+                logger,
+            )
+
     logger.info("validate_order called from download endpoint.")
 
     try:
@@ -293,7 +297,7 @@ def download():
         )
 
     file_index = int(data.get("fileIndex"))
-    files_list = get_service_files_list(service, provider_wallet, asset.version)
+    files_list = get_service_files_list(service, provider_wallet, asset)
     if file_index > len(files_list):
         return error_response(f"No such fileIndex {file_index}", 400, logger)
     url_object = files_list[file_index]

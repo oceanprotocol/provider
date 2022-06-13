@@ -137,6 +137,7 @@ def build_credentials_dict() -> dict:
 def get_compute_service(
     address,
     price,
+    nft_address,
     datatoken_address,
     trusted_algos=None,
     trusted_publishers=None,
@@ -154,7 +155,7 @@ def get_compute_service(
 
     unencrypted_files_list = {
         "datatokenAddress": datatoken_address,
-        "type": "compute",
+        "nftAddress": nft_address,
         "files": [
             {
                 "type": "url",
@@ -182,7 +183,9 @@ def get_compute_service(
     }
 
 
-def get_compute_service_no_rawalgo(address, price, datatoken_address, timeout=3600):
+def get_compute_service_no_rawalgo(
+    address, price, nft_address, datatoken_address, timeout=3600
+):
     compute_service_attributes = {
         "namespace": "test",
         "allowRawAlgorithm": False,
@@ -193,7 +196,7 @@ def get_compute_service_no_rawalgo(address, price, datatoken_address, timeout=36
 
     unencrypted_files_list = {
         "datatokenAddress": datatoken_address,
-        "type": "compute",
+        "nftAddress": nft_address,
         "files": [
             {
                 "type": "url",

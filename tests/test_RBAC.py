@@ -129,7 +129,9 @@ def test_compute_payload_without_additional_inputs(
 ):
     ddo_sample1 = copy.deepcopy(ddo_sample1_v4)
     ddo = Asset(ddo_sample1)
-    ddo.services.append(Service.from_json(1, get_compute_service(None, None, "0x0")))
+    ddo.services.append(
+        Service.from_json(1, get_compute_service(None, None, "0x0", "0x0"))
+    )
 
     alg_ddo = Asset(algorithm_ddo_sample)
     sa = get_first_service_by_type(alg_ddo, ServiceType.COMPUTE)
@@ -174,7 +176,9 @@ def test_compute_request_payload(
 ):
     ddo_sample1 = copy.deepcopy(ddo_sample1_v4)
     ddo = Asset(ddo_sample1)
-    ddo.services.append(Service.from_json(1, get_compute_service(None, None, "0x0")))
+    ddo.services.append(
+        Service.from_json(1, get_compute_service(None, None, "0x0", "0x0"))
+    )
 
     alg_ddo = Asset(algorithm_ddo_sample)
     sa = get_first_service_by_type(alg_ddo, ServiceType.COMPUTE)

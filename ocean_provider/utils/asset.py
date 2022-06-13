@@ -19,6 +19,7 @@ class Asset:
         ad = copy.deepcopy(asset_dict)
         self.did = ad.pop("id", None)
         self.version = ad.pop("version", None)
+        self.nftAddress = ad.pop("nftAddress", None)
         self.chain_id = ad.pop("chainId", None)
         self.metadata = ad.pop("metadata", None)
         self.services = [

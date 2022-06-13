@@ -10,6 +10,7 @@ import os
 from cgi import parse_header
 from urllib.parse import urljoin
 from typing import Tuple
+from ocean_provider.utils.asset import Asset
 import werkzeug
 
 from eth_account.signers.local import LocalAccount
@@ -109,29 +110,36 @@ def build_download_response(
 
 
 def get_service_files_list(
-    service: Service, provider_wallet: LocalAccount, version="4.1.0"
+    service: Service, provider_wallet: LocalAccount, asset: Asset = None
 ) -> list:
-    if version == "4.0.0":
+    if asset is None:
+        version = "4.0.0"
+    else:
+        version = asset.version if asset.version else "4.0.0"
+    if asset is None or version == "4.0.0":
         return get_service_files_list_old_structure(service, provider_wallet)
 
     try:
         files_str = do_decrypt(service.encrypted_files, provider_wallet)
         if not files_str:
             return None
-        logger.debug(f"Got decrypted files str {files_str}")
+        
 
         files_json = json.loads(files_str)
 
-        for key in ["datatokenAddress", "type", "files"]:
+        for key in ["datatokenAddress", "nftAddress", "files"]:
             if key not in files_json:
                 raise Exception(f"Key {key} not found in files.")
-
-        if (
-            Web3.toChecksumAddress(files_json["datatokenAddress"])
-            != Web3.toChecksumAddress(service.datatoken_address)
-            or files_json["type"] != service.type
+        if Web3.toChecksumAddress(
+            files_json["datatokenAddress"]
+        ) != Web3.toChecksumAddress(
+            service.datatoken_address
+        ) or Web3.toChecksumAddress(
+            files_json["nftAddress"]
+        ) != Web3.toChecksumAddress(
+            asset.nftAddress
         ):
-            raise Exception(f"Mismatch of service details.")
+            raise Exception(f"Mismatch of service datatoken or nft")
 
         files_list = files_json["files"]
         if not isinstance(files_list, list):
@@ -189,10 +197,10 @@ def get_download_url(url_object):
     return urljoin(os.getenv("IPFS_GATEWAY"), urljoin("ipfs/", url_object["hash"]))
 
 
-def check_url_valid(service, file_index, data):
+def check_url_valid(service, file_index, data, asset):
     provider_wallet = get_provider_wallet()
 
-    url_object = get_service_files_list(service, provider_wallet)[file_index]
+    url_object = get_service_files_list(service, provider_wallet, asset)[file_index]
     url_valid, message = validate_url_object(url_object, service.id)
     if not url_valid:
         return False, message
