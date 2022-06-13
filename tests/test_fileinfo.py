@@ -95,3 +95,11 @@ def test_check_url_bad(client):
     response = client.post(fileinfo_url, json=data)
     result = response.get_json()
     assert response.status == "400 BAD REQUEST"
+
+@pytest.mark.unit
+def test_check_arweave_good(client):
+    pass
+
+@pytest.mark.unit
+def test_check_arweave_bad(client):
+    pass
