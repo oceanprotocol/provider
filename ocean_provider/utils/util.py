@@ -9,7 +9,7 @@ import mimetypes
 import os
 from cgi import parse_header
 from urllib.parse import urljoin
-from typing import Tuple
+from typing import Any, Dict, Tuple
 import werkzeug
 
 from eth_account.signers.local import LocalAccount
@@ -142,14 +142,19 @@ def validate_url_object(url_object, service_id):
     return True, ""
 
 
-def get_download_url(url_object):
-    if url_object["type"] != "ipfs":
-        return url_object["url"]
-
-    if not os.getenv("IPFS_GATEWAY"):
-        raise Exception("No IPFS_GATEWAY defined, can not resolve ipfs hash.")
-
-    return urljoin(os.getenv("IPFS_GATEWAY"), urljoin("ipfs/", url_object["hash"]))
+def get_download_url(url_object: Dict[str, Any]) -> str:
+    if url_object["type"] == "url":
+        return url_object["url"]:
+    elif url_object["type"] == "ipfs":
+        if not os.getenv("IPFS_GATEWAY"):
+            raise ValueError("No IPFS_GATEWAY defined, can not resolve ipfs hash.")
+        return urljoin(os.getenv("IPFS_GATEWAY"), urljoin("ipfs/", url_object["hash"]))
+    elif url_object["type"] == "arweave":
+        if not os.getenv("ARWEAVE_GATEWAY"):
+            raise ValueError("No ARWEAVE_GATEWAY defined, can not resolve arweave transaction id.")
+        return urljoin(os.getenv("ARWEAVE_GATEWAY", url_object["transactionId"]))
+    else:
+        raise ValueError(f"URL object type {url_object['type']} not supported.")
 
 
 def check_url_valid(service, file_index, data):
