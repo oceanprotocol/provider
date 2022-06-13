@@ -102,9 +102,9 @@ def test_check_arweave_good(client):
     response = client.post(fileinfo_url, json=payload)
     result = response.get_json()
 
+    assert response.status == "200 OK", f"{result}"
     assert isinstance(result, list)
     assert len(result) == 1
-    assert response.status == "200 OK"
     for file_info in result:
         assert file_info["contentLength"] == "1161"  # TODO update to actual content length
         assert file_info["contentType"] == "application/json"
