@@ -152,7 +152,7 @@ def get_download_url(url_object: Dict[str, Any]) -> str:
     elif url_object["type"] == "arweave":
         if not os.getenv("ARWEAVE_GATEWAY"):
             raise ValueError("No ARWEAVE_GATEWAY defined, can not resolve arweave transaction id.")
-        return urljoin(os.getenv("ARWEAVE_GATEWAY", url_object["transactionId"]))
+        return urljoin(os.getenv("ARWEAVE_GATEWAY"), url_object["transactionId"])
     else:
         raise ValueError(f"URL object type {url_object['type']} not supported.")
 
