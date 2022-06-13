@@ -144,7 +144,7 @@ def validate_url_object(url_object, service_id):
 
 def get_download_url(url_object: Dict[str, Any]) -> str:
     if url_object["type"] == "url":
-        return url_object["url"]:
+        return url_object["url"]
     elif url_object["type"] == "ipfs":
         if not os.getenv("IPFS_GATEWAY"):
             raise ValueError("No IPFS_GATEWAY defined, can not resolve ipfs hash.")
