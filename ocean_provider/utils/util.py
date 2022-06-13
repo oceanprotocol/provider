@@ -58,7 +58,8 @@ def build_download_response(
         if is_range_request:
             download_request_headers = {"Range": request.headers.get("range")}
             download_response_headers = download_request_headers
-
+        if method.lower() not in ["get", "post"]:
+            raise ValueError(f"Unsafe method {method.lower()}")
         method = getattr(requests_session, method.lower())
         response = method(
             download_url, headers=download_request_headers, stream=True, timeout=3
