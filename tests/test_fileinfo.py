@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import pytest
-
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.services import ServiceType
 from tests.test_helpers import (
@@ -96,9 +95,13 @@ def test_check_url_bad(client):
     result = response.get_json()
     assert response.status == "400 BAD REQUEST"
 
+
 @pytest.mark.unit
 def test_check_arweave_good(client):
-    payload = {"type": "arweave", "transactionId": "cZ6j5PmPVXCq5Az6YGcGqzffYjx2JnsnlSajaHNr20w"}
+    payload = {
+        "type": "arweave",
+        "transactionId": "cZ6j5PmPVXCq5Az6YGcGqzffYjx2JnsnlSajaHNr20w",
+    }
     response = client.post(fileinfo_url, json=payload)
     result = response.get_json()
 
@@ -109,6 +112,7 @@ def test_check_arweave_good(client):
         assert file_info["contentLength"] == "31976"
         assert file_info["contentType"] == "application/json"
         assert file_info["valid"] is True
+
 
 @pytest.mark.unit
 def test_check_arweave_bad(client):
