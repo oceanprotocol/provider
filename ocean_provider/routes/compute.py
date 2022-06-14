@@ -179,7 +179,6 @@ def initializeCompute():
 
         algo_service = algo.get_service_by_id(algorithm.get("serviceId"))
         algorithm["consumerAddress"] = consumer_address
-
         approve_params["algorithm"] = get_provider_fees_or_remote(
             algo,
             algo_service,
