@@ -122,7 +122,12 @@ def initializeCompute():
             400,
             logger,
         )
-
+    if datetime.utcnow().timestamp() >= valid_until:
+        return error_response(
+            "The validUntil value should be higher then current timpestamp.",
+            400,
+            logger,
+        )
     if not check_environment_exists(get_c2d_environments(), compute_env):
         return error_response("Compute environment does not exist", 400, logger)
 
