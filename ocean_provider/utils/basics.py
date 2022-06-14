@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 from datetime import datetime
+import logging
 import os
 from typing import Optional, Union
 
@@ -15,6 +16,7 @@ from requests_testadapter import Resp
 from web3 import WebsocketProvider
 from web3.main import Web3
 
+logger = logging.getLogger(__name__)
 
 def get_config(config_file: Optional[str] = None) -> Config:
     """
@@ -125,5 +127,6 @@ def validate_timestamp(value):
         now = datetime.utcnow()
 
         return valid_until > now
-    except Exception:
+    except Exception as e:
+        logger.error(f"Failed to validate timestamp {value}: {e}\n")
         return False
