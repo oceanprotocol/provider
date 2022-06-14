@@ -176,14 +176,16 @@ def validate_url_object(url_object, service_id):
     if not url_object:
         return False, f"cannot decrypt files for this service. id={service_id}"
 
-    if "type" not in url_object or url_object["type"] not in ["ipfs", "url"]:
+    if "type" not in url_object or url_object["type"] not in ["ipfs", "url", "arweave"]:
         return (
             False,
             f"malformed or unsupported type for service files. id={service_id}",
         )
 
-    if (url_object["type"] == "ipfs" and "hash" not in url_object) or (
-        url_object["type"] == "url" and "url" not in url_object
+    if (
+        (url_object["type"] == "ipfs" and "hash" not in url_object)
+        or (url_object["type"] == "url" and "url" not in url_object)
+        or (url_object["type"] == "arweave" and "transactionId" not in url_object)
     ):
         return False, f"malformed service files, missing required keys. id={service_id}"
 
