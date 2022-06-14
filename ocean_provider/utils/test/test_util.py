@@ -127,6 +127,13 @@ def test_build_download_response():
         == f"attachment;filename={filename}"
     )
 
+    filename = "filename.txt"
+    url = f"https://source-lllllll.cccc/{filename}"
+    with pytest.raises(ValueError, match="Unsafe method DELETE"):
+        response = build_download_response(
+            request, requests_session_with_content_type, url, url, method="DELETE"
+        )
+
 
 @pytest.mark.unit
 def test_download_ipfs_file():
