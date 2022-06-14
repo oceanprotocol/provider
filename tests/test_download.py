@@ -2,6 +2,7 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
+from asyncio.log import logger
 import copy
 import time
 from datetime import datetime
@@ -104,7 +105,7 @@ def test_download_timeout(client, publisher_wallet, consumer_wallet, web3, timeo
         get_provider_fees(asset.did, service, consumer_wallet.address, 0),
         consumer_wallet,
     )
-
+    
     # Sleep for 1 second (give the order time to expire)
     time.sleep(1)
 

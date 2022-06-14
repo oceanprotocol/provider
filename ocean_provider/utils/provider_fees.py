@@ -71,7 +71,7 @@ def get_provider_fees(
     provider_fee = {
         "providerFeeAddress": provider_fee_address,
         "providerFeeToken": provider_fee_token,
-        "providerFeeAmount": str(provider_fee_amount),
+        "providerFeeAmount": provider_fee_amount,
         "providerData": web3.toHex(web3.toBytes(text=provider_data)),
         # make it compatible with last openzepellin https://github.com/OpenZeppelin/openzeppelin-contracts/pull/1622
         "v": (signed.v + 27) if signed.v <= 1 else signed.v,
@@ -139,18 +139,20 @@ def get_provider_fees_or_remote(
         except Exception:
             # order does not exist or is expired, so we need new provider fees
             pass
-
     if is_this_same_provider(service.service_endpoint):
-        result = {
-            "datatoken": service.datatoken_address,
-            "providerFee": get_provider_fees(
+        provider_fee = get_provider_fees(
                 asset.did,
                 service,
                 consumer_address,
                 valid_until,
                 compute_env,
                 force_zero=force_zero,
-            ),
+            )
+        if provider_fee :
+            provider_fee['providerFeeAmount'] = str(provider_fee["providerFeeAmount"])
+        result = {
+            "datatoken": service.datatoken_address,
+            "providerFee": provider_fee
         }
     else:
         # delegate to different provider
@@ -159,7 +161,7 @@ def get_provider_fees_or_remote(
         )
 
         result = response.json()
-
+    
     if valid_order:
         result["validOrder"] = valid_order
 

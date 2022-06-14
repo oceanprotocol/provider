@@ -198,10 +198,13 @@ def initialize():
     # of tokens required for this service
     # The consumer must sign and execute this transaction in order to be
     # able to consume the service
+    provider_fee = get_provider_fees(did, service, consumer_address, 0)
+    if provider_fee:
+        provider_fee["providerFeeAmount"] = str(provider_fee["providerFeeAmount"])
     approve_params = {
         "datatoken": token_address,
         "nonce": get_nonce(consumer_address),
-        "providerFee": get_provider_fees(did, service, consumer_address, 0),
+        "providerFee": provider_fee,
     }
 
     if valid_order:

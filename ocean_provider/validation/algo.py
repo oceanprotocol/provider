@@ -123,12 +123,15 @@ class WorkflowValidator:
             self.web3,
             provider_fee_token,
         )
-
-        if required_provider_fee not in provider_fee_amounts:
+        
+        paid_provider_fees_index = -1
+        for fee in provider_fee_amounts:
+            if required_provider_fee <= fee:
+                paid_provider_fees_index = provider_fee_amounts.index(fee)
+        
+        if paid_provider_fees_index == -1:
             self.error = "Provider fees must be paid on the asset, OR on the algorithm ordered, OR on any additional input."
             return False
-
-        paid_provider_fees_index = provider_fee_amounts.index(required_provider_fee)
 
         self.agreement_id = None
         for index, input_item in enumerate(all_data):
@@ -346,7 +349,6 @@ class InputItemValidator:
         asset_urls = get_service_files_list(
             self.service, self.provider_wallet, self.asset
         )
-        logger.error(asset_urls)
         if self.service.type == "compute" and not asset_urls:
             self.error = "Services in input with compute type must be in the same provider you are calling."
             return False
