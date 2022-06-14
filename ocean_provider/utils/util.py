@@ -112,10 +112,7 @@ def build_download_response(
 def get_service_files_list(
     service: Service, provider_wallet: LocalAccount, asset: Asset = None
 ) -> list:
-    if asset is None:
-        version = "4.0.0"
-    else:
-        version = asset.version if asset.version else "4.0.0"
+    version = asset.version if asset is not None and asset.version else "4.0.0"
     if asset is None or version == "4.0.0":
         return get_service_files_list_old_structure(service, provider_wallet)
 
@@ -129,6 +126,7 @@ def get_service_files_list(
         for key in ["datatokenAddress", "nftAddress", "files"]:
             if key not in files_json:
                 raise Exception(f"Key {key} not found in files.")
+
         if Web3.toChecksumAddress(
             files_json["datatokenAddress"]
         ) != Web3.toChecksumAddress(service.datatoken_address):
@@ -140,7 +138,7 @@ def get_service_files_list(
             asset.nftAddress
         ):
             raise Exception(
-                f"Mismatch of nft. Got {files_json['nftAddress']} vs expected {asset.nftAddress}"
+                f"Mismatch of dataNft. Got {files_json['nftAddress']} vs expected {asset.nftAddress}"
             )
 
         files_list = files_json["files"]

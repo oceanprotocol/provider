@@ -177,7 +177,15 @@ def test_compute_request_payload(
     ddo_sample1 = copy.deepcopy(ddo_sample1_v4)
     ddo = Asset(ddo_sample1)
     ddo.services.append(
-        Service.from_json(1, get_compute_service(None, None, "0x0", "0x0"))
+        Service.from_json(
+            1,
+            get_compute_service(
+                None,
+                None,
+                "0x0000000000000000000000000000000000000000",
+                "0x0000000000000000000000000000000000000000",
+            ),
+        )
     )
 
     alg_ddo = Asset(algorithm_ddo_sample)
