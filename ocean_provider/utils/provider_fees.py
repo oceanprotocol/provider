@@ -141,19 +141,16 @@ def get_provider_fees_or_remote(
             pass
     if is_this_same_provider(service.service_endpoint):
         provider_fee = get_provider_fees(
-                asset.did,
-                service,
-                consumer_address,
-                valid_until,
-                compute_env,
-                force_zero=force_zero,
-            )
-        if provider_fee :
-            provider_fee['providerFeeAmount'] = str(provider_fee["providerFeeAmount"])
-        result = {
-            "datatoken": service.datatoken_address,
-            "providerFee": provider_fee
-        }
+            asset.did,
+            service,
+            consumer_address,
+            valid_until,
+            compute_env,
+            force_zero=force_zero,
+        )
+        if provider_fee:
+            provider_fee["providerFeeAmount"] = str(provider_fee["providerFeeAmount"])
+        result = {"datatoken": service.datatoken_address, "providerFee": provider_fee}
     else:
         # delegate to different provider
         response = requests.get(
@@ -161,7 +158,7 @@ def get_provider_fees_or_remote(
         )
 
         result = response.json()
-    
+
     if valid_order:
         result["validOrder"] = valid_order
 

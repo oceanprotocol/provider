@@ -31,6 +31,7 @@ from unittest.mock import patch
 
 logger = logging.getLogger(__name__)
 
+
 @pytest.mark.integration
 def test_initialize_on_bad_url(client, publisher_wallet, consumer_wallet, web3):
     asset = get_dataset_with_invalid_url_ddo(client, publisher_wallet)

@@ -123,12 +123,12 @@ class WorkflowValidator:
             self.web3,
             provider_fee_token,
         )
-        
+
         paid_provider_fees_index = -1
         for fee in provider_fee_amounts:
             if required_provider_fee <= fee:
                 paid_provider_fees_index = provider_fee_amounts.index(fee)
-        
+
         if paid_provider_fees_index == -1:
             self.error = "Provider fees must be paid on the asset, OR on the algorithm ordered, OR on any additional input."
             return False
