@@ -35,6 +35,7 @@ jobs:
         working-directory: ${{ github.workspace }}/barge
         env:
           CONTRACTS_VERSION: v1.0.0-alpha.32
+          AQUARIUS_VERSION: schema-4.1.0
         run: |
           bash -x start_ocean.sh --no-dashboard 2>&1 --with-rbac --with-provider2 --with-c2d > start_ocean.log &
       - name: Install dependencies

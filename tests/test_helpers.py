@@ -169,6 +169,7 @@ def get_registered_asset(
     custom_services_args=None,
     custom_service_endpoint=None,
     erc20_enterprise=False,
+    service_type="access",
     timeout=3600,
 ):
     web3 = get_web3()
@@ -208,6 +209,11 @@ def get_registered_asset(
             }
         ]
 
+    unencrypted_files_list = {
+        "datatokenAddress": datatoken_address,
+        "nftAddress": data_nft_address,
+        "files": unencrypted_files_list,
+    }
     encrypted_files_str = json.dumps(unencrypted_files_list, separators=(",", ":"))
     encrypted_files = do_encrypt(
         Web3.toHex(text=encrypted_files_str), get_provider_wallet()
@@ -241,6 +247,7 @@ def get_registered_asset(
         else build_custom_services(
             custom_services,
             from_wallet,
+            data_nft_address,
             datatoken_address,
             custom_services_args,
             timeout,
@@ -300,7 +307,7 @@ def set_metadata(
     return sign_send_and_wait_for_receipt(web3, transaction, from_wallet)
 
 
-def get_dataset_ddo_with_multiple_files(client, wallet):
+def get_dataset_ddo_with_multiple_files(client, wallet, service_type="access"):
     ufl = []
     for _ in range(3):
         ufl.append(
@@ -311,7 +318,9 @@ def get_dataset_ddo_with_multiple_files(client, wallet):
             }
         )
 
-    return get_registered_asset(wallet, unencrypted_files_list=ufl)
+    return get_registered_asset(
+        wallet, unencrypted_files_list=ufl, service_type=service_type
+    )
 
 
 def get_dataset_ddo_disabled(client, wallet):
@@ -454,13 +463,19 @@ def start_order(
 
 
 def build_custom_services(
-    services_type, from_wallet, datatoken_address, custom_services_args, timeout
+    services_type,
+    from_wallet,
+    nft_address,
+    datatoken_address,
+    custom_services_args,
+    timeout,
 ):
     if services_type == "vanilla_compute":
         return [
             get_compute_service(
                 from_wallet.address,
                 10,
+                nft_address,
                 datatoken_address,
                 trusted_algos=custom_services_args,
                 timeout=timeout,
@@ -469,7 +484,7 @@ def build_custom_services(
     if services_type == "norawalgo":
         return [
             get_compute_service_no_rawalgo(
-                from_wallet.address, 10, datatoken_address, timeout
+                from_wallet.address, 10, nft_address, datatoken_address, timeout
             )
         ]
 

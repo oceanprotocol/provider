@@ -50,7 +50,7 @@ def test_compute_raw_algo(
 
     # publish a dataset asset
     dataset_ddo_w_compute_service = get_registered_asset(
-        publisher_wallet, custom_services=custom_services
+        publisher_wallet, custom_services=custom_services, service_type="compute"
     )
 
     sa = get_first_service_by_type(dataset_ddo_w_compute_service, ServiceType.COMPUTE)
