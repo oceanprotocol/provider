@@ -18,6 +18,7 @@ from web3.main import Web3
 
 logger = logging.getLogger(__name__)
 
+
 def get_config(config_file: Optional[str] = None) -> Config:
     """
     :return: Config instance
