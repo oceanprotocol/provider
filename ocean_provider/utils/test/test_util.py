@@ -2,7 +2,7 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
-from copy import deepcopy
+import copy
 import json
 import logging
 import mimetypes
@@ -13,16 +13,20 @@ import ipfshttpclient
 from web3.main import Web3
 from werkzeug.utils import get_content_type
 
+from copy import deepcopy
 from ocean_provider.requests_session import get_requests_session
+from ocean_provider.utils.asset import Asset
 from ocean_provider.utils.encryption import do_encrypt
 from ocean_provider.utils.services import Service
 from ocean_provider.utils.util import (
     build_download_response,
     get_download_url,
     get_service_files_list,
+    get_service_files_list_old_structure,
     msg_hash,
     validate_url_object,
 )
+from tests.ddo.ddo_sample1_v4 import json_dict as ddo_sample1_v4
 
 test_logger = logging.getLogger(__name__)
 
@@ -156,12 +160,99 @@ def test_download_ipfs_file():
 
 @pytest.mark.unit
 def test_get_service_files_list(provider_wallet):
+    ddo_sample1 = copy.deepcopy(ddo_sample1_v4)
+    ddo = Asset(ddo_sample1)
+    service = Mock(template=Service)
+    service.datatoken_address = "0x0000000000000000000000000000000000000000"
+    service.type = "access"
+
+    encrypted_files_str = json.dumps(
+        {
+            "nftAddress": "0x0000000000000000000000000000000000000000",
+            "datatokenAddress": "0x0000000000000000000000000000000000000000",
+            "files": ["test1", "test2"],
+        },
+        separators=(",", ":"),
+    )
+    service.encrypted_files = do_encrypt(
+        Web3.toHex(text=encrypted_files_str), provider_wallet
+    )
+    assert ["test1", "test2"] == get_service_files_list(service, provider_wallet, ddo)
+
+    # empty and raw
+    service.encrypted_files = ""
+    assert get_service_files_list(service, provider_wallet, ddo) is None
+
+    # empty and encrypted
+    encrypted_files_str = ""
+    service.encrypted_files = do_encrypt(
+        Web3.toHex(text=encrypted_files_str), provider_wallet
+    )
+    assert get_service_files_list(service, provider_wallet, ddo) is None
+
+    # not a dict
+    encrypted_files_str = json.dumps([], separators=(",", ":"))
+    service.encrypted_files = do_encrypt(
+        Web3.toHex(text=encrypted_files_str), provider_wallet
+    )
+
+    assert get_service_files_list(service, provider_wallet, ddo) is None
+
+    # files not a list
+    encrypted_files_str = json.dumps(
+        {
+            "nftAddress": "0x0000000000000000000000000000000000000000",
+            "datatokenAddress": "0x0000000000000000000000000000000000000000",
+            "files": {"some_dict": "test"},
+        },
+        separators=(",", ":"),
+    )
+    service.encrypted_files = do_encrypt(
+        Web3.toHex(text=encrypted_files_str), provider_wallet
+    )
+
+    assert get_service_files_list(service, provider_wallet, ddo) is None
+
+    # missing nftAddress
+    encrypted_files_str = json.dumps(
+        {
+            "datatokenAddress": "0x0000000000000000000000000000000000000000",
+            "files": {"some_dict": "test"},
+        },
+        separators=(",", ":"),
+    )
+    service.encrypted_files = do_encrypt(
+        Web3.toHex(text=encrypted_files_str), provider_wallet
+    )
+
+    assert get_service_files_list(service, provider_wallet, ddo) is None
+
+    # wrong nftAddress
+    encrypted_files_str = json.dumps(
+        {
+            "nftAddress": "0x0000000000000000000000000000000000000001",
+            "datatokenAddress": "0x0000000000000000000000000000000000000000",
+            "files": {"some_dict": "test"},
+        },
+        separators=(",", ":"),
+    )
+    service.encrypted_files = do_encrypt(
+        Web3.toHex(text=encrypted_files_str), provider_wallet
+    )
+
+    assert get_service_files_list(service, provider_wallet, ddo) is None
+
+
+@pytest.mark.unit
+def test_get_service_files_list_old_structure(provider_wallet):
     service = Mock(template=Service)
     encrypted_files_str = json.dumps(["test1", "test2"], separators=(",", ":"))
     service.encrypted_files = do_encrypt(
         Web3.toHex(text=encrypted_files_str), provider_wallet
     )
-    assert ["test1", "test2"] == get_service_files_list(service, provider_wallet)
+    assert ["test1", "test2"] == get_service_files_list_old_structure(
+        service, provider_wallet
+    )
 
     # empty and raw
     service.encrypted_files = ""
@@ -172,7 +263,7 @@ def test_get_service_files_list(provider_wallet):
     service.encrypted_files = do_encrypt(
         Web3.toHex(text=encrypted_files_str), provider_wallet
     )
-    assert get_service_files_list(service, provider_wallet) is None
+    assert get_service_files_list_old_structure(service, provider_wallet) is None
 
     # not a list
     encrypted_files_str = json.dumps({"test": "test"}, separators=(",", ":"))
@@ -180,7 +271,7 @@ def test_get_service_files_list(provider_wallet):
         Web3.toHex(text=encrypted_files_str), provider_wallet
     )
 
-    assert get_service_files_list(service, provider_wallet) is None
+    assert get_service_files_list_old_structure(service, provider_wallet) is None
 
 
 @pytest.mark.unit

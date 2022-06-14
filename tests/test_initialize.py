@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import json
+import logging
 import time
 
 import pytest
@@ -27,6 +28,8 @@ from tests.test_helpers import (
 )
 
 from unittest.mock import patch
+
+logger = logging.getLogger(__name__)
 
 
 @pytest.mark.integration
