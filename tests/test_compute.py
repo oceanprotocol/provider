@@ -161,7 +161,7 @@ def test_compute(client, publisher_wallet, consumer_wallet, free_c2d_env):
         False,
         None,
         free_c2d_env["consumerAddress"],
-        free_c2d_env["id"],
+        c2d_environment=free_c2d_env["id"],
     )
     sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
     sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
@@ -288,7 +288,7 @@ def test_compute_diff_provider(client, publisher_wallet, consumer_wallet, free_c
         True,
         None,
         free_c2d_env["consumerAddress"],
-        free_c2d_env["id"],
+        c2d_environment=free_c2d_env["id"],
     )
     sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
     sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
@@ -323,7 +323,7 @@ def test_compute_allow_all_published(
         False,
         "allow_all_published",
         free_c2d_env["consumerAddress"],
-        free_c2d_env["id"],
+        c2d_environment=free_c2d_env["id"],
     )
     sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
     sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
@@ -371,7 +371,7 @@ def test_compute_additional_input(
         False,
         None,
         free_c2d_env["consumerAddress"],
-        free_c2d_env["id"],
+        c2d_environment=free_c2d_env["id"],
     )
     sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
     sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
@@ -455,7 +455,7 @@ def test_compute_delete_job(
         False,
         None,
         free_c2d_env["consumerAddress"],
-        free_c2d_env["id"],
+        c2d_environment=free_c2d_env["id"],
     )
     sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
     sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
