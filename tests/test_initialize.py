@@ -309,7 +309,7 @@ def test_initialize_compute_order_reused(
         )
         if "providerFee" in response.json["algorithm"] or time.time() > timeout:
             break
-        time.sleep(5)
+        time.sleep(1)
 
     # Case 2: valid orders, expired provider fees
     assert response.status_code == 200
@@ -329,7 +329,7 @@ def test_initialize_compute_order_reused(
         )
         if "validOrder" not in response.json["algorithm"] or time.time() > timeout:
             break
-        time.sleep(5)
+        time.sleep(1)
 
     # Case 3: expired orders, expired provider fees
     assert response.status_code == 200
