@@ -364,6 +364,7 @@ def test_compute_allow_all_published(
 def test_compute_additional_input(
     client, publisher_wallet, consumer_wallet, monkeypatch, free_c2d_env
 ):
+    valid_until = get_future_valid_until()
     ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
         client,
         publisher_wallet,
@@ -372,6 +373,7 @@ def test_compute_additional_input(
         None,
         free_c2d_env["consumerAddress"],
         c2d_environment=free_c2d_env["id"],
+        valid_until=valid_until,
     )
     sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
     sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
@@ -398,7 +400,7 @@ def test_compute_additional_input(
             ddo2.did,
             sa2,
             consumer_wallet.address,
-            get_future_valid_until(),
+            valid_until,
             free_c2d_env["id"],
             force_zero=True,
         ),
