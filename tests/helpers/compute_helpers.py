@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
-from ocean_provider.utils.provider_fees import get_c2d_environments, get_provider_fees
+from ocean_provider.utils.provider_fees import get_provider_fees
 from ocean_provider.utils.services import ServiceType
 from ocean_provider.utils.util import msg_hash
 from tests.helpers.ddo_dict_builders import build_metadata_dict_type_algorithm
@@ -58,6 +58,31 @@ def build_and_send_ddo_with_compute_service(
             publisher_wallet,
             custom_services="vanilla_compute",
             custom_services_args=[],
+            timeout=timeout,
+        )
+    elif asset_type == "stored_in_arweave":
+        unencrypted_files_list = [
+            {
+                "type": "arweave",
+                "transactionId": "cZ6j5PmPVXCq5Az6YGcGqzffYjx2JnsnlSajaHNr20w",
+            }
+        ]
+        dataset_ddo_w_compute_service = get_registered_asset(
+            publisher_wallet,
+            unencrypted_files_list=unencrypted_files_list,
+            custom_services="vanilla_compute",
+            custom_services_args=[
+                {
+                    "did": alg_ddo.did,
+                    "filesChecksum": msg_hash(service.encrypted_files),
+                    "containerSectionChecksum": msg_hash(
+                        json.dumps(
+                            alg_ddo.metadata["algorithm"]["container"],
+                            separators=(",", ":"),
+                        )
+                    ),
+                }
+            ],
             timeout=timeout,
         )
     else:

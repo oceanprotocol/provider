@@ -8,7 +8,7 @@ from datetime import datetime
 import pytest
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
-from ocean_provider.utils.provider_fees import get_c2d_environments, get_provider_fees
+from ocean_provider.utils.provider_fees import get_provider_fees
 from ocean_provider.utils.services import ServiceType
 from ocean_provider.validation.provider_requests import RBACValidator
 from tests.helpers.compute_helpers import (
@@ -273,6 +273,91 @@ def test_compute(client, publisher_wallet, consumer_wallet, free_c2d_env):
         result_without_signature.json["errors"]["signature"][0]
         == "The signature field is required."
     ), "Signature should be required"
+
+    nonce, signature = get_compute_signature(client, consumer_wallet, index, job_id)
+    payload["signature"] = signature
+    payload["nonce"] = nonce
+    result_data = get_compute_result(
+        client, BaseURLs.SERVICES_URL + "/computeResult", payload
+    )
+    assert result_data is not None, "We should have a result"
+
+
+@pytest.mark.integration
+def test_compute_arweave(client, publisher_wallet, consumer_wallet, free_c2d_env):
+    valid_until = get_future_valid_until()
+    ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
+        client,
+        publisher_wallet,
+        consumer_wallet,
+        False,
+        asset_type="stored_in_arweave",
+        c2d_address=free_c2d_env["consumerAddress"],
+        valid_until=valid_until,
+        c2d_environment=free_c2d_env["id"],
+    )
+    sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
+    sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
+    nonce, signature = get_compute_signature(client, consumer_wallet, ddo.did)
+
+    # Start the compute job
+    payload = {
+        "dataset": {"documentId": ddo.did, "serviceId": sa.id, "transferTxId": tx_id},
+        "algorithm": {
+            "serviceId": sa_compute.id,
+            "documentId": alg_ddo.did,
+            "transferTxId": alg_tx_id,
+        },
+        "signature": signature,
+        "nonce": nonce,
+        "consumerAddress": consumer_wallet.address,
+        "environment": free_c2d_env["id"],
+    }
+
+    # Start compute with valid signature
+    payload["signature"] = signature
+    response = post_to_compute(client, payload)
+    assert response.status == "200 OK", f"start compute job failed: {response.data}"
+
+    job_info = response.json[0]
+    print(f"got response from starting compute job: {job_info}")
+    job_id = job_info.get("jobId", "")
+
+    # get a new signature
+    nonce, signature = get_compute_signature(client, consumer_wallet, ddo.did)
+    payload = dict(
+        {
+            "signature": signature,
+            "nonce": nonce,
+            "documentId": ddo.did,
+            "consumerAddress": consumer_wallet.address,
+            "jobId": job_id,
+        }
+    )
+
+    compute_endpoint = BaseURLs.SERVICES_URL + "/compute"
+    job_info = get_compute_job_info(client, compute_endpoint, payload)
+    assert job_info, f"Failed to get job info for jobId {job_id}"
+    print(f"got info for compute job {job_id}: {job_info}")
+    assert job_info["statusText"] in get_possible_compute_job_status_text()
+
+    # wait until job is done, see:
+    # https://github.com/oceanprotocol/operator-service/blob/main/API.md#status-description
+    tries = 0
+    while tries < 200:
+        job_info = get_compute_job_info(client, compute_endpoint, payload)
+        if job_info["dateFinished"] and float(job_info["dateFinished"]) > 0:
+            break
+        tries = tries + 1
+        time.sleep(5)
+
+    assert tries <= 200, "Timeout waiting for the job to be completed"
+    index = 0
+    payload = {
+        "index": index,
+        "consumerAddress": consumer_wallet.address,
+        "jobId": job_id,
+    }
 
     nonce, signature = get_compute_signature(client, consumer_wallet, index, job_id)
     payload["signature"] = signature
