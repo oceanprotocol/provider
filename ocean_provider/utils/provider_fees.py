@@ -131,7 +131,7 @@ def get_provider_fees_or_remote(
                 allow_expired_provider_fees=True,
             )
             log_valid_until = _provider_fees_log.args.validUntil
-            if datetime.utcnow().timestamp() <= log_valid_until:
+            if valid_until <= log_valid_until:
                 # already paid provider fees and both order and provider fees are still valid
                 return {"validOrder": dataset["transferTxId"]}
             else:
@@ -139,19 +139,18 @@ def get_provider_fees_or_remote(
         except Exception:
             # order does not exist or is expired, so we need new provider fees
             pass
-
     if is_this_same_provider(service.service_endpoint):
-        result = {
-            "datatoken": service.datatoken_address,
-            "providerFee": get_provider_fees(
-                asset.did,
-                service,
-                consumer_address,
-                valid_until,
-                compute_env,
-                force_zero=force_zero,
-            ),
-        }
+        provider_fee = get_provider_fees(
+            asset.did,
+            service,
+            consumer_address,
+            valid_until,
+            compute_env,
+            force_zero=force_zero,
+        )
+        if provider_fee:
+            provider_fee["providerFeeAmount"] = str(provider_fee["providerFeeAmount"])
+        result = {"datatoken": service.datatoken_address, "providerFee": provider_fee}
     else:
         # delegate to different provider
         response = requests.get(

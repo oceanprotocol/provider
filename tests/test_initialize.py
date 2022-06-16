@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import json
+import logging
 import time
 
 import pytest
@@ -27,6 +28,8 @@ from tests.test_helpers import (
 )
 
 from unittest.mock import patch
+
+logger = logging.getLogger(__name__)
 
 
 @pytest.mark.integration
@@ -245,7 +248,8 @@ def test_initialize_compute_order_reused(
     Case 4:
         wrong tx id for dataset order
     """
-    # Order asset, valid for 60 seconds
+    # Order asset, valid for 30 seconds
+    valid_until = get_future_valid_until(short=True)
     ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
         client,
         publisher_wallet,
@@ -253,7 +257,7 @@ def test_initialize_compute_order_reused(
         True,
         None,
         free_c2d_env["consumerAddress"],
-        short_valid_until=True,
+        valid_until,
         timeout=60,
         c2d_environment=free_c2d_env["id"],
     )
@@ -277,7 +281,7 @@ def test_initialize_compute_order_reused(
         "consumerAddress": consumer_wallet.address,
         "compute": {
             "env": free_c2d_env["id"],
-            "validUntil": get_future_valid_until(short=True),
+            "validUntil": valid_until,
         },
     }
 
@@ -294,12 +298,10 @@ def test_initialize_compute_order_reused(
     assert "providerFee" not in response.json["datasets"][0]
     assert "providerFee" not in response.json["algorithm"]
 
-    # Update payload "validUntil" to 1 hour from now
-    payload["compute"]["validUntil"] = get_future_valid_until()
-
     # Sleep long enough for provider fees to expire
     timeout = time.time() + (30 * 4)
     while True:
+        payload["compute"]["validUntil"] = get_future_valid_until(short=True) + 30
         response = client.post(
             BaseURLs.SERVICES_URL + "/initializeCompute",
             data=json.dumps(payload),
@@ -317,7 +319,9 @@ def test_initialize_compute_order_reused(
     assert "providerFee" in response.json["algorithm"]
 
     # Sleep long enough for orders to expire
+    timeout = time.time() + (30 * 4)
     while True:
+        payload["compute"]["validUntil"] = get_future_valid_until(short=True) + 30
         response = client.post(
             BaseURLs.SERVICES_URL + "/initializeCompute",
             data=json.dumps(payload),

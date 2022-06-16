@@ -30,7 +30,7 @@ def build_ddo_dict(
     return {
         "@context": ["https://w3id.org/did/v1"],
         "id": did,
-        "version": "4.0.0",
+        "version": "4.1.0",
         "nftAddress": nft_address,
         "chainId": chain_id,
         "metadata": metadata,
@@ -114,7 +114,7 @@ def build_algorithm_dict() -> dict:
     """Build an algorithm dict, used for testing."""
     return {
         "language": "python",
-        "version": "0.1.0",
+        "version": "4.1.0",
         "container": build_container_dict(),
     }
 
@@ -137,6 +137,7 @@ def build_credentials_dict() -> dict:
 def get_compute_service(
     address,
     price,
+    nft_address,
     datatoken_address,
     trusted_algos=None,
     trusted_publishers=None,
@@ -152,13 +153,17 @@ def get_compute_service(
         "publisherTrustedAlgorithms": trusted_algos,
     }
 
-    unencrypted_files_list = [
-        {
-            "type": "url",
-            "method": "GET",
-            "url": "https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt",
-        }
-    ]
+    unencrypted_files_list = {
+        "datatokenAddress": datatoken_address,
+        "nftAddress": nft_address,
+        "files": [
+            {
+                "type": "url",
+                "method": "GET",
+                "url": "https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt",
+            }
+        ],
+    }
 
     encrypted_files_str = json.dumps(unencrypted_files_list, separators=(",", ":"))
     encrypted_files = do_encrypt(
@@ -178,7 +183,9 @@ def get_compute_service(
     }
 
 
-def get_compute_service_no_rawalgo(address, price, datatoken_address, timeout=3600):
+def get_compute_service_no_rawalgo(
+    address, price, nft_address, datatoken_address, timeout=3600
+):
     compute_service_attributes = {
         "namespace": "test",
         "allowRawAlgorithm": False,
@@ -187,13 +194,17 @@ def get_compute_service_no_rawalgo(address, price, datatoken_address, timeout=36
         "publisherTrustedAlgorithms": [],
     }
 
-    unencrypted_files_list = [
-        {
-            "type": "url",
-            "method": "GET",
-            "url": "https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt",
-        }
-    ]
+    unencrypted_files_list = {
+        "datatokenAddress": datatoken_address,
+        "nftAddress": nft_address,
+        "files": [
+            {
+                "type": "url",
+                "method": "GET",
+                "url": "https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt",
+            }
+        ],
+    }
 
     encrypted_files_str = json.dumps(unencrypted_files_list, separators=(",", ":"))
     encrypted_files = do_encrypt(

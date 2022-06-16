@@ -5,7 +5,7 @@
 algorithm_ddo_sample = {
     "@context": ["https://w3id.org/did/v1"],
     "id": "did:op:0bc278fee025464f8012b811d1bce8e22094d0984e4e49139df5d5ff7a028bdf",
-    "version": "4.0.0",
+    "version": "4.1.0",
     "chainId": 8996,
     "proof": {
         "created": "2019-02-08T08:13:41Z",
