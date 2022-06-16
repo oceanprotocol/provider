@@ -21,7 +21,7 @@ from ocean_provider.utils.asset import Asset
 from ocean_provider.utils.basics import get_provider_wallet
 from ocean_provider.utils.encryption import do_decrypt
 from ocean_provider.utils.services import Service
-from ocean_provider.utils.url import append_userdata, check_url_details, is_safe_url
+from ocean_provider.utils.url import append_userdata, check_url_details
 from web3 import Web3
 from web3.types import TxParams, TxReceipt
 
@@ -41,17 +41,9 @@ def msg_hash(message: str):
 
 
 def build_download_response(
-    request,
-    requests_session,
-    url,
-    download_url,
-    content_type=None,
-    method="GET",
-    validate_url=True,
+    request, requests_session, download_url, content_type=None, method="GET"
 ):
     try:
-        if validate_url and not is_safe_url(url):
-            raise ValueError(f"Unsafe url {url}")
         download_request_headers = {}
         download_response_headers = {}
         is_range_request = bool(request.range)
@@ -68,7 +60,7 @@ def build_download_response(
             download_url, headers=download_request_headers, stream=True, timeout=3
         )
         if not is_range_request:
-            filename = url.split("/")[-1]
+            filename = download_url.split("/")[-1]
 
             content_disposition_header = response.headers.get("content-disposition")
             if content_disposition_header:

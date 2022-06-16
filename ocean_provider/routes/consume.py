@@ -318,7 +318,6 @@ def download():
     response = build_download_response(
         request,
         requests_session,
-        url_object["url"],
         download_url,
         content_type,
         method=url_object.get("method", "GET"),

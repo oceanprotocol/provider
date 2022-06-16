@@ -6,14 +6,11 @@ import copy
 import json
 import logging
 import mimetypes
-import pytest
+from copy import deepcopy
 from unittest.mock import MagicMock, Mock
 
 import ipfshttpclient
-from web3.main import Web3
-from werkzeug.utils import get_content_type
-
-from copy import deepcopy
+import pytest
 from ocean_provider.requests_session import get_requests_session
 from ocean_provider.utils.asset import Asset
 from ocean_provider.utils.encryption import do_encrypt
@@ -27,6 +24,8 @@ from ocean_provider.utils.util import (
     validate_url_object,
 )
 from tests.ddo.ddo_sample1_v4 import json_dict as ddo_sample1_v4
+from web3.main import Web3
+from werkzeug.utils import get_content_type
 
 test_logger = logging.getLogger(__name__)
 
@@ -58,7 +57,7 @@ def test_build_download_response():
     filename = "<<filename>>.xml"
     content_type = mimetypes.guess_type(filename)[0]
     url = f"https://source-lllllll.cccc/{filename}"
-    response = build_download_response(request, requests_session, url, url, None)
+    response = build_download_response(request, requests_session, url, None)
     assert response.headers["content-type"] == content_type
     assert (
         response.headers.get_all("Content-Disposition")[0]
@@ -67,7 +66,7 @@ def test_build_download_response():
 
     filename = "<<filename>>"
     url = f"https://source-lllllll.cccc/{filename}"
-    response = build_download_response(request, requests_session, url, url, None)
+    response = build_download_response(request, requests_session, url, None)
     assert response.headers["content-type"] == get_content_type(
         response.default_mimetype, response.charset
     )
@@ -78,9 +77,7 @@ def test_build_download_response():
 
     filename = "<<filename>>"
     url = f"https://source-lllllll.cccc/{filename}"
-    response = build_download_response(
-        request, requests_session, url, url, content_type
-    )
+    response = build_download_response(request, requests_session, url, content_type)
     assert response.headers["content-type"] == content_type
 
     matched_cd = (
@@ -101,7 +98,7 @@ def test_build_download_response():
 
     url = "https://source-lllllll.cccc/not-a-filename"
     response = build_download_response(
-        request, requests_session_with_attachment, url, url, None
+        request, requests_session_with_attachment, url, None
     )
     assert (
         response.headers["content-type"]
@@ -123,7 +120,7 @@ def test_build_download_response():
     filename = "filename.txt"
     url = f"https://source-lllllll.cccc/{filename}"
     response = build_download_response(
-        request, requests_session_with_content_type, url, url, None
+        request, requests_session_with_content_type, url, None
     )
     assert response.headers["content-type"] == response_content_type
     assert (
@@ -135,7 +132,7 @@ def test_build_download_response():
     url = f"https://source-lllllll.cccc/{filename}"
     with pytest.raises(ValueError, match="Unsafe method DELETE"):
         response = build_download_response(
-            request, requests_session_with_content_type, url, url, method="DELETE"
+            request, requests_session_with_content_type, url, method="DELETE"
         )
 
 
@@ -152,9 +149,7 @@ def test_download_ipfs_file():
 
     print(f"got ipfs download url: {download_url}")
     assert download_url and download_url.endswith(f"ipfs/{cid}")
-    response = build_download_response(
-        request, requests_session, download_url, download_url, None
-    )
+    response = build_download_response(request, requests_session, download_url, None)
     assert response.data, f"got no data {response.data}"
 
 

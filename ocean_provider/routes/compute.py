@@ -6,7 +6,6 @@ import functools
 import json
 import logging
 import os
-from datetime import datetime
 
 import flask
 from flask import Response, jsonify, request
@@ -21,25 +20,22 @@ from ocean_provider.utils.basics import (
     validate_timestamp,
 )
 from ocean_provider.utils.compute import (
+    get_compute_endpoint,
+    get_compute_result_endpoint,
     process_compute_request,
     sign_for_compute,
-    get_compute_result_endpoint,
-    get_compute_endpoint,
 )
 from ocean_provider.utils.compute_environments import (
-    get_c2d_environments,
     check_environment_exists,
+    get_c2d_environments,
 )
 from ocean_provider.utils.error_responses import error_response
 from ocean_provider.utils.provider_fees import (
-    get_provider_fees_or_remote,
     comb_for_valid_transfer_and_fees,
+    get_provider_fees_or_remote,
 )
-from ocean_provider.utils.util import (
-    build_download_response,
-    get_request_data,
-)
-from ocean_provider.validation.algo import WorkflowValidator, InputItemValidator
+from ocean_provider.utils.util import build_download_response, get_request_data
+from ocean_provider.validation.algo import InputItemValidator, WorkflowValidator
 from ocean_provider.validation.provider_requests import (
     ComputeGetResult,
     ComputeRequest,
@@ -117,11 +113,7 @@ def initializeCompute():
     valid_until = int(valid_until)
 
     if not timestamp_ok:
-        return error_response(
-            "The validUntil value is not correct.",
-            400,
-            logger,
-        )
+        return error_response("The validUntil value is not correct.", 400, logger)
 
     if not check_environment_exists(get_c2d_environments(), compute_env):
         return error_response("Compute environment does not exist", 400, logger)
@@ -531,9 +523,7 @@ def computeResult():
     logger.debug(f"Done processing computeResult, url: {result_url}")
     update_nonce(data.get("consumerAddress"), data.get("nonce"))
 
-    response = build_download_response(
-        request, requests_session, result_url, result_url, None, validate_url=False
-    )
+    response = build_download_response(request, requests_session, result_url, None)
     logger.info(f"computeResult response = {response}")
 
     return response
