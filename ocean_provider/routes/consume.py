@@ -2,7 +2,6 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
-from datetime import datetime
 import json
 import logging
 
@@ -11,27 +10,23 @@ from flask_sieve import validate
 from ocean_provider.requests_session import get_requests_session
 from ocean_provider.user_nonce import get_nonce, update_nonce
 from ocean_provider.utils.asset import (
-    get_asset_from_metadatastore,
     check_asset_consumable,
+    get_asset_from_metadatastore,
 )
-from ocean_provider.utils.basics import (
-    get_provider_wallet,
-    get_web3,
-    get_metadata_url,
-)
+from ocean_provider.utils.basics import get_metadata_url, get_provider_wallet, get_web3
 from ocean_provider.utils.datatoken import validate_order
 from ocean_provider.utils.error_responses import error_response
 from ocean_provider.utils.proof import send_proof
-from ocean_provider.utils.provider_fees import get_provider_fees, get_c2d_environments
+from ocean_provider.utils.provider_fees import get_c2d_environments, get_provider_fees
 from ocean_provider.utils.services import ServiceType
 from ocean_provider.utils.url import append_userdata, check_url_details
 from ocean_provider.utils.util import (
     build_download_response,
+    check_url_valid,
     get_download_url,
     get_request_data,
     get_service_files_list,
     validate_url_object,
-    check_url_valid,
 )
 from ocean_provider.validation.provider_requests import (
     DownloadRequest,
@@ -312,7 +307,7 @@ def download():
     download_url = get_download_url(url_object)
     download_url = append_userdata(download_url, data)
 
-    valid, details = check_url_details(url_object["url"])
+    valid, details = check_url_details(download_url)
     content_type = details["contentType"] if valid else None
 
     logger.debug(
