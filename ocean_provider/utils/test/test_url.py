@@ -3,9 +3,12 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import logging
+from requests.models import Response
+
+from ocean_provider.utils.url import is_safe_url, is_this_same_provider, is_url, get_redirect
 
 import pytest
-from ocean_provider.utils.url import is_safe_url, is_this_same_provider, is_url
+from unittest.mock import patch, Mock
 
 test_logger = logging.getLogger(__name__)
 
@@ -34,3 +37,38 @@ def test_is_safe_url():
 @pytest.mark.unit
 def test_is_same_provider():
     assert is_this_same_provider("http://localhost:8030")
+
+
+@pytest.mark.unit
+def test_get_redirect():
+    assert get_redirect("https://bit.ly/3zqzc4m") == "https://jsonplaceholder.typicode.com/"
+
+    redirect_response = Mock(spec=Response)
+    redirect_response.is_redirect = True
+    redirect_response.status_code = 200
+    redirect_response.headers = {
+        "Location": "/root-relative.html"
+    }
+
+    normal_response = Mock(spec=Response)
+    normal_response.is_redirect = False
+    normal_response.status_code = 200
+
+    with patch("ocean_provider.utils.url.requests.head") as mock:
+        mock.side_effect = [redirect_response, normal_response]
+        assert get_redirect("https://some-url.com:3000/index") == "https://some-url.com:3000/root-relative.html"
+
+    redirect_response = Mock(spec=Response)
+    redirect_response.is_redirect = True
+    redirect_response.status_code = 200
+    redirect_response.headers = {
+        "Location": "relative.html"
+    }
+
+    normal_response = Mock(spec=Response)
+    normal_response.is_redirect = False
+    normal_response.status_code = 200
+
+    with patch("ocean_provider.utils.url.requests.head") as mock:
+        mock.side_effect = [redirect_response, normal_response]
+        assert get_redirect("https://some-url.com:3000/index") == "https://some-url.com:3000/index/relative.html"

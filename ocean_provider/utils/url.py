@@ -7,7 +7,7 @@ import ipaddress
 import json
 import logging
 import os
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urljoin
 
 import dns.resolver
 import requests
@@ -31,7 +31,8 @@ def get_redirect(url):
         result = requests.get(url, allow_redirects=False)
 
     if result.is_redirect:
-        return get_redirect(result.headers["Location"])
+        # TODO: handle looping risk?
+        return urljoin(url if url.endswith("/") else f"{url}/", result.headers["Location"])
 
     return url
 
