@@ -72,3 +72,15 @@ def test_get_redirect():
     with patch("ocean_provider.utils.url.requests.head") as mock:
         mock.side_effect = [redirect_response, normal_response]
         assert get_redirect("https://some-url.com:3000/index") == "https://some-url.com:3000/index/relative.html"
+
+    redirect_response = Mock(spec=Response)
+    redirect_response.is_redirect = True
+    redirect_response.status_code = 200
+    redirect_response.headers = {
+        "Location": "https://some-url.com:3000/index"
+    }
+
+    with patch("ocean_provider.utils.url.requests.head") as mock:
+        mock.return_value = redirect_response
+        assert get_redirect("https://some-url.com:3000/index") is None
+        assert mock.call_count == 6

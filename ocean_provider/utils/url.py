@@ -20,8 +20,13 @@ REQUEST_TIMEOUT = 3
 CHUNK_SIZE = 8192
 
 
-def get_redirect(url):
+def get_redirect(url, redirect_count=0):
     if not is_url(url):
+        return None
+
+    if redirect_count > 5:
+        logger.info(f"More than 5 redirects for url {url}. Aborting.")
+
         return None
 
     result = requests.head(url, allow_redirects=False)
@@ -31,8 +36,10 @@ def get_redirect(url):
         result = requests.get(url, allow_redirects=False)
 
     if result.is_redirect:
-        # TODO: handle looping risk?
-        return urljoin(url if url.endswith("/") else f"{url}/", result.headers["Location"])
+        location = urljoin(url if url.endswith("/") else f"{url}/", result.headers["Location"])
+        logger.info(f"Redirecting for url {url} to location {location}.")
+
+        return get_redirect(location, redirect_count + 1)
 
     return url
 
