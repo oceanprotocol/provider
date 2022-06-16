@@ -36,7 +36,9 @@ def get_redirect(url, redirect_count=0):
         result = requests.get(url, allow_redirects=False)
 
     if result.is_redirect:
-        location = urljoin(url if url.endswith("/") else f"{url}/", result.headers["Location"])
+        location = urljoin(
+            url if url.endswith("/") else f"{url}/", result.headers["Location"]
+        )
         logger.info(f"Redirecting for url {url} to location {location}.")
 
         return get_redirect(location, redirect_count + 1)

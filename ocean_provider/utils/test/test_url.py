@@ -5,7 +5,12 @@
 import logging
 from requests.models import Response
 
-from ocean_provider.utils.url import is_safe_url, is_this_same_provider, is_url, get_redirect
+from ocean_provider.utils.url import (
+    is_safe_url,
+    is_this_same_provider,
+    is_url,
+    get_redirect,
+)
 
 import pytest
 from unittest.mock import patch, Mock
@@ -41,14 +46,15 @@ def test_is_same_provider():
 
 @pytest.mark.unit
 def test_get_redirect():
-    assert get_redirect("https://bit.ly/3zqzc4m") == "https://jsonplaceholder.typicode.com/"
+    assert (
+        get_redirect("https://bit.ly/3zqzc4m")
+        == "https://jsonplaceholder.typicode.com/"
+    )
 
     redirect_response = Mock(spec=Response)
     redirect_response.is_redirect = True
     redirect_response.status_code = 200
-    redirect_response.headers = {
-        "Location": "/root-relative.html"
-    }
+    redirect_response.headers = {"Location": "/root-relative.html"}
 
     normal_response = Mock(spec=Response)
     normal_response.is_redirect = False
@@ -56,14 +62,15 @@ def test_get_redirect():
 
     with patch("ocean_provider.utils.url.requests.head") as mock:
         mock.side_effect = [redirect_response, normal_response]
-        assert get_redirect("https://some-url.com:3000/index") == "https://some-url.com:3000/root-relative.html"
+        assert (
+            get_redirect("https://some-url.com:3000/index")
+            == "https://some-url.com:3000/root-relative.html"
+        )
 
     redirect_response = Mock(spec=Response)
     redirect_response.is_redirect = True
     redirect_response.status_code = 200
-    redirect_response.headers = {
-        "Location": "relative.html"
-    }
+    redirect_response.headers = {"Location": "relative.html"}
 
     normal_response = Mock(spec=Response)
     normal_response.is_redirect = False
@@ -71,14 +78,15 @@ def test_get_redirect():
 
     with patch("ocean_provider.utils.url.requests.head") as mock:
         mock.side_effect = [redirect_response, normal_response]
-        assert get_redirect("https://some-url.com:3000/index") == "https://some-url.com:3000/index/relative.html"
+        assert (
+            get_redirect("https://some-url.com:3000/index")
+            == "https://some-url.com:3000/index/relative.html"
+        )
 
     redirect_response = Mock(spec=Response)
     redirect_response.is_redirect = True
     redirect_response.status_code = 200
-    redirect_response.headers = {
-        "Location": "https://some-url.com:3000/index"
-    }
+    redirect_response.headers = {"Location": "https://some-url.com:3000/index"}
 
     with patch("ocean_provider.utils.url.requests.head") as mock:
         mock.return_value = redirect_response
