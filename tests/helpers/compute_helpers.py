@@ -24,11 +24,13 @@ def build_and_send_ddo_with_compute_service(
     asset_type=None,
     c2d_address=None,
     do_send=True,
-    short_valid_until=True,
+    valid_until=None,
     timeout=3600,
     c2d_environment="ocean-compute",
 ):
     web3 = get_web3()
+    if valid_until is None:
+        valid_until = get_future_valid_until(short=True)
     algo_metadata = build_metadata_dict_type_algorithm()
     if c2d_address is None:
         c2d_address = consumer_wallet.address

@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 from datetime import datetime
+import logging
 import os
 from typing import Optional, Union
 
@@ -14,6 +15,8 @@ from ocean_provider.http_provider import CustomHTTPProvider
 from requests_testadapter import Resp
 from web3 import WebsocketProvider
 from web3.main import Web3
+
+logger = logging.getLogger(__name__)
 
 
 def get_config(config_file: Optional[str] = None) -> Config:

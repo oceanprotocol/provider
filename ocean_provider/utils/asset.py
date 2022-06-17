@@ -19,6 +19,7 @@ class Asset:
         ad = copy.deepcopy(asset_dict)
         self.did = ad.pop("id", None)
         self.version = ad.pop("version", None)
+        self.nftAddress = ad.pop("nftAddress", None)
         self.chain_id = ad.pop("chainId", None)
         self.metadata = ad.pop("metadata", None)
         self.services = [
@@ -97,9 +98,9 @@ def get_asset_from_metadatastore(metadata_url, document_id):
 def check_asset_consumable(asset, consumer_address, logger, custom_url=None):
     if not asset.nft or "address" not in asset.nft:
         return False, "Asset malformed"
-
-    dt_contract = get_web3().eth.contract(
-        abi=ERC721Template.abi, address=asset.nft["address"]
+    web3 = get_web3()
+    dt_contract = web3.eth.contract(
+        abi=ERC721Template.abi, address=web3.toChecksumAddress(asset.nft["address"])
     )
 
     if dt_contract.caller.getMetaData()[2] != 0:

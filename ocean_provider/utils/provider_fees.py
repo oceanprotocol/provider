@@ -54,8 +54,8 @@ def get_provider_fees(
         ["bytes", "address", "address", "uint256", "uint256"],
         [
             web3.toHex(web3.toBytes(text=provider_data)),
-            provider_fee_address,
-            provider_fee_token,
+            web3.toChecksumAddress(provider_fee_address),
+            web3.toChecksumAddress(provider_fee_token),
             provider_fee_amount,
             duration,
         ],
@@ -138,19 +138,18 @@ def get_provider_fees_or_remote(
         except Exception:
             # order does not exist or is expired, so we need new provider fees
             pass
-
     if is_this_same_provider(service.service_endpoint):
-        result = {
-            "datatoken": service.datatoken_address,
-            "providerFee": get_provider_fees(
-                asset.did,
-                service,
-                consumer_address,
-                duration,
-                compute_env,
-                force_zero=force_zero,
-            ),
-        }
+        provider_fee = get_provider_fees(
+            asset.did,
+            service,
+            consumer_address,
+            duration,
+            compute_env,
+            force_zero=force_zero,
+        )
+        if provider_fee:
+            provider_fee["providerFeeAmount"] = str(provider_fee["providerFeeAmount"])
+        result = {"datatoken": service.datatoken_address, "providerFee": provider_fee}
     else:
         # delegate to different provider
         response = requests.get(

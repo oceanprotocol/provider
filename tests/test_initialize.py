@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import json
+import logging
 import time
 
 import pytest
@@ -27,6 +28,8 @@ from tests.test_helpers import (
 )
 
 from unittest.mock import patch
+
+logger = logging.getLogger(__name__)
 
 
 @pytest.mark.integration
@@ -254,7 +257,7 @@ def test_initialize_compute_order_reused(
         True,
         None,
         free_c2d_env["consumerAddress"],
-        short_valid_until=True,
+        valid_until,
         timeout=60,
         c2d_environment=free_c2d_env["id"],
     )
@@ -301,6 +304,7 @@ def test_initialize_compute_order_reused(
     # Sleep long enough for provider fees to expire
     timeout = time.time() + (30 * 5)
     while True:
+        payload["compute"]["validUntil"] = get_future_valid_until(short=True) + 30
         response = client.post(
             BaseURLs.SERVICES_URL + "/initializeCompute",
             data=json.dumps(payload),
@@ -318,7 +322,9 @@ def test_initialize_compute_order_reused(
     assert "providerFee" in response.json["algorithm"]
 
     # Sleep long enough for orders to expire
+    timeout = time.time() + (30 * 4)
     while True:
+        payload["compute"]["validUntil"] = get_future_valid_until(short=True) + 30
         response = client.post(
             BaseURLs.SERVICES_URL + "/initializeCompute",
             data=json.dumps(payload),

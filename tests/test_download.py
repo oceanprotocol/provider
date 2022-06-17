@@ -2,6 +2,7 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
+from asyncio.log import logger
 import copy
 import time
 from datetime import datetime
@@ -202,7 +203,9 @@ def test_download_multiple_files(client, publisher_wallet, consumer_wallet, web3
 
 @pytest.mark.integration
 def test_download_compute_asset_by_c2d(client, publisher_wallet, consumer_wallet, web3):
-    asset = get_dataset_ddo_with_multiple_files(client, publisher_wallet)
+    asset = get_dataset_ddo_with_multiple_files(
+        client, publisher_wallet, service_type="compute"
+    )
     service = get_first_service_by_type(asset, ServiceType.ACCESS)
 
     mint_100_datatokens(
