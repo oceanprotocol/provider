@@ -249,6 +249,7 @@ def test_initialize_compute_order_reused(
         wrong tx id for dataset order
     """
     monkeypatch.setenv("C2D_BUFFER_DURATION", 0)
+    duration = get_duration()
     # Order asset, valid for 60 seconds
     ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
         client,
@@ -257,7 +258,7 @@ def test_initialize_compute_order_reused(
         True,
         None,
         free_c2d_env["consumerAddress"],
-        valid_until,
+        duration,
         timeout=60,
         c2d_environment=free_c2d_env["id"],
     )
@@ -304,7 +305,7 @@ def test_initialize_compute_order_reused(
     # Sleep long enough for provider fees to expire
     timeout = time.time() + (30 * 5)
     while True:
-        payload["compute"]["validUntil"] = get_future_valid_until(short=True) + 30
+        payload["compute"]["validUntil"] = get_duration(short=True) + 30
         response = client.post(
             BaseURLs.SERVICES_URL + "/initializeCompute",
             data=json.dumps(payload),
@@ -324,7 +325,7 @@ def test_initialize_compute_order_reused(
     # Sleep long enough for orders to expire
     timeout = time.time() + (30 * 4)
     while True:
-        payload["compute"]["validUntil"] = get_future_valid_until(short=True) + 30
+        payload["compute"]["validUntil"] = get_duration(short=True) + 30
         response = client.post(
             BaseURLs.SERVICES_URL + "/initializeCompute",
             data=json.dumps(payload),

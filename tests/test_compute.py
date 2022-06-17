@@ -47,7 +47,6 @@ def test_compute_raw_algo(
     free_c2d_env,
 ):
     custom_services = "vanilla_compute" if allow_raw_algos else "norawalgo"
-    valid_until = get_future_valid_until()
     # publish a dataset asset
     dataset_ddo_w_compute_service = get_registered_asset(
         publisher_wallet, custom_services=custom_services, service_type="compute"
@@ -110,7 +109,7 @@ def test_compute_raw_algo(
 def test_compute_specific_algo_dids(
     client, publisher_wallet, consumer_wallet, consumer_address, free_c2d_env
 ):
-    valid_until = get_future_valid_until()
+    duration = get_duration()
     ddo, tx_id, alg_ddo, _ = build_and_send_ddo_with_compute_service(
         client,
         publisher_wallet,
@@ -118,7 +117,7 @@ def test_compute_specific_algo_dids(
         False,
         None,
         c2d_address=free_c2d_env["consumerAddress"],
-        valid_until=valid_until,
+        duration=duration,
         c2d_environment=free_c2d_env["id"],
     )
     sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
@@ -156,7 +155,7 @@ def test_compute_specific_algo_dids(
 
 @pytest.mark.integration
 def test_compute(client, publisher_wallet, consumer_wallet, free_c2d_env):
-    valid_until = get_future_valid_until()
+    duration = get_duration()
     ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
         client,
         publisher_wallet,
@@ -164,7 +163,7 @@ def test_compute(client, publisher_wallet, consumer_wallet, free_c2d_env):
         False,
         None,
         c2d_address=free_c2d_env["consumerAddress"],
-        valid_until=valid_until,
+        duration=duration,
         c2d_environment=free_c2d_env["id"],
     )
     sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
@@ -285,7 +284,7 @@ def test_compute(client, publisher_wallet, consumer_wallet, free_c2d_env):
 
 @pytest.mark.integration
 def test_compute_diff_provider(client, publisher_wallet, consumer_wallet, free_c2d_env):
-    valid_until = get_future_valid_until()
+    duration = get_duration()
     ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
         client,
         publisher_wallet,
@@ -293,7 +292,7 @@ def test_compute_diff_provider(client, publisher_wallet, consumer_wallet, free_c
         True,
         None,
         c2d_address=free_c2d_env["consumerAddress"],
-        valid_until=valid_until,
+        duration=duration,
         c2d_environment=free_c2d_env["id"],
     )
     sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
@@ -322,7 +321,7 @@ def test_compute_diff_provider(client, publisher_wallet, consumer_wallet, free_c
 def test_compute_allow_all_published(
     client, publisher_wallet, consumer_wallet, free_c2d_env
 ):
-    valid_until = get_future_valid_until()
+    duration = get_duration()
     ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
         client,
         publisher_wallet,
@@ -330,7 +329,7 @@ def test_compute_allow_all_published(
         False,
         "allow_all_published",
         c2d_address=free_c2d_env["consumerAddress"],
-        valid_until=valid_until,
+        duration=duration,
         c2d_environment=free_c2d_env["id"],
     )
     sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
@@ -372,7 +371,7 @@ def test_compute_allow_all_published(
 def test_compute_additional_input(
     client, publisher_wallet, consumer_wallet, monkeypatch, free_c2d_env
 ):
-    valid_until = get_future_valid_until()
+    duration = get_duration()
     ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
         client,
         publisher_wallet,
@@ -380,7 +379,7 @@ def test_compute_additional_input(
         False,
         None,
         c2d_address=free_c2d_env["consumerAddress"],
-        valid_until=valid_until,
+        duration=duration,
         c2d_environment=free_c2d_env["id"],
     )
     sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
@@ -458,7 +457,7 @@ def test_compute_additional_input(
 def test_compute_delete_job(
     client, publisher_wallet, consumer_wallet, consumer_address, free_c2d_env
 ):
-    valid_until = get_future_valid_until()
+    duration = get_duration()
     ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
         client,
         publisher_wallet,
@@ -466,7 +465,7 @@ def test_compute_delete_job(
         False,
         None,
         c2d_address=free_c2d_env["consumerAddress"],
-        valid_until=valid_until,
+        duration=duration,
         c2d_environment=free_c2d_env["id"],
     )
     sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
