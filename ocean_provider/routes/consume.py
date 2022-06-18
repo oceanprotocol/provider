@@ -319,6 +319,7 @@ def download():
         request,
         requests_session,
         download_url,
+        url_object["type"],
         content_type,
         method=url_object.get("method", "GET"),
     )

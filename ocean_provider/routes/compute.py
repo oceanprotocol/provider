@@ -523,7 +523,7 @@ def computeResult():
     logger.debug(f"Done processing computeResult, url: {result_url}")
     update_nonce(data.get("consumerAddress"), data.get("nonce"))
 
-    response = build_download_response(request, requests_session, result_url, None)
+    response = build_download_response(request, requests_session, result_url)
     logger.info(f"computeResult response = {response}")
 
     return response

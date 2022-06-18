@@ -57,7 +57,7 @@ def test_build_download_response():
     filename = "<<filename>>.xml"
     content_type = mimetypes.guess_type(filename)[0]
     url = f"https://source-lllllll.cccc/{filename}"
-    response = build_download_response(request, requests_session, url, None)
+    response = build_download_response(request, requests_session, url)
     assert response.headers["content-type"] == content_type
     assert (
         response.headers.get_all("Content-Disposition")[0]
@@ -66,7 +66,7 @@ def test_build_download_response():
 
     filename = "<<filename>>"
     url = f"https://source-lllllll.cccc/{filename}"
-    response = build_download_response(request, requests_session, url, None)
+    response = build_download_response(request, requests_session, url)
     assert response.headers["content-type"] == get_content_type(
         response.default_mimetype, response.charset
     )
@@ -77,7 +77,9 @@ def test_build_download_response():
 
     filename = "<<filename>>"
     url = f"https://source-lllllll.cccc/{filename}"
-    response = build_download_response(request, requests_session, url, content_type)
+    response = build_download_response(
+        request, requests_session, url, content_type=content_type
+    )
     assert response.headers["content-type"] == content_type
 
     matched_cd = (
@@ -97,9 +99,7 @@ def test_build_download_response():
     )
 
     url = "https://source-lllllll.cccc/not-a-filename"
-    response = build_download_response(
-        request, requests_session_with_attachment, url, None
-    )
+    response = build_download_response(request, requests_session_with_attachment, url)
     assert (
         response.headers["content-type"]
         == mimetypes.guess_type(attachment_file_name)[0]
@@ -119,9 +119,7 @@ def test_build_download_response():
 
     filename = "filename.txt"
     url = f"https://source-lllllll.cccc/{filename}"
-    response = build_download_response(
-        request, requests_session_with_content_type, url, None
-    )
+    response = build_download_response(request, requests_session_with_content_type, url)
     assert response.headers["content-type"] == response_content_type
     assert (
         response.headers.get_all("Content-Disposition")[0]
@@ -137,7 +135,7 @@ def test_build_download_response():
 
 
 @pytest.mark.unit
-def test_download_ipfs_file():
+def test_build_download_response_ipfs():
     client = ipfshttpclient.connect("/dns/172.15.0.16/tcp/5001/http")
     cid = client.add("./tests/resources/ddo_sample_file.txt")["Hash"]
     url_object = {"type": "ipfs", "hash": cid}
@@ -147,9 +145,34 @@ def test_download_ipfs_file():
     request = Mock()
     request.range = None
 
-    print(f"got ipfs download url: {download_url}")
     assert download_url and download_url.endswith(f"ipfs/{cid}")
-    response = build_download_response(request, requests_session, download_url, None)
+    response = build_download_response(
+        request, requests_session, download_url, url_type=url_object["type"]
+    )
+    assert response.data, f"got no data {response.data}"
+
+
+@pytest.mark.unit
+def test_build_download_response_arweave():
+    url_object = {
+        "type": "arweave",
+        "transactionId": "cZ6j5PmPVXCq5Az6YGcGqzffYjx2JnsnlSajaHNr20w",
+    }
+    download_url = get_download_url(url_object)
+    requests_session = get_requests_session()
+
+    request = Mock()
+    request.range = None
+
+    assert download_url is not None
+    assert (
+        download_url
+        == "https://arweave.net/cZ6j5PmPVXCq5Az6YGcGqzffYjx2JnsnlSajaHNr20w"
+    )
+
+    response = build_download_response(
+        request, requests_session, download_url, url_type=url_object["type"]
+    )
     assert response.data, f"got no data {response.data}"
 
 

@@ -10,6 +10,7 @@ import os
 from cgi import parse_header
 from typing import Any, Dict, Tuple
 from urllib.parse import urljoin
+from uuid import uuid4
 
 import werkzeug
 from eth_account.signers.local import LocalAccount
@@ -41,7 +42,12 @@ def msg_hash(message: str):
 
 
 def build_download_response(
-    request, requests_session, download_url, content_type=None, method="GET"
+    request,
+    requests_session,
+    download_url,
+    url_type="url",
+    content_type=None,
+    method="GET",
 ):
     try:
         download_request_headers = {}
@@ -59,8 +65,14 @@ def build_download_response(
         response = method(
             download_url, headers=download_request_headers, stream=True, timeout=3
         )
+
         if not is_range_request:
-            filename = download_url.split("/")[-1]
+            if url_type == "url":
+                filename = download_url.split("/")[-1]
+            elif url_type in ["ipfs", "arweave"]:
+                filename = uuid4().hex
+            else:
+                raise ValueError(f"Unsupported url type: {url_type}")
 
             content_disposition_header = response.headers.get("content-disposition")
             if content_disposition_header:
@@ -188,11 +200,11 @@ def get_download_url(url_object: Dict[str, Any]) -> str:
     if url_object["type"] == "url":
         return url_object["url"]
     elif url_object["type"] == "ipfs":
-        if not os.getenv("IPFS_GATEWAY"):
+        if os.getenv("IPFS_GATEWAY") is None:
             raise ValueError("No IPFS_GATEWAY defined, can not resolve ipfs hash.")
         return urljoin(os.getenv("IPFS_GATEWAY"), urljoin("ipfs/", url_object["hash"]))
     elif url_object["type"] == "arweave":
-        if not os.getenv("ARWEAVE_GATEWAY"):
+        if os.getenv("ARWEAVE_GATEWAY") is None:
             raise ValueError(
                 "No ARWEAVE_GATEWAY defined, can not resolve arweave transaction id."
             )
