@@ -166,7 +166,7 @@ def test_get_download_url_arweave(monkeypatch):
     )
 
     # Unsupported type
-    url_object_unsupported_type = url_object.deepcopy()
+    url_object_unsupported_type = deepcopy(url_object)
     url_object_unsupported_type = url_object["type"] = "unsupported"
     with pytest.raises(
         ValueError, match=f"URL object type {url_object['type']} not supported."
@@ -174,12 +174,12 @@ def test_get_download_url_arweave(monkeypatch):
         download_url = get_download_url(url_object_unsupported_type)
 
     # Missing type
-    url_object_without_type = url_object.deepcopy().pop("type")
+    url_object_without_type = deepcopy(url_object).pop("type")
     with pytest.raises(KeyError, match="KeyError: 'type'"):
         download_url = get_download_url(url_object_without_type)
 
     # Missing transactionId
-    url_object_without_tx_id = url_object.deepcopy().pop("transactionId")
+    url_object_without_tx_id = deepcopy(url_object).pop("transactionId")
     with pytest.raises(ValueError, match="KeyError: 'transactionId'"):
         download_url = get_download_url(url_object_without_tx_id)
 
