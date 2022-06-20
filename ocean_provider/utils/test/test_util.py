@@ -153,27 +153,69 @@ def test_build_download_response_ipfs():
 
 
 @pytest.mark.unit
-def test_build_download_response_arweave():
+def test_get_download_url_arweave(monkeypatch):
     url_object = {
         "type": "arweave",
         "transactionId": "cZ6j5PmPVXCq5Az6YGcGqzffYjx2JnsnlSajaHNr20w",
     }
     download_url = get_download_url(url_object)
-    requests_session = get_requests_session()
-
-    request = Mock()
-    request.range = None
-
     assert download_url is not None
     assert (
         download_url
         == "https://arweave.net/cZ6j5PmPVXCq5Az6YGcGqzffYjx2JnsnlSajaHNr20w"
     )
 
+    # Unsupported type
+    url_object_unsupported_type = url_object.deepcopy()
+    url_object_unsupported_type = url_object["type"] = "unsupported"
+    with pytest.raises(
+        ValueError, match=f"URL object type {url_object['type']} not supported."
+    ):
+        download_url = get_download_url(url_object_unsupported_type)
+
+    # Missing type
+    url_object_without_type = url_object.deepcopy().pop("type")
+    with pytest.raises(KeyError, match="KeyError: 'type'"):
+        download_url = get_download_url(url_object_without_type)
+
+    # Missing transactionId
+    url_object_without_tx_id = url_object.deepcopy().pop("transactionId")
+    with pytest.raises(ValueError, match="KeyError: 'transactionId'"):
+        download_url = get_download_url(url_object_without_tx_id)
+
+    # Unset ARWEAVE_GATEWAY
+    monkeypatch.delenv("ARWEAVE_GATEWAY")
+    with pytest.raises(
+        ValueError,
+        match="No ARWEAVE_GATEWAY defined, can not resolve arweave transaction id.",
+    ):
+        download_url = get_download_url(url_object)
+
+
+@pytest.mark.unit
+def test_build_download_response_arweave():
+    url_type = "arweave"
+    transactionId = "cZ6j5PmPVXCq5Az6YGcGqzffYjx2JnsnlSajaHNr20w"
+    download_url = "https://arweave.net/cZ6j5PmPVXCq5Az6YGcGqzffYjx2JnsnlSajaHNr20w"
+    requests_session = get_requests_session()
+
+    request = Mock()
+    request.range = None
+
     response = build_download_response(
-        request, requests_session, download_url, url_type=url_object["type"]
+        request, requests_session, download_url, url_type=url_type
     )
+    assert response.status == 200
     assert response.data, f"got no data {response.data}"
+
+    # Assert that Content-Disposition header doesn't leak transaction ID
+    assert transactionId not in response.headers["Content-Disposition"]
+
+    url_type = "unsupported"
+    with pytest.raises(ValueError, match=f"Unsupported url type: {url_type}"):
+        response = build_download_response(
+            request, requests_session, download_url, url_type=url_type
+        )
 
 
 @pytest.mark.unit

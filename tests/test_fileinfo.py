@@ -126,4 +126,4 @@ def test_check_arweave_bad(client):
     payload = {"type": "arweave"}  # No transactionId
     response = client.post(fileinfo_url, json=payload)
     result = response.get_json()
-    assert response.status == "400 BAD REQUEST"
+    assert response.status == "400 BAD REQUEST", f"{result}"
