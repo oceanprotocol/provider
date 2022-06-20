@@ -91,13 +91,16 @@ def fileinfo():
     did = data.get("did")
     service_id = data.get("serviceId")
 
-    if did:
-        asset = get_asset_from_metadatastore(get_metadata_url(), did)
-        service = asset.get_service_by_id(service_id)
-        files_list = get_service_files_list(service, provider_wallet, asset)
-        url_list = [get_download_url(file_item) for file_item in files_list]
-    else:
-        url_list = [get_download_url(data)]
+    try:
+        if did:
+            asset = get_asset_from_metadatastore(get_metadata_url(), did)
+            service = asset.get_service_by_id(service_id)
+            files_list = get_service_files_list(service, provider_wallet, asset)
+            url_list = [get_download_url(file_item) for file_item in files_list]
+        else:
+            url_list = [get_download_url(data)]
+    except Exception as e:
+        error_response(f"Failed to get download url(s): {e}", 400)
 
     with_checksum = data.get("checksum", False)
 
