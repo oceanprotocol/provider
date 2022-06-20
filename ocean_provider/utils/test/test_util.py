@@ -167,20 +167,23 @@ def test_get_download_url_arweave(monkeypatch):
 
     # Unsupported type
     url_object_unsupported_type = deepcopy(url_object)
-    url_object_unsupported_type = url_object["type"] = "unsupported"
+    url_object_unsupported_type["type"] = "unsupported"
     with pytest.raises(
-        ValueError, match=f"URL object type {url_object['type']} not supported."
+        ValueError,
+        match=f"URL object type {url_object_unsupported_type['type']} not supported.",
     ):
         download_url = get_download_url(url_object_unsupported_type)
 
     # Missing type
-    url_object_without_type = deepcopy(url_object).pop("type")
-    with pytest.raises(KeyError, match="KeyError: 'type'"):
+    url_object_without_type = deepcopy(url_object)
+    url_object_without_type.pop("type")
+    with pytest.raises(KeyError, match="'type'"):
         download_url = get_download_url(url_object_without_type)
 
     # Missing transactionId
-    url_object_without_tx_id = deepcopy(url_object).pop("transactionId")
-    with pytest.raises(ValueError, match="KeyError: 'transactionId'"):
+    url_object_without_tx_id = deepcopy(url_object)
+    url_object_without_tx_id.pop("transactionId")
+    with pytest.raises(KeyError, match="'transactionId'"):
         download_url = get_download_url(url_object_without_tx_id)
 
     # Unset ARWEAVE_GATEWAY
@@ -205,7 +208,7 @@ def test_build_download_response_arweave():
     response = build_download_response(
         request, requests_session, download_url, url_type=url_type
     )
-    assert response.status == 200
+    assert response.status == "200 OK"
     assert response.data, f"got no data {response.data}"
 
     # Assert that Content-Disposition header doesn't leak transaction ID
