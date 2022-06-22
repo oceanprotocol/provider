@@ -133,9 +133,9 @@ def get_provider_fees_or_remote(
             log_valid_until = _provider_fees_log.args.validUntil
             if valid_until <= log_valid_until:
                 # already paid provider fees and both order and provider fees are still valid
-                return {"validOrder": '0x' + start_order_tx_id.hex()}
+                return {"validOrder": "" + start_order_tx_id.hex()}
             else:
-                valid_order = '0x' + start_order_tx_id.hex()
+                valid_order = "" + start_order_tx_id.hex()
         except Exception:
             # order does not exist or is expired, so we need new provider fees
             pass
