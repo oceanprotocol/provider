@@ -96,7 +96,7 @@ def comb_for_valid_transfer_and_fees(all_datasets, compute_env):
         service = asset.get_service_by_id(dataset["serviceId"])
 
         try:
-            _tx, _order_log, _provider_fees_log = validate_order(
+            _tx, _order_log, _provider_fees_log, start_order_tx_id = validate_order(
                 web3,
                 dataset["consumerAddress"],
                 dataset["transferTxId"],
