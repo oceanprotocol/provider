@@ -347,6 +347,6 @@ def test_validate_url_object():
     assert result is False
     assert message == "malformed or unsupported type for service files. id=1"
 
-    result, message = validate_url_object({"type": "ipfs", "but_hash": "missing"}, 1)
+    result, message = validate_url_object({"type": "ipfs", "but_value": "missing"}, 1)
     assert result is False
-    assert message == "malformed service files, missing required keys. id=1"
+    assert message == 'malformed service files, missing "value" key. id=1'
