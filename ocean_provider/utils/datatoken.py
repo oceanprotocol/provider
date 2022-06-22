@@ -147,6 +147,7 @@ def verify_order_tx(
     event_logs = datatoken_contract.events.OrderReused().processReceipt(
         tx_receipt, errors=DISCARD
     )
+    logger.debug(f"Got events log when searching for ReuseOrder : {event_logs}")
     log_timestamp = None
     order_log = event_logs[0] if event_logs else None
     if order_log and order_log.args.orderTxId:
@@ -160,10 +161,11 @@ def verify_order_tx(
             raise AssertionError("Failed to get tx receipt referenced in OrderReused..")
         if tx_receipt.status == 0:
             raise AssertionError("order referenced in OrderReused failed.")
-
+    logger.debug(f"Search for orderStarted in tx_receipt : {tx_receipt}")
     event_logs = datatoken_contract.events.OrderStarted().processReceipt(
         tx_receipt, errors=DISCARD
     )
+    logger.debug(f"Got events log when searching for OrderStarted : {event_logs}")
     order_log = event_logs[0] if event_logs else None
 
     if not order_log:
