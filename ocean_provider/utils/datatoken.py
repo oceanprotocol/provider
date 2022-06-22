@@ -226,7 +226,7 @@ def verify_order_tx(
 
     tx = web3.eth.get_transaction(HexBytes(tx_id))
 
-    return tx, order_log, provider_fee_order_log, tx, start_order_tx_id
+    return tx, order_log, provider_fee_order_log, start_order_tx_id
 
 
 def validate_order(
