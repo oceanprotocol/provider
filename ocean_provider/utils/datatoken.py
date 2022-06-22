@@ -144,9 +144,12 @@ def verify_order_tx(
     # end check provider fees
 
     # check if we have an OrderReused event. If so, get orderTxId and switch next checks to use that
-    event_logs = datatoken_contract.events.OrderReused().processReceipt(
-        tx_receipt, errors=DISCARD
-    )
+    try:
+        event_logs = datatoken_contract.events.OrderReused().processReceipt(
+            tx_receipt, errors=DISCARD
+        )
+    except Exception as e:
+        logger.error(e)
     logger.debug(f"Got events log when searching for ReuseOrder : {event_logs}")
     log_timestamp = None
     order_log = event_logs[0] if event_logs else None
@@ -161,10 +164,14 @@ def verify_order_tx(
             raise AssertionError("Failed to get tx receipt referenced in OrderReused..")
         if tx_receipt.status == 0:
             raise AssertionError("order referenced in OrderReused failed.")
+    
     logger.debug(f"Search for orderStarted in tx_receipt : {tx_receipt}")
-    event_logs = datatoken_contract.events.OrderStarted().processReceipt(
-        tx_receipt, errors=DISCARD
-    )
+    try:
+        event_logs = datatoken_contract.events.OrderStarted().processReceipt(
+            tx_receipt
+        )
+    except Exception as e:
+        logger.error(e)
     logger.debug(f"Got events log when searching for OrderStarted : {event_logs}")
     order_log = event_logs[0] if event_logs else None
 
