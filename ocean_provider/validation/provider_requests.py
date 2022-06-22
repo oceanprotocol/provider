@@ -3,14 +3,13 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import logging
-from datetime import datetime
 import os
+from datetime import datetime
 
 from flask import request as flask_request
 from flask_sieve import JsonRequest, ValidationException
 from flask_sieve.rules_processor import RulesProcessor
 from flask_sieve.validator import Validator
-
 from ocean_provider.exceptions import InvalidSignatureError
 from ocean_provider.utils.accounts import verify_signature
 from ocean_provider.utils.util import get_request_data
@@ -225,10 +224,8 @@ class FileInfoRequest(CustomJsonRequest):
     def rules(self):
         return {
             "type": ["required_without:did", "in:ipfs,url,arweave"],
+            "value": ["required_without:did"],
             "did": ["required_without:type", "regex:^did:op"],
-            "hash": ["required_if:type,ipfs"],
-            "url": ["required_if:type,url"],
-            "transactionId": ["required_if:type,arweave"],
             "serviceId": ["required_without:type"],
         }
 

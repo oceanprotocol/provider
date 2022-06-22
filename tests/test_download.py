@@ -303,10 +303,7 @@ def test_download_compute_asset_by_user_fails(
 
 def test_download_arweave(client, publisher_wallet, consumer_wallet, web3):
     unencrypted_files_list = [
-        {
-            "type": "arweave",
-            "transactionId": "cZ6j5PmPVXCq5Az6YGcGqzffYjx2JnsnlSajaHNr20w",
-        }
+        {"type": "arweave", "value": "cZ6j5PmPVXCq5Az6YGcGqzffYjx2JnsnlSajaHNr20w"}
     ]
     asset = get_registered_asset(
         publisher_wallet, unencrypted_files_list=unencrypted_files_list

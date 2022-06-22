@@ -160,7 +160,7 @@ def get_compute_service(
             {
                 "type": "url",
                 "method": "GET",
-                "url": "https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt",
+                "value": "https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt",
             }
         ],
     }
@@ -201,7 +201,7 @@ def get_compute_service_no_rawalgo(
             {
                 "type": "url",
                 "method": "GET",
-                "url": "https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt",
+                "value": "https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt",
             }
         ],
     }

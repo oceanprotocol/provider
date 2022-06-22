@@ -231,7 +231,7 @@ Example:
 POST /api/services/fileinfo
 payload:
 {
-    "url": "https://s3.amazonaws.com/testfiles.oceanprotocol.com/info.0.json",
+    "value": "https://s3.amazonaws.com/testfiles.oceanprotocol.com/info.0.json",
     "type": "url",
     "method": "GET",
 }

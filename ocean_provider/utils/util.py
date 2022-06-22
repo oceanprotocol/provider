@@ -186,29 +186,25 @@ def validate_url_object(url_object, service_id):
             f"malformed or unsupported type for service files. id={service_id}",
         )
 
-    if (
-        (url_object["type"] == "ipfs" and "hash" not in url_object)
-        or (url_object["type"] == "url" and "url" not in url_object)
-        or (url_object["type"] == "arweave" and "transactionId" not in url_object)
-    ):
-        return False, f"malformed service files, missing required keys. id={service_id}"
+    if "value" not in url_object:
+        return False, f'malformed service files, missing "value" key. id={service_id}'
 
     return True, ""
 
 
 def get_download_url(url_object: Dict[str, Any]) -> str:
     if url_object["type"] == "url":
-        return url_object["url"]
+        return url_object["value"]
     elif url_object["type"] == "ipfs":
         if os.getenv("IPFS_GATEWAY") is None:
             raise ValueError("No IPFS_GATEWAY defined, can not resolve ipfs hash.")
-        return urljoin(os.getenv("IPFS_GATEWAY"), urljoin("ipfs/", url_object["hash"]))
+        return urljoin(os.getenv("IPFS_GATEWAY"), urljoin("ipfs/", url_object["value"]))
     elif url_object["type"] == "arweave":
         if os.getenv("ARWEAVE_GATEWAY") is None:
             raise ValueError(
                 "No ARWEAVE_GATEWAY defined, can not resolve arweave transaction id."
             )
-        return urljoin(os.getenv("ARWEAVE_GATEWAY"), url_object["transactionId"])
+        return urljoin(os.getenv("ARWEAVE_GATEWAY"), url_object["value"])
     else:
         raise ValueError(f"URL object type {url_object['type']} not supported.")
 

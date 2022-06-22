@@ -138,7 +138,7 @@ def test_build_download_response():
 def test_build_download_response_ipfs():
     client = ipfshttpclient.connect("/dns/172.15.0.16/tcp/5001/http")
     cid = client.add("./tests/resources/ddo_sample_file.txt")["Hash"]
-    url_object = {"type": "ipfs", "hash": cid}
+    url_object = {"type": "ipfs", "value": cid}
     download_url = get_download_url(url_object)
     requests_session = get_requests_session()
 
@@ -156,7 +156,7 @@ def test_build_download_response_ipfs():
 def test_get_download_url_arweave(monkeypatch):
     url_object = {
         "type": "arweave",
-        "transactionId": "cZ6j5PmPVXCq5Az6YGcGqzffYjx2JnsnlSajaHNr20w",
+        "value": "cZ6j5PmPVXCq5Az6YGcGqzffYjx2JnsnlSajaHNr20w",
     }
     download_url = get_download_url(url_object)
     assert download_url is not None
@@ -180,10 +180,10 @@ def test_get_download_url_arweave(monkeypatch):
     with pytest.raises(KeyError, match="'type'"):
         download_url = get_download_url(url_object_without_type)
 
-    # Missing transactionId
+    # Missing value (arweave transaction id)
     url_object_without_tx_id = deepcopy(url_object)
-    url_object_without_tx_id.pop("transactionId")
-    with pytest.raises(KeyError, match="'transactionId'"):
+    url_object_without_tx_id.pop("value")
+    with pytest.raises(KeyError, match="'value'"):
         download_url = get_download_url(url_object_without_tx_id)
 
     # Unset ARWEAVE_GATEWAY

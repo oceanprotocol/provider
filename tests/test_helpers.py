@@ -25,10 +25,8 @@ from ocean_provider.utils.data_nft_factory import get_data_nft_factory_contract
 from ocean_provider.utils.datatoken import get_datatoken_contract
 from ocean_provider.utils.did import compute_did_from_data_nft_address_and_chain_id
 from ocean_provider.utils.encryption import do_encrypt
-from ocean_provider.utils.provider_fees import get_c2d_environments
 from ocean_provider.utils.services import Service, ServiceType
 from ocean_provider.utils.util import sign_send_and_wait_for_receipt, sign_tx
-
 from tests.helpers.ddo_dict_builders import (
     build_credentials_dict,
     build_ddo_dict,
@@ -203,7 +201,7 @@ def get_registered_asset(
     if not unencrypted_files_list:
         unencrypted_files_list = [
             {
-                "url": "https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt",
+                "value": "https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt",
                 "type": "url",
                 "method": "GET",
             }
@@ -314,7 +312,7 @@ def get_dataset_ddo_with_multiple_files(client, wallet, service_type="access"):
             {
                 "type": "url",
                 "method": "GET",
-                "url": "https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt",
+                "value": "https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt",
             }
         )
 
@@ -355,7 +353,7 @@ def get_dataset_with_invalid_url_ddo(client, wallet):
     return get_registered_asset(
         wallet,
         unencrypted_files_list=[
-            {"url": "http://localhost/not_valid_url", "type": "url", "method": "GET"}
+            {"value": "http://localhost/not_valid_url", "type": "url", "method": "GET"}
         ],
     )
 
@@ -364,7 +362,7 @@ def get_dataset_with_ipfs_url_ddo(client, wallet):
     return get_registered_asset(
         wallet,
         unencrypted_files_list=[
-            {"type": "ipfs", "hash": "QmXtkGkWCG47tVpiBr8f5FdHuCMPq8h2jhck4jgjSXKiWZ"}
+            {"type": "ipfs", "value": "QmXtkGkWCG47tVpiBr8f5FdHuCMPq8h2jhck4jgjSXKiWZ"}
         ],
     )
 
@@ -413,10 +411,7 @@ def initialize_service(
     if reuse_order:
         payload["transferTxId"] = reuse_order
 
-    response = client.get(
-        BaseURLs.SERVICES_URL + "/initialize",
-        json=payload,
-    )
+    response = client.get(BaseURLs.SERVICES_URL + "/initialize", json=payload)
 
     if raw_response:
         return response
