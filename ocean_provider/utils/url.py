@@ -7,7 +7,7 @@ import ipaddress
 import json
 import logging
 import os
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urljoin
 
 import dns.resolver
 import requests
@@ -20,8 +20,36 @@ REQUEST_TIMEOUT = 3
 CHUNK_SIZE = 8192
 
 
-def is_safe_url(url):
+def get_redirect(url, redirect_count=0):
     if not is_url(url):
+        return None
+
+    if redirect_count > 5:
+        logger.info(f"More than 5 redirects for url {url}. Aborting.")
+
+        return None
+
+    result = requests.head(url, allow_redirects=False)
+
+    if result.status_code == 405:
+        # HEAD not allowed, so defaulting to get
+        result = requests.get(url, allow_redirects=False)
+
+    if result.is_redirect:
+        location = urljoin(
+            url if url.endswith("/") else f"{url}/", result.headers["Location"]
+        )
+        logger.info(f"Redirecting for url {url} to location {location}.")
+
+        return get_redirect(location, redirect_count + 1)
+
+    return url
+
+
+def is_safe_url(url):
+    url = get_redirect(url)
+
+    if not url:
         return False
 
     result = urlparse(url)
