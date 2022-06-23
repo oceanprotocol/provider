@@ -221,7 +221,10 @@ def verify_order_tx(
                 f"service timeout={service.timeout}"
             )
 
-    if sender not in [order_log.args.consumer, order_log.args.payer]:
+    if web3.toChecksumAddress(sender) not in [
+        web3.toChecksumAddress(order_log.args.consumer),
+        web3.toChecksumAddress(order_log.args.payer),
+    ]:
         raise ValueError("sender of order transaction is not the consumer/payer.")
 
     tx = web3.eth.get_transaction(HexBytes(tx_id))
