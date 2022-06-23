@@ -410,14 +410,18 @@ class InputItemValidator:
             algo_ddo = get_asset_from_metadatastore(
                 get_metadata_url(), trusted_algo_dict["did"]
             )
-            service = algo_ddo.get_service_by_id(self.data["algorithm"].get("serviceId"))
-            compute_urls = get_service_files_list(service, self.provider_wallet, algo_ddo)
+            service = algo_ddo.get_service_by_id(
+                self.data["algorithm"].get("serviceId")
+            )
+            compute_urls = get_service_files_list(
+                service, self.provider_wallet, algo_ddo
+            )
             file_download_urls = [get_download_url(u) for u in compute_urls]
             checksums = [
                 check_url_details(durl, with_checksum=True)[1]["checksum"]
                 for durl in file_download_urls
             ]
-            files_checksum = ''.join(checksums)
+            files_checksum = "".join(checksums)
 
             if allowed_files_checksum and files_checksum != allowed_files_checksum:
                 self.error = f"filesChecksum for algorithm with did {algo_ddo.did} does not match"
