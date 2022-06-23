@@ -95,7 +95,12 @@ def verify_order_tx(
             datetime.utcnow().timestamp() >= valid_until
             and not allow_expired_provider_fees
         ):
-            raise AssertionError("Ordered c2d time was exceeded, check validUntil.")
+            # expired validUntil.  let's add the difference between provider_data["timestamp"] and order timestamp
+            block = web3.eth.get_block(tx_receipt.blockHash, False)
+            if datetime.utcnow().timestamp() >= valid_until + (
+                block.timestamp - provider_data["timestamp"]
+            ):
+                raise AssertionError("Ordered c2d time was exceeded, check validUntil.")
 
     if Web3.toChecksumAddress(
         provider_fee_order_log.args.providerFeeAddress
