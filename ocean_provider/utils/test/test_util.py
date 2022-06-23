@@ -138,7 +138,7 @@ def test_build_download_response():
 def test_build_download_response_ipfs():
     client = ipfshttpclient.connect("/dns/172.15.0.16/tcp/5001/http")
     cid = client.add("./tests/resources/ddo_sample_file.txt")["Hash"]
-    url_object = {"type": "ipfs", "value": cid}
+    url_object = {"type": "ipfs", "hash": cid}
     download_url = get_download_url(url_object)
     requests_session = get_requests_session()
 
@@ -156,7 +156,7 @@ def test_build_download_response_ipfs():
 def test_get_download_url_arweave(monkeypatch):
     url_object = {
         "type": "arweave",
-        "value": "cZ6j5PmPVXCq5Az6YGcGqzffYjx2JnsnlSajaHNr20w",
+        "transactionId": "cZ6j5PmPVXCq5Az6YGcGqzffYjx2JnsnlSajaHNr20w",
     }
     download_url = get_download_url(url_object)
     assert download_url is not None
@@ -180,10 +180,10 @@ def test_get_download_url_arweave(monkeypatch):
     with pytest.raises(KeyError, match="'type'"):
         download_url = get_download_url(url_object_without_type)
 
-    # Missing value (arweave transaction id)
+    # Missing transactionId
     url_object_without_tx_id = deepcopy(url_object)
-    url_object_without_tx_id.pop("value")
-    with pytest.raises(KeyError, match="'value'"):
+    url_object_without_tx_id.pop("transactionId")
+    with pytest.raises(KeyError, match="'transactionId'"):
         download_url = get_download_url(url_object_without_tx_id)
 
     # Unset ARWEAVE_GATEWAY
@@ -347,6 +347,6 @@ def test_validate_url_object():
     assert result is False
     assert message == "malformed or unsupported type for service files. id=1"
 
-    result, message = validate_url_object({"type": "ipfs", "but_value": "missing"}, 1)
+    result, message = validate_url_object({"type": "ipfs", "but_hash": "missing"}, 1)
     assert result is False
-    assert message == 'malformed service files, missing "value" key. id=1'
+    assert message == "malformed service files, missing required keys. id=1"

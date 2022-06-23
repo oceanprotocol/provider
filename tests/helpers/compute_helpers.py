@@ -62,7 +62,10 @@ def build_and_send_ddo_with_compute_service(
         )
     elif asset_type == "stored_in_arweave":
         unencrypted_files_list = [
-            {"type": "arweave", "value": "cZ6j5PmPVXCq5Az6YGcGqzffYjx2JnsnlSajaHNr20w"}
+            {
+                "type": "arweave",
+                "transactionId": "cZ6j5PmPVXCq5Az6YGcGqzffYjx2JnsnlSajaHNr20w",
+            }
         ]
         dataset_ddo_w_compute_service = get_registered_asset(
             publisher_wallet,

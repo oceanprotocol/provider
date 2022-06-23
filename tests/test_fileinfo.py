@@ -58,7 +58,7 @@ def test_check_url_good(client):
     response = client.post(
         fileinfo_url,
         json={
-            "value": "https://s3.amazonaws.com/testfiles.oceanprotocol.com/info.0.json",
+            "url": "https://s3.amazonaws.com/testfiles.oceanprotocol.com/info.0.json",
             "type": "url",
             "method": "GET",
         },
@@ -73,7 +73,7 @@ def test_check_url_good(client):
 
 @pytest.mark.unit
 def test_check_url_bad(client):
-    data = {"value": "http://127.0.0.1/not_valid", "type": "url", "method": "GET"}
+    data = {"url": "http://127.0.0.1/not_valid", "type": "url", "method": "GET"}
     response = client.post(fileinfo_url, json=data)
     result = response.get_json()
     assert response.status == "200 OK"
@@ -90,7 +90,7 @@ def test_check_url_bad(client):
     result = response.get_json()
     assert response.status == "400 BAD REQUEST"
 
-    data = {"type": "url"}  # no value (url)
+    data = {"type": "url"}  # no url
     response = client.post(fileinfo_url, json=data)
     result = response.get_json()
     assert response.status == "400 BAD REQUEST"
@@ -100,7 +100,7 @@ def test_check_url_bad(client):
 def test_check_arweave_good(client):
     payload = {
         "type": "arweave",
-        "value": "cZ6j5PmPVXCq5Az6YGcGqzffYjx2JnsnlSajaHNr20w",
+        "transactionId": "cZ6j5PmPVXCq5Az6YGcGqzffYjx2JnsnlSajaHNr20w",
     }
     response = client.post(fileinfo_url, json=payload)
     result = response.get_json()
@@ -116,14 +116,14 @@ def test_check_arweave_good(client):
 
 @pytest.mark.unit
 def test_check_arweave_bad(client):
-    payload = {"type": "arweave", "value": "invalid"}
+    payload = {"type": "arweave", "transactionId": "invalid"}
     response = client.post(fileinfo_url, json=payload)
     result = response.get_json()
     assert response.status == "200 OK"
     for file_info in result:
         assert file_info["valid"] is False
 
-    payload = {"type": "arweave"}  # No value (transaction id)
+    payload = {"type": "arweave"}  # No transactionId
     response = client.post(fileinfo_url, json=payload)
     result = response.get_json()
     assert response.status == "400 BAD REQUEST", f"{result}"
