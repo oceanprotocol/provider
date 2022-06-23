@@ -192,11 +192,11 @@ class WorkflowValidator:
                 algorithm_token_address = self.algo_service.datatoken_address
 
                 if self.algo_service.type == "compute":
-                    self.compute_urls = get_service_files_list(
+                    asset_urls = get_service_files_list(
                         self.algo_service, self.provider_wallet, algo
                     )
 
-                    if not self.compute_urls:
+                    if not asset_urls:
                         self.error = "Services in algorithm with compute type must be in the same provider you are calling."
                         return False
 
