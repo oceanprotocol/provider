@@ -19,7 +19,7 @@ def verify_signature(signer_address, signature, original_msg, nonce):
     :return: True if signature is valid, throws InvalidSignatureError otherwise
     """
     db_nonce = get_nonce(signer_address)
-    if db_nonce and float(nonce) < float(db_nonce):
+    if db_nonce and float(nonce) <= float(db_nonce):
         msg = (
             f"Invalid signature expected nonce ({db_nonce}) > current nonce ({nonce})."
         )
