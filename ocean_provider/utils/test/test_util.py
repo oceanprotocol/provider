@@ -7,7 +7,7 @@ import json
 import logging
 import mimetypes
 import pytest
-from unittest.mock import MagicMock, Mock
+from unittest.mock import MagicMock, Mock, patch
 
 import ipfshttpclient
 from web3.main import Web3
@@ -58,7 +58,12 @@ def test_build_download_response():
     filename = "<<filename>>.xml"
     content_type = mimetypes.guess_type(filename)[0]
     url = f"https://source-lllllll.cccc/{filename}"
-    response = build_download_response(request, requests_session, url, url, None)
+    with patch(
+        "ocean_provider.utils.util.is_safe_url",
+        side_effect=[True],
+    ):
+        response = build_download_response(request, requests_session, url, url, None)
+
     assert response.headers["content-type"] == content_type
     assert (
         response.headers.get_all("Content-Disposition")[0]
@@ -67,7 +72,11 @@ def test_build_download_response():
 
     filename = "<<filename>>"
     url = f"https://source-lllllll.cccc/{filename}"
-    response = build_download_response(request, requests_session, url, url, None)
+    with patch(
+        "ocean_provider.utils.util.is_safe_url",
+        side_effect=[True],
+    ):
+        response = build_download_response(request, requests_session, url, url, None)
     assert response.headers["content-type"] == get_content_type(
         response.default_mimetype, response.charset
     )
@@ -78,9 +87,13 @@ def test_build_download_response():
 
     filename = "<<filename>>"
     url = f"https://source-lllllll.cccc/{filename}"
-    response = build_download_response(
-        request, requests_session, url, url, content_type
-    )
+    with patch(
+        "ocean_provider.utils.util.is_safe_url",
+        side_effect=[True],
+    ):
+        response = build_download_response(
+            request, requests_session, url, url, content_type
+        )
     assert response.headers["content-type"] == content_type
 
     matched_cd = (
@@ -100,9 +113,13 @@ def test_build_download_response():
     )
 
     url = "https://source-lllllll.cccc/not-a-filename"
-    response = build_download_response(
-        request, requests_session_with_attachment, url, url, None
-    )
+    with patch(
+        "ocean_provider.utils.util.is_safe_url",
+        side_effect=[True],
+    ):
+        response = build_download_response(
+            request, requests_session_with_attachment, url, url, None
+        )
     assert (
         response.headers["content-type"]
         == mimetypes.guess_type(attachment_file_name)[0]
@@ -122,9 +139,13 @@ def test_build_download_response():
 
     filename = "filename.txt"
     url = f"https://source-lllllll.cccc/{filename}"
-    response = build_download_response(
-        request, requests_session_with_content_type, url, url, None
-    )
+    with patch(
+        "ocean_provider.utils.util.is_safe_url",
+        side_effect=[True],
+    ):
+        response = build_download_response(
+            request, requests_session_with_content_type, url, url, None
+        )
     assert response.headers["content-type"] == response_content_type
     assert (
         response.headers.get_all("Content-Disposition")[0]
@@ -133,10 +154,14 @@ def test_build_download_response():
 
     filename = "filename.txt"
     url = f"https://source-lllllll.cccc/{filename}"
-    with pytest.raises(ValueError, match="Unsafe method DELETE"):
-        response = build_download_response(
-            request, requests_session_with_content_type, url, url, method="DELETE"
-        )
+    with patch(
+        "ocean_provider.utils.util.is_safe_url",
+        side_effect=[True],
+    ):
+        with pytest.raises(ValueError, match="Unsafe method DELETE"):
+            response = build_download_response(
+                request, requests_session_with_content_type, url, url, method="DELETE"
+            )
 
 
 @pytest.mark.unit
