@@ -401,6 +401,7 @@ class InputItemValidator:
                 )
                 return False
 
+            # TODO: try/catch + test
             trusted_algo_dict = did_to_trusted_algo_dict[algorithm_did]
             allowed_files_checksum = trusted_algo_dict.get("filesChecksum")
             allowed_container_checksum = trusted_algo_dict.get(
