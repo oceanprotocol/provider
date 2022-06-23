@@ -202,7 +202,7 @@ class WorkflowValidator:
                     self.error = "Failed to retrieve purchased algorithm service id."
                     return False
                 logger.debug("validate_order called for ALGORITHM usage.")
-                _tx, _order_log, _provider_fees_log = validate_order(
+                _tx, _order_log, _provider_fees_log, start_order_tx_id = validate_order(
                     self.web3,
                     self.consumer_address,
                     algorithm_tx_id,
@@ -463,7 +463,7 @@ class InputItemValidator:
         logger.debug("Validating ASSET usage.")
 
         try:
-            _tx, _order_log, _provider_fees_log = validate_order(
+            _tx, _order_log, _provider_fees_log, start_order_tx_id = validate_order(
                 self.web3,
                 self.consumer_address,
                 tx_id,

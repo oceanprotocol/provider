@@ -173,7 +173,7 @@ def initialize():
     valid_order = None
     if "transferTxId" in data:
         try:
-            _tx, _order_log, _ = validate_order(
+            _tx, _order_log, _, _ = validate_order(
                 get_web3(),
                 consumer_address,
                 data["transferTxId"],
@@ -289,7 +289,7 @@ def download():
     logger.info("validate_order called from download endpoint.")
 
     try:
-        _tx, _order_log, _ = validate_order(
+        _tx, _order_log, _, _ = validate_order(
             get_web3(), consumer_address, tx_id, asset, service
         )
     except Exception as e:

@@ -24,7 +24,7 @@ provider_fees_event.args.providerFeeAmount = 0
 @patch("ocean_provider.validation.algo.check_asset_consumable", return_value=(True, ""))
 @patch(
     "ocean_provider.validation.algo.validate_order",
-    return_value=(None, None, provider_fees_event),
+    return_value=(None, None, provider_fees_event, None),
 )
 @patch(
     "ocean_provider.validation.algo.get_service_files_list",
@@ -67,7 +67,7 @@ def test_passes_algo_ddo(provider_wallet, consumer_address, web3):
 @patch("ocean_provider.validation.algo.check_asset_consumable", return_value=(True, ""))
 @patch(
     "ocean_provider.validation.algo.validate_order",
-    return_value=(None, None, provider_fees_event),
+    return_value=(None, None, provider_fees_event, None),
 )
 @patch(
     "ocean_provider.validation.algo.get_service_files_list",
@@ -103,7 +103,7 @@ def test_passes_raw(provider_wallet, consumer_address, web3):
 @patch("ocean_provider.validation.algo.check_asset_consumable", return_value=(True, ""))
 @patch(
     "ocean_provider.validation.algo.validate_order",
-    return_value=(None, None, provider_fees_event),
+    return_value=(None, None, provider_fees_event, None),
 )
 @patch(
     "ocean_provider.validation.algo.get_service_files_list",
@@ -148,7 +148,7 @@ def test_fails_not_an_algo(provider_wallet, consumer_address, web3):
 @patch("ocean_provider.validation.algo.check_asset_consumable", return_value=(True, ""))
 @patch(
     "ocean_provider.validation.algo.validate_order",
-    return_value=(None, None, provider_fees_event),
+    return_value=(None, None, provider_fees_event, None),
 )
 @patch(
     "ocean_provider.validation.algo.get_service_files_list",
@@ -227,7 +227,7 @@ def test_fails_meta_issues(provider_wallet, consumer_address, web3):
 @patch("ocean_provider.validation.algo.check_asset_consumable", return_value=(True, ""))
 @patch(
     "ocean_provider.validation.algo.validate_order",
-    return_value=(None, None, provider_fees_event),
+    return_value=(None, None, provider_fees_event, None),
 )
 @patch(
     "ocean_provider.validation.algo.get_service_files_list",
@@ -364,7 +364,7 @@ def test_additional_datasets(provider_wallet, consumer_address, web3):
 @patch("ocean_provider.validation.algo.check_asset_consumable", return_value=(True, ""))
 @patch(
     "ocean_provider.validation.algo.validate_order",
-    return_value=(None, None, provider_fees_event),
+    return_value=(None, None, provider_fees_event, None),
 )
 @patch(
     "ocean_provider.validation.algo.get_service_files_list",
@@ -420,7 +420,7 @@ def test_service_not_compute(provider_wallet, consumer_address, web3):
 @patch("ocean_provider.validation.algo.check_asset_consumable", return_value=(True, ""))
 @patch(
     "ocean_provider.validation.algo.validate_order",
-    return_value=(None, None, provider_fees_event),
+    return_value=(None, None, provider_fees_event, None),
 )
 @patch(
     "ocean_provider.validation.algo.get_service_files_list",
@@ -522,7 +522,7 @@ def test_fails_trusted(provider_wallet, consumer_address, web3):
 @patch("ocean_provider.validation.algo.check_asset_consumable", return_value=(True, ""))
 @patch(
     "ocean_provider.validation.algo.validate_order",
-    return_value=(None, None, provider_fees_event),
+    return_value=(None, None, provider_fees_event, None),
 )
 @patch("ocean_provider.validation.algo.get_service_files_list", return_value=None)
 def test_fails_no_asset_url(provider_wallet, consumer_address, web3):
@@ -571,7 +571,7 @@ def test_fails_validate_order(provider_wallet, consumer_address, web3):
 @patch("ocean_provider.validation.algo.check_asset_consumable", return_value=(True, ""))
 @patch(
     "ocean_provider.validation.algo.validate_order",
-    return_value=(None, None, provider_fees_event),
+    return_value=(None, None, provider_fees_event, None),
 )
 @patch(
     "ocean_provider.validation.algo.get_service_files_list",
@@ -597,7 +597,7 @@ def test_fails_no_service_id(provider_wallet, consumer_address, web3):
 @patch("ocean_provider.validation.algo.check_asset_consumable", return_value=(True, ""))
 @patch(
     "ocean_provider.validation.algo.validate_order",
-    return_value=(None, None, provider_fees_event),
+    return_value=(None, None, provider_fees_event, None),
 )
 @patch(
     "ocean_provider.validation.algo.get_service_files_list",
@@ -642,7 +642,7 @@ def test_fails_invalid_algorithm_dict(provider_wallet, consumer_address, web3):
 @patch("ocean_provider.validation.algo.check_asset_consumable", return_value=(True, ""))
 @patch(
     "ocean_provider.validation.algo.validate_order",
-    return_value=(None, None, provider_fees_event),
+    return_value=(None, None, provider_fees_event, None),
 )
 @patch(
     "ocean_provider.validation.algo.get_service_files_list",
@@ -697,7 +697,7 @@ def test_fails_algorithm_in_use(provider_wallet, consumer_address, web3):
 @patch("ocean_provider.validation.algo.check_asset_consumable", return_value=(True, ""))
 @patch(
     "ocean_provider.validation.algo.validate_order",
-    return_value=(None, None, provider_fees_event),
+    return_value=(None, None, provider_fees_event, None),
 )
 @patch(
     "ocean_provider.validation.algo.get_service_files_list",
@@ -753,7 +753,7 @@ def test_fail_wrong_algo_type(provider_wallet, consumer_address, web3):
 @patch("ocean_provider.validation.algo.check_asset_consumable", return_value=(True, ""))
 @patch(
     "ocean_provider.validation.algo.validate_order",
-    return_value=(None, None, provider_fees_event),
+    return_value=(None, None, provider_fees_event, None),
 )
 @patch(
     "ocean_provider.validation.algo.get_service_files_list",
@@ -798,7 +798,7 @@ def test_fail_allow_raw_false(provider_wallet, consumer_address, web3):
 @patch("ocean_provider.validation.algo.check_asset_consumable", return_value=(True, ""))
 @patch(
     "ocean_provider.validation.algo.validate_order",
-    return_value=(None, None, provider_fees_event),
+    return_value=(None, None, provider_fees_event, None),
 )
 def test_success_multiple_services_types(provider_wallet, consumer_address, web3):
     ddo = Asset(ddo_dict)
@@ -852,7 +852,7 @@ def test_success_multiple_services_types(provider_wallet, consumer_address, web3
 @patch("ocean_provider.validation.algo.check_asset_consumable", return_value=(True, ""))
 @patch(
     "ocean_provider.validation.algo.validate_order",
-    return_value=(None, None, provider_fees_event),
+    return_value=(None, None, provider_fees_event, None),
 )
 def test_fail_missing_algo_meta_documentId(provider_wallet, consumer_address, web3):
     ddo = Asset(ddo_dict)
@@ -900,7 +900,7 @@ def test_fail_missing_algo_meta_documentId(provider_wallet, consumer_address, we
 @patch("ocean_provider.validation.algo.check_asset_consumable", return_value=(True, ""))
 @patch(
     "ocean_provider.validation.algo.validate_order",
-    return_value=(None, None, provider_fees_event),
+    return_value=(None, None, provider_fees_event, None),
 )
 @patch(
     "ocean_provider.validation.algo.get_service_files_list",

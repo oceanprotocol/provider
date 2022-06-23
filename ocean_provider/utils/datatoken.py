@@ -144,9 +144,14 @@ def verify_order_tx(
     # end check provider fees
 
     # check if we have an OrderReused event. If so, get orderTxId and switch next checks to use that
-    event_logs = datatoken_contract.events.OrderReused().processReceipt(
-        tx_receipt, errors=DISCARD
-    )
+    start_order_tx_id = tx_receipt.transactionHash
+    try:
+        event_logs = datatoken_contract.events.OrderReused().processReceipt(
+            tx_receipt, errors=DISCARD
+        )
+    except Exception as e:
+        logger.error(e)
+    logger.debug(f"Got events log when searching for ReuseOrder : {event_logs}")
     log_timestamp = None
     order_log = event_logs[0] if event_logs else None
     if order_log and order_log.args.orderTxId:
@@ -161,9 +166,15 @@ def verify_order_tx(
         if tx_receipt.status == 0:
             raise AssertionError("order referenced in OrderReused failed.")
 
-    event_logs = datatoken_contract.events.OrderStarted().processReceipt(
-        tx_receipt, errors=DISCARD
-    )
+    logger.debug(f"Search for orderStarted in tx_receipt : {tx_receipt}")
+
+    # this has changed now if the original original_tx was a reuseOrder
+    start_order_tx_id = tx_receipt.transactionHash
+    try:
+        event_logs = datatoken_contract.events.OrderStarted().processReceipt(tx_receipt)
+    except Exception as e:
+        logger.error(e)
+    logger.debug(f"Got events log when searching for OrderStarted : {event_logs}")
     order_log = event_logs[0] if event_logs else None
 
     if not order_log:
@@ -215,7 +226,7 @@ def verify_order_tx(
 
     tx = web3.eth.get_transaction(HexBytes(tx_id))
 
-    return tx, order_log, provider_fee_order_log
+    return tx, order_log, provider_fee_order_log, start_order_tx_id
 
 
 def validate_order(
@@ -246,7 +257,7 @@ def validate_order(
         logger.debug(f"validate_order is on trial {i + 1} in {num_tries}.")
         i += 1
         try:
-            tx, order_event, provider_fees_event = verify_order_tx(
+            tx, order_event, provider_fees_event, start_order_tx_id = verify_order_tx(
                 web3,
                 token_address,
                 tx_id,
@@ -262,7 +273,7 @@ def validate_order(
                 f"result is: tx={tx}, order_event={order_event}."
             )
 
-            return tx, order_event, provider_fees_event
+            return tx, order_event, provider_fees_event, start_order_tx_id
         except ConnectionClosed:
             logger.debug("got ConnectionClosed error on validate_order.")
             if i == num_tries:
