@@ -22,6 +22,8 @@ from ocean_provider.utils.datatoken import (
 from ocean_provider.utils.provider_fees import get_provider_fee_amount
 from ocean_provider.utils.url import append_userdata
 from ocean_provider.utils.util import (
+    check_url_details,
+    get_download_url,
     get_service_files_list,
     msg_hash,
 )
@@ -190,11 +192,11 @@ class WorkflowValidator:
                 algorithm_token_address = self.algo_service.datatoken_address
 
                 if self.algo_service.type == "compute":
-                    asset_urls = get_service_files_list(
+                    self.compute_urls = get_service_files_list(
                         self.algo_service, self.provider_wallet, algo
                     )
 
-                    if not asset_urls:
+                    if not self.compute_urls:
                         self.error = "Services in algorithm with compute type must be in the same provider you are calling."
                         return False
 
@@ -407,12 +409,15 @@ class InputItemValidator:
             algo_ddo = get_asset_from_metadatastore(
                 get_metadata_url(), trusted_algo_dict["did"]
             )
+            service = algo_ddo.get_service_by_id(self.data["algorithm"].get("serviceId"))
+            compute_urls = get_service_files_list(service, self.provider_wallet, algo_ddo)
+            file_download_urls = [get_download_url(u) for u in compute_urls]
+            checksums = [
+                check_url_details(durl, with_checksum=True)[1]["checksum"]
+                for durl in file_download_urls
+            ]
+            files_checksum = ''.join(checksums)
 
-            service = algo_ddo.get_service_by_id(
-                self.data["algorithm"].get("serviceId")
-            )
-
-            files_checksum = msg_hash(service.encrypted_files)
             if allowed_files_checksum and files_checksum != allowed_files_checksum:
                 self.error = f"filesChecksum for algorithm with did {algo_ddo.did} does not match"
                 return False
