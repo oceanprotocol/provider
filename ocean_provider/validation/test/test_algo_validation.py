@@ -944,3 +944,49 @@ def test_fee_amount_not_paid(provider_wallet, consumer_address, web3):
                 validator.error
                 == "Provider fees must be paid on the asset, OR on the algorithm ordered, OR on any additional input."
             )
+
+
+@pytest.mark.unit
+@patch("ocean_provider.validation.algo.check_asset_consumable", return_value=(True, ""))
+@patch(
+    "ocean_provider.validation.algo.validate_order",
+    return_value=(None, None, provider_fees_event, None),
+)
+@patch(
+    "ocean_provider.validation.algo.get_service_files_list",
+    return_value=[{"url": "http://some.broken.url", "type": "url"}],
+)
+def test_algo_ddo_file_broken(provider_wallet, consumer_address, web3):
+    """Tests case where algo checksum can not be computed."""
+    web3 = get_web3()
+    ddo = Asset(ddo_dict)
+    alg_ddo = Asset(alg_ddo_dict)
+    sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
+    sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
+
+    data = {
+        "dataset": {"documentId": ddo.did, "serviceId": sa.id, "transferTxId": "tx_id"},
+        "algorithm": {
+            "documentId": alg_ddo.did,
+            "serviceId": sa_compute.id,
+            "transferTxId": "alg_tx_id",
+        },
+        "environment": "ocean-compute",
+    }
+
+    def side_effect(*args, **kwargs):
+        nonlocal ddo, alg_ddo
+        if ddo.did == args[1]:
+            return ddo
+        if alg_ddo.did == args[1]:
+            return alg_ddo
+
+    with patch(
+        "ocean_provider.validation.algo.get_asset_from_metadatastore",
+        side_effect=side_effect,
+    ):
+        validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
+        assert validator.validate() is False
+        assert (
+            validator.error == "Unable to check algorithm file, is it still available?"
+        )
