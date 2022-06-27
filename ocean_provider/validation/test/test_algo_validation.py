@@ -200,7 +200,7 @@ def test_fails_meta_issues(provider_wallet, consumer_address, web3):
         assert validator.validate() is False
         assert (
             validator.error
-            == "algorithm `container` must specify values for all of entrypoint, image, tag and checksum."
+            == "algorithm `container` must specify values for all of entrypoint, image and checksum."
         )
 
     # algorithmMeta container is missing image
@@ -224,7 +224,7 @@ def test_fails_meta_issues(provider_wallet, consumer_address, web3):
         assert validator.validate() is False
         assert (
             validator.error
-            == "algorithm `container` must specify values for all of entrypoint, image, tag and checksum."
+            == "algorithm `container` must specify values for all of entrypoint, image and checksum."
         )
 
 
