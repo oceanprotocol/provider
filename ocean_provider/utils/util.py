@@ -19,7 +19,7 @@ from eth_typing.encoding import HexStr
 from flask import Response
 from ocean_provider.utils.encryption import do_decrypt
 from ocean_provider.utils.services import Service
-from ocean_provider.utils.url import is_safe_url, append_userdata, get_download_url
+from ocean_provider.utils.url import is_safe_url, format_userdata, get_download_url
 from web3 import Web3
 from web3.types import TxParams, TxReceipt
 
@@ -47,7 +47,6 @@ def build_download_response(
 ):
     method = url_object.get("method", "GET")
     url = get_download_url(url_object)
-    url = append_userdata(url, url_object)
     url_headers = url_object.get("headers", {})
 
     try:
@@ -67,7 +66,20 @@ def build_download_response(
             raise ValueError(f"Unsafe method {method}")
 
         method = getattr(requests_session, method.lower())
-        response = method(url, headers=download_request_headers, stream=True, timeout=3)
+        func_args = {
+            "url": url,
+            "headers": download_request_headers,
+            "stream": True,
+            "timeout": 3,
+        }
+
+        if "userdata" in url_object:
+            if method != "get":
+                func_args["params"] = format_userdata(url_object.get("userdata"))
+            else:
+                func_args["json"] = format_userdata(url_object.get("userdata"))
+
+        response = method(**func_args)
         if not is_range_request:
             filename = url.split("/")[-1]
 

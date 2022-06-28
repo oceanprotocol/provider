@@ -12,7 +12,6 @@ from urllib.parse import urlparse, urljoin
 import dns.resolver
 import requests
 from ocean_provider.utils.basics import get_config, get_provider_wallet
-from requests.models import PreparedRequest
 
 logger = logging.getLogger(__name__)
 
@@ -166,17 +165,13 @@ def check_url_details(url_object, with_checksum=False):
     the file checksum and the checksumType (currently hardcoded to sha256)
     """
     url = get_download_url(url_object)
-    url = append_userdata(url, url_object)
-
     try:
         if not is_safe_url(url):
             return False, {}
 
         for _ in range(int(os.getenv("REQUEST_RETRIES", 1))):
             result, extra_data = _get_result_from_url(
-                url,
-                method=url_object.get("method", "GET"),
-                headers=url_object.get("headers", {}),
+                url_object,
                 with_checksum=with_checksum,
             )
             if result and result.status_code == 200:
@@ -216,13 +211,22 @@ def check_url_details(url_object, with_checksum=False):
     return False, {}
 
 
-def _get_result_from_url(url, method, headers, with_checksum=False):
+def _get_result_from_url(url_object, with_checksum=False):
+    method = url_object.get("method", "GET")
+    headers = url_object.get("headers", {})
+    url = get_download_url(url_object)
+
     lightweight_methods = [] if method.lower() == "post" else ["head", "options"]
     heavyweight_method = method.lower()
 
     for method in lightweight_methods:
         func = getattr(requests, method)
-        result = func(url, timeout=REQUEST_TIMEOUT, headers=headers)
+        result = func(
+            url,
+            timeout=REQUEST_TIMEOUT,
+            headers=headers,
+            params=format_userdata(url_object.get("userdata")),
+        )
 
         if (
             not with_checksum
@@ -236,14 +240,22 @@ def _get_result_from_url(url, method, headers, with_checksum=False):
             return result, {}
 
     func = getattr(requests, heavyweight_method)
+    func_args = {"url": url, "stream": True, "headers": headers}
+
+    if "userdata" in url_object:
+        if heavyweight_method != "get":
+            func_args["params"] = format_userdata(url_object.get("userdata"))
+        else:
+            func_args["json"] = format_userdata(url_object.get("userdata"))
 
     if not with_checksum:
         # fallback on GET request
-        return func(url, stream=True, timeout=REQUEST_TIMEOUT, headers=headers), {}
+        func_args["timeout"] = REQUEST_TIMEOUT
+        return func(**func_args), {}
 
     sha = hashlib.sha256()
 
-    with func(url, headers=headers, stream=True) as r:
+    with func(**func_args) as r:
         r.raise_for_status()
         for chunk in r.iter_content(chunk_size=CHUNK_SIZE):
             sha.update(chunk)
@@ -251,21 +263,15 @@ def _get_result_from_url(url, method, headers, with_checksum=False):
     return r, {"checksum": sha.hexdigest(), "checksumType": "sha256"}
 
 
-def append_userdata(url, data):
-    userdata = data.get("userdata", None)
-
+def format_userdata(userdata):
     if not userdata:
-        return url
+        return None
 
     if not isinstance(userdata, dict):
         try:
             userdata = json.loads(userdata)
         except json.decoder.JSONDecodeError:
             logger.info(
-                "Can not decode sent userdata for asset, sending without extra GET parameters."
+                "Can not decode sent userdata for asset, sending without extra parameters."
             )
-            return url
-
-    req = PreparedRequest()
-    req.prepare_url(url, userdata)
-    return req.url
+            return {}
