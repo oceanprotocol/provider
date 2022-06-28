@@ -148,13 +148,26 @@ def validate_dns_record(record, domain, record_type):
     return True
 
 
-def check_url_details(url, with_checksum=False):
+def get_download_url(url_object):
+    if url_object["type"] != "ipfs":
+        return url_object["url"]
+
+    if not os.getenv("IPFS_GATEWAY"):
+        raise Exception("No IPFS_GATEWAY defined, can not resolve ipfs hash.")
+
+    return urljoin(os.getenv("IPFS_GATEWAY"), urljoin("ipfs/", url_object["hash"]))
+
+
+def check_url_details(url_object, with_checksum=False):
     """
     If the url argument is invalid, returns False and empty dictionary.
     Otherwise it returns True and a dictionary containing contentType and
     contentLength. If the with_checksum flag is set to True, it also returns
     the file checksum and the checksumType (currently hardcoded to sha256)
     """
+    url = get_download_url(url_object)
+    url = append_userdata(url, url_object)
+
     try:
         if not is_safe_url(url):
             return False, {}
