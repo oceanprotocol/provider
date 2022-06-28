@@ -45,7 +45,7 @@ def test_initialize_on_bad_url(client, publisher_wallet, consumer_wallet, web3):
         client, asset.did, service, consumer_wallet, raw_response=True
     )
     assert "error" in response.json
-    assert response.json["error"] == "Asset URL not found or not available."
+    assert "Asset URL not found or not available." in response.json["error"]
 
 
 @pytest.mark.integration

@@ -191,6 +191,15 @@ def initialize():
         if not valid:
             return error_response(message, 400, logger)
 
+        valid, url_details = check_url_details(url_object)
+        if not valid or not url_details:
+            return error_response(
+                f"Error: Asset URL not found or not available. \n"
+                f"Payload was: {data}",
+                400,
+                logger,
+            )
+
     # Prepare the `transfer` tokens transaction with the appropriate number
     # of tokens required for this service
     # The consumer must sign and execute this transaction in order to be
