@@ -138,7 +138,11 @@ def test_build_download_response():
     )
 
     filename = "filename.txt"
-    url_object = {"url": f"https://source-lllllll.cccc/{filename}", "type": "url"}
+    url_object = {
+        "url": f"https://source-lllllll.cccc/{filename}",
+        "type": "url",
+        "headers": {"APIKEY": "sample"},
+    }
     with patch(
         "ocean_provider.utils.util.is_safe_url",
         side_effect=[True],

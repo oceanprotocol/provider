@@ -48,6 +48,7 @@ def build_download_response(
     method = url_object.get("method", "GET")
     url = get_download_url(url_object)
     url = append_userdata(url, url_object)
+    url_headers = url_object.get("headers", {})
 
     try:
         if validate_url and not is_safe_url(url):
@@ -59,6 +60,8 @@ def build_download_response(
         if is_range_request:
             download_request_headers = {"Range": request.headers.get("range")}
             download_response_headers = download_request_headers
+
+        download_request_headers.update(url_headers)
 
         if method.lower() not in ["get", "post"]:
             raise ValueError(f"Unsafe method {method}")

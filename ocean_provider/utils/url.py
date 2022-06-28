@@ -174,7 +174,10 @@ def check_url_details(url_object, with_checksum=False):
 
         for _ in range(int(os.getenv("REQUEST_RETRIES", 1))):
             result, extra_data = _get_result_from_url(
-                url, method=url_object.get("method", "GET"), with_checksum=with_checksum
+                url,
+                method=url_object.get("method", "GET"),
+                headers=url_object.get("headers", {}),
+                with_checksum=with_checksum,
             )
             if result and result.status_code == 200:
                 break
@@ -213,13 +216,13 @@ def check_url_details(url_object, with_checksum=False):
     return False, {}
 
 
-def _get_result_from_url(url, method, with_checksum=False):
+def _get_result_from_url(url, method, headers, with_checksum=False):
     lightweight_methods = [] if method.lower() == "post" else ["head", "options"]
     heavyweight_method = method
 
     for method in lightweight_methods:
         func = getattr(requests, method)
-        result = func(url, timeout=REQUEST_TIMEOUT)
+        result = func(url, timeout=REQUEST_TIMEOUT, headers=headers)
 
         if (
             not with_checksum
@@ -236,11 +239,11 @@ def _get_result_from_url(url, method, with_checksum=False):
 
     if not with_checksum:
         # fallback on GET request
-        return func(url, stream=True, timeout=REQUEST_TIMEOUT), {}
+        return func(url, stream=True, timeout=REQUEST_TIMEOUT, headers=headers), {}
 
     sha = hashlib.sha256()
 
-    with func(url, stream=True) as r:
+    with func(url, headers=headers, stream=True) as r:
         r.raise_for_status()
         for chunk in r.iter_content(chunk_size=CHUNK_SIZE):
             sha.update(chunk)
