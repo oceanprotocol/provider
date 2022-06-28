@@ -302,6 +302,24 @@ def test_validate_url_object():
     assert result is False
     assert message == "malformed service files, missing required keys. id=1"
 
+    result, message = validate_url_object(
+        {"type": "url", "url": "x", "headers": "not_a_dict"}, 1
+    )
+    assert result is False
+    assert message == "malformed or unsupported type for headers. id=1"
+
+    result, message = validate_url_object(
+        {"type": "url", "url": "x", "headers": '{"dict": "but_stringified"}'}, 1
+    )
+    # we purposefully require a dictionary
+    assert result is False
+    assert message == "malformed or unsupported type for headers. id=1"
+
+    result, message = validate_url_object(
+        {"type": "url", "url": "x", "headers": {"dict": "dict_key"}}, 1
+    )
+    assert result is True
+
 
 @pytest.mark.unit
 def test_download_ipfs_file():

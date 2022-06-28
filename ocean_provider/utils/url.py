@@ -218,7 +218,7 @@ def check_url_details(url_object, with_checksum=False):
 
 def _get_result_from_url(url, method, headers, with_checksum=False):
     lightweight_methods = [] if method.lower() == "post" else ["head", "options"]
-    heavyweight_method = method
+    heavyweight_method = method.lower()
 
     for method in lightweight_methods:
         func = getattr(requests, method)

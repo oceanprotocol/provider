@@ -98,6 +98,10 @@ def fileinfo():
         service = asset.get_service_by_id(service_id)
         files_list = get_service_files_list(service, provider_wallet, asset)
     else:
+        valid, message = validate_url_object(data)
+        if not valid:
+            return error_response(message, 400, logger)
+
         files_list = [data]
 
     with_checksum = data.get("checksum", False)
