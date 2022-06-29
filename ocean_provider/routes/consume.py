@@ -7,6 +7,7 @@ import logging
 
 from flask import jsonify, request
 from flask_sieve import validate
+from ocean_provider.file_types.file_types_factory import FilesTypeFactory
 from ocean_provider.requests_session import get_requests_session
 from ocean_provider.user_nonce import get_nonce, update_nonce
 from ocean_provider.utils.asset import (
@@ -28,7 +29,6 @@ from ocean_provider.utils.util import (
     build_download_response,
     get_request_data,
     get_service_files_list,
-    validate_url_object,
 )
 from ocean_provider.validation.provider_requests import (
     DownloadRequest,
@@ -98,7 +98,7 @@ def fileinfo():
         service = asset.get_service_by_id(service_id)
         files_list = get_service_files_list(service, provider_wallet, asset)
     else:
-        valid, message = validate_url_object(data)
+        valid, message = FilesTypeFactory.validate_and_create(data)
         if not valid:
             return error_response(message, 400, logger)
 
@@ -191,7 +191,7 @@ def initialize():
     # we check if the file is valid only if we have fileIndex
     if file_index > -1:
         url_object = get_service_files_list(service, provider_wallet, asset)[file_index]
-        valid, message = validate_url_object(url_object, service.id)
+        valid, message = FilesTypeFactory.validate_and_create(url_object)
         if not valid:
             return error_response(message, 400, logger)
 
@@ -314,7 +314,7 @@ def download():
     if file_index > len(files_list):
         return error_response(f"No such fileIndex {file_index}", 400, logger)
     url_object = files_list[file_index]
-    url_valid, message = validate_url_object(url_object, service_id)
+    url_valid, message = FilesTypeFactory.validate_and_create(url_object)
 
     if not url_valid:
         return error_response(message, 400, logger)

@@ -185,28 +185,6 @@ def get_service_files_list_old_structure(
         return None
 
 
-def validate_url_object(url_object, service_id=""):
-    if not url_object:
-        return False, f"cannot decrypt files for this service. id={service_id}"
-
-    if "type" not in url_object or url_object["type"] not in ["ipfs", "url"]:
-        return (
-            False,
-            f"malformed or unsupported type for service files. id={service_id}",
-        )
-
-    if (url_object["type"] == "ipfs" and "hash" not in url_object) or (
-        url_object["type"] == "url" and "url" not in url_object
-    ):
-        return False, f"malformed service files, missing required keys. id={service_id}"
-
-    if "headers" in url_object:
-        if not isinstance(url_object["headers"], dict):
-            return False, f"malformed or unsupported type for headers. id={service_id}"
-
-    return True, ""
-
-
 def sign_tx(web3, tx, private_key):
     """
     :param web3: Web3 object instance

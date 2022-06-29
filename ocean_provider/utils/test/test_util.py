@@ -14,6 +14,7 @@ from web3.main import Web3
 from werkzeug.utils import get_content_type
 
 from copy import deepcopy
+from ocean_provider.file_types.file_types_factory import FilesTypeFactory
 from ocean_provider.requests_session import get_requests_session
 from ocean_provider.utils.asset import Asset
 from ocean_provider.utils.encryption import do_encrypt
@@ -25,7 +26,6 @@ from ocean_provider.utils.util import (
     get_service_files_list,
     get_service_files_list_old_structure,
     msg_hash,
-    validate_url_object,
 )
 from tests.ddo.ddo_sample1_v4 import json_dict as ddo_sample1_v4
 
@@ -324,33 +324,33 @@ def test_get_service_files_list_old_structure(provider_wallet):
 
 @pytest.mark.unit
 def test_validate_url_object():
-    result, message = validate_url_object({}, 1)
+    result, message = FilesTypeFactory.validate_and_create({})
     assert result is False
-    assert message == "cannot decrypt files for this service. id=1"
+    assert message == "cannot decrypt files for this service."
 
-    result, message = validate_url_object({"type": "not_ipfs_or_url"}, 1)
+    result, message = FilesTypeFactory.validate_and_create({"type": "not_ipfs_or_url"})
     assert result is False
-    assert message == "malformed or unsupported type for service files. id=1"
+    assert message == "malformed or unsupported type for service files."
 
-    result, message = validate_url_object({"type": "ipfs", "but_hash": "missing"}, 1)
+    result, message = FilesTypeFactory.validate_and_create({"type": "ipfs", "but_hash": "missing"})
     assert result is False
-    assert message == "malformed service files, missing required keys. id=1"
+    assert message == "malformed service files, missing required keys."
 
-    result, message = validate_url_object(
-        {"type": "url", "url": "x", "headers": "not_a_dict"}, 1
+    result, message = FilesTypeFactory.validate_and_create(
+        {"type": "url", "url": "x", "headers": "not_a_dict"}
     )
     assert result is False
-    assert message == "malformed or unsupported type for headers. id=1"
+    assert message == "malformed or unsupported types."
 
-    result, message = validate_url_object(
-        {"type": "url", "url": "x", "headers": '{"dict": "but_stringified"}'}, 1
+    result, message = FilesTypeFactory.validate_and_create(
+        {"type": "url", "url": "x", "headers": '{"dict": "but_stringified"}'}
     )
     # we purposefully require a dictionary
     assert result is False
-    assert message == "malformed or unsupported type for headers. id=1"
+    assert message == "malformed or unsupported types."
 
-    result, message = validate_url_object(
-        {"type": "url", "url": "x", "headers": {"dict": "dict_key"}}, 1
+    result, message = FilesTypeFactory.validate_and_create(
+        {"type": "url", "url": "x", "headers": {"dict": "dict_key"}}
     )
     assert result is True
 
