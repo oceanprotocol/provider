@@ -58,7 +58,7 @@ def test_build_download_response():
     url_object = {"url": f"https://source-lllllll.cccc/{filename}", "type": "url"}
     _, instance = FilesTypeFactory.validate_and_create(url_object)
     with patch(
-        "ocean_provider.file_types.file_types_factory.is_safe_url",
+        "ocean_provider.file_types.definitions.is_safe_url",
         side_effect=[True],
     ):
         response = instance.build_download_response(request, requests_session)
@@ -73,7 +73,7 @@ def test_build_download_response():
     url_object = {"url": f"https://source-lllllll.cccc/{filename}", "type": "url"}
     _, instance = FilesTypeFactory.validate_and_create(url_object)
     with patch(
-        "ocean_provider.file_types.file_types_factory.is_safe_url",
+        "ocean_provider.file_types.definitions.is_safe_url",
         side_effect=[True],
     ):
         response = instance.build_download_response(request, requests_session)
@@ -90,7 +90,7 @@ def test_build_download_response():
     _, instance = FilesTypeFactory.validate_and_create(url_object)
     instance.checked_details = {"contentType": content_type}
     with patch(
-        "ocean_provider.file_types.file_types_factory.is_safe_url",
+        "ocean_provider.file_types.definitions.is_safe_url",
         side_effect=[True],
     ):
         response = instance.build_download_response(request, requests_session)
@@ -115,7 +115,7 @@ def test_build_download_response():
     url_object = {"url": "https://source-lllllll.cccc/not-a-filename", "type": "url"}
     _, instance = FilesTypeFactory.validate_and_create(url_object)
     with patch(
-        "ocean_provider.file_types.file_types_factory.is_safe_url",
+        "ocean_provider.file_types.definitions.is_safe_url",
         side_effect=[True],
     ):
         response = instance.build_download_response(
@@ -146,7 +146,7 @@ def test_build_download_response():
     }
     _, instance = FilesTypeFactory.validate_and_create(url_object)
     with patch(
-        "ocean_provider.file_types.file_types_factory.is_safe_url",
+        "ocean_provider.file_types.definitions.is_safe_url",
         side_effect=[True],
     ):
         response = instance.build_download_response(
