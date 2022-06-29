@@ -83,19 +83,14 @@ def verify_order_tx(
             f"Multiple order events in the same transaction !!! {provider_fee_order_log}"
         )
 
+    provider_initialize_timestamp = 0
     if extra_data:
         provider_data = json.loads(provider_fee_order_log.args.providerData)
         if extra_data["environment"] != provider_data["environment"]:
             raise AssertionError(
                 "Mismatch between ordered c2d environment and selected one."
             )
-
-        valid_until = provider_fee_order_log.args.validUntil
-        if (
-            datetime.utcnow().timestamp() >= valid_until
-            and not allow_expired_provider_fees
-        ):
-            raise AssertionError("Ordered c2d time was exceeded, check validUntil.")
+        provider_initialize_timestamp = provider_data["timestamp"]
 
     if Web3.toChecksumAddress(
         provider_fee_order_log.args.providerFeeAddress
@@ -134,13 +129,19 @@ def verify_order_tx(
             "Provider was not able to check the signed message in ProviderFees event\n"
         )
 
-    # check duration
+    timestamp_now = datetime.utcnow().timestamp()
+    # check validUntil
     if provider_fee_order_log.args.validUntil > 0 and not allow_expired_provider_fees:
-        timestamp_now = datetime.utcnow().timestamp()
-        if provider_fee_order_log.args.validUntil < timestamp_now:
-            raise AssertionError(
-                "Validity in transaction exceeds current UTC timestamp"
-            )
+        if timestamp_now >= provider_fee_order_log.args.validUntil:
+            # expired validUntil.  let's add the difference between provider_data["timestamp"](time of initializeCompute) and transaction timestamp.
+            # Also add 90 secs as buffer, since block.timestamp can be manipulated
+            block = web3.eth.get_block(tx_receipt.blockHash, False)
+            if provider_initialize_timestamp > 0 and (
+                timestamp_now
+                >= provider_fee_order_log.args.validUntil
+                + (block.timestamp - provider_initialize_timestamp + 90)
+            ):
+                raise AssertionError("Ordered c2d time was exceeded, check validUntil.")
     # end check provider fees
 
     # check if we have an OrderReused event. If so, get orderTxId and switch next checks to use that
@@ -202,7 +203,7 @@ def verify_order_tx(
         )
 
     # Check if order expired. timeout == 0 means order is valid forever
-    timestamp_now = datetime.utcnow().timestamp()
+
     # use orderReused timestamp if it exists
     log_timestamp = (
         log_timestamp if log_timestamp is not None else order_log.args.timestamp

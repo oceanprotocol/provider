@@ -49,7 +49,10 @@ def get_provider_fees(
     else:
         provider_fee_amount = 0
 
-    provider_data = json.dumps({"environment": compute_env}, separators=(",", ":"))
+    provider_data = json.dumps(
+        {"environment": compute_env, "timestamp": datetime.utcnow().timestamp()},
+        separators=(",", ":"),
+    )
     message_hash = web3.solidityKeccak(
         ["bytes", "address", "address", "uint256", "uint256"],
         [
