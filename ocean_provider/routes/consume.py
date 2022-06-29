@@ -2,7 +2,6 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
-from datetime import datetime
 import json
 import logging
 
@@ -24,14 +23,12 @@ from ocean_provider.utils.error_responses import error_response
 from ocean_provider.utils.proof import send_proof
 from ocean_provider.utils.provider_fees import get_provider_fees, get_c2d_environments
 from ocean_provider.utils.services import ServiceType
-from ocean_provider.utils.url import append_userdata, check_url_details
+from ocean_provider.utils.url import check_url_details
 from ocean_provider.utils.util import (
     build_download_response,
-    get_download_url,
     get_request_data,
     get_service_files_list,
     validate_url_object,
-    check_url_valid,
 )
 from ocean_provider.validation.provider_requests import (
     DownloadRequest,
@@ -100,15 +97,18 @@ def fileinfo():
         asset = get_asset_from_metadatastore(get_metadata_url(), did)
         service = asset.get_service_by_id(service_id)
         files_list = get_service_files_list(service, provider_wallet, asset)
-        url_list = [get_download_url(file_item) for file_item in files_list]
     else:
-        url_list = [get_download_url(data)]
+        valid, message = validate_url_object(data)
+        if not valid:
+            return error_response(message, 400, logger)
+
+        files_list = [data]
 
     with_checksum = data.get("checksum", False)
 
     files_info = []
-    for i, url in enumerate(url_list):
-        valid, details = check_url_details(url, with_checksum=with_checksum)
+    for i, file in enumerate(files_list):
+        valid, details = check_url_details(file, with_checksum=with_checksum)
         info = {"index": i, "valid": valid}
         info.update(details)
         files_info.append(info)
@@ -190,9 +190,19 @@ def initialize():
     file_index = int(data.get("fileIndex", "-1"))
     # we check if the file is valid only if we have fileIndex
     if file_index > -1:
-        valid, message = check_url_valid(service, file_index, data, asset)
+        url_object = get_service_files_list(service, provider_wallet, asset)[file_index]
+        valid, message = validate_url_object(url_object, service.id)
         if not valid:
             return error_response(message, 400, logger)
+
+        valid, url_details = check_url_details(url_object)
+        if not valid or not url_details:
+            return error_response(
+                f"Error: Asset URL not found or not available. \n"
+                f"Payload was: {data}",
+                400,
+                logger,
+            )
 
     # Prepare the `transfer` tokens transaction with the appropriate number
     # of tokens required for this service
@@ -309,24 +319,19 @@ def download():
     if not url_valid:
         return error_response(message, 400, logger)
 
-    download_url = get_download_url(url_object)
-    download_url = append_userdata(download_url, data)
-
-    valid, details = check_url_details(url_object["url"])
+    valid, details = check_url_details(url_object)
     content_type = details["contentType"] if valid else None
 
     logger.debug(
-        f"Done processing consume request for asset {did}, " f" url {download_url}"
+        f"Done processing consume request for asset {did}, " f" url {url_object['url']}"
     )
     update_nonce(consumer_address, data.get("nonce"))
 
     response = build_download_response(
         request,
         requests_session,
-        url_object["url"],
-        download_url,
+        url_object,
         content_type,
-        method=url_object.get("method", "GET"),
     )
     logger.info(f"download response = {response}")
 

@@ -88,7 +88,12 @@ def test_passes_raw(provider_wallet, consumer_address, web3):
                 "rawcode": "console.log('Hello world'!)",
                 "format": "docker-image",
                 "version": "0.1",
-                "container": {"entrypoint": "node $ALGO", "image": "node", "tag": "10"},
+                "container": {
+                    "entrypoint": "node $ALGO",
+                    "image": "node",
+                    "tag": "10",
+                    "checksum": "xx",
+                },
             },
         },
         "environment": "ocean-compute",
@@ -197,7 +202,7 @@ def test_fails_meta_issues(provider_wallet, consumer_address, web3):
         assert validator.validate() is False
         assert (
             validator.error
-            == "algorithm `container` must specify values for all of entrypoint, image and tag."
+            == "algorithm `container` must specify values for all of entrypoint, image and checksum."
         )
 
     # algorithmMeta container is missing image
@@ -221,7 +226,7 @@ def test_fails_meta_issues(provider_wallet, consumer_address, web3):
         assert validator.validate() is False
         assert (
             validator.error
-            == "algorithm `container` must specify values for all of entrypoint, image and tag."
+            == "algorithm `container` must specify values for all of entrypoint, image and checksum."
         )
 
 
@@ -775,7 +780,12 @@ def test_fail_allow_raw_false(provider_wallet, consumer_address, web3):
                 "rawcode": "console.log('Hello world'!)",
                 "format": "docker-image",
                 "version": "0.1",
-                "container": {"entrypoint": "node $ALGO", "image": "node", "tag": "10"},
+                "container": {
+                    "entrypoint": "node $ALGO",
+                    "image": "node",
+                    "tag": "10",
+                    "checksum": "xx",
+                },
             },
         },
     }
@@ -816,7 +826,12 @@ def test_success_multiple_services_types(provider_wallet, consumer_address, web3
                 "rawcode": "console.log('Hello world'!)",
                 "format": "docker-image",
                 "version": "0.1",
-                "container": {"entrypoint": "node $ALGO", "image": "node", "tag": "10"},
+                "container": {
+                    "entrypoint": "node $ALGO",
+                    "image": "node",
+                    "tag": "10",
+                    "checksum": "xx",
+                },
             },
         },
         "additionalDatasets": [

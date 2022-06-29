@@ -20,9 +20,8 @@ from ocean_provider.utils.datatoken import (
     validate_transfer_not_used_for_other_service,
 )
 from ocean_provider.utils.provider_fees import get_provider_fee_amount
-from ocean_provider.utils.url import append_userdata
+from ocean_provider.utils.url import check_url_details
 from ocean_provider.utils.util import (
-    check_url_details,
     get_download_url,
     get_service_files_list,
     msg_hash,
@@ -274,13 +273,12 @@ def validate_formatted_algorithm_dict(algorithm_dict, algorithm_did):
 
     container = algorithm_dict.get("container", {})
     # Validate `container` data
-    if not (
-        container.get("entrypoint") and container.get("image") and container.get("tag")
-    ):
-        return (
-            False,
-            "algorithm `container` must specify values for all of entrypoint, image and tag.",
-        )  # noqa
+    for key in ["entrypoint", "image", "checksum"]:
+        if not container.get(key):
+            return (
+                False,
+                "algorithm `container` must specify values for all of entrypoint, image and checksum.",
+            )
 
     return True, ""
 
@@ -414,13 +412,12 @@ class InputItemValidator:
                 service = algo_ddo.get_service_by_id(
                     self.data["algorithm"].get("serviceId")
                 )
-                compute_urls = get_service_files_list(
+                compute_url_objects = get_service_files_list(
                     service, self.provider_wallet, algo_ddo
                 )
-                file_download_urls = [get_download_url(u) for u in compute_urls]
                 checksums = [
                     check_url_details(durl, with_checksum=True)[1]["checksum"]
-                    for durl in file_download_urls
+                    for durl in compute_url_objects
                 ]
 
                 files_checksum = "".join(checksums).lower()

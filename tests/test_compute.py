@@ -61,7 +61,12 @@ def test_compute_raw_algo(
         "rawcode": "console.log('Hello world'!)",
         "format": "docker-image",
         "version": "0.1",
-        "container": {"entrypoint": "node $ALGO", "image": "node", "tag": "10"},
+        "container": {
+            "entrypoint": "node $ALGO",
+            "image": "node",
+            "tag": "10",
+            "checksum": "xx",
+        },
     }
     tx_id, _ = start_order(
         web3,

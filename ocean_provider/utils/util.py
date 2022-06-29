@@ -8,7 +8,6 @@ import logging
 import mimetypes
 import os
 from cgi import parse_header
-from urllib.parse import urljoin
 from typing import Tuple
 from ocean_provider.utils.asset import Asset
 import werkzeug
@@ -18,10 +17,9 @@ from eth_keys import KeyAPI
 from eth_keys.backends import NativeECCBackend
 from eth_typing.encoding import HexStr
 from flask import Response
-from ocean_provider.utils.basics import get_provider_wallet
 from ocean_provider.utils.encryption import do_decrypt
 from ocean_provider.utils.services import Service
-from ocean_provider.utils.url import is_safe_url, append_userdata, check_url_details
+from ocean_provider.utils.url import is_safe_url, format_userdata, get_download_url
 from web3 import Web3
 from web3.types import TxParams, TxReceipt
 
@@ -43,12 +41,14 @@ def msg_hash(message: str):
 def build_download_response(
     request,
     requests_session,
-    url,
-    download_url,
+    url_object,
     content_type=None,
-    method="GET",
     validate_url=True,
 ):
+    method = url_object.get("method", "GET")
+    url = get_download_url(url_object)
+    url_headers = url_object.get("headers", {})
+
     try:
         if validate_url and not is_safe_url(url):
             raise ValueError(f"Unsafe url {url}")
@@ -60,13 +60,26 @@ def build_download_response(
             download_request_headers = {"Range": request.headers.get("range")}
             download_response_headers = download_request_headers
 
+        download_request_headers.update(url_headers)
+
         if method.lower() not in ["get", "post"]:
             raise ValueError(f"Unsafe method {method}")
 
-        method = getattr(requests_session, method.lower())
-        response = method(
-            download_url, headers=download_request_headers, stream=True, timeout=3
-        )
+        func_method = getattr(requests_session, method.lower())
+        func_args = {
+            "url": url,
+            "headers": download_request_headers,
+            "stream": True,
+            "timeout": 3,
+        }
+
+        if "userdata" in url_object:
+            if method.lower() != "post":
+                func_args["params"] = format_userdata(url_object.get("userdata"))
+            else:
+                func_args["json"] = format_userdata(url_object.get("userdata"))
+
+        response = func_method(**func_args)
         if not is_range_request:
             filename = url.split("/")[-1]
 
@@ -172,7 +185,7 @@ def get_service_files_list_old_structure(
         return None
 
 
-def validate_url_object(url_object, service_id):
+def validate_url_object(url_object, service_id=""):
     if not url_object:
         return False, f"cannot decrypt files for this service. id={service_id}"
 
@@ -187,41 +200,11 @@ def validate_url_object(url_object, service_id):
     ):
         return False, f"malformed service files, missing required keys. id={service_id}"
 
+    if "headers" in url_object:
+        if not isinstance(url_object["headers"], dict):
+            return False, f"malformed or unsupported type for headers. id={service_id}"
+
     return True, ""
-
-
-def get_download_url(url_object):
-    if url_object["type"] != "ipfs":
-        return url_object["url"]
-
-    if not os.getenv("IPFS_GATEWAY"):
-        raise Exception("No IPFS_GATEWAY defined, can not resolve ipfs hash.")
-
-    return urljoin(os.getenv("IPFS_GATEWAY"), urljoin("ipfs/", url_object["hash"]))
-
-
-def check_url_valid(service, file_index, data, asset):
-    provider_wallet = get_provider_wallet()
-
-    url_object = get_service_files_list(service, provider_wallet, asset)[file_index]
-    url_valid, message = validate_url_object(url_object, service.id)
-    if not url_valid:
-        return False, message
-
-    download_url = get_download_url(url_object)
-    download_url = append_userdata(download_url, data)
-    valid, url_details = check_url_details(download_url)
-
-    if not valid:
-        logger.error(
-            f"Error: Asset URL not found or not available. \n" f"Payload was: {data}",
-            exc_info=1,
-        )
-
-        if not url_details:
-            url_details = "Asset URL not found or not available."
-
-    return valid, url_details
 
 
 def sign_tx(web3, tx, private_key):
