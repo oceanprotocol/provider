@@ -7,7 +7,7 @@ import logging
 import mimetypes
 import os
 import requests
-from typing import Any, Optional, Protocol
+from typing import Any, Optional, Protocol, Tuple
 from urllib.parse import urljoin
 
 from enforce_typing import enforce_types
@@ -23,7 +23,7 @@ CHUNK_SIZE = 8192
 class FilesType(Protocol):
     @enforce_types
     @abstractmethod
-    def validate_dict(url_object) -> tuple[bool, str]:
+    def validate_dict(url_object) -> Tuple[bool, str]:
         raise NotImplementedError
 
     @abstractmethod
@@ -256,7 +256,7 @@ class UrlFile(EndUrlType, FilesType):
         self.userdata = userdata
 
     @enforce_types
-    def validate_dict(self) -> tuple[bool, str]:
+    def validate_dict(self) -> Tuple[bool, Any]:
         if not self.url:
             return False, "malformed service files, missing required keys."
 
@@ -281,7 +281,7 @@ class IpfsFile(EndUrlType, FilesType):
         self.method = "get"
 
     @enforce_types
-    def validate_dict(self) -> tuple[bool, str]:
+    def validate_dict(self) -> Tuple[bool, Any]:
         if not self.hash:
             return False, "malformed service files, missing required keys."
 
@@ -299,7 +299,7 @@ class FilesTypeFactory:
     """Factory Method"""
 
     @staticmethod
-    def validate_and_create(file_obj) -> tuple[bool, Any]:
+    def validate_and_create(file_obj) -> Tuple[bool, Any]:
         if not file_obj:
             return False, "cannot decrypt files for this service."
 
