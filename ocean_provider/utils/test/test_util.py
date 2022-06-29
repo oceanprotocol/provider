@@ -18,6 +18,7 @@ from ocean_provider.requests_session import get_requests_session
 from ocean_provider.utils.asset import Asset
 from ocean_provider.utils.encryption import do_encrypt
 from ocean_provider.utils.services import Service
+from ocean_provider.utils.url import _get_result_from_url
 from ocean_provider.utils.util import (
     build_download_response,
     get_download_url,
@@ -170,6 +171,39 @@ def test_build_download_response():
             response = build_download_response(
                 request, requests_session_with_content_type, url_object
             )
+
+
+@pytest.mark.unit
+def test_httpbin():
+    request = Mock()
+    request.range = None
+
+    session = get_requests_session()
+    url_object = {
+        "url": "https://httpbin.org/get",
+        "type": "url",
+        "method": "GET",
+        "userdata": {"test_param": "OCEAN value"},
+    }
+    response = build_download_response(request, session, url_object, None)
+    assert response.json["args"] == {"test_param": "OCEAN value"}
+
+    url_object["url"] = "https://httpbin.org/headers"
+    url_object["headers"] = {"test_header": "OCEAN header"}
+    response = build_download_response(request, session, url_object, None)
+    assert response.json["headers"]["Test-Header"] == "OCEAN header"
+
+    url_object = {
+        "url": "https://httpbin.org/post",
+        "type": "url",
+        "method": "POST",
+        "userdata": {"test_param": "OCEAN POST value"},
+    }
+    response = build_download_response(request, session, url_object, None)
+    assert response.json["json"]["test_param"] == "OCEAN POST value"
+
+    response, _ = _get_result_from_url(url_object)
+    assert response.json()["json"]["test_param"] == "OCEAN POST value"
 
 
 @pytest.mark.unit

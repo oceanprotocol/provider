@@ -65,7 +65,7 @@ def build_download_response(
         if method.lower() not in ["get", "post"]:
             raise ValueError(f"Unsafe method {method}")
 
-        method = getattr(requests_session, method.lower())
+        func_method = getattr(requests_session, method.lower())
         func_args = {
             "url": url,
             "headers": download_request_headers,
@@ -74,12 +74,12 @@ def build_download_response(
         }
 
         if "userdata" in url_object:
-            if method != "get":
+            if method.lower() != "post":
                 func_args["params"] = format_userdata(url_object.get("userdata"))
             else:
                 func_args["json"] = format_userdata(url_object.get("userdata"))
 
-        response = method(**func_args)
+        response = func_method(**func_args)
         if not is_range_request:
             filename = url.split("/")[-1]
 

@@ -243,7 +243,7 @@ def _get_result_from_url(url_object, with_checksum=False):
     func_args = {"url": url, "stream": True, "headers": headers}
 
     if "userdata" in url_object:
-        if heavyweight_method != "get":
+        if heavyweight_method != "post":
             func_args["params"] = format_userdata(url_object.get("userdata"))
         else:
             func_args["json"] = format_userdata(url_object.get("userdata"))
@@ -269,9 +269,11 @@ def format_userdata(userdata):
 
     if not isinstance(userdata, dict):
         try:
-            userdata = json.loads(userdata)
+            return json.loads(userdata)
         except json.decoder.JSONDecodeError:
             logger.info(
                 "Can not decode sent userdata for asset, sending without extra parameters."
             )
             return {}
+
+    return userdata
