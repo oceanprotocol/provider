@@ -423,12 +423,15 @@ class InputItemValidator:
                     for durl in file_download_urls
                 ]
 
-                files_checksum = "".join(checksums)
+                files_checksum = "".join(checksums).lower()
             except Exception:
                 self.error = "Unable to check algorithm file, is it still available?"
                 return False
 
-            if allowed_files_checksum and files_checksum != allowed_files_checksum:
+            if (
+                allowed_files_checksum
+                and files_checksum != allowed_files_checksum.lower()
+            ):
                 self.error = f"filesChecksum for algorithm with did {algo_ddo.did} does not match"
                 return False
 
