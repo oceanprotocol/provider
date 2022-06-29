@@ -20,7 +20,6 @@ from ocean_provider.utils.datatoken import (
     validate_transfer_not_used_for_other_service,
 )
 from ocean_provider.utils.provider_fees import get_provider_fee_amount
-from ocean_provider.utils.url import append_userdata
 from ocean_provider.utils.util import (
     get_service_files_list,
     msg_hash,
