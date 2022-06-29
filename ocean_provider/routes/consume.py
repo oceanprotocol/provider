@@ -24,9 +24,7 @@ from ocean_provider.utils.error_responses import error_response
 from ocean_provider.utils.proof import send_proof
 from ocean_provider.utils.provider_fees import get_provider_fees, get_c2d_environments
 from ocean_provider.utils.services import ServiceType
-from ocean_provider.utils.url import check_url_details
 from ocean_provider.utils.util import (
-    build_download_response,
     get_request_data,
     get_service_files_list,
 )
@@ -98,17 +96,18 @@ def fileinfo():
         service = asset.get_service_by_id(service_id)
         files_list = get_service_files_list(service, provider_wallet, asset)
     else:
-        valid, message = FilesTypeFactory.validate_and_create(data)
-        if not valid:
-            return error_response(message, 400, logger)
-
         files_list = [data]
 
     with_checksum = data.get("checksum", False)
 
     files_info = []
     for i, file in enumerate(files_list):
-        valid, details = check_url_details(file, with_checksum=with_checksum)
+        valid, message = FilesTypeFactory.validate_and_create(file)
+        if not valid:
+            return error_response(message, 400, logger)
+
+        file_instance = message
+        valid, details = file_instance.check_details(with_checksum=with_checksum)
         info = {"index": i, "valid": valid}
         info.update(details)
         files_info.append(info)
@@ -195,7 +194,8 @@ def initialize():
         if not valid:
             return error_response(message, 400, logger)
 
-        valid, url_details = check_url_details(url_object)
+        file_instance = message
+        valid, url_details = file_instance.check_details(url_object)
         if not valid or not url_details:
             return error_response(
                 f"Error: Asset URL not found or not available. \n"
@@ -319,19 +319,20 @@ def download():
     if not url_valid:
         return error_response(message, 400, logger)
 
-    valid, details = check_url_details(url_object)
-    content_type = details["contentType"] if valid else None
+    file_instance = message
+    valid, details = file_instance.check_details(url_object)
+    # TODO: think we need this
+    # if not valid:
+    #    return error_response(details, 400, logger)
 
     logger.debug(
         f"Done processing consume request for asset {did}, " f" url {url_object['url']}"
     )
     update_nonce(consumer_address, data.get("nonce"))
 
-    response = build_download_response(
+    response = file_instance.build_download_response(
         request,
         requests_session,
-        url_object,
-        content_type,
     )
     logger.info(f"download response = {response}")
 

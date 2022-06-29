@@ -5,9 +5,7 @@
 import hashlib
 import json
 import logging
-import mimetypes
 import os
-from cgi import parse_header
 from typing import Tuple
 from ocean_provider.utils.asset import Asset
 import werkzeug
@@ -19,7 +17,7 @@ from eth_typing.encoding import HexStr
 from flask import Response
 from ocean_provider.utils.encryption import do_decrypt
 from ocean_provider.utils.services import Service
-from ocean_provider.utils.url import is_safe_url, format_userdata, get_download_url
+from ocean_provider.utils.url import is_safe_url
 from web3 import Web3
 from web3.types import TxParams, TxReceipt
 
@@ -36,93 +34,6 @@ def get_request_data(request):
 
 def msg_hash(message: str):
     return hashlib.sha256(message.encode("utf-8")).hexdigest()
-
-
-def build_download_response(
-    request,
-    requests_session,
-    url_object,
-    content_type=None,
-    validate_url=True,
-):
-    method = url_object.get("method", "GET")
-    url = get_download_url(url_object)
-    url_headers = url_object.get("headers", {})
-
-    try:
-        if validate_url and not is_safe_url(url):
-            raise ValueError(f"Unsafe url {url}")
-        download_request_headers = {}
-        download_response_headers = {}
-        is_range_request = bool(request.range)
-
-        if is_range_request:
-            download_request_headers = {"Range": request.headers.get("range")}
-            download_response_headers = download_request_headers
-
-        download_request_headers.update(url_headers)
-
-        if method.lower() not in ["get", "post"]:
-            raise ValueError(f"Unsafe method {method}")
-
-        func_method = getattr(requests_session, method.lower())
-        func_args = {
-            "url": url,
-            "headers": download_request_headers,
-            "stream": True,
-            "timeout": 3,
-        }
-
-        if "userdata" in url_object:
-            if method.lower() != "post":
-                func_args["params"] = format_userdata(url_object.get("userdata"))
-            else:
-                func_args["json"] = format_userdata(url_object.get("userdata"))
-
-        response = func_method(**func_args)
-        if not is_range_request:
-            filename = url.split("/")[-1]
-
-            content_disposition_header = response.headers.get("content-disposition")
-            if content_disposition_header:
-                _, content_disposition_params = parse_header(content_disposition_header)
-                content_filename = content_disposition_params.get("filename")
-                if content_filename:
-                    filename = content_filename
-
-            content_type_header = response.headers.get("content-type")
-            if content_type_header:
-                content_type = content_type_header
-
-            file_ext = os.path.splitext(filename)[1]
-            if file_ext and not content_type:
-                content_type = mimetypes.guess_type(filename)[0]
-            elif not file_ext and content_type:
-                # add an extension to filename based on the content_type
-                extension = mimetypes.guess_extension(content_type)
-                if extension:
-                    filename = filename + extension
-
-            download_response_headers = {
-                "Content-Disposition": f"attachment;filename={filename}",
-                "Access-Control-Expose-Headers": "Content-Disposition",
-                "Connection": "close",
-            }
-
-        def _generate(_response):
-            for chunk in _response.iter_content(chunk_size=4096):
-                if chunk:
-                    yield chunk
-
-        return Response(
-            _generate(response),
-            response.status_code,
-            headers=download_response_headers,
-            content_type=content_type,
-        )
-    except Exception as e:
-        logger.error(f"Error preparing file download response: {str(e)}")
-        raise
 
 
 def get_service_files_list(
