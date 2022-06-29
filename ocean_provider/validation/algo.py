@@ -272,13 +272,12 @@ def validate_formatted_algorithm_dict(algorithm_dict, algorithm_did):
 
     container = algorithm_dict.get("container", {})
     # Validate `container` data
-    if not (
-        container.get("entrypoint") and container.get("image") and container.get("tag")
-    ):
-        return (
-            False,
-            "algorithm `container` must specify values for all of entrypoint, image and tag.",
-        )  # noqa
+    for key in ["entrypoint", "image", "checksum"]:
+        if not container.get(key):
+            return (
+                False,
+                "algorithm `container` must specify values for all of entrypoint, image and checksum.",
+            )
 
     return True, ""
 
