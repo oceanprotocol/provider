@@ -29,7 +29,13 @@ class FilesType(Protocol):
     def check_details(self, with_checksum=False):
         raise NotImplementedError
 
-    # TODO: build_download_response?
+    @abstractmethod
+    def build_download_response(
+        self,
+        request,
+        validate_url=True,
+    ):
+        raise NotImplementedError
 
 
 class EndUrlType:
@@ -91,12 +97,10 @@ class EndUrlType:
         return False, {}
 
     def _get_result_from_url(self, with_checksum=False):
-        url = self.get_download_url()
-
         lightweight_methods = [] if self.method == "post" else ["head", "options"]
-        heavyweight_method = self.method
 
         for method in lightweight_methods:
+            url = self.get_download_url()
             func = getattr(requests, method)
             result = func(
                 url,
@@ -116,18 +120,10 @@ class EndUrlType:
             ):
                 return result, {}
 
-        func = getattr(requests, heavyweight_method)
-        func_args = {"url": url, "stream": True, "headers": self.headers}
-
-        if self.userdata:
-            if heavyweight_method != "post":
-                func_args["params"] = self.format_userdata()
-            else:
-                func_args["json"] = self.format_userdata()
+        func, func_args = self._get_func_and_args()
 
         if not with_checksum:
-            # fallback on GET request
-            func_args["timeout"] = REQUEST_TIMEOUT
+            # fallback on full request, since head and options did not work
             return func(**func_args), {}
 
         sha = hashlib.sha256()
@@ -138,6 +134,24 @@ class EndUrlType:
                 sha.update(chunk)
 
         return r, {"checksum": sha.hexdigest(), "checksumType": "sha256"}
+
+    def _get_func_and_args(self):
+        url = self.get_download_url()
+        func = getattr(requests, self.method)
+        func_args = {
+            "url": url,
+            "stream": True,
+            "headers": self.headers,
+            "timeout": REQUEST_TIMEOUT,
+        }
+
+        if self.userdata:
+            if self.method != "post":
+                func_args["params"] = self.format_userdata()
+            else:
+                func_args["json"] = self.format_userdata()
+
+        return func, func_args
 
     def format_userdata(self):
         if not self.userdata:
@@ -157,7 +171,6 @@ class EndUrlType:
     def build_download_response(
         self,
         request,
-        requests_session,
         validate_url=True,
     ):
         url = self.get_download_url()
@@ -170,29 +183,18 @@ class EndUrlType:
         try:
             if validate_url and not is_safe_url(url):
                 raise ValueError(f"Unsafe url {url}")
-            download_request_headers = {}
+
             download_response_headers = {}
             is_range_request = bool(request.range)
 
-            if is_range_request:
-                download_request_headers = {"Range": request.headers.get("range")}
-                download_response_headers = download_request_headers
+            if is_range_request and "Range" not in self.headers:
+                #  TODO: add this to file check as well, alternatively reject ranged requests
+                # if range exists in ddo
+                # if headers exist in the DDO, they should stay put
+                self.headers["Range"] = request.headers.get("range")
+                download_response_headers = {"Range": request.headers.get("range")}
 
-            download_request_headers.update(self.headers)
-
-            func_method = getattr(requests_session, self.method)
-            func_args = {
-                "url": url,
-                "headers": download_request_headers,
-                "stream": True,
-                "timeout": 3,
-            }
-
-            if self.userdata:
-                if self.method.lower() != "post":
-                    func_args["params"] = self.format_userdata()
-                else:
-                    func_args["json"] = self.format_userdata()
+            func_method, func_args = self._get_func_and_args()
 
             response = func_method(**func_args)
             if not is_range_request:

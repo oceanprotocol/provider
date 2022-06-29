@@ -15,7 +15,6 @@ from werkzeug.utils import get_content_type
 
 from copy import deepcopy
 from ocean_provider.file_types.file_types_factory import FilesTypeFactory
-from ocean_provider.requests_session import get_requests_session
 from ocean_provider.utils.asset import Asset
 from ocean_provider.utils.encryption import do_encrypt
 from ocean_provider.utils.services import Service
@@ -50,9 +49,6 @@ def test_build_download_response():
     mocked_response.status_code = 200
     mocked_response.headers = {}
 
-    requests_session = Dummy()
-    requests_session.get = MagicMock(return_value=mocked_response)
-
     filename = "<<filename>>.xml"
     content_type = mimetypes.guess_type(filename)[0]
     url_object = {"url": f"https://source-lllllll.cccc/{filename}", "type": "url"}
@@ -61,7 +57,11 @@ def test_build_download_response():
         "ocean_provider.file_types.definitions.is_safe_url",
         side_effect=[True],
     ):
-        response = instance.build_download_response(request, requests_session)
+        with patch(
+            "requests.get",
+            side_effect=[mocked_response],
+        ):
+            response = instance.build_download_response(request)
 
     assert response.headers["content-type"] == content_type
     assert (
@@ -76,7 +76,11 @@ def test_build_download_response():
         "ocean_provider.file_types.definitions.is_safe_url",
         side_effect=[True],
     ):
-        response = instance.build_download_response(request, requests_session)
+        with patch(
+            "requests.get",
+            side_effect=[mocked_response],
+        ):
+            response = instance.build_download_response(request)
     assert response.headers["content-type"] == get_content_type(
         response.default_mimetype, response.charset
     )
@@ -93,7 +97,11 @@ def test_build_download_response():
         "ocean_provider.file_types.definitions.is_safe_url",
         side_effect=[True],
     ):
-        response = instance.build_download_response(request, requests_session)
+        with patch(
+            "requests.get",
+            side_effect=[mocked_response],
+        ):
+            response = instance.build_download_response(request)
     assert response.headers["content-type"] == content_type
 
     matched_cd = (
@@ -107,20 +115,17 @@ def test_build_download_response():
         "content-disposition": f"attachment;filename={attachment_file_name}"
     }
 
-    requests_session_with_attachment = Dummy()
-    requests_session_with_attachment.get = MagicMock(
-        return_value=mocked_response_with_attachment
-    )
-
     url_object = {"url": "https://source-lllllll.cccc/not-a-filename", "type": "url"}
     _, instance = FilesTypeFactory.validate_and_create(url_object)
     with patch(
         "ocean_provider.file_types.definitions.is_safe_url",
         side_effect=[True],
     ):
-        response = instance.build_download_response(
-            request, requests_session_with_attachment
-        )
+        with patch(
+            "requests.get",
+            side_effect=[mocked_response_with_attachment],
+        ):
+            response = instance.build_download_response(request)
     assert (
         response.headers["content-type"]
         == mimetypes.guess_type(attachment_file_name)[0]
@@ -133,11 +138,6 @@ def test_build_download_response():
     response_content_type = "text/csv"
     mocked_response_with_content_type.headers = {"content-type": response_content_type}
 
-    requests_session_with_content_type = Dummy()
-    requests_session_with_content_type.get = MagicMock(
-        return_value=mocked_response_with_content_type
-    )
-
     filename = "filename.txt"
     url_object = {
         "url": f"https://source-lllllll.cccc/{filename}",
@@ -149,9 +149,11 @@ def test_build_download_response():
         "ocean_provider.file_types.definitions.is_safe_url",
         side_effect=[True],
     ):
-        response = instance.build_download_response(
-            request, requests_session_with_content_type
-        )
+        with patch(
+            "requests.get",
+            side_effect=[mocked_response_with_content_type],
+        ):
+            response = instance.build_download_response(request)
     assert response.headers["content-type"] == response_content_type
     assert (
         response.headers.get_all("Content-Disposition")[0]
@@ -164,7 +166,6 @@ def test_httpbin():
     request = Mock()
     request.range = None
 
-    session = get_requests_session()
     url_object = {
         "url": "https://httpbin.org/get",
         "type": "url",
@@ -172,13 +173,13 @@ def test_httpbin():
         "userdata": {"test_param": "OCEAN value"},
     }
     _, instance = FilesTypeFactory.validate_and_create(url_object)
-    response = instance.build_download_response(request, session)
+    response = instance.build_download_response(request)
     assert response.json["args"] == {"test_param": "OCEAN value"}
 
     url_object["url"] = "https://httpbin.org/headers"
     url_object["headers"] = {"test_header": "OCEAN header"}
     _, instance = FilesTypeFactory.validate_and_create(url_object)
-    response = instance.build_download_response(request, session)
+    response = instance.build_download_response(request)
     assert response.json["headers"]["Test-Header"] == "OCEAN header"
 
     url_object = {
@@ -188,7 +189,7 @@ def test_httpbin():
         "userdata": {"test_param": "OCEAN POST value"},
     }
     _, instance = FilesTypeFactory.validate_and_create(url_object)
-    response = instance.build_download_response(request, session)
+    response = instance.build_download_response(request)
     assert response.json["json"]["test_param"] == "OCEAN POST value"
 
 
@@ -357,7 +358,6 @@ def test_download_ipfs_file():
     client = ipfshttpclient.connect("/dns/172.15.0.16/tcp/5001/http")
     cid = client.add("./tests/resources/ddo_sample_file.txt")["Hash"]
     url_object = {"type": "ipfs", "hash": cid}
-    requests_session = get_requests_session()
 
     request = Mock()
     request.range = None
@@ -367,5 +367,5 @@ def test_download_ipfs_file():
     print(f"got ipfs download url: {download_url}")
     assert download_url and download_url.endswith(f"ipfs/{cid}")
 
-    response = instance.build_download_response(request, requests_session)
+    response = instance.build_download_response(request)
     assert response.data, f"got no data {response.data}"

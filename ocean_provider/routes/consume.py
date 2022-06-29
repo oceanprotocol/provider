@@ -330,10 +330,7 @@ def download():
     )
     update_nonce(consumer_address, data.get("nonce"))
 
-    response = file_instance.build_download_response(
-        request,
-        requests_session,
-    )
+    response = file_instance.build_download_response(request)
     logger.info(f"download response = {response}")
 
     provider_proof_data = json.dumps(
