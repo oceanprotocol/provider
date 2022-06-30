@@ -188,8 +188,6 @@ class EndUrlType:
             is_range_request = bool(request.range)
 
             if is_range_request and "Range" not in self.headers:
-                #  TODO: add this to file check as well, alternatively reject ranged requests
-                # if range exists in ddo
                 # if headers exist in the DDO, they should stay put
                 self.headers["Range"] = request.headers.get("Range")
 

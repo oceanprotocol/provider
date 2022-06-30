@@ -321,9 +321,6 @@ def download():
 
     file_instance = message
     valid, details = file_instance.check_details(url_object)
-    # TODO: think we need this
-    # if not valid:
-    #    return error_response(details, 400, logger)
 
     logger.debug(
         f"Done processing consume request for asset {did}, " f" url {url_object['url']}"
