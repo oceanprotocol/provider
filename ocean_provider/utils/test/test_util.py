@@ -10,6 +10,7 @@ import mimetypes
 import pytest
 from unittest.mock import MagicMock, Mock, patch
 
+from flask import Request
 from web3.main import Web3
 from werkzeug.utils import get_content_type
 
@@ -163,8 +164,9 @@ def test_build_download_response():
 
 @pytest.mark.unit
 def test_httpbin():
-    request = Mock()
+    request = Mock(spec=Request)
     request.range = None
+    request.headers = {}
 
     url_object = {
         "url": "https://httpbin.org/get",
@@ -177,11 +179,35 @@ def test_httpbin():
     assert response.json["args"] == {"test_param": "OCEAN value"}
 
     url_object["url"] = "https://httpbin.org/headers"
-    url_object["headers"] = {"test_header": "OCEAN header"}
+    url_object["headers"] = {"test_header": "OCEAN header", "Range": "DDO range"}
     _, instance = FilesTypeFactory.validate_and_create(url_object)
     response = instance.build_download_response(request)
-    assert response.json["headers"]["Test-Header"] == "OCEAN header"
+    # no request range, but DDO range exists
+    assert response.headers.get("Range") == "DDO range"
 
+    url_object["headers"] = {}
+    _, instance = FilesTypeFactory.validate_and_create(url_object)
+    response = instance.build_download_response(request)
+    # no request range and no DDO range
+    assert response.headers.get("Range") is None
+
+    _, instance = FilesTypeFactory.validate_and_create(url_object)
+    request.range = 200
+    request.headers = {"Range": "200"}
+    response = instance.build_download_response(request)
+    # request range and no DDO range
+    assert response.headers.get("Range") == "200"
+
+    url_object["headers"] = {"test_header": "OCEAN header", "Range": "DDO range"}
+    _, instance = FilesTypeFactory.validate_and_create(url_object)
+    request.range = 200
+    request.headers = {"Range": "200"}
+    response = instance.build_download_response(request)
+    # request range and DDO range, will favor DDO range
+    assert response.headers.get("Range") == "DDO range"
+
+    request.range = None
+    request.headers = {}
     url_object = {
         "url": "https://httpbin.org/post",
         "type": "url",

@@ -191,8 +191,11 @@ class EndUrlType:
                 #  TODO: add this to file check as well, alternatively reject ranged requests
                 # if range exists in ddo
                 # if headers exist in the DDO, they should stay put
-                self.headers["Range"] = request.headers.get("range")
-                download_response_headers = {"Range": request.headers.get("range")}
+                self.headers["Range"] = request.headers.get("Range")
+
+            if "Range" in self.headers:
+                download_response_headers = {"Range": self.headers.get("Range")}
+                is_range_request = True
 
             func_method, func_args = self._get_func_and_args()
 
