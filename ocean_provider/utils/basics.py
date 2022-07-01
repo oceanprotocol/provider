@@ -13,6 +13,7 @@ from hexbytes import HexBytes
 from ocean_provider.config import Config
 from ocean_provider.http_provider import CustomHTTPProvider
 from requests_testadapter import Resp
+from web3.middleware import geth_poa_middleware
 from web3 import WebsocketProvider
 from web3.main import Web3
 
@@ -72,11 +73,7 @@ def get_web3(network_url: Optional[str] = None) -> Web3:
         network_url = get_config().network_url
 
     web3 = Web3(provider=get_web3_connection_provider(network_url))
-
-    if network_url.startswith("wss"):
-        from web3.middleware import geth_poa_middleware
-
-        web3.middleware_onion.inject(geth_poa_middleware, layer=0)
+    web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
     web3.chain_id = web3.eth.chain_id
     app_web3_instance = web3
