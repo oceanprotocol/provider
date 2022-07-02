@@ -49,6 +49,8 @@ class IpfsFile(EndUrlType, FilesType):
         self.headers = headers if headers else {}
         self.userdata = userdata
         self.method = "get"
+        self.gateway = os.getenv("IPFS_GATEWAY")
+        self.url = self.get_download_url()
 
     @enforce_types
     def validate_dict(self) -> Tuple[bool, Any]:
@@ -58,7 +60,15 @@ class IpfsFile(EndUrlType, FilesType):
         return True, self
 
     def get_download_url(self):
-        if not os.getenv("IPFS_GATEWAY"):
+        if not self.gateway:
             raise Exception("No IPFS_GATEWAY defined, can not resolve ipfs hash.")
 
-        return urljoin(os.getenv("IPFS_GATEWAY"), urljoin("ipfs/", self.hash))
+        if self.gateway == "https://api.web3.storage/upload":
+            url = f"https://{self.hash}.ipfs.dweb.link"
+        elif self.gateway in ["https://api.estuary.tech/content/add", "https://shuttle-5.estuary.tech/content/add"]:
+            url = f'https://dweb.link/ipfs/{cid}'
+        else:
+            url = urljoin(os.getenv("IPFS_GATEWAY"), urljoin("ipfs/", self.hash))
+
+        return url
+
