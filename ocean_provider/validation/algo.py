@@ -4,9 +4,9 @@
 #
 import json
 import logging
-import os
 
 from ocean_provider.constants import BaseURLs
+from ocean_provider.file_types.file_types_factory import FilesTypeFactory
 from ocean_provider.serializers import StageAlgoSerializer
 from ocean_provider.utils.asset import (
     get_asset_from_metadatastore,
@@ -20,9 +20,7 @@ from ocean_provider.utils.datatoken import (
     validate_transfer_not_used_for_other_service,
 )
 from ocean_provider.utils.provider_fees import get_provider_fee_amount
-from ocean_provider.utils.url import check_url_details
 from ocean_provider.utils.util import (
-    get_download_url,
     get_service_files_list,
     msg_hash,
 )
@@ -412,11 +410,11 @@ class InputItemValidator:
                 service = algo_ddo.get_service_by_id(
                     self.data["algorithm"].get("serviceId")
                 )
-                compute_url_objects = get_service_files_list(
-                    service, self.provider_wallet, algo_ddo
-                )
+
+                compute_url_objects = get_service_files_list(service, self.provider_wallet, algo_ddo)
+
                 checksums = [
-                    check_url_details(durl, with_checksum=True)[1]["checksum"]
+                    FilesTypeFactory.validate_and_create(durl)[1].check_details(with_checksum=True)[1]["checksum"]
                     for durl in compute_url_objects
                 ]
 
