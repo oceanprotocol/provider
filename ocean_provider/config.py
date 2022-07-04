@@ -28,6 +28,7 @@ NAME_ALLOW_NON_PUBLIC_IP = "allow_non_public_ip"
 NAME_STORAGE_PATH = "storage.path"
 NAME_BLOCK_CONFIRMATIONS = "block_confirmations"
 NAME_AUTHORIZED_DECRYPTERS = "authorized_decrypters"
+NAME_IS_POA_NETWORK = "is_poa_network"
 
 environ_names = {
     NAME_NETWORK_URL: [
@@ -61,6 +62,11 @@ environ_names = {
         "AUTHORIZED_DECRYPTERS",
         "List of authorized decrypters",
         "resources",
+    ],
+    NAME_IS_POA_NETWORK: [
+        "IS_POA_NETWORK",
+        "Is POA network",
+        "eth-network",
     ],
 }
 
@@ -164,3 +170,9 @@ class Config(configparser.ConfigParser):
     @property
     def block_confirmations(self):
         return int(self.get("eth-network", NAME_BLOCK_CONFIRMATIONS, fallback=0))
+
+    @property
+    def is_poa_network(self):
+        return bool(
+            strtobool(self.get("eth-network", NAME_IS_POA_NETWORK, fallback="0"))
+        )

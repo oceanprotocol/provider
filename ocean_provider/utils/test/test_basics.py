@@ -49,3 +49,19 @@ def test_validate_timestamp():
 
     timestamp_past = (datetime.utcnow() - timedelta(hours=1)).timestamp()
     assert validate_timestamp(timestamp_past) is False
+
+
+@pytest.mark.unit
+def test_poa_network(monkeypatch):
+    web3 = get_web3(cached=False)
+    for middleware in web3.middleware_onion._queue:
+        break
+
+    assert not callable(middleware)
+
+    monkeypatch.setenv("IS_POA_NETWORK", "1")
+    web3 = get_web3(cached=False)
+    for middleware in web3.middleware_onion._queue:
+        break
+
+    assert callable(middleware)
