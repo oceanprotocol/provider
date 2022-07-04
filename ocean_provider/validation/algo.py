@@ -411,10 +411,14 @@ class InputItemValidator:
                     self.data["algorithm"].get("serviceId")
                 )
 
-                compute_url_objects = get_service_files_list(service, self.provider_wallet, algo_ddo)
+                compute_url_objects = get_service_files_list(
+                    service, self.provider_wallet, algo_ddo
+                )
 
                 checksums = [
-                    FilesTypeFactory.validate_and_create(durl)[1].check_details(with_checksum=True)[1]["checksum"]
+                    FilesTypeFactory.validate_and_create(durl)[1].check_details(
+                        with_checksum=True
+                    )[1]["checksum"]
                     for durl in compute_url_objects
                 ]
 
