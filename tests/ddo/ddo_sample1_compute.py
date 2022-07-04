@@ -40,7 +40,7 @@ ddo_dict = {
                 "publisherTrustedAlgorithms": [
                     {
                         "did": "did:op:706d7452b1a25b183051fe02f2ad902d54fc45a43fdcee26b20f21684b5dee72",
-                        "filesChecksum": "09903ddb8459c7ade1ea2bb639207c47f3474a060ae4ace9ba9581c71b9a3f54",
+                        "filesChecksum": "b4908c868c78086097a10f986718a8f3fae1455f0d443c3dc59330207d47cc6d",
                         "containerSectionChecksum": "743e3591b4c035906be7dbc9eb592089d096be3b2d752f8d8d52917dd609f31f",
                     }
                 ],
@@ -146,7 +146,7 @@ alg_ddo_dict = {
                 "publisherTrustedAlgorithms": [
                     {
                         "did": "did:op:706d7452b1a25b183051fe02f2ad902d54fc45a43fdcee26b20f21684b5dee72",
-                        "filesChecksum": "09903ddb8459c7ade1ea2bb639207c47f3474a060ae4ace9ba9581c71b9a3f54",
+                        "filesChecksum": "b4908c868c78086097a10f986718a8f3fae1455f0d443c3dc59330207d47cc6d",
                         "containerSectionChecksum": "743e3591b4c035906be7dbc9eb592089d096be3b2d752f8d8d52917dd609f31f",
                     }
                 ],

@@ -16,6 +16,9 @@ from tests.test_helpers import (
 )
 
 
+this_is_a_gist = "https://gist.githubusercontent.com/calina-c/5e8c965962bc0240eab516cb7a180670/raw/6e6cd245c039a9aac0a488857c6927d39eaafe4d/sprintf-py-conversions"
+
+
 def build_and_send_ddo_with_compute_service(
     client,
     publisher_wallet,
@@ -40,10 +43,18 @@ def build_and_send_ddo_with_compute_service(
             custom_metadata=algo_metadata,
             custom_service_endpoint="http://172.15.0.7:8030",
             timeout=timeout,
+            unencrypted_files_list=[
+                {"url": this_is_a_gist, "type": "url", "method": "GET"}
+            ],
         )
     else:
         alg_ddo = get_registered_asset(
-            publisher_wallet, custom_metadata=algo_metadata, timeout=timeout
+            publisher_wallet,
+            custom_metadata=algo_metadata,
+            timeout=timeout,
+            unencrypted_files_list=[
+                {"url": this_is_a_gist, "type": "url", "method": "GET"}
+            ],
         )
 
     # publish an algorithm asset (asset with metadata of type `algorithm`)
@@ -67,7 +78,8 @@ def build_and_send_ddo_with_compute_service(
             custom_services_args=[
                 {
                     "did": alg_ddo.did,
-                    "filesChecksum": msg_hash(service.encrypted_files),
+                    # known checksum for the gist
+                    "filesChecksum": "b4908c868c78086097a10f986718a8f3fae1455f0d443c3dc59330207d47cc6d",
                     "containerSectionChecksum": msg_hash(
                         json.dumps(
                             alg_ddo.metadata["algorithm"]["container"],

@@ -20,7 +20,9 @@ from ocean_provider.utils.datatoken import (
     validate_transfer_not_used_for_other_service,
 )
 from ocean_provider.utils.provider_fees import get_provider_fee_amount
+from ocean_provider.utils.url import check_url_details
 from ocean_provider.utils.util import (
+    get_download_url,
     get_service_files_list,
     msg_hash,
 )
@@ -402,16 +404,31 @@ class InputItemValidator:
             allowed_container_checksum = trusted_algo_dict.get(
                 "containerSectionChecksum"
             )
-            algo_ddo = get_asset_from_metadatastore(
-                get_metadata_url(), trusted_algo_dict["did"]
-            )
 
-            service = algo_ddo.get_service_by_id(
-                self.data["algorithm"].get("serviceId")
-            )
+            try:
+                algo_ddo = get_asset_from_metadatastore(
+                    get_metadata_url(), trusted_algo_dict["did"]
+                )
+                service = algo_ddo.get_service_by_id(
+                    self.data["algorithm"].get("serviceId")
+                )
+                compute_url_objects = get_service_files_list(
+                    service, self.provider_wallet, algo_ddo
+                )
+                checksums = [
+                    check_url_details(durl, with_checksum=True)[1]["checksum"]
+                    for durl in compute_url_objects
+                ]
 
-            files_checksum = msg_hash(service.encrypted_files)
-            if allowed_files_checksum and files_checksum != allowed_files_checksum:
+                files_checksum = "".join(checksums).lower()
+            except Exception:
+                self.error = "Unable to check algorithm file, is it still available?"
+                return False
+
+            if (
+                allowed_files_checksum
+                and files_checksum != allowed_files_checksum.lower()
+            ):
                 self.error = f"filesChecksum for algorithm with did {algo_ddo.did} does not match"
                 return False
 
