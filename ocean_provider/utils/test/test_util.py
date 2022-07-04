@@ -10,22 +10,19 @@ import mimetypes
 import pytest
 from unittest.mock import MagicMock, Mock, patch
 
+from flask import Request
 from web3.main import Web3
 from werkzeug.utils import get_content_type
 
 from copy import deepcopy
-from ocean_provider.requests_session import get_requests_session
+from ocean_provider.file_types.file_types_factory import FilesTypeFactory
 from ocean_provider.utils.asset import Asset
 from ocean_provider.utils.encryption import do_encrypt
 from ocean_provider.utils.services import Service
-from ocean_provider.utils.url import _get_result_from_url
 from ocean_provider.utils.util import (
-    build_download_response,
-    get_download_url,
     get_service_files_list,
     get_service_files_list_old_structure,
     msg_hash,
-    validate_url_object,
 )
 from tests.ddo.ddo_sample1_v4 import json_dict as ddo_sample1_v4
 
@@ -53,17 +50,19 @@ def test_build_download_response():
     mocked_response.status_code = 200
     mocked_response.headers = {}
 
-    requests_session = Dummy()
-    requests_session.get = MagicMock(return_value=mocked_response)
-
     filename = "<<filename>>.xml"
     content_type = mimetypes.guess_type(filename)[0]
     url_object = {"url": f"https://source-lllllll.cccc/{filename}", "type": "url"}
+    _, instance = FilesTypeFactory.validate_and_create(url_object)
     with patch(
-        "ocean_provider.utils.util.is_safe_url",
+        "ocean_provider.file_types.definitions.is_safe_url",
         side_effect=[True],
     ):
-        response = build_download_response(request, requests_session, url_object, None)
+        with patch(
+            "requests.get",
+            side_effect=[mocked_response],
+        ):
+            response = instance.build_download_response(request)
 
     assert response.headers["content-type"] == content_type
     assert (
@@ -73,11 +72,16 @@ def test_build_download_response():
 
     filename = "<<filename>>"
     url_object = {"url": f"https://source-lllllll.cccc/{filename}", "type": "url"}
+    _, instance = FilesTypeFactory.validate_and_create(url_object)
     with patch(
-        "ocean_provider.utils.util.is_safe_url",
+        "ocean_provider.file_types.definitions.is_safe_url",
         side_effect=[True],
     ):
-        response = build_download_response(request, requests_session, url_object, None)
+        with patch(
+            "requests.get",
+            side_effect=[mocked_response],
+        ):
+            response = instance.build_download_response(request)
     assert response.headers["content-type"] == get_content_type(
         response.default_mimetype, response.charset
     )
@@ -88,13 +92,17 @@ def test_build_download_response():
 
     filename = "<<filename>>"
     url_object = {"url": f"https://source-lllllll.cccc/{filename}", "type": "url"}
+    _, instance = FilesTypeFactory.validate_and_create(url_object)
+    instance.checked_details = {"contentType": content_type}
     with patch(
-        "ocean_provider.utils.util.is_safe_url",
+        "ocean_provider.file_types.definitions.is_safe_url",
         side_effect=[True],
     ):
-        response = build_download_response(
-            request, requests_session, url_object, content_type
-        )
+        with patch(
+            "requests.get",
+            side_effect=[mocked_response],
+        ):
+            response = instance.build_download_response(request)
     assert response.headers["content-type"] == content_type
 
     matched_cd = (
@@ -108,19 +116,17 @@ def test_build_download_response():
         "content-disposition": f"attachment;filename={attachment_file_name}"
     }
 
-    requests_session_with_attachment = Dummy()
-    requests_session_with_attachment.get = MagicMock(
-        return_value=mocked_response_with_attachment
-    )
-
     url_object = {"url": "https://source-lllllll.cccc/not-a-filename", "type": "url"}
+    _, instance = FilesTypeFactory.validate_and_create(url_object)
     with patch(
-        "ocean_provider.utils.util.is_safe_url",
+        "ocean_provider.file_types.definitions.is_safe_url",
         side_effect=[True],
     ):
-        response = build_download_response(
-            request, requests_session_with_attachment, url_object, None
-        )
+        with patch(
+            "requests.get",
+            side_effect=[mocked_response_with_attachment],
+        ):
+            response = instance.build_download_response(request)
     assert (
         response.headers["content-type"]
         == mimetypes.guess_type(attachment_file_name)[0]
@@ -133,77 +139,84 @@ def test_build_download_response():
     response_content_type = "text/csv"
     mocked_response_with_content_type.headers = {"content-type": response_content_type}
 
-    requests_session_with_content_type = Dummy()
-    requests_session_with_content_type.get = MagicMock(
-        return_value=mocked_response_with_content_type
-    )
-
     filename = "filename.txt"
     url_object = {
         "url": f"https://source-lllllll.cccc/{filename}",
         "type": "url",
         "headers": {"APIKEY": "sample"},
     }
+    _, instance = FilesTypeFactory.validate_and_create(url_object)
     with patch(
-        "ocean_provider.utils.util.is_safe_url",
+        "ocean_provider.file_types.definitions.is_safe_url",
         side_effect=[True],
     ):
-        response = build_download_response(
-            request, requests_session_with_content_type, url_object, None
-        )
+        with patch(
+            "requests.get",
+            side_effect=[mocked_response_with_content_type],
+        ):
+            response = instance.build_download_response(request)
     assert response.headers["content-type"] == response_content_type
     assert (
         response.headers.get_all("Content-Disposition")[0]
         == f"attachment;filename={filename}"
     )
 
-    filename = "filename.txt"
-    url_object = {
-        "url": f"https://source-lllllll.cccc/{filename}",
-        "type": "url",
-        "method": "DELETE",
-    }
-    with patch(
-        "ocean_provider.utils.util.is_safe_url",
-        side_effect=[True],
-    ):
-        with pytest.raises(ValueError, match="Unsafe method DELETE"):
-            response = build_download_response(
-                request, requests_session_with_content_type, url_object
-            )
-
 
 @pytest.mark.unit
 def test_httpbin():
-    request = Mock()
+    request = Mock(spec=Request)
     request.range = None
+    request.headers = {}
 
-    session = get_requests_session()
     url_object = {
         "url": "https://httpbin.org/get",
         "type": "url",
         "method": "GET",
         "userdata": {"test_param": "OCEAN value"},
     }
-    response = build_download_response(request, session, url_object, None)
+    _, instance = FilesTypeFactory.validate_and_create(url_object)
+    response = instance.build_download_response(request)
     assert response.json["args"] == {"test_param": "OCEAN value"}
 
     url_object["url"] = "https://httpbin.org/headers"
-    url_object["headers"] = {"test_header": "OCEAN header"}
-    response = build_download_response(request, session, url_object, None)
-    assert response.json["headers"]["Test-Header"] == "OCEAN header"
+    url_object["headers"] = {"test_header": "OCEAN header", "Range": "DDO range"}
+    _, instance = FilesTypeFactory.validate_and_create(url_object)
+    response = instance.build_download_response(request)
+    # no request range, but DDO range exists
+    assert response.headers.get("Range") == "DDO range"
 
+    url_object["headers"] = {}
+    _, instance = FilesTypeFactory.validate_and_create(url_object)
+    response = instance.build_download_response(request)
+    # no request range and no DDO range
+    assert response.headers.get("Range") is None
+
+    _, instance = FilesTypeFactory.validate_and_create(url_object)
+    request.range = 200
+    request.headers = {"Range": "200"}
+    response = instance.build_download_response(request)
+    # request range and no DDO range
+    assert response.headers.get("Range") == "200"
+
+    url_object["headers"] = {"test_header": "OCEAN header", "Range": "DDO range"}
+    _, instance = FilesTypeFactory.validate_and_create(url_object)
+    request.range = 200
+    request.headers = {"Range": "200"}
+    response = instance.build_download_response(request)
+    # request range and DDO range, will favor DDO range
+    assert response.headers.get("Range") == "DDO range"
+
+    request.range = None
+    request.headers = {}
     url_object = {
         "url": "https://httpbin.org/post",
         "type": "url",
         "method": "POST",
         "userdata": {"test_param": "OCEAN POST value"},
     }
-    response = build_download_response(request, session, url_object, None)
+    _, instance = FilesTypeFactory.validate_and_create(url_object)
+    response = instance.build_download_response(request)
     assert response.json["json"]["test_param"] == "OCEAN POST value"
-
-    response, _ = _get_result_from_url(url_object)
-    assert response.json()["json"]["test_param"] == "OCEAN POST value"
 
 
 @pytest.mark.unit
@@ -324,35 +337,46 @@ def test_get_service_files_list_old_structure(provider_wallet):
 
 @pytest.mark.unit
 def test_validate_url_object():
-    result, message = validate_url_object({}, 1)
+    result, message = FilesTypeFactory.validate_and_create({})
     assert result is False
-    assert message == "cannot decrypt files for this service. id=1"
+    assert message == "cannot decrypt files for this service."
 
-    result, message = validate_url_object({"type": "not_ipfs_or_url"}, 1)
+    result, message = FilesTypeFactory.validate_and_create({"type": "not_ipfs_or_url"})
     assert result is False
-    assert message == "malformed or unsupported type for service files. id=1"
+    assert message == "malformed or unsupported type for service files."
 
-    result, message = validate_url_object({"type": "ipfs", "but_hash": "missing"}, 1)
-    assert result is False
-    assert message == "malformed service files, missing required keys. id=1"
-
-    result, message = validate_url_object(
-        {"type": "url", "url": "x", "headers": "not_a_dict"}, 1
+    result, message = FilesTypeFactory.validate_and_create(
+        {"type": "ipfs", "but_hash": "missing"}
     )
     assert result is False
-    assert message == "malformed or unsupported type for headers. id=1"
+    assert message == "malformed service files, missing required keys."
 
-    result, message = validate_url_object(
-        {"type": "url", "url": "x", "headers": '{"dict": "but_stringified"}'}, 1
+    result, message = FilesTypeFactory.validate_and_create(
+        {"type": "url", "url": "x", "headers": "not_a_dict"}
+    )
+    assert result is False
+    assert message == "malformed or unsupported types."
+
+    result, message = FilesTypeFactory.validate_and_create(
+        {"type": "url", "url": "x", "headers": '{"dict": "but_stringified"}'}
     )
     # we purposefully require a dictionary
     assert result is False
-    assert message == "malformed or unsupported type for headers. id=1"
+    assert message == "malformed or unsupported types."
 
-    result, message = validate_url_object(
-        {"type": "url", "url": "x", "headers": {"dict": "dict_key"}}, 1
+    result, message = FilesTypeFactory.validate_and_create(
+        {"type": "url", "url": "x", "headers": {"dict": "dict_key"}}
     )
     assert result is True
+
+    url_object = {
+        "url": "x",
+        "type": "url",
+        "method": "DELETE",
+    }
+    result, message = FilesTypeFactory.validate_and_create(url_object)
+    assert result is False
+    assert message == "Unsafe method delete."
 
 
 @pytest.mark.unit
@@ -360,14 +384,14 @@ def test_download_ipfs_file():
     client = ipfshttpclient.connect("/dns/172.15.0.16/tcp/5001/http")
     cid = client.add("./tests/resources/ddo_sample_file.txt")["Hash"]
     url_object = {"type": "ipfs", "hash": cid}
-    requests_session = get_requests_session()
 
     request = Mock()
     request.range = None
 
-    download_url = get_download_url(url_object)
+    _, instance = FilesTypeFactory.validate_and_create(url_object)
+    download_url = instance.get_download_url()
     print(f"got ipfs download url: {download_url}")
     assert download_url and download_url.endswith(f"ipfs/{cid}")
 
-    response = build_download_response(request, requests_session, url_object, None)
+    response = instance.build_download_response(request)
     assert response.data, f"got no data {response.data}"

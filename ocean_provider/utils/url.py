@@ -2,11 +2,8 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
-import hashlib
 import ipaddress
-import json
 import logging
-import os
 from urllib.parse import urlparse, urljoin
 
 import dns.resolver
@@ -14,9 +11,6 @@ import requests
 from ocean_provider.utils.basics import get_config, get_provider_wallet
 
 logger = logging.getLogger(__name__)
-
-REQUEST_TIMEOUT = 3
-CHUNK_SIZE = 8192
 
 
 def get_redirect(url, redirect_count=0):
@@ -145,135 +139,3 @@ def validate_dns_record(record, domain, record_type):
         return False
 
     return True
-
-
-def get_download_url(url_object):
-    if url_object["type"] != "ipfs":
-        return url_object["url"]
-
-    if not os.getenv("IPFS_GATEWAY"):
-        raise Exception("No IPFS_GATEWAY defined, can not resolve ipfs hash.")
-
-    return urljoin(os.getenv("IPFS_GATEWAY"), urljoin("ipfs/", url_object["hash"]))
-
-
-def check_url_details(url_object, with_checksum=False):
-    """
-    If the url argument is invalid, returns False and empty dictionary.
-    Otherwise it returns True and a dictionary containing contentType and
-    contentLength. If the with_checksum flag is set to True, it also returns
-    the file checksum and the checksumType (currently hardcoded to sha256)
-    """
-    url = get_download_url(url_object)
-    try:
-        if not is_safe_url(url):
-            return False, {}
-
-        for _ in range(int(os.getenv("REQUEST_RETRIES", 1))):
-            result, extra_data = _get_result_from_url(
-                url_object,
-                with_checksum=with_checksum,
-            )
-            if result and result.status_code == 200:
-                break
-
-        if result.status_code == 200:
-            content_type = result.headers.get("Content-Type")
-            content_length = result.headers.get("Content-Length")
-            content_range = result.headers.get("Content-Range")
-
-            if not content_length and content_range:
-                # sometimes servers send content-range instead
-                try:
-                    content_length = content_range.split("-")[1]
-                except IndexError:
-                    pass
-
-            if content_type:
-                try:
-                    content_type = content_type.split(";")[0]
-                except IndexError:
-                    pass
-
-            if content_type or content_length:
-                details = {
-                    "contentLength": content_length or "",
-                    "contentType": content_type or "",
-                }
-
-                if extra_data:
-                    details.update(extra_data)
-
-                return True, details
-    except requests.exceptions.RequestException:
-        pass
-
-    return False, {}
-
-
-def _get_result_from_url(url_object, with_checksum=False):
-    method = url_object.get("method", "GET")
-    headers = url_object.get("headers", {})
-    url = get_download_url(url_object)
-
-    lightweight_methods = [] if method.lower() == "post" else ["head", "options"]
-    heavyweight_method = method.lower()
-
-    for method in lightweight_methods:
-        func = getattr(requests, method)
-        result = func(
-            url,
-            timeout=REQUEST_TIMEOUT,
-            headers=headers,
-            params=format_userdata(url_object.get("userdata")),
-        )
-
-        if (
-            not with_checksum
-            and result.status_code == 200
-            and (
-                result.headers.get("Content-Type")
-                or result.headers.get("Content-Range")
-            )
-            and result.headers.get("Content-Length")
-        ):
-            return result, {}
-
-    func = getattr(requests, heavyweight_method)
-    func_args = {"url": url, "stream": True, "headers": headers}
-
-    if "userdata" in url_object:
-        if heavyweight_method != "post":
-            func_args["params"] = format_userdata(url_object.get("userdata"))
-        else:
-            func_args["json"] = format_userdata(url_object.get("userdata"))
-
-    if not with_checksum:
-        # fallback on GET request
-        func_args["timeout"] = REQUEST_TIMEOUT
-        return func(**func_args), {}
-
-    sha = hashlib.sha256()
-
-    with func(**func_args) as r:
-        r.raise_for_status()
-        for chunk in r.iter_content(chunk_size=CHUNK_SIZE):
-            sha.update(chunk)
-
-    return r, {"checksum": sha.hexdigest(), "checksumType": "sha256"}
-
-
-def format_userdata(userdata):
-    if not userdata:
-        return None
-
-    if not isinstance(userdata, dict):
-        try:
-            return json.loads(userdata)
-        except json.decoder.JSONDecodeError:
-            logger.info(
-                "Can not decode sent userdata for asset, sending without extra parameters."
-            )
-            return {}
-
-    return userdata

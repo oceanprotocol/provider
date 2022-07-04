@@ -6,11 +6,11 @@ import functools
 import json
 import logging
 import os
-from datetime import datetime
 
 import flask
 from flask import Response, jsonify, request
 from flask_sieve import validate
+from ocean_provider.file_types.file_types_factory import FilesTypeFactory
 from ocean_provider.requests_session import get_requests_session
 from ocean_provider.user_nonce import update_nonce
 from ocean_provider.utils.asset import get_asset_from_metadatastore
@@ -36,7 +36,6 @@ from ocean_provider.utils.provider_fees import (
     comb_for_valid_transfer_and_fees,
 )
 from ocean_provider.utils.util import (
-    build_download_response,
     get_request_data,
 )
 from ocean_provider.validation.algo import WorkflowValidator, InputItemValidator
@@ -531,11 +530,11 @@ def computeResult():
     logger.debug(f"Done processing computeResult, url: {result_url}")
     update_nonce(data.get("consumerAddress"), data.get("nonce"))
 
-    response = build_download_response(
-        request,
-        requests_session,
+    _, instance = FilesTypeFactory.validate_and_create(
         {"url": result_url, "type": "url"},
-        None,
+    )
+    response = instance.build_download_response(
+        request,
         validate_url=False,
     )
     logger.info(f"computeResult response = {response}")
