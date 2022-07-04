@@ -173,4 +173,6 @@ class Config(configparser.ConfigParser):
 
     @property
     def is_poa_network(self):
-        return bool(strtobool(self.get("eth-network", NAME_IS_POA_NETWORK, fallback="0")))
+        return bool(
+            strtobool(self.get("eth-network", NAME_IS_POA_NETWORK, fallback="0"))
+        )
