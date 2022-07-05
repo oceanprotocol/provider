@@ -4,10 +4,17 @@
 #
 import jwt
 import logging
+import os
+
 from flask import request, jsonify
 from flask_sieve import validate
+
 from ocean_provider.utils.util import get_request_data
-from ocean_provider.user_nonce import force_expire_token, is_token_valid
+from ocean_provider.user_nonce import (
+    force_expire_token,
+    force_restore_token,
+    is_token_valid,
+)
 from ocean_provider.validation.provider_requests import (
     CreateTokenRequest,
     DeleteTokenRequest,
@@ -26,8 +33,13 @@ def create_auth_token():
     address = data.get("address")
     expiration = int(data.get("expiration"))
 
-    token = jwt.encode({"exp": expiration}, address, algorithm="HS256")
+    pk = os.environ.get("PROVIDER_PRIVATE_KEY")
+    token = jwt.encode({"exp": expiration, "address": address}, pk, algorithm="HS256")
     token = token.decode("utf-8") if isinstance(token, bytes) else token
+
+    valid, message = is_token_valid(token, address)
+    if not valid and message == "Token is deleted.":
+        force_restore_token(token)
 
     return jsonify(token=token)
 

@@ -5,6 +5,7 @@
 import jwt
 import logging
 import os
+from web3.main import Web3
 
 from flask_caching import Cache
 from ocean_provider import models
@@ -97,9 +98,33 @@ def force_expire_token(token):
         raise
 
 
+def force_restore_token(token):
+    if os.getenv("REDIS_CONNECTION"):
+        cache.delete("token//" + token)
+
+        return
+
+    existing_token = models.RevokedToken.query.filter_by(token=token).first()
+    if not existing_token:
+        return
+
+    try:
+        db.delete(existing_token)
+        db.commit()
+    except Exception:
+        db.rollback()
+        logger.exception("Database update failed.")
+        raise
+
+
 def is_token_valid(token, address):
     try:
-        jwt.decode(token, address, algorithms=["HS256"])
+        pk = os.environ.get("PROVIDER_PRIVATE_KEY")
+        decoded = jwt.decode(token, pk, algorithms=["HS256"])
+        if Web3.toChecksumAddress(decoded["address"]) != Web3.toChecksumAddress(
+            address
+        ):
+            return False, "Token is invalid."
     except jwt.ExpiredSignatureError:
         return False, "Token is expired."
     except Exception:

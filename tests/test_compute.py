@@ -280,7 +280,7 @@ def test_compute(client, publisher_wallet, consumer_wallet, free_c2d_env):
     assert result_without_signature.status_code == 400
     assert (
         result_without_signature.json["errors"]["signature"][0]
-        == "The signature field is required."
+        == "Invalid signature provided."
     ), "Signature should be required"
 
     nonce, signature = get_compute_signature(client, consumer_wallet, index, job_id)

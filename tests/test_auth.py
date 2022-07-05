@@ -11,15 +11,12 @@ from ocean_provider.utils.accounts import sign_message
 from ocean_provider.user_nonce import is_token_valid
 
 
-def create_token(client, consumer_wallet, expiration_interval=None):
+def create_token(client, consumer_wallet, expiration=None):
     address = consumer_wallet.address
-    if expiration_interval is None:
-        expiration_interval = timedelta(hours=1)
+    if expiration is None:
+        expiration = (int((datetime.utcnow() + timedelta(hours=1)).timestamp()),)
 
-    payload = {
-        "address": address,
-        "expiration": int((datetime.utcnow() + expiration_interval).timestamp()),
-    }
+    payload = {"address": address, "expiration": expiration}
 
     endpoint = BaseURLs.SERVICES_URL + "/createAuthToken"
     nonce = str(datetime.utcnow().timestamp())
@@ -35,15 +32,19 @@ def create_token(client, consumer_wallet, expiration_interval=None):
 
 
 @pytest.mark.unit
-def test_create_auth_token(client, consumer_wallet):
-    create_token(client, consumer_wallet)
+def test_create_auth_token(client, consumer_wallet, provider_wallet):
+    consumer_token = create_token(client, consumer_wallet)
+    provider_token = create_token(client, provider_wallet)
+    assert is_token_valid(consumer_token, consumer_wallet.address)[0]
+    assert not is_token_valid(provider_token, consumer_wallet.address)[0]
 
 
 @pytest.mark.unit
 def test_delete_auth_token_sqlite(client, consumer_wallet, monkeypatch):
     monkeypatch.delenv("REDIS_CONNECTION")
+    expiration = int((datetime.utcnow() + timedelta(hours=1)).timestamp())
     address = consumer_wallet.address
-    token = create_token(client, consumer_wallet)
+    token = create_token(client, consumer_wallet, expiration)
     assert is_token_valid(token, address)[0]
 
     payload = {"address": address, "token": token}
@@ -58,11 +59,17 @@ def test_delete_auth_token_sqlite(client, consumer_wallet, monkeypatch):
     assert response.status_code == 200, f"{response.data}"
     assert not is_token_valid(token, address)[0]
 
+    # create with same parameters restores the token
+    token2 = create_token(client, consumer_wallet, expiration)
+    assert token == token2
+    assert is_token_valid(token, address)[0]
+
 
 @pytest.mark.unit
 def test_delete_auth_token_redis(client, consumer_wallet):
     address = consumer_wallet.address
-    token = create_token(client, consumer_wallet)
+    expiration = int((datetime.utcnow() + timedelta(hours=1)).timestamp())
+    token = create_token(client, consumer_wallet, expiration)
     assert is_token_valid(token, address)[0]
 
     payload = {"address": address, "token": token}
@@ -88,13 +95,17 @@ def test_delete_auth_token_redis(client, consumer_wallet):
     assert response.status_code == 400
     assert response.json["error"] == "Token is deleted."
 
+    # create with same parameters restores the token
+    token2 = create_token(client, consumer_wallet, expiration)
+    assert token == token2
+    assert is_token_valid(token, address)[0]
+
 
 @pytest.mark.unit
 def test_expiration(client, consumer_wallet):
     address = consumer_wallet.address
-    token = create_token(
-        client, consumer_wallet, expiration_interval=timedelta(seconds=1)
-    )
+    expiration = int((datetime.utcnow() + timedelta(seconds=1)).timestamp())
+    token = create_token(client, consumer_wallet, expiration)
     time.sleep(2)
     valid, message = is_token_valid(token, address)
     assert not valid
