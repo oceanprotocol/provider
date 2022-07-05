@@ -74,3 +74,31 @@ def get_or_create_user_nonce_object(address, nonce_value):
     if nonce_object is None:
         nonce_object = models.UserNonce(address=address, nonce=nonce_value)
     return nonce_object
+
+
+def force_expire_token(token):
+    if os.getenv("REDIS_CONNECTION"):
+        cache.set("token//" + token, "")
+
+        return
+
+    existing_token = models.RevokedToken.query.filter_by(token=token).first()
+    if existing_token is None:
+        existing_token = models.RevokedToken(token=token)
+        try:
+            db.add(existing_token)
+            db.commit()
+        except Exception:
+            db.rollback()
+            logger.exception("Database update failed.")
+            raise
+
+
+def is_token_valid(token):
+    if os.getenv("REDIS_CONNECTION"):
+        result = cache.get("token//" + token)
+        return not result
+
+    existing_token = models.RevokedToken.query.filter_by(token=token).first()
+
+    return not existing_token
