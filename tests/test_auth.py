@@ -99,27 +99,3 @@ def test_expiration(client, consumer_wallet):
     valid, message = is_token_valid(token, address)
     assert not valid
     assert message == "Token is expired."
-
-
-@pytest.mark.unit
-def test_temporary(client, consumer_wallet):
-    token = create_token(client, consumer_wallet)
-
-    address = consumer_wallet.address
-    expiration_interval = timedelta(hours=1)
-
-    payload = {
-        "address": address,
-        "expiration": int((datetime.utcnow() + expiration_interval).timestamp()),
-    }
-
-    endpoint = BaseURLs.SERVICES_URL + "/createAuthToken"
-    nonce = str(datetime.utcnow().timestamp())
-    payload["nonce"] = nonce
-    response = client.get(endpoint, query_string=payload, headers={"AuthToken": "asas"})
-    assert response.status_code == 400
-
-    nonce = str(datetime.utcnow().timestamp())
-    payload["nonce"] = nonce
-    response = client.get(endpoint, query_string=payload, headers={"AuthToken": token})
-    assert response.status_code == 200

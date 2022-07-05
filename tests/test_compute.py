@@ -25,6 +25,7 @@ from tests.helpers.compute_helpers import (
     start_order,
 )
 from tests.helpers.ddo_dict_builders import build_metadata_dict_type_algorithm
+from tests.test_auth import create_token
 from tests.test_helpers import get_first_service_by_type
 
 
@@ -194,8 +195,16 @@ def test_compute(client, publisher_wallet, consumer_wallet, free_c2d_env):
     msg = f"{consumer_wallet.address}{ddo.did}"
     payload["signature"] = sign_message(msg, consumer_wallet)
 
+    # Start compute with auth token
+    token = create_token(client, consumer_wallet)
+    response = post_to_compute(client, payload, headers={"AuthToken": token})
+    assert response.status_code == 200, f"{response.data}"
+
+    # Start compute with an auth token
+    nonce = str(datetime.utcnow().timestamp())
+    payload["nonce"] = nonce
     response = post_to_compute(client, payload)
-    assert response.status_code == 400, f"{response.data}"
+    assert response.status == "200 OK", f"start compute job failed: {response.data}"
 
     # Start compute with valid signature
     payload["signature"] = signature

@@ -90,6 +90,16 @@ class CustomRulesProcessor(RulesProcessor):
     attributes
     """
 
+    def check_auth_header(self, value, owner, nonce):
+        if value:
+            return 0
+
+        if self.headers and self.headers.get("AuthToken"):
+            valid, _ = is_token_valid(self.headers["AuthToken"], owner)
+            return 1 if valid and verify_nonce(owner, nonce) else -1
+
+        return -1
+
     def validate_signature(self, value, params, **kwargs):
         """
         Validates a signature using the documentId, jobId and consumerAddress.
@@ -109,12 +119,9 @@ class CustomRulesProcessor(RulesProcessor):
         job_id = self._attribute_value(params[2]) or ""
         nonce = self._attribute_value(params[3]) or ""
 
-        if not value and self.headers and self.headers.get("AuthToken"):
-            valid, _ = is_token_valid(self.headers["AuthToken"], owner)
-            if not valid:
-                return False
-
-            return verify_nonce(owner, nonce)
+        cont = self.check_auth_header(value, owner, nonce)
+        if abs(cont) == 1:
+            return cont > 0
 
         original_msg = f"{owner}{job_id}{did}"
         try:
@@ -143,12 +150,9 @@ class CustomRulesProcessor(RulesProcessor):
         did = self._attribute_value(params[1])
         nonce = self._attribute_value(params[2])
 
-        if not value and self.headers and self.headers.get("AuthToken"):
-            valid, _ = is_token_valid(self.headers["AuthToken"], owner)
-            if not valid:
-                return False
-
-            return verify_nonce(owner, nonce)
+        cont = self.check_auth_header(value, owner, nonce)
+        if abs(cont) == 1:
+            return cont > 0
 
         original_msg = f"{did}"
         try:
@@ -179,12 +183,9 @@ class CustomRulesProcessor(RulesProcessor):
         chain_id = self._attribute_value(params[3])
         nonce = self._attribute_value(params[4])
 
-        if not value and self.headers and self.headers.get("AuthToken"):
-            valid, _ = is_token_valid(self.headers["AuthToken"], decrypter_address)
-            if not valid:
-                return False
-
-            return verify_nonce(decrypter_address, nonce)
+        cont = self.check_auth_header(value, decrypter_address, nonce)
+        if abs(cont) == 1:
+            return cont > 0
 
         logger.info(
             f"Successfully retrieve params for decrypt: transaction_id={transaction_id},"
