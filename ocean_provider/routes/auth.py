@@ -27,6 +27,7 @@ def create_auth_token():
     expiration = int(data.get("expiration"))
 
     token = jwt.encode({"exp": expiration}, address, algorithm="HS256")
+    token = token.decode("utf-8") if isinstance(token, bytes) else token
 
     return jsonify(token=token)
 

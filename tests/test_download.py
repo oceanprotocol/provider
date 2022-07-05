@@ -2,7 +2,6 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
-from asyncio.log import logger
 import copy
 import time
 from datetime import datetime
@@ -70,6 +69,7 @@ def test_download_service(
     token = create_token(client, consumer_wallet)
     nonce = str(datetime.utcnow().timestamp())
     payload["nonce"] = nonce
+    payload.pop("signature")
     response = client.get(
         download_endpoint, query_string=payload, headers={"AuthToken": token}
     )

@@ -8,7 +8,7 @@ from datetime import datetime
 import pytest
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
-from ocean_provider.utils.provider_fees import get_c2d_environments, get_provider_fees
+from ocean_provider.utils.provider_fees import get_provider_fees
 from ocean_provider.utils.services import ServiceType
 from ocean_provider.validation.provider_requests import RBACValidator
 from tests.helpers.compute_helpers import (
@@ -197,14 +197,9 @@ def test_compute(client, publisher_wallet, consumer_wallet, free_c2d_env):
 
     # Start compute with auth token
     token = create_token(client, consumer_wallet)
+    payload.pop("signature")
     response = post_to_compute(client, payload, headers={"AuthToken": token})
     assert response.status_code == 200, f"{response.data}"
-
-    # Start compute with an auth token
-    nonce = str(datetime.utcnow().timestamp())
-    payload["nonce"] = nonce
-    response = post_to_compute(client, payload)
-    assert response.status == "200 OK", f"start compute job failed: {response.data}"
 
     # Start compute with valid signature
     payload["signature"] = signature
