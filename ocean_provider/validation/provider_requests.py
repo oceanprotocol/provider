@@ -42,7 +42,7 @@ class CustomJsonRequest(JsonRequest):
                     "signature.signature": "Invalid signature provided.",
                     "signature.download_signature": "Invalid signature provided.",
                     "signature.decrypt_signature": "Invalid signature provided.",
-                    "validUntil.timestamp": "Invalid timestamp provided.",
+                    "expiration.timestamp": "Invalid timestamp provided.",
                 },
                 request=request,
             )
@@ -176,12 +176,12 @@ class CustomRulesProcessor(RulesProcessor):
 
         return False
 
-    def validate_timestamp(self, value):
+    def validate_timestamp(self, value, **kwargs):
         try:
-            valid_until = datetime.fromtimestamp(value)
+            datetime.fromtimestamp(int(value))
             timestamp_now = int(datetime.utcnow().timestamp())
 
-            return valid_until > timestamp_now
+            return int(value) > timestamp_now
         except Exception:
             return False
 
@@ -324,4 +324,30 @@ class InitializeComputeRequest(CustomJsonRequest):
             "compute.env": ["required"],
             "compute.validUntil": ["required", "integer"],
             "consumerAddress": ["required"],
+        }
+
+
+class CreateTokenRequest(CustomJsonRequest):
+    def rules(self):
+        return {
+            "address": ["bail", "required"],
+            "expiration": ["bail", "required", "integer", "timestamp"],
+            "nonce": ["bail", "required", "numeric"],
+            "signature": [
+                "required",
+                "signature:address,,,nonce",
+            ],
+        }
+
+
+class DeleteTokenRequest(CustomJsonRequest):
+    def rules(self):
+        return {
+            "address": ["bail", "required"],
+            "token": ["bail", "required"],
+            "nonce": ["bail", "required", "numeric"],
+            "signature": [
+                "required",
+                "signature:address,,,nonce",
+            ],
         }

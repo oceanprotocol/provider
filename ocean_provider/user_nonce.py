@@ -2,6 +2,7 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
+import jwt
 import logging
 import os
 
@@ -78,27 +79,37 @@ def get_or_create_user_nonce_object(address, nonce_value):
 
 def force_expire_token(token):
     if os.getenv("REDIS_CONNECTION"):
-        cache.set("token//" + token, "")
+        cache.set("token//" + token, True)
 
         return
 
     existing_token = models.RevokedToken.query.filter_by(token=token).first()
-    if existing_token is None:
-        existing_token = models.RevokedToken(token=token)
-        try:
-            db.add(existing_token)
-            db.commit()
-        except Exception:
-            db.rollback()
-            logger.exception("Database update failed.")
-            raise
+    if existing_token:
+        return
+
+    existing_token = models.RevokedToken(token=token)
+    try:
+        db.add(existing_token)
+        db.commit()
+    except Exception:
+        db.rollback()
+        logger.exception("Database update failed.")
+        raise
 
 
-def is_token_valid(token):
+def is_token_valid(token, address):
+    try:
+        jwt.decode(token, address, algorithms=["HS256"])
+    except jwt.ExpiredSignatureError:
+        return False, "Token is expired."
+    except Exception:
+        return False, "Token is invalid."
+
     if os.getenv("REDIS_CONNECTION"):
-        result = cache.get("token//" + token)
-        return not result
+        valid = not cache.get("token//" + token)
+    else:
+        valid = not models.RevokedToken.query.filter_by(token=token).first()
 
-    existing_token = models.RevokedToken.query.filter_by(token=token).first()
+    message = "" if valid else "Token is deleted."
 
-    return not existing_token
+    return valid, message
