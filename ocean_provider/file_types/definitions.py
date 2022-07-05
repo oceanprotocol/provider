@@ -198,8 +198,17 @@ class EndUrlType:
             func_method, func_args = self._get_func_and_args()
 
             response = func_method(**func_args)
+
+            # check if content is encrypted
+            if response.content.decode('utf-8').startswith("0x"):
+                provider_wallet = get_provider_wallet()
+                response._content = do_decrypt(response.content.decode('utf-8'), provider_wallet)
+
             if not is_range_request:
-                filename = url.split("/")[-1]
+                if url_object["type"] != "ipfs":
+                    filename = url.split("/")[-1]
+                else:
+                    filename = "ipfs_file"
 
                 content_disposition_header = response.headers.get("content-disposition")
                 if content_disposition_header:
