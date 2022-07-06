@@ -28,7 +28,38 @@ logger = logging.getLogger(__name__)
 @services.route("/createAuthToken", methods=["GET"])
 @validate(CreateTokenRequest)
 def create_auth_token():
-    # TODO: document endpoint
+    """Creates an AuthToken for the given address, that can replace signature in API calls.
+
+    Accepts a user address and an expiration parameter (future UTC timestamp).
+    If the token was previously deleted with the same parameters and they are still valid
+    (expiration date is in the future), the same token is re-enabled.
+    ---
+    tags:
+      - services
+    consumes:
+      - application/json
+    parameters:
+      - name: address
+        description: The address of the API caller
+        required: true
+        type: string
+      - name: expiration
+        description: A valid future UTC timestamp
+        required: true
+        type: string
+      - name: signature
+        in: query
+        description: Signature to verify that the address requestor has rights to create the token.
+    responses:
+      200:
+        description: the token was successfully created or restored
+      400:
+        description: issue with the request parameters
+      503:
+        description: Service Unavailable.
+
+    return: created or restored token if successfull, otherwise an error string
+    """
     data = get_request_data(request)
     address = data.get("address")
     expiration = int(data.get("expiration"))
@@ -47,7 +78,39 @@ def create_auth_token():
 @services.route("/deleteAuthToken", methods=["DELETE"])
 @validate(DeleteTokenRequest)
 def delete_auth_token():
-    # TODO: document endpoint
+    """Revokes a given AuthToken if it is still valid.
+
+    Accepts the token and signed request parameters to determine whether the user has
+    rights to delete/revoke. If the token is already expired or deleted, returns an
+    error string. If the token is still valid at the time of the request, it is blacklisted,
+    disallowing API calls with that token.
+    ---
+    tags:
+      - services
+    consumes:
+      - application/json
+    parameters:
+      - name: address
+        description: The address of the API caller
+        required: true
+        type: string
+      - name: token
+        description: The token string
+        required: true
+        type: string
+      - name: signature
+        in: query
+        description: Signature to verify that the address requestor has rights to delete the token.
+    responses:
+      200:
+        description: the token was successfully deleted
+      400:
+        description: issue with the request parameters
+      503:
+        description: Service Unavailable.
+
+    return: success or error message
+    """
     data = get_request_data(request)
     address = data.get("address")
     token = data.get("token")

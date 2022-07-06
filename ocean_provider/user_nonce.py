@@ -79,6 +79,10 @@ def get_or_create_user_nonce_object(address, nonce_value):
 
 
 def force_expire_token(token):
+    """
+    Creates the token in the database of Revoked Tokens.
+    :param: token
+    """
     if os.getenv("REDIS_CONNECTION"):
         cache.set("token//" + token, True)
 
@@ -99,6 +103,10 @@ def force_expire_token(token):
 
 
 def force_restore_token(token):
+    """
+    Removes the token from the database of Revoked Tokens.
+    :param: token
+    """
     if os.getenv("REDIS_CONNECTION"):
         cache.delete("token//" + token)
 
@@ -118,6 +126,12 @@ def force_restore_token(token):
 
 
 def is_token_valid(token, address):
+    """
+    Decodes the token, checks expiration, ownership and presence in the blacklist.
+
+    Returns a tuple of boolean, message representing validity and issue (only if invalid).
+    :param: token
+    """
     try:
         pk = os.environ.get("PROVIDER_PRIVATE_KEY")
         decoded = jwt.decode(token, pk, algorithms=["HS256"])

@@ -12,6 +12,7 @@ from ocean_provider.user_nonce import is_token_valid
 
 
 def create_token(client, consumer_wallet, expiration=None):
+    """Helper function to create a token using the API."""
     address = consumer_wallet.address
     if expiration is None:
         expiration = (int((datetime.utcnow() + timedelta(hours=1)).timestamp()),)
@@ -33,6 +34,7 @@ def create_token(client, consumer_wallet, expiration=None):
 
 @pytest.mark.unit
 def test_create_auth_token(client, consumer_wallet, provider_wallet):
+    """Test that tokens can be created and they are only valid for their creators' addresses."""
     consumer_token = create_token(client, consumer_wallet)
     provider_token = create_token(client, provider_wallet)
     assert is_token_valid(consumer_token, consumer_wallet.address)[0]
@@ -41,6 +43,7 @@ def test_create_auth_token(client, consumer_wallet, provider_wallet):
 
 @pytest.mark.unit
 def test_delete_auth_token_sqlite(client, consumer_wallet, monkeypatch):
+    """Tests token deletion and recreation with the sqlite backend."""
     monkeypatch.delenv("REDIS_CONNECTION")
     expiration = int((datetime.utcnow() + timedelta(hours=1)).timestamp())
     address = consumer_wallet.address
@@ -67,6 +70,7 @@ def test_delete_auth_token_sqlite(client, consumer_wallet, monkeypatch):
 
 @pytest.mark.unit
 def test_delete_auth_token_redis(client, consumer_wallet):
+    """Tests token deletion and recreation with the redis backend."""
     address = consumer_wallet.address
     expiration = int((datetime.utcnow() + timedelta(hours=1)).timestamp())
     token = create_token(client, consumer_wallet, expiration)
@@ -103,6 +107,7 @@ def test_delete_auth_token_redis(client, consumer_wallet):
 
 @pytest.mark.unit
 def test_expiration(client, consumer_wallet):
+    """Tests token expiration."""
     address = consumer_wallet.address
     expiration = int((datetime.utcnow() + timedelta(seconds=1)).timestamp())
     token = create_token(client, consumer_wallet, expiration)

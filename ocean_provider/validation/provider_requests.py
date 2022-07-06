@@ -91,6 +91,16 @@ class CustomRulesProcessor(RulesProcessor):
     """
 
     def check_auth_header(self, value, owner, nonce):
+        """
+        Checks AuthToken header and returns an int representing the check result.
+        Values meaning:
+          - 0 means the check needs to continue inside validate_signature,
+        since a signature is present and should override any auth token checks.
+          - 1 means the check is conclusively OK, the auth headers are correct
+        and signature is not present, meaning we can skip further validate_signature checks
+          - -1 means the check has conclusively failed, the auth headers are incorrect or
+        expired, and the request should be rejected.
+        """
         if value:
             return 0
 
