@@ -2,8 +2,10 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
+import jwt
 import logging
 import os
+from web3.main import Web3
 
 from flask_caching import Cache
 from ocean_provider import models
@@ -74,3 +76,79 @@ def get_or_create_user_nonce_object(address, nonce_value):
     if nonce_object is None:
         nonce_object = models.UserNonce(address=address, nonce=nonce_value)
     return nonce_object
+
+
+def force_expire_token(token):
+    """
+    Creates the token in the database of Revoked Tokens.
+    :param: token
+    """
+    if os.getenv("REDIS_CONNECTION"):
+        cache.set("token//" + token, True)
+
+        return
+
+    existing_token = models.RevokedToken.query.filter_by(token=token).first()
+    if existing_token:
+        return
+
+    existing_token = models.RevokedToken(token=token)
+    try:
+        db.add(existing_token)
+        db.commit()
+    except Exception:
+        db.rollback()
+        logger.exception("Database update failed.")
+        raise
+
+
+def force_restore_token(token):
+    """
+    Removes the token from the database of Revoked Tokens.
+    :param: token
+    """
+    if os.getenv("REDIS_CONNECTION"):
+        cache.delete("token//" + token)
+
+        return
+
+    existing_token = models.RevokedToken.query.filter_by(token=token).first()
+    if not existing_token:
+        return
+
+    try:
+        db.delete(existing_token)
+        db.commit()
+    except Exception:
+        db.rollback()
+        logger.exception("Database update failed.")
+        raise
+
+
+def is_token_valid(token, address):
+    """
+    Decodes the token, checks expiration, ownership and presence in the blacklist.
+
+    Returns a tuple of boolean, message representing validity and issue (only if invalid).
+    :param: token
+    """
+    try:
+        pk = os.environ.get("PROVIDER_PRIVATE_KEY")
+        decoded = jwt.decode(token, pk, algorithms=["HS256"])
+        if Web3.toChecksumAddress(decoded["address"]) != Web3.toChecksumAddress(
+            address
+        ):
+            return False, "Token is invalid."
+    except jwt.ExpiredSignatureError:
+        return False, "Token is expired."
+    except Exception:
+        return False, "Token is invalid."
+
+    if os.getenv("REDIS_CONNECTION"):
+        valid = not cache.get("token//" + token)
+    else:
+        valid = not models.RevokedToken.query.filter_by(token=token).first()
+
+    message = "" if valid else "Token is deleted."
+
+    return valid, message
