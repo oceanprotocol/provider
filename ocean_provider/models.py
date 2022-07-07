@@ -16,3 +16,13 @@ class UserNonce(Base):
 
     address = Column(String(255), nullable=False, primary_key=True, autoincrement=False)
     nonce = Column(String(255), nullable=False)
+
+
+class RevokedToken(Base):
+    """
+    Table for storing the revoked jwt tokens.
+    """
+
+    __tablename__ = "revoked_tokens"
+
+    token = Column(String(255), nullable=False, primary_key=True, autoincrement=False)

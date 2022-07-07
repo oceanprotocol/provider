@@ -149,10 +149,13 @@ def get_compute_signature(client, consumer_wallet, did, job_id=None):
     return nonce, signature
 
 
-def post_to_compute(client, payload):
+def post_to_compute(client, payload, headers=None):
     compute_endpoint = BaseURLs.SERVICES_URL + "/compute"
     return client.post(
-        compute_endpoint, data=json.dumps(payload), content_type="application/json"
+        compute_endpoint,
+        data=json.dumps(payload),
+        headers=headers,
+        content_type="application/json",
     )
 
 

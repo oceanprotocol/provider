@@ -2,7 +2,6 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
-from asyncio.log import logger
 import copy
 import time
 from datetime import datetime
@@ -13,6 +12,7 @@ from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.provider_fees import get_provider_fees
 from ocean_provider.utils.services import ServiceType
+from tests.test_auth import create_token
 from tests.test_helpers import (
     get_dataset_ddo_with_multiple_files,
     get_first_service_by_type,
@@ -64,6 +64,16 @@ def test_download_service(
 
     response = client.get(download_endpoint, query_string=payload)
     assert response.status_code == 400, f"{response.data}"
+
+    # Consume using auth token
+    token = create_token(client, consumer_wallet)
+    nonce = str(datetime.utcnow().timestamp())
+    payload["nonce"] = nonce
+    payload.pop("signature")
+    response = client.get(
+        download_endpoint, query_string=payload, headers={"AuthToken": token}
+    )
+    assert response.status == "200 OK"
 
     # Consume using url index and signature (with nonce)
     nonce = str(datetime.utcnow().timestamp())
