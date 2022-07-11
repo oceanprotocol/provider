@@ -4,9 +4,9 @@
 #
 import json
 import logging
-import os
 
 from ocean_provider.constants import BaseURLs
+from ocean_provider.file_types.file_types_factory import FilesTypeFactory
 from ocean_provider.serializers import StageAlgoSerializer
 from ocean_provider.utils.asset import (
     get_asset_from_metadatastore,
@@ -402,16 +402,35 @@ class InputItemValidator:
             allowed_container_checksum = trusted_algo_dict.get(
                 "containerSectionChecksum"
             )
-            algo_ddo = get_asset_from_metadatastore(
-                get_metadata_url(), trusted_algo_dict["did"]
-            )
 
-            service = algo_ddo.get_service_by_id(
-                self.data["algorithm"].get("serviceId")
-            )
+            try:
+                algo_ddo = get_asset_from_metadatastore(
+                    get_metadata_url(), trusted_algo_dict["did"]
+                )
+                service = algo_ddo.get_service_by_id(
+                    self.data["algorithm"].get("serviceId")
+                )
 
-            files_checksum = msg_hash(service.encrypted_files)
-            if allowed_files_checksum and files_checksum != allowed_files_checksum:
+                compute_url_objects = get_service_files_list(
+                    service, self.provider_wallet, algo_ddo
+                )
+
+                checksums = [
+                    FilesTypeFactory.validate_and_create(durl)[1].check_details(
+                        with_checksum=True
+                    )[1]["checksum"]
+                    for durl in compute_url_objects
+                ]
+
+                files_checksum = "".join(checksums).lower()
+            except Exception:
+                self.error = "Unable to check algorithm file, is it still available?"
+                return False
+
+            if (
+                allowed_files_checksum
+                and files_checksum != allowed_files_checksum.lower()
+            ):
                 self.error = f"filesChecksum for algorithm with did {algo_ddo.did} does not match"
                 return False
 

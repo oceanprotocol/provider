@@ -41,6 +41,7 @@ install_requirements = [
     "SQLAlchemy==1.3.23",
     "json-sempai==0.4.0",
     "redis==4.0.2",
+    "enforce-typing==1.0.0.post1",
     "pyjwt==2.4.0",
 ]
 
