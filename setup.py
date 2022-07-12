@@ -43,6 +43,7 @@ install_requirements = [
     "redis==4.0.2",
     "enforce-typing==1.0.0.post1",
     "pyjwt==2.4.0",
+    "docker==5.0.3",
 ]
 
 # Required to run setup.py:
