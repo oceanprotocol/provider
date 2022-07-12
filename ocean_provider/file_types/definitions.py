@@ -11,11 +11,13 @@ import requests
 from enforce_typing import enforce_types
 from flask import Response
 
+from ocean_provider.utils.basics import get_provider_wallet
+from ocean_provider.utils.encryption import do_decrypt
 from ocean_provider.utils.url import is_safe_url
 
 logger = logging.getLogger(__name__)
 
-REQUEST_TIMEOUT = 3
+REQUEST_TIMEOUT = 20
 CHUNK_SIZE = 8192
 
 
@@ -205,7 +207,7 @@ class EndUrlType:
                 response._content = do_decrypt(response.content.decode('utf-8'), provider_wallet)
 
             if not is_range_request:
-                if url_object["type"] != "ipfs":
+                if self.type != "ipfs":
                     filename = url.split("/")[-1]
                 else:
                     filename = "ipfs_file"
