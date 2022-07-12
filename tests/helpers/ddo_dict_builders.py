@@ -123,8 +123,8 @@ def build_container_dict() -> dict:
     """Build a container dict, used for testing"""
     return {
         "entrypoint": "run.sh",
-        "image": "my-docker-image",
-        "tag": "latest",
+        "image": "oceanprotocol/algo_dockers",
+        "tag": "python-branin",
         "checksum": "44e10daa6637893f4276bb8d7301eb35306ece50f61ca34dcab550",
     }
 
