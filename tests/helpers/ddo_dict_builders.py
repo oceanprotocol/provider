@@ -122,10 +122,10 @@ def build_algorithm_dict() -> dict:
 def build_container_dict() -> dict:
     """Build a container dict, used for testing"""
     return {
-        "entrypoint": "run.sh",
+        "entrypoint": "node $ALGO",
         "image": "oceanprotocol/algo_dockers",
         "tag": "python-branin",
-        "checksum": "44e10daa6637893f4276bb8d7301eb35306ece50f61ca34dcab550",
+        "checksum": "sha256:8221d20c1c16491d7d56b9657ea09082c0ee4a8ab1a6621fa720da58b09580e4",
     }
 
 
