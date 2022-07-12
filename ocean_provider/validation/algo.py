@@ -282,7 +282,6 @@ def validate_formatted_algorithm_dict(algorithm_dict, algorithm_did):
     if not container["checksum"].startswith("sha256:"):
         return False, "container checksum must start with sha256:"
 
-    # TODO: tests for failure and sha256 start
     client = docker.from_env()
     try:
         inspection = client.api.inspect_distribution(

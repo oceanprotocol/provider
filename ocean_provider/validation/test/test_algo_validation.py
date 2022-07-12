@@ -229,6 +229,62 @@ def test_fails_meta_issues(provider_wallet, consumer_address, web3):
             == "algorithm `container` must specify values for all of entrypoint, image and checksum."
         )
 
+    # algorithmMeta container checksum does not start with sha256
+    data = {
+        "dataset": {"documentId": ddo.did, "transferTxId": "tx_id", "serviceId": sa.id},
+        "algorithm": {
+            "serviceId": sa.id,
+            "meta": {
+                "rawcode": "console.log('Hello world'!)",
+                "format": "docker-image",
+                "version": "0.1",
+                "container": {
+                    "entrypoint": "node $ALGO",
+                    "image": "oceanprotocol/algo_dockers",
+                    "tag": "python-branin",
+                    "checksum": "8221d20c1c16491d7d56b9657ea09082c0ee4a8ab1a6621fa720da58b09580e4",
+                },
+            },
+        },
+    }
+
+    with patch(
+        "ocean_provider.validation.algo.get_asset_from_metadatastore", side_effect=[ddo]
+    ):
+        validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
+        assert validator.validate() is False
+        assert validator.error == "container checksum must start with sha256:"
+
+    # algorithmMeta container checksum is wrong
+    data = {
+        "dataset": {"documentId": ddo.did, "transferTxId": "tx_id", "serviceId": sa.id},
+        "algorithm": {
+            "serviceId": sa.id,
+            "meta": {
+                "rawcode": "console.log('Hello world'!)",
+                "format": "docker-image",
+                "version": "0.1",
+                "container": {
+                    "entrypoint": "node $ALGO",
+                    "image": "oceanprotocol/algo_dockers",
+                    "tag": "python-branin",
+                    # keep the length, just make it invalid
+                    "checksum": "sha256:8221d20c1c16491d7d56b9657ea09082c0ee4a8ab1a6621fa720da58b0900000",
+                },
+            },
+        },
+    }
+
+    with patch(
+        "ocean_provider.validation.algo.get_asset_from_metadatastore", side_effect=[ddo]
+    ):
+        validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
+        assert validator.validate() is False
+        assert (
+            validator.error
+            == "Invalid container values provided on algorithm. Check image, tag and checksum."
+        )
+
 
 @pytest.mark.unit
 @patch("ocean_provider.validation.algo.check_asset_consumable", return_value=(True, ""))
