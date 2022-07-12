@@ -396,11 +396,12 @@ def test_download_ipfs_file():
     response = instance.build_download_response(request)
     assert response.data, f"got no data {response.data}"
 
+
 @pytest.mark.unit
 def test_download_filecoin_file():
     cid = "bafybeigsvqhocrg45mm4ffdqkq24yigwonjlndsjk3xujrawhxhfsglooe"
     url_object = {"type": "filecoin", "hash": cid}
-    
+
     requests_session = get_requests_session()
     request = Mock()
     request.range = None
@@ -412,10 +413,14 @@ def test_download_filecoin_file():
     response = build_download_response(request, requests_session, url_object, None)
     assert response.data, f"got no data {response.data}"
 
+
 @pytest.mark.unit
 def test_build_download_response_filecoin():
-    url_object = {"type": "filecoin", "hash": "bafybeigsvqhocrg45mm4ffdqkq24yigwonjlndsjk3xujrawhxhfsglooe"}
-    
+    url_object = {
+        "type": "filecoin",
+        "hash": "bafybeigsvqhocrg45mm4ffdqkq24yigwonjlndsjk3xujrawhxhfsglooe",
+    }
+
     requests_session = get_requests_session()
     request = Mock()
     request.range = None

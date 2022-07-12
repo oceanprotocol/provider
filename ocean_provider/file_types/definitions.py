@@ -202,9 +202,11 @@ class EndUrlType:
             response = func_method(**func_args)
 
             # check if content is encrypted
-            if response.content.decode('utf-8').startswith("0x"):
+            if response.content.decode("utf-8").startswith("0x"):
                 provider_wallet = get_provider_wallet()
-                response._content = do_decrypt(response.content.decode('utf-8'), provider_wallet)
+                response._content = do_decrypt(
+                    response.content.decode("utf-8"), provider_wallet
+                )
 
             if not is_range_request:
                 if self.type != "ipfs":

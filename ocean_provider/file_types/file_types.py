@@ -65,10 +65,12 @@ class IpfsFile(EndUrlType, FilesType):
 
         if self.gateway == "https://api.web3.storage/upload":
             url = f"https://{self.hash}.ipfs.dweb.link"
-        elif self.gateway in ["https://api.estuary.tech/content/add", "https://shuttle-5.estuary.tech/content/add"]:
-            url = f'https://dweb.link/ipfs/{cid}'
+        elif self.gateway in [
+            "https://api.estuary.tech/content/add",
+            "https://shuttle-5.estuary.tech/content/add",
+        ]:
+            url = f"https://dweb.link/ipfs/{cid}"
         else:
             url = urljoin(os.getenv("IPFS_GATEWAY"), urljoin("ipfs/", self.hash))
 
         return url
-
