@@ -45,11 +45,12 @@ def test_encrypt_request_payload(consumer_wallet, publisher_wallet, monkeypatch)
         "compression": "zip",
     }
     req = {
-        "document": json.dumps(document),
+        "data": json.dumps([document]),
         "publisherAddress": publisher_wallet.address,
     }
     validator = RBACValidator(request_name="EncryptRequest", request=req)
     payload = validator.build_payload()
+
     assert validator.request == req
     assert payload["eventType"] == "encryptUrl"
     assert payload["providerAccess"] == "private"
@@ -58,6 +59,7 @@ def test_encrypt_request_payload(consumer_wallet, publisher_wallet, monkeypatch)
         "type": "address",
         "value": publisher_wallet.address,
     }
+    assert payload["data"] == json.dumps([document])
 
 
 @pytest.mark.unit

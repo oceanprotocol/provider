@@ -97,7 +97,7 @@ class RBACValidator:
         message = "encryptUrl" + json.dumps(self.credentials)
         signature = sign_message(message, get_provider_wallet())
 
-        return {"signature": signature}
+        return {"signature": signature, "data": self.request["data"]}
 
     def build_initialize_payload(self):
         message = "initialize" + json.dumps(self.credentials)
