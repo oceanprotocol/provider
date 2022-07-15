@@ -543,7 +543,9 @@ def test_compute_environments(client):
 
 
 @pytest.mark.integration
-def test_compute_paid_env(client, publisher_wallet, consumer_wallet, paid_c2d_env, web3):
+def test_compute_paid_env(
+    client, publisher_wallet, consumer_wallet, paid_c2d_env, web3
+):
     valid_until = get_future_valid_until()
     deployer_wallet = Account.from_key(os.getenv("FACTORY_DEPLOYER_PRIVATE_KEY"))
     fee_token = get_datatoken_contract(web3, get_ocean_token_address(web3))
@@ -560,7 +562,7 @@ def test_compute_paid_env(client, publisher_wallet, consumer_wallet, paid_c2d_en
         c2d_address=paid_c2d_env["consumerAddress"],
         valid_until=valid_until,
         c2d_environment=paid_c2d_env["id"],
-        fee_token_args=(fee_token, to_wei(80))
+        fee_token_args=(fee_token, to_wei(80)),
     )
     sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
     sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
@@ -578,7 +580,7 @@ def test_compute_paid_env(client, publisher_wallet, consumer_wallet, paid_c2d_en
         "nonce": nonce,
         "consumerAddress": consumer_wallet.address,
         "environment": paid_c2d_env["id"],
-        "signature": signature
+        "signature": signature,
     }
 
     # Start compute with valid signature

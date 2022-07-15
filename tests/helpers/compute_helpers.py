@@ -30,7 +30,7 @@ def build_and_send_ddo_with_compute_service(
     valid_until=None,
     timeout=3600,
     c2d_environment="ocean-compute",
-    fee_token_args=None
+    fee_token_args=None,
 ):
     web3 = get_web3()
     if valid_until is None:
@@ -103,7 +103,9 @@ def build_and_send_ddo_with_compute_service(
 
     if fee_token_args:
         fee_token, amt = fee_token_args
-        fee_token.functions.approve(datatoken, amt).transact({"from": consumer_wallet.address})
+        fee_token.functions.approve(datatoken, amt).transact(
+            {"from": consumer_wallet.address}
+        )
 
     tx_id, _ = start_order(
         web3,
