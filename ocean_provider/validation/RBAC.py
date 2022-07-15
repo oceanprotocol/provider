@@ -10,6 +10,7 @@ import requests
 
 from ocean_provider.exceptions import RequestNotFound
 from ocean_provider.utils.accounts import sign_message
+from ocean_provider.utils.asset import Asset
 from ocean_provider.utils.basics import get_provider_wallet
 
 
@@ -77,6 +78,17 @@ class RBACValidator:
             for additional_input in additional_inputs
         ]
 
+    def get_data(self):
+        if "data" not in self.request.keys():
+            raise Exception("Data to encrypt is empty.")
+        # import pdb;pdb.set_trace()
+        if not isinstance(self.request["data"], list) and not isinstance(
+            self.request["data"], Asset
+        ):
+            raise Exception("Invalid type of data.")
+
+        return self.request["data"]
+
     def build_payload(self):
         provider_access = (
             "private" if os.getenv("PRIVATE_PROVIDER", False) else "public"
@@ -97,7 +109,7 @@ class RBACValidator:
         message = "encryptUrl" + json.dumps(self.credentials)
         signature = sign_message(message, get_provider_wallet())
 
-        return {"signature": signature, "data": self.request["data"]}
+        return {"signature": signature, "data": self.get_data()}
 
     def build_initialize_payload(self):
         message = "initialize" + json.dumps(self.credentials)
