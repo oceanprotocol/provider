@@ -453,9 +453,8 @@ class InputItemValidator:
                 return False
 
             container_section_checksum = msg_hash(
-                json.dumps(
-                    algo_ddo.metadata["algorithm"]["container"], separators=(",", ":")
-                )
+                algo_ddo.metadata["algorithm"]["container"]["entrypoint"]
+                + algo_ddo.metadata["algorithm"]["container"]["checksum"]
             )
             if (
                 allowed_container_checksum

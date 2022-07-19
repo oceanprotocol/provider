@@ -41,7 +41,7 @@ ddo_dict = {
                     {
                         "did": "did:op:706d7452b1a25b183051fe02f2ad902d54fc45a43fdcee26b20f21684b5dee72",
                         "filesChecksum": "b4908c868c78086097a10f986718a8f3fae1455f0d443c3dc59330207d47cc6d",
-                        "containerSectionChecksum": "62691290a07f644b9ef94187f4c78c9b3c899e474253e22c2bb231a17a3023fa",
+                        "containerSectionChecksum": "20d3f5667b2068e84db5465fb51aa405b06a0ff791635048d7976ec7f5abdc73",
                     }
                 ],
             },
