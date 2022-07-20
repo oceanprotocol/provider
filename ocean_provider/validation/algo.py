@@ -284,7 +284,9 @@ def validate_formatted_algorithm_dict(algorithm_dict, algorithm_did):
 
     try:
         ns_string = container["image"].replace("/", "/repositories/")
-        dh_response = requests.get(f"http://hub.docker.com/v2/namespaces/{ns_string}/tags/{container['tag']}/images")
+        dh_response = requests.get(
+            f"http://hub.docker.com/v2/namespaces/{ns_string}/tags/{container['tag']}/images"
+        )
         digests = [item["digest"].lower() for item in dh_response.json()]
         assert container["checksum"].lower() in digests
     except Exception:
