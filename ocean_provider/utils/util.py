@@ -5,24 +5,16 @@
 import hashlib
 import json
 import logging
-import mimetypes
-import os
-from cgi import parse_header
-from typing import Any, Dict, Tuple
-from urllib.parse import urljoin
-from uuid import uuid4
+from typing import Tuple
 
 import werkzeug
 from eth_account.signers.local import LocalAccount
 from eth_keys import KeyAPI
 from eth_keys.backends import NativeECCBackend
 from eth_typing.encoding import HexStr
-from flask import Response
 from ocean_provider.utils.asset import Asset
-from ocean_provider.utils.basics import get_provider_wallet
 from ocean_provider.utils.encryption import do_decrypt
 from ocean_provider.utils.services import Service
-from ocean_provider.utils.url import append_userdata, check_url_details
 from web3 import Web3
 from web3.types import TxParams, TxReceipt
 
@@ -39,81 +31,6 @@ def get_request_data(request):
 
 def msg_hash(message: str):
     return hashlib.sha256(message.encode("utf-8")).hexdigest()
-
-
-def build_download_response(
-    request,
-    requests_session,
-    download_url,
-    url_type="url",
-    content_type=None,
-    method="GET",
-):
-    try:
-        download_request_headers = {}
-        download_response_headers = {}
-        is_range_request = bool(request.range)
-
-        if is_range_request:
-            download_request_headers = {"Range": request.headers.get("range")}
-            download_response_headers = download_request_headers
-
-        if method.lower() not in ["get", "post"]:
-            raise ValueError(f"Unsafe method {method}")
-
-        method = getattr(requests_session, method.lower())
-        response = method(
-            download_url, headers=download_request_headers, stream=True, timeout=3
-        )
-
-        if not is_range_request:
-            if url_type == "url":
-                filename = download_url.split("/")[-1]
-            elif url_type in ["ipfs", "arweave"]:
-                filename = uuid4().hex
-            else:
-                raise ValueError(f"Unsupported url type: {url_type}")
-
-            content_disposition_header = response.headers.get("content-disposition")
-            if content_disposition_header:
-                _, content_disposition_params = parse_header(content_disposition_header)
-                content_filename = content_disposition_params.get("filename")
-                if content_filename:
-                    filename = content_filename
-
-            content_type_header = response.headers.get("content-type")
-            if content_type_header:
-                content_type = content_type_header
-
-            file_ext = os.path.splitext(filename)[1]
-            if file_ext and not content_type:
-                content_type = mimetypes.guess_type(filename)[0]
-            elif not file_ext and content_type:
-                # add an extension to filename based on the content_type
-                extension = mimetypes.guess_extension(content_type)
-                if extension:
-                    filename = filename + extension
-
-            download_response_headers = {
-                "Content-Disposition": f"attachment;filename={filename}",
-                "Access-Control-Expose-Headers": "Content-Disposition",
-                "Connection": "close",
-            }
-
-        def _generate(_response):
-            for chunk in _response.iter_content(chunk_size=4096):
-                if chunk:
-                    yield chunk
-
-        return Response(
-            _generate(response),
-            response.status_code,
-            headers=download_response_headers,
-            content_type=content_type,
-        )
-    except Exception as e:
-        logger.error(f"Error preparing file download response: {str(e)}")
-        raise
 
 
 def get_service_files_list(
@@ -174,67 +91,6 @@ def get_service_files_list_old_structure(
     except Exception as e:
         logger.error(f"Error decrypting service files {Service}: {str(e)}")
         return None
-
-
-def validate_url_object(url_object, service_id):
-    if not url_object:
-        return False, f"cannot decrypt files for this service. id={service_id}"
-
-    if "type" not in url_object or url_object["type"] not in ["ipfs", "url", "arweave"]:
-        return (
-            False,
-            f"malformed or unsupported type for service files. id={service_id}",
-        )
-
-    if (
-        (url_object["type"] == "ipfs" and "hash" not in url_object)
-        or (url_object["type"] == "url" and "url" not in url_object)
-        or (url_object["type"] == "arweave" and "transactionId" not in url_object)
-    ):
-        return False, f"malformed service files, missing required keys. id={service_id}"
-
-    return True, ""
-
-
-def get_download_url(url_object: Dict[str, Any]) -> str:
-    if url_object["type"] == "url":
-        return url_object["url"]
-    elif url_object["type"] == "ipfs":
-        if os.getenv("IPFS_GATEWAY") is None:
-            raise ValueError("No IPFS_GATEWAY defined, can not resolve ipfs hash.")
-        return urljoin(os.getenv("IPFS_GATEWAY"), urljoin("ipfs/", url_object["hash"]))
-    elif url_object["type"] == "arweave":
-        if os.getenv("ARWEAVE_GATEWAY") is None:
-            raise ValueError(
-                "No ARWEAVE_GATEWAY defined, can not resolve arweave transaction id."
-            )
-        return urljoin(os.getenv("ARWEAVE_GATEWAY"), url_object["transactionId"])
-    else:
-        raise ValueError(f"URL object type {url_object['type']} not supported.")
-
-
-def check_url_valid(service, file_index, data, asset):
-    provider_wallet = get_provider_wallet()
-
-    url_object = get_service_files_list(service, provider_wallet, asset)[file_index]
-    url_valid, message = validate_url_object(url_object, service.id)
-    if not url_valid:
-        return False, message
-
-    download_url = get_download_url(url_object)
-    download_url = append_userdata(download_url, data)
-    valid, url_details = check_url_details(download_url)
-
-    if not valid:
-        logger.error(
-            f"Error: Asset URL not found or not available. \n" f"Payload was: {data}",
-            exc_info=1,
-        )
-
-        if not url_details:
-            url_details = "Asset URL not found or not available."
-
-    return valid, url_details
 
 
 def sign_tx(web3, tx, private_key):

@@ -31,6 +31,15 @@ with engine.connect() as con:
         """
     )
 
+    rs = con.execute(
+        """
+        CREATE TABLE IF NOT EXISTS revoked_tokens (
+          token VARCHAR(255) NOT NULL,
+          PRIMARY KEY (token)
+        )
+        """
+    )
+
 app = Flask(__name__)
 CORS(app)
 Sieve(app)

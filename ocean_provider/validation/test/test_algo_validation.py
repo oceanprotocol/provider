@@ -19,6 +19,8 @@ provider_fees_event.args.providerData = {"environment": "ocean-compute"}
 provider_fees_event.args.validUntil = get_future_valid_until()
 provider_fees_event.args.providerFeeAmount = 0
 
+this_is_a_gist = "https://gist.githubusercontent.com/calina-c/5e8c965962bc0240eab516cb7a180670/raw/6e6cd245c039a9aac0a488857c6927d39eaafe4d/sprintf-py-conversions"
+
 
 @pytest.mark.unit
 @patch("ocean_provider.validation.algo.check_asset_consumable", return_value=(True, ""))
@@ -28,7 +30,7 @@ provider_fees_event.args.providerFeeAmount = 0
 )
 @patch(
     "ocean_provider.validation.algo.get_service_files_list",
-    return_value=[{"url": "dummy"}],
+    return_value=[{"url": this_is_a_gist, "type": "url"}],
 )
 def test_passes_algo_ddo(provider_wallet, consumer_address, web3):
     """Tests happy flow of validator with algo ddo."""
@@ -71,7 +73,7 @@ def test_passes_algo_ddo(provider_wallet, consumer_address, web3):
 )
 @patch(
     "ocean_provider.validation.algo.get_service_files_list",
-    return_value=[{"url": "dummy"}],
+    return_value=[{"url": this_is_a_gist, "type": "url"}],
 )
 def test_passes_raw(provider_wallet, consumer_address, web3):
     """Tests happy flow of validator with raw algo."""
@@ -86,7 +88,12 @@ def test_passes_raw(provider_wallet, consumer_address, web3):
                 "rawcode": "console.log('Hello world'!)",
                 "format": "docker-image",
                 "version": "0.1",
-                "container": {"entrypoint": "node $ALGO", "image": "node", "tag": "10"},
+                "container": {
+                    "entrypoint": "node $ALGO",
+                    "image": "node",
+                    "tag": "10",
+                    "checksum": "xx",
+                },
             },
         },
         "environment": "ocean-compute",
@@ -107,7 +114,7 @@ def test_passes_raw(provider_wallet, consumer_address, web3):
 )
 @patch(
     "ocean_provider.validation.algo.get_service_files_list",
-    return_value=[{"url": "dummy"}],
+    return_value=[{"url": this_is_a_gist, "type": "url"}],
 )
 def test_fails_not_an_algo(provider_wallet, consumer_address, web3):
     """Tests happy flow of validator with algo ddo."""
@@ -152,7 +159,7 @@ def test_fails_not_an_algo(provider_wallet, consumer_address, web3):
 )
 @patch(
     "ocean_provider.validation.algo.get_service_files_list",
-    return_value=[{"url": "dummy"}],
+    return_value=[{"url": this_is_a_gist, "type": "url"}],
 )
 def test_fails_meta_issues(provider_wallet, consumer_address, web3):
     """Tests happy flow of validator with raw algo."""
@@ -195,7 +202,7 @@ def test_fails_meta_issues(provider_wallet, consumer_address, web3):
         assert validator.validate() is False
         assert (
             validator.error
-            == "algorithm `container` must specify values for all of entrypoint, image and tag."
+            == "algorithm `container` must specify values for all of entrypoint, image and checksum."
         )
 
     # algorithmMeta container is missing image
@@ -219,7 +226,7 @@ def test_fails_meta_issues(provider_wallet, consumer_address, web3):
         assert validator.validate() is False
         assert (
             validator.error
-            == "algorithm `container` must specify values for all of entrypoint, image and tag."
+            == "algorithm `container` must specify values for all of entrypoint, image and checksum."
         )
 
 
@@ -231,7 +238,7 @@ def test_fails_meta_issues(provider_wallet, consumer_address, web3):
 )
 @patch(
     "ocean_provider.validation.algo.get_service_files_list",
-    return_value=[{"url": "dummy"}],
+    return_value=[{"url": this_is_a_gist, "type": "url"}],
 )
 def test_additional_datasets(provider_wallet, consumer_address, web3):
     web3 = get_web3()
@@ -368,7 +375,7 @@ def test_additional_datasets(provider_wallet, consumer_address, web3):
 )
 @patch(
     "ocean_provider.validation.algo.get_service_files_list",
-    return_value=[{"url": "dummy"}],
+    return_value=[{"url": this_is_a_gist, "type": "url"}],
 )
 def test_service_not_compute(provider_wallet, consumer_address, web3):
     ddo = Asset(ddo_dict)
@@ -424,7 +431,7 @@ def test_service_not_compute(provider_wallet, consumer_address, web3):
 )
 @patch(
     "ocean_provider.validation.algo.get_service_files_list",
-    return_value=[{"url": "dummy"}],
+    return_value=[{"url": this_is_a_gist, "type": "url"}],
 )
 def test_fails_trusted(provider_wallet, consumer_address, web3):
     """Tests possible failures of the algo validation."""
@@ -549,7 +556,7 @@ def test_fails_no_asset_url(provider_wallet, consumer_address, web3):
 @patch("ocean_provider.validation.algo.validate_order", side_effect=Exception("mock"))
 @patch(
     "ocean_provider.validation.algo.get_service_files_list",
-    return_value=[{"url": "dummy"}],
+    return_value=[{"url": this_is_a_gist, "type": "url"}],
 )
 def test_fails_validate_order(provider_wallet, consumer_address, web3):
     ddo = Asset(ddo_dict)
@@ -575,7 +582,7 @@ def test_fails_validate_order(provider_wallet, consumer_address, web3):
 )
 @patch(
     "ocean_provider.validation.algo.get_service_files_list",
-    return_value=[{"url": "dummy"}],
+    return_value=[{"url": this_is_a_gist, "type": "url"}],
 )
 def test_fails_no_service_id(provider_wallet, consumer_address, web3):
     ddo = Asset(ddo_dict)
@@ -601,7 +608,7 @@ def test_fails_no_service_id(provider_wallet, consumer_address, web3):
 )
 @patch(
     "ocean_provider.validation.algo.get_service_files_list",
-    return_value=[{"url": "dummy"}],
+    return_value=[{"url": this_is_a_gist, "type": "url"}],
 )
 @patch(
     "ocean_provider.serializers.StageAlgoSerializer.serialize",
@@ -646,7 +653,7 @@ def test_fails_invalid_algorithm_dict(provider_wallet, consumer_address, web3):
 )
 @patch(
     "ocean_provider.validation.algo.get_service_files_list",
-    return_value=[{"url": "dummy"}],
+    return_value=[{"url": this_is_a_gist, "type": "url"}],
 )
 def test_fails_algorithm_in_use(provider_wallet, consumer_address, web3):
     ddo = Asset(ddo_dict)
@@ -701,7 +708,7 @@ def test_fails_algorithm_in_use(provider_wallet, consumer_address, web3):
 )
 @patch(
     "ocean_provider.validation.algo.get_service_files_list",
-    return_value=[{"url": "dummy"}],
+    return_value=[{"url": this_is_a_gist, "type": "url"}],
 )
 def test_fail_wrong_algo_type(provider_wallet, consumer_address, web3):
     ddo = Asset(ddo_dict)
@@ -757,7 +764,7 @@ def test_fail_wrong_algo_type(provider_wallet, consumer_address, web3):
 )
 @patch(
     "ocean_provider.validation.algo.get_service_files_list",
-    return_value=[{"url": "dummy"}],
+    return_value=[{"url": this_is_a_gist, "type": "url"}],
 )
 def test_fail_allow_raw_false(provider_wallet, consumer_address, web3):
     ddo = Asset(ddo_dict)
@@ -773,7 +780,12 @@ def test_fail_allow_raw_false(provider_wallet, consumer_address, web3):
                 "rawcode": "console.log('Hello world'!)",
                 "format": "docker-image",
                 "version": "0.1",
-                "container": {"entrypoint": "node $ALGO", "image": "node", "tag": "10"},
+                "container": {
+                    "entrypoint": "node $ALGO",
+                    "image": "node",
+                    "tag": "10",
+                    "checksum": "xx",
+                },
             },
         },
     }
@@ -814,7 +826,12 @@ def test_success_multiple_services_types(provider_wallet, consumer_address, web3
                 "rawcode": "console.log('Hello world'!)",
                 "format": "docker-image",
                 "version": "0.1",
-                "container": {"entrypoint": "node $ALGO", "image": "node", "tag": "10"},
+                "container": {
+                    "entrypoint": "node $ALGO",
+                    "image": "node",
+                    "tag": "10",
+                    "checksum": "xx",
+                },
             },
         },
         "additionalDatasets": [
@@ -834,7 +851,7 @@ def test_success_multiple_services_types(provider_wallet, consumer_address, web3
         nonlocal ddo, alg_ddo
         if args[0].type == "access":
             return None
-        return [{"url": "dummy"}]
+        return [{"url": this_is_a_gist, "type": "url"}]
 
     with patch(
         "ocean_provider.validation.algo.get_asset_from_metadatastore",
@@ -878,7 +895,7 @@ def test_fail_missing_algo_meta_documentId(provider_wallet, consumer_address, we
         nonlocal ddo, alg_ddo
         if args[0].type == "access":
             return None
-        return [{"url": "dummy"}]
+        return [{"url": this_is_a_gist, "type": "url"}]
 
     with patch(
         "ocean_provider.validation.algo.get_asset_from_metadatastore",
@@ -904,7 +921,7 @@ def test_fail_missing_algo_meta_documentId(provider_wallet, consumer_address, we
 )
 @patch(
     "ocean_provider.validation.algo.get_service_files_list",
-    return_value=[{"url": "dummy"}],
+    return_value=[{"url": this_is_a_gist, "type": "url"}],
 )
 def test_fee_amount_not_paid(provider_wallet, consumer_address, web3):
     """Tests happy flow of validator with algo ddo."""
@@ -942,3 +959,49 @@ def test_fee_amount_not_paid(provider_wallet, consumer_address, web3):
                 validator.error
                 == "Provider fees must be paid on the asset, OR on the algorithm ordered, OR on any additional input."
             )
+
+
+@pytest.mark.unit
+@patch("ocean_provider.validation.algo.check_asset_consumable", return_value=(True, ""))
+@patch(
+    "ocean_provider.validation.algo.validate_order",
+    return_value=(None, None, provider_fees_event, None),
+)
+@patch(
+    "ocean_provider.validation.algo.get_service_files_list",
+    return_value=[{"url": "http://some.broken.url", "type": "url"}],
+)
+def test_algo_ddo_file_broken(provider_wallet, consumer_address, web3):
+    """Tests case where algo checksum can not be computed."""
+    web3 = get_web3()
+    ddo = Asset(ddo_dict)
+    alg_ddo = Asset(alg_ddo_dict)
+    sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
+    sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
+
+    data = {
+        "dataset": {"documentId": ddo.did, "serviceId": sa.id, "transferTxId": "tx_id"},
+        "algorithm": {
+            "documentId": alg_ddo.did,
+            "serviceId": sa_compute.id,
+            "transferTxId": "alg_tx_id",
+        },
+        "environment": "ocean-compute",
+    }
+
+    def side_effect(*args, **kwargs):
+        nonlocal ddo, alg_ddo
+        if ddo.did == args[1]:
+            return ddo
+        if alg_ddo.did == args[1]:
+            return alg_ddo
+
+    with patch(
+        "ocean_provider.validation.algo.get_asset_from_metadatastore",
+        side_effect=side_effect,
+    ):
+        validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
+        assert validator.validate() is False
+        assert (
+            validator.error == "Unable to check algorithm file, is it still available?"
+        )

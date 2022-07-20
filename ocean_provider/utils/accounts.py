@@ -14,10 +14,7 @@ logger = logging.getLogger(__name__)
 keys = KeyAPI(NativeECCBackend)
 
 
-def verify_signature(signer_address, signature, original_msg, nonce):
-    """
-    :return: True if signature is valid, throws InvalidSignatureError otherwise
-    """
+def verify_nonce(signer_address, nonce):
     db_nonce = get_nonce(signer_address)
     if db_nonce and float(nonce) < float(db_nonce):
         msg = (
@@ -25,6 +22,15 @@ def verify_signature(signer_address, signature, original_msg, nonce):
         )
         logger.error(msg)
         raise InvalidSignatureError(msg)
+
+    return True
+
+
+def verify_signature(signer_address, signature, original_msg, nonce):
+    """
+    :return: True if signature is valid, throws InvalidSignatureError otherwise
+    """
+    verify_nonce(signer_address, nonce)
 
     message = f"{original_msg}{str(nonce)}"
     signature_bytes = Web3.toBytes(hexstr=signature)

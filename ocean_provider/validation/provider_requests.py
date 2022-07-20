@@ -11,7 +11,8 @@ from flask_sieve import JsonRequest, ValidationException
 from flask_sieve.rules_processor import RulesProcessor
 from flask_sieve.validator import Validator
 from ocean_provider.exceptions import InvalidSignatureError
-from ocean_provider.utils.accounts import verify_signature
+from ocean_provider.user_nonce import is_token_valid
+from ocean_provider.utils.accounts import verify_nonce, verify_signature
 from ocean_provider.utils.util import get_request_data
 from ocean_provider.validation.RBAC import RBACValidator
 
@@ -26,6 +27,7 @@ class CustomJsonRequest(JsonRequest):
 
     def __init__(self, request=None):
         request = request or flask_request
+        headers = request.headers
         request = get_request_data(request)
         class_name = self.__class__.__name__
         self._validators = list()
@@ -41,9 +43,10 @@ class CustomJsonRequest(JsonRequest):
                     "signature.signature": "Invalid signature provided.",
                     "signature.download_signature": "Invalid signature provided.",
                     "signature.decrypt_signature": "Invalid signature provided.",
-                    "validUntil.timestamp": "Invalid timestamp provided.",
+                    "expiration.timestamp": "Invalid timestamp provided.",
                 },
                 request=request,
+                headers=headers,
             )
         )
 
@@ -63,12 +66,19 @@ class CustomValidator(Validator):
     """
 
     def __init__(
-        self, rules=None, request=None, custom_handlers=None, messages=None, **kwargs
+        self,
+        rules=None,
+        request=None,
+        custom_handlers=None,
+        messages=None,
+        headers=None,
+        **kwargs,
     ):
         super(CustomValidator, self).__init__(
             rules, request, custom_handlers, messages, **kwargs
         )
         self._processor = CustomRulesProcessor()
+        self._processor.headers = headers
 
 
 class CustomRulesProcessor(RulesProcessor):
@@ -78,6 +88,26 @@ class CustomRulesProcessor(RulesProcessor):
     Flask Sieve do not allow access to other parameters, just the value and
     attributes
     """
+
+    def check_auth_header(self, value, owner, nonce):
+        """
+        Checks AuthToken header and returns an int representing the check result.
+        Values meaning:
+          - 0 means the check needs to continue inside validate_signature,
+        since a signature is present and should override any auth token checks.
+          - 1 means the check is conclusively OK, the auth headers are correct
+        and signature is not present, meaning we can skip further validate_signature checks
+          - -1 means the check has conclusively failed, the auth headers are incorrect or
+        expired, and the request should be rejected.
+        """
+        if value:
+            return 0
+
+        if self.headers and self.headers.get("AuthToken"):
+            valid, _ = is_token_valid(self.headers["AuthToken"], owner)
+            return 1 if valid and verify_nonce(owner, nonce) else -1
+
+        return -1
 
     def validate_signature(self, value, params, **kwargs):
         """
@@ -97,6 +127,10 @@ class CustomRulesProcessor(RulesProcessor):
         did = self._attribute_value(params[1]) or ""
         job_id = self._attribute_value(params[2]) or ""
         nonce = self._attribute_value(params[3]) or ""
+
+        cont = self.check_auth_header(value, owner, nonce)
+        if abs(cont) == 1:
+            return cont > 0
 
         original_msg = f"{owner}{job_id}{did}"
         try:
@@ -124,6 +158,10 @@ class CustomRulesProcessor(RulesProcessor):
         owner = self._attribute_value(params[0])
         did = self._attribute_value(params[1])
         nonce = self._attribute_value(params[2])
+
+        cont = self.check_auth_header(value, owner, nonce)
+        if abs(cont) == 1:
+            return cont > 0
 
         original_msg = f"{did}"
         try:
@@ -153,6 +191,11 @@ class CustomRulesProcessor(RulesProcessor):
         decrypter_address = self._attribute_value(params[2])
         chain_id = self._attribute_value(params[3])
         nonce = self._attribute_value(params[4])
+
+        cont = self.check_auth_header(value, decrypter_address, nonce)
+        if abs(cont) == 1:
+            return cont > 0
+
         logger.info(
             f"Successfully retrieve params for decrypt: transaction_id={transaction_id},"
             f"data_nft_address={data_nft_address}, decrypter_address={decrypter_address},"
@@ -175,12 +218,12 @@ class CustomRulesProcessor(RulesProcessor):
 
         return False
 
-    def validate_timestamp(self, value):
+    def validate_timestamp(self, value, **kwargs):
         try:
-            valid_until = datetime.fromtimestamp(value)
+            datetime.fromtimestamp(int(value))
             timestamp_now = int(datetime.utcnow().timestamp())
 
-            return valid_until > timestamp_now
+            return int(value) > timestamp_now
         except Exception:
             return False
 
@@ -214,7 +257,6 @@ class DecryptRequest(CustomJsonRequest):
             "nonce": ["required", "numeric"],
             "signature": [
                 "bail",
-                "required",
                 "decrypt_signature:transactionId,dataNftAddress,decrypterAddress,chainId,nonce",
             ],
         }
@@ -237,10 +279,7 @@ class ComputeRequest(CustomJsonRequest):
         return {
             "consumerAddress": ["bail", "required"],
             "nonce": ["bail", "required", "numeric"],
-            "signature": [
-                "required",
-                "signature:consumerAddress,documentId,jobId,nonce",
-            ],
+            "signature": ["signature:consumerAddress,documentId,jobId,nonce"],
         }
 
 
@@ -264,7 +303,6 @@ class ComputeStartRequest(CustomJsonRequest):
             "nonce": ["bail", "required", "numeric"],
             "signature": [
                 "bail",
-                "required",
                 "signature:consumerAddress,dataset.documentId,jobId,nonce",
             ],
         }
@@ -277,11 +315,7 @@ class ComputeGetResult(CustomJsonRequest):
             "index": ["bail", "required"],
             "consumerAddress": ["bail", "required"],
             "nonce": ["bail", "required", "numeric"],
-            "signature": [
-                "bail",
-                "required",
-                "signature:consumerAddress,index,jobId,nonce",
-            ],
+            "signature": ["bail", "signature:consumerAddress,index,jobId,nonce"],
         }
 
 
@@ -294,10 +328,7 @@ class DownloadRequest(CustomJsonRequest):
             "transferTxId": ["bail", "required"],
             "fileIndex": ["required"],
             "nonce": ["bail", "required", "numeric"],
-            "signature": [
-                "required",
-                "download_signature:consumerAddress,documentId,nonce",
-            ],
+            "signature": ["download_signature:consumerAddress,documentId,nonce"],
         }
 
 
@@ -324,4 +355,24 @@ class InitializeComputeRequest(CustomJsonRequest):
             "compute.env": ["required"],
             "compute.validUntil": ["required", "integer"],
             "consumerAddress": ["required"],
+        }
+
+
+class CreateTokenRequest(CustomJsonRequest):
+    def rules(self):
+        return {
+            "address": ["bail", "required"],
+            "expiration": ["bail", "required", "integer", "timestamp"],
+            "nonce": ["bail", "required", "numeric"],
+            "signature": ["required", "signature:address,,,nonce"],
+        }
+
+
+class DeleteTokenRequest(CustomJsonRequest):
+    def rules(self):
+        return {
+            "address": ["bail", "required"],
+            "token": ["bail", "required"],
+            "nonce": ["bail", "required", "numeric"],
+            "signature": ["required", "signature:address,,,nonce"],
         }

@@ -5,6 +5,7 @@
 import json
 import logging
 import time
+from unittest.mock import patch
 
 import pytest
 from ocean_provider.constants import BaseURLs
@@ -27,8 +28,6 @@ from tests.test_helpers import (
     start_order,
 )
 
-from unittest.mock import patch
-
 logger = logging.getLogger(__name__)
 
 
@@ -45,7 +44,7 @@ def test_initialize_on_bad_url(client, publisher_wallet, consumer_wallet, web3):
         client, asset.did, service, consumer_wallet, raw_response=True
     )
     assert "error" in response.json
-    assert response.json["error"] == "Asset URL not found or not available."
+    assert "Asset URL not found or not available." in response.json["error"]
 
 
 @pytest.mark.integration
@@ -279,10 +278,7 @@ def test_initialize_compute_order_reused(
             "transferTxId": alg_tx_id,
         },
         "consumerAddress": consumer_wallet.address,
-        "compute": {
-            "env": free_c2d_env["id"],
-            "validUntil": valid_until,
-        },
+        "compute": {"env": free_c2d_env["id"], "validUntil": valid_until},
     }
 
     response = client.post(

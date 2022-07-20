@@ -7,6 +7,7 @@ import logging
 
 from flask import jsonify, request
 from flask_sieve import validate
+from ocean_provider.file_types.file_types_factory import FilesTypeFactory
 from ocean_provider.requests_session import get_requests_session
 from ocean_provider.user_nonce import get_nonce, update_nonce
 from ocean_provider.utils.asset import (
@@ -19,15 +20,7 @@ from ocean_provider.utils.error_responses import error_response
 from ocean_provider.utils.proof import send_proof
 from ocean_provider.utils.provider_fees import get_c2d_environments, get_provider_fees
 from ocean_provider.utils.services import ServiceType
-from ocean_provider.utils.url import append_userdata, check_url_details
-from ocean_provider.utils.util import (
-    build_download_response,
-    check_url_valid,
-    get_download_url,
-    get_request_data,
-    get_service_files_list,
-    validate_url_object,
-)
+from ocean_provider.utils.util import get_request_data, get_service_files_list
 from ocean_provider.validation.provider_requests import (
     DownloadRequest,
     FileInfoRequest,
@@ -91,22 +84,23 @@ def fileinfo():
     did = data.get("did")
     service_id = data.get("serviceId")
 
-    try:
-        if did:
-            asset = get_asset_from_metadatastore(get_metadata_url(), did)
-            service = asset.get_service_by_id(service_id)
-            files_list = get_service_files_list(service, provider_wallet, asset)
-            url_list = [get_download_url(file_item) for file_item in files_list]
-        else:
-            url_list = [get_download_url(data)]
-    except Exception as e:
-        error_response(f"Failed to get download url(s): {e}", 400)
+    if did:
+        asset = get_asset_from_metadatastore(get_metadata_url(), did)
+        service = asset.get_service_by_id(service_id)
+        files_list = get_service_files_list(service, provider_wallet, asset)
+    else:
+        files_list = [data]
 
     with_checksum = data.get("checksum", False)
 
     files_info = []
-    for i, url in enumerate(url_list):
-        valid, details = check_url_details(url, with_checksum=with_checksum)
+    for i, file in enumerate(files_list):
+        valid, message = FilesTypeFactory.validate_and_create(file)
+        if not valid:
+            return error_response(message, 400, logger)
+
+        file_instance = message
+        valid, details = file_instance.check_details(with_checksum=with_checksum)
         info = {"index": i, "valid": valid}
         info.update(details)
         files_info.append(info)
@@ -188,9 +182,20 @@ def initialize():
     file_index = int(data.get("fileIndex", "-1"))
     # we check if the file is valid only if we have fileIndex
     if file_index > -1:
-        valid, message = check_url_valid(service, file_index, data, asset)
+        url_object = get_service_files_list(service, provider_wallet, asset)[file_index]
+        valid, message = FilesTypeFactory.validate_and_create(url_object)
         if not valid:
             return error_response(message, 400, logger)
+
+        file_instance = message
+        valid, url_details = file_instance.check_details(url_object)
+        if not valid or not url_details:
+            return error_response(
+                f"Error: Asset URL not found or not available. \n"
+                f"Payload was: {data}",
+                400,
+                logger,
+            )
 
     # Prepare the `transfer` tokens transaction with the appropriate number
     # of tokens required for this service
@@ -302,30 +307,20 @@ def download():
     if file_index > len(files_list):
         return error_response(f"No such fileIndex {file_index}", 400, logger)
     url_object = files_list[file_index]
-    url_valid, message = validate_url_object(url_object, service_id)
+    url_valid, message = FilesTypeFactory.validate_and_create(url_object)
 
     if not url_valid:
         return error_response(message, 400, logger)
 
-    download_url = get_download_url(url_object)
-    download_url = append_userdata(download_url, data)
-
-    valid, details = check_url_details(download_url)
-    content_type = details["contentType"] if valid else None
+    file_instance = message
+    valid, details = file_instance.check_details(url_object)
 
     logger.debug(
-        f"Done processing consume request for asset {did}, " f" url {download_url}"
+        f"Done processing consume request for asset {did}, " f" url {url_object['url']}"
     )
     update_nonce(consumer_address, data.get("nonce"))
 
-    response = build_download_response(
-        request,
-        requests_session,
-        download_url,
-        url_object["type"],
-        content_type,
-        method=url_object.get("method", "GET"),
-    )
+    response = file_instance.build_download_response(request)
     logger.info(f"download response = {response}")
 
     provider_proof_data = json.dumps(
