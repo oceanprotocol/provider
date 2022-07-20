@@ -41,7 +41,7 @@ ddo_dict = {
                     {
                         "did": "did:op:706d7452b1a25b183051fe02f2ad902d54fc45a43fdcee26b20f21684b5dee72",
                         "filesChecksum": "b4908c868c78086097a10f986718a8f3fae1455f0d443c3dc59330207d47cc6d",
-                        "containerSectionChecksum": "743e3591b4c035906be7dbc9eb592089d096be3b2d752f8d8d52917dd609f31f",
+                        "containerSectionChecksum": "20d3f5667b2068e84db5465fb51aa405b06a0ff791635048d7976ec7f5abdc73",
                     }
                 ],
             },
@@ -109,9 +109,9 @@ alg_ddo_dict = {
             "version": "0.1.0",
             "container": {
                 "entrypoint": "run.sh",
-                "image": "my-docker-image",
-                "tag": "latest",
-                "checksum": "44e10daa6637893f4276bb8d7301eb35306ece50f61ca34dcab550",
+                "image": "oceanprotocol/algo_dockers",
+                "tag": "python-branin",
+                "checksum": "sha256:8221d20c1c16491d7d56b9657ea09082c0ee4a8ab1a6621fa720da58b09580e4",
             },
         },
     },
