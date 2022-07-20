@@ -31,9 +31,9 @@ algorithm_ddo_sample = {
             "version": "0.1",
             "container": {
                 "entrypoint": "node $ALGO",
-                "image": "node",
-                "tag": "10",
-                "checksum": "test",
+                "image": "oceanprotocol/algo_dockers",
+                "tag": "python-branin",
+                "checksum": "sha256:8221d20c1c16491d7d56b9657ea09082c0ee4a8ab1a6621fa720da58b09580e4",
             },
         },
         "additionalInformation": {
