@@ -2,9 +2,9 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
-import docker
 import json
 import logging
+import requests
 
 from ocean_provider.constants import BaseURLs
 from ocean_provider.file_types.file_types_factory import FilesTypeFactory
@@ -282,14 +282,11 @@ def validate_formatted_algorithm_dict(algorithm_dict, algorithm_did):
     if not container["checksum"].startswith("sha256:"):
         return False, "container checksum must start with sha256:"
 
-    client = docker.from_env()
     try:
-        inspection = client.api.inspect_distribution(
-            f"{container['image']}:{container['tag']}@{container['checksum']}"
-        )
-        assert (
-            inspection["Descriptor"]["digest"].lower() == container["checksum"].lower()
-        )
+        ns_string = container["image"].replace("/", "/repositories/")
+        dh_response = requests.get(f"http://hub.docker.com/v2/namespaces/{ns_string}/tags/{container['tag']}/images")
+        digests = [item["digest"].lower() for item in dh_response.json()]
+        assert container["checksum"].lower() in digests
     except Exception:
         return (
             False,
