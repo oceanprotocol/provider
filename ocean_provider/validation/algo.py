@@ -283,7 +283,12 @@ def validate_formatted_algorithm_dict(algorithm_dict, algorithm_did):
         return False, "container checksum must start with sha256:"
 
     try:
-        ns_string = container["image"].replace("/", "/repositories/")
+        container_image = (
+            container["image"]
+            if "/" in container["image"]
+            else f"library/{container['image']}"
+        )
+        ns_string = container_image.replace("/", "/repositories/")
         dh_response = requests.get(
             f"http://hub.docker.com/v2/namespaces/{ns_string}/tags/{container['tag']}/images"
         )
