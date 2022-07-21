@@ -134,6 +134,8 @@ def test_build_download_response():
 @pytest.mark.unit
 def test_httpbin():
     request = Mock(spec=Request)
+    request.range = None
+    request.headers = {}
 
     url_object = {
         "url": "https://httpbin.org/get",
