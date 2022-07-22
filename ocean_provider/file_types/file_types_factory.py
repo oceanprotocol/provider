@@ -16,7 +16,7 @@ class FilesTypeFactory:
         if not file_obj:
             return False, "cannot decrypt files for this service."
 
-        if "type" not in file_obj or file_obj["type"] not in ["ipfs", "url"]:
+        if "type" not in file_obj or file_obj["type"] not in ["ipfs", "url", "arweave"]:
             return (False, "malformed or unsupported type for service files.")
 
         try:
