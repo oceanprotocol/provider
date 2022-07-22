@@ -310,12 +310,18 @@ def test_validate_url_object():
     assert result is False
     assert message == "cannot decrypt files for this service."
 
-    result, message = FilesTypeFactory.validate_and_create({"type": "not_ipfs_or_url"})
+    result, message = FilesTypeFactory.validate_and_create({"type": "invalid"})
     assert result is False
     assert message == "malformed or unsupported type for service files."
 
     result, message = FilesTypeFactory.validate_and_create(
         {"type": "ipfs", "but_hash": "missing"}
+    )
+    assert result is False
+    assert message == "malformed service files, missing required keys."
+
+    result, message = FilesTypeFactory.validate_and_create(
+        {"type": "arweave", "but_transactionId": "missing"}
     )
     assert result is False
     assert message == "malformed service files, missing required keys."
@@ -367,7 +373,9 @@ def test_build_download_response_ipfs():
 
 
 @pytest.mark.unit
-def test_build_download_response_arweave():
+def test_build_download_response_arweave(monkeypatch):
+    """Test the special cases relevant only to arweave"""
+    transaction_id = "cZ6j5PmPVXCq5Az6YGcGqzffYjx2JnsnlSajaHNr20w"
     url_object = {
         "type": "arweave",
         "transactionId": "cZ6j5PmPVXCq5Az6YGcGqzffYjx2JnsnlSajaHNr20w",
@@ -386,54 +394,13 @@ def test_build_download_response_arweave():
     assert response.status == "200 OK"
     assert response.data, f"got no data {response.data}"
 
+    # Assert that Content-Disposition header doesn't leak transaction ID
+    assert transaction_id not in response.headers["Content-Disposition"]
 
-# @pytest.mark.unit
-# def test_get_download_url_arweave(monkeypatch):
-#     url_object = {
-#         "type": "arweave",
-#         "transactionId": "cZ6j5PmPVXCq5Az6YGcGqzffYjx2JnsnlSajaHNr20w",
-#     }
-#     download_url = get_download_url(url_object)
-#     assert download_url is not None
-#     assert (
-#         download_url
-#         == "https://arweave.net/cZ6j5PmPVXCq5Az6YGcGqzffYjx2JnsnlSajaHNr20w"
-#     )
-
-#     # Unsupported type
-#     url_object_unsupported_type = deepcopy(url_object)
-#     url_object_unsupported_type["type"] = "unsupported"
-#     with pytest.raises(
-#         ValueError,
-#         match=f"URL object type {url_object_unsupported_type['type']} not supported.",
-#     ):
-#         download_url = get_download_url(url_object_unsupported_type)
-
-#     # Missing type
-#     url_object_without_type = deepcopy(url_object)
-#     url_object_without_type.pop("type")
-#     with pytest.raises(KeyError, match="'type'"):
-#         download_url = get_download_url(url_object_without_type)
-
-#     # Missing transactionId
-#     url_object_without_tx_id = deepcopy(url_object)
-#     url_object_without_tx_id.pop("transactionId")
-#     with pytest.raises(KeyError, match="'transactionId'"):
-#         download_url = get_download_url(url_object_without_tx_id)
-
-#     # Unset ARWEAVE_GATEWAY
-#     monkeypatch.delenv("ARWEAVE_GATEWAY")
-#     with pytest.raises(
-#         ValueError,
-#         match="No ARWEAVE_GATEWAY defined, can not resolve arweave transaction id.",
-#     ):
-#         download_url = get_download_url(url_object)
-
-#     # Assert that Content-Disposition header doesn't leak transaction ID
-#     assert transactionId not in response.headers["Content-Disposition"]
-
-#     url_type = "unsupported"
-#     with pytest.raises(ValueError, match=f"Unsupported url type: {url_type}"):
-#         response = build_download_response(
-#             request, requests_session, download_url, url_type=url_type
-#         )
+    # Unset ARWEAVE_GATEWAY
+    monkeypatch.delenv("ARWEAVE_GATEWAY")
+    with pytest.raises(
+        ValueError,
+        match="No ARWEAVE_GATEWAY defined, can not resolve arweave transaction id.",
+    ):
+        instance.get_download_url(url_object)
