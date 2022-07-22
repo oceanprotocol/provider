@@ -320,9 +320,7 @@ def test_validate_url_object():
     assert result is False
     assert message == "malformed service files, missing required keys."
 
-    result, message = FilesTypeFactory.validate_and_create(
-        {"type": "arweave", "but_transactionId": "missing"}
-    )
+    result, message = FilesTypeFactory.validate_and_create()
     assert result is False
     assert message == "malformed service files, missing required keys."
 
@@ -365,6 +363,27 @@ def test_build_download_response_ipfs():
     assert download_url and download_url.endswith(f"ipfs/{cid}")
 
     response = instance.build_download_response(request)
+    assert response.data, f"got no data {response.data}"
+
+
+@pytest.mark.unit
+def test_build_download_response_arweave():
+    url_object = {
+        "type": "arweave",
+        "transactionId": "cZ6j5PmPVXCq5Az6YGcGqzffYjx2JnsnlSajaHNr20w",
+    }
+
+    request = Mock()
+    request.range = None
+
+    _, instance = FilesTypeFactory.validate_and_create(url_object)
+    assert (
+        instance.get_download_url()
+        == "https://arweave.net/cZ6j5PmPVXCq5Az6YGcGqzffYjx2JnsnlSajaHNr20w"
+    )
+
+    response = instance.build_download_response(request)
+    assert response.status == "200 OK"
     assert response.data, f"got no data {response.data}"
 
 
@@ -418,20 +437,3 @@ def test_build_download_response_ipfs():
 #         response = build_download_response(
 #             request, requests_session, download_url, url_type=url_type
 #         )
-
-
-# @pytest.mark.unit
-# def test_build_download_response_arweave():
-#     url_type = "arweave"
-#     transactionId = "cZ6j5PmPVXCq5Az6YGcGqzffYjx2JnsnlSajaHNr20w"
-#     download_url = "https://arweave.net/cZ6j5PmPVXCq5Az6YGcGqzffYjx2JnsnlSajaHNr20w"
-#     requests_session = get_requests_session()
-
-#     request = Mock()
-#     request.range = None
-
-#     response = build_download_response(
-#         request, requests_session, download_url, url_type=url_type
-#     )
-#     assert response.status == "200 OK"
-#     assert response.data, f"got no data {response.data}"
