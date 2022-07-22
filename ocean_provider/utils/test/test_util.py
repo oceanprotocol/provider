@@ -345,7 +345,7 @@ def test_validate_url_object():
 
 
 @pytest.mark.unit
-def test_download_ipfs_file():
+def test_build_download_response_ipfs():
     client = ipfshttpclient.connect("/dns/172.15.0.16/tcp/5001/http")
     cid = client.add("./tests/resources/ddo_sample_file.txt")["Hash"]
     url_object = {"type": "ipfs", "hash": cid}
