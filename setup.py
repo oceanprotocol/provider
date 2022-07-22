@@ -43,6 +43,7 @@ install_requirements = [
     "redis==4.0.2",
     "enforce-typing==1.0.0.post1",
     "pyjwt==2.4.0",
+    "pysha3==1.0.2",
 ]
 
 # Required to run setup.py:
@@ -106,7 +107,7 @@ setup(
     url="https://github.com/oceanprotocol/provider-py",
     # fmt: off
     # bumpversion needs single quotes
-    version='1.2.0',
+    version='1.3.2',
     # fmt: on
     zip_safe=False,
 )
