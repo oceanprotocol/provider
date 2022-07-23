@@ -109,7 +109,9 @@ def test_check_arweave_good(client):
     assert isinstance(result, list)
     assert len(result) == 1
     for file_info in result:
-        assert file_info["contentLength"] == "31976"
+        # arweave.net uses Cloudflare redirects and Transfer-Encoding: chunked
+        # and therefore won't have Content-Length header.
+        assert file_info["contentLength"] == ""
         assert file_info["contentType"] == "application/json"
         assert file_info["valid"] is True
 
