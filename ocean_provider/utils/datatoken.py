@@ -3,13 +3,13 @@ import logging
 from datetime import datetime
 from typing import Optional
 
-from jsonsempai import magic  # noqa: F401
 from artifacts import ERC20Template
 from eth_keys import KeyAPI
 from eth_keys.backends import NativeECCBackend
 from eth_typing.encoding import HexStr
 from eth_typing.evm import HexAddress
 from hexbytes import HexBytes
+from jsonsempai import magic  # noqa: F401
 from ocean_provider.utils.basics import get_provider_wallet
 from ocean_provider.utils.currency import to_wei
 from ocean_provider.utils.data_nft import get_data_nft_contract
@@ -172,7 +172,9 @@ def verify_order_tx(
     # this has changed now if the original original_tx was a reuseOrder
     start_order_tx_id = tx_receipt.transactionHash
     try:
-        event_logs = datatoken_contract.events.OrderStarted().processReceipt(tx_receipt)
+        event_logs = datatoken_contract.events.OrderStarted().processReceipt(
+            tx_receipt, errors=DISCARD
+        )
     except Exception as e:
         logger.error(e)
     logger.debug(f"Got events log when searching for OrderStarted : {event_logs}")
