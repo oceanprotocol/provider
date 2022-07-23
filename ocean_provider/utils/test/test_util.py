@@ -396,7 +396,7 @@ def test_build_download_response_arweave(monkeypatch):
     # Unset ARWEAVE_GATEWAY
     monkeypatch.delenv("ARWEAVE_GATEWAY")
     with pytest.raises(
-        ValueError,
+        Exception,
         match="No ARWEAVE_GATEWAY defined, can not resolve arweave transaction id.",
     ):
         instance.get_download_url(url_object)
