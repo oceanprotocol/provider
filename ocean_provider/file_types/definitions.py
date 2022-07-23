@@ -38,6 +38,11 @@ class EndUrlType:
     def get_download_url(self):
         raise NotImplementedError
 
+    @enforce_types
+    @abstractmethod
+    def get_filename(self):
+        raise NotImplementedError
+
     def check_details(self, with_checksum=False):
         """
         If the url argument is invalid, returns False and empty dictionary.
@@ -164,8 +169,6 @@ class EndUrlType:
         return self.userdata
 
     def build_download_response(self, request):
-        self.get_download_url
-        url = self.get_download_url()
         content_type = (
             self.checked_details.get("contentType")
             if hasattr(self, "checked_details")
@@ -188,14 +191,7 @@ class EndUrlType:
 
             response = func_method(**func_args)
             if not is_range_request:
-                filename = url.split("/")[-1]
-                # TODO: Fix logic to not leak IPFS cid hash or arweave tx id
-                # if url_type == "url":
-                #     filename = download_url.split("/")[-1]
-                # elif url_type in ["ipfs", "arweave"]:
-                #     filename = uuid4().hex
-                # else:
-                #     raise ValueError(f"Unsupported url type: {url_type}")
+                filename = self.get_filename()
 
                 content_disposition_header = response.headers.get("content-disposition")
                 if content_disposition_header:

@@ -2,6 +2,7 @@ import logging
 import os
 from typing import Any, Optional, Tuple
 from urllib.parse import urljoin
+from uuid import uuid4
 
 from enforce_typing import enforce_types
 from ocean_provider.file_types.definitions import EndUrlType, FilesType
@@ -37,6 +38,10 @@ class UrlFile(EndUrlType, FilesType):
     def get_download_url(self):
         return self.url
 
+    @enforce_types
+    def get_file_name(self) -> str:
+        return self.url.split("/")[-1]
+
 
 class IpfsFile(EndUrlType, FilesType):
     @enforce_types
@@ -61,6 +66,10 @@ class IpfsFile(EndUrlType, FilesType):
             raise Exception("No IPFS_GATEWAY defined, can not resolve ipfs hash.")
 
         return urljoin(os.getenv("IPFS_GATEWAY"), urljoin("ipfs/", self.hash))
+
+    @enforce_types
+    def get_filename(self):
+        return uuid4().hex
 
 
 class ArweaveFile(EndUrlType, FilesType):
@@ -91,3 +100,7 @@ class ArweaveFile(EndUrlType, FilesType):
             )
 
         return urljoin(os.getenv("ARWEAVE_GATEWAY"), self.transactionId)
+
+    @enforce_types
+    def get_filename(self):
+        return uuid4().hex
