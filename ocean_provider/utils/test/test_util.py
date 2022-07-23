@@ -370,7 +370,7 @@ def test_build_download_response_ipfs():
 
 @pytest.mark.unit
 def test_build_download_response_arweave(monkeypatch):
-    """Test the special cases relevant only to arweave"""
+    """Test the special cases relevant only to Arweave"""
     transaction_id = "cZ6j5PmPVXCq5Az6YGcGqzffYjx2JnsnlSajaHNr20w"
     url_object = {
         "type": "arweave",
