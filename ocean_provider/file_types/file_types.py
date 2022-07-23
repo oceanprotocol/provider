@@ -87,7 +87,7 @@ class ArweaveFile(EndUrlType, FilesType):
     def get_download_url(self):
         if not os.getenv("ARWEAVE_GATEWAY"):
             raise Exception(
-                "No ARWEAVE_GATEWAY defined, can not resolve arweave tx id."
+                "No ARWEAVE_GATEWAY defined, can not resolve arweave transaction id."
             )
 
         return urljoin(os.getenv("ARWEAVE_GATEWAY"), self.transactionId)
