@@ -39,7 +39,7 @@ class UrlFile(EndUrlType, FilesType):
         return self.url
 
     @enforce_types
-    def get_file_name(self) -> str:
+    def get_filename(self) -> str:
         return self.url.split("/")[-1]
 
 
