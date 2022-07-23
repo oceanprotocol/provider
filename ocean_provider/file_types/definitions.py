@@ -29,7 +29,7 @@ class FilesType(Protocol):
         raise NotImplementedError
 
     @abstractmethod
-    def build_download_response(self, request, validate_url=True):
+    def build_download_response(self, request):
         raise NotImplementedError
 
 
@@ -163,7 +163,8 @@ class EndUrlType:
 
         return self.userdata
 
-    def build_download_response(self, request, validate_url=True):
+    def build_download_response(self, request):
+        self.get_download_url
         url = self.get_download_url()
         content_type = (
             self.checked_details.get("contentType")
@@ -172,10 +173,6 @@ class EndUrlType:
         )
 
         try:
-            # TODO: Consider removing this check
-            if validate_url and not is_safe_url(url):
-                raise ValueError(f"Unsafe url {url}")
-
             download_response_headers = {}
             is_range_request = bool(request.range)
 
