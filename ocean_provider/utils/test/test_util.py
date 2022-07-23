@@ -362,6 +362,9 @@ def test_build_download_response_ipfs():
     response = instance.build_download_response(request)
     assert response.data, f"got no data {response.data}"
 
+    # Assert that Content-Disposition header doesn't leak CID
+    assert cid not in response.headers["Content-Disposition"]
+
 
 @pytest.mark.unit
 def test_build_download_response_arweave(monkeypatch):
