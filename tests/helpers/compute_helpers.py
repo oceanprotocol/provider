@@ -87,10 +87,8 @@ def build_and_send_ddo_with_compute_service(
                     "did": alg_ddo.did,
                     "filesChecksum": msg_hash(service.encrypted_files),
                     "containerSectionChecksum": msg_hash(
-                        json.dumps(
-                            alg_ddo.metadata["algorithm"]["container"],
-                            separators=(",", ":"),
-                        )
+                        alg_ddo.metadata["algorithm"]["container"]["entrypoint"]
+                        + alg_ddo.metadata["algorithm"]["container"]["checksum"]
                     ),
                 }
             ],
