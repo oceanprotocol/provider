@@ -2,7 +2,6 @@ import json
 from datetime import datetime, timedelta
 
 from ocean_provider.constants import BaseURLs
-from ocean_provider.file_types.file_types_factory import FilesTypeFactory
 from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.provider_fees import get_provider_fees
 from ocean_provider.utils.services import ServiceType
@@ -73,23 +72,20 @@ def build_and_send_ddo_with_compute_service(
             timeout=timeout,
         )
     elif asset_type == "stored_in_arweave":
-        unencrypted_file_object = {
+        arweave_file_object = {
             "type": "arweave",
             "transactionId": "cZ6j5PmPVXCq5Az6YGcGqzffYjx2JnsnlSajaHNr20w",
         }
 
-        files_checksum = FilesTypeFactory.validate_and_create(unencrypted_file_object)[
-            1
-        ].check_details(with_checksum=True)[1]["checksum"]
-
         dataset_ddo_w_compute_service = get_registered_asset(
             publisher_wallet,
-            unencrypted_files_list=[unencrypted_file_object],
+            unencrypted_files_list=[arweave_file_object],
             custom_services="vanilla_compute",
             custom_services_args=[
                 {
                     "did": alg_ddo.did,
-                    "filesChecksum": files_checksum,
+                    # known checksum for the gist
+                    "filesChecksum": "b4908c868c78086097a10f986718a8f3fae1455f0d443c3dc59330207d47cc6d",
                     "containerSectionChecksum": msg_hash(
                         alg_ddo.metadata["algorithm"]["container"]["entrypoint"]
                         + alg_ddo.metadata["algorithm"]["container"]["checksum"]
