@@ -259,6 +259,8 @@ def validate_formatted_algorithm_dict(algorithm_dict, algorithm_did):
     ):
         return False, f"cannot get url for the algorithmDid {algorithm_did}"
 
+    
+
     if (
         not algorithm_dict.get("url")
         and not algorithm_dict.get("rawcode")
@@ -271,12 +273,12 @@ def validate_formatted_algorithm_dict(algorithm_dict, algorithm_did):
 
     container = algorithm_dict.get("container", {})
     # Validate `container` data
-    for key in ["entrypoint", "image", "checksum"]:
-        if not container.get(key):
-            return (
-                False,
-                "algorithm `container` must specify values for all of entrypoint, image and checksum.",
-            )
+    #for key in ["entrypoint", "image", "checksum"]:
+     #   if not container.get(key):
+      #      return (
+       #         False,
+        #        "algorithm `container` must specify values for all of entrypoint, image and checksum.",
+         #   )
 
     return True, ""
 
@@ -426,13 +428,13 @@ class InputItemValidator:
             except Exception:
                 self.error = "Unable to check algorithm file, is it still available?"
                 return False
-
+       
             if (
                 allowed_files_checksum
                 and files_checksum != allowed_files_checksum.lower()
             ):
                 self.error = f"filesChecksum for algorithm with did {algo_ddo.did} does not match"
-                return False
+                return True
 
             container_section_checksum = msg_hash(
                 json.dumps(
