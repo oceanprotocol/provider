@@ -81,7 +81,6 @@ class RBACValidator:
     def get_data(self):
         if "data" not in self.request.keys():
             raise Exception("Data to encrypt is empty.")
-        # import pdb;pdb.set_trace()
         if not isinstance(self.request["data"], list) and not isinstance(
             self.request["data"], Asset
         ):
