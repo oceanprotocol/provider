@@ -71,7 +71,7 @@ class WorkflowValidator:
             additional_inputs = []
 
         if not isinstance(additional_inputs, list):
-            self.error = "Additional input is invalid or can not be decoded."
+            self.error = "additional_input.invalid"
             return False
 
         all_data = [main_input] + additional_inputs
@@ -94,7 +94,7 @@ class WorkflowValidator:
 
             status = input_item_validator.validate()
             if not status:
-                prefix = f"Error in input at index {index}: " if index else ""
+                prefix = f"additional_input.invalid_at_{index}" if index else ""
                 self.error = prefix + input_item_validator.error
                 return False
 
@@ -130,7 +130,7 @@ class WorkflowValidator:
                 paid_provider_fees_index = provider_fee_amounts.index(fee)
 
         if paid_provider_fees_index == -1:
-            self.error = "Provider fees must be paid on the asset, OR on the algorithm ordered, OR on any additional input."
+            self.error = "order.fees_not_paid"
             return False
 
         self.agreement_id = None
@@ -148,7 +148,7 @@ class WorkflowValidator:
         output_def = decode_from_data(self.data, "output", dec_type="dict")
 
         if output_def == -1:
-            self.error = "Output is invalid or can not be decoded."
+            self.error = "output.invalid"
             return False
 
         self.validated_output_dict = build_stage_output_dict(
@@ -178,11 +178,11 @@ class WorkflowValidator:
                 asset_type = None
 
             if asset_type != "algorithm":
-                self.error = f"DID {algorithm_did} is not a valid algorithm"
+                self.error = "algorithm.not_algo"
                 return False
 
             if not algorithm_service_id:
-                self.error = "No serviceId in algorithm input item."
+                self.error = "algoritm.service_id_missing"
                 return False
 
             try:
@@ -195,11 +195,11 @@ class WorkflowValidator:
                     )
 
                     if not asset_urls:
-                        self.error = "Services in algorithm with compute type must be in the same provider you are calling."
+                        self.error = "algorithm.compute_services_not_in_same_provider"
                         return False
 
                 if not self.algo_service:
-                    self.error = "Failed to retrieve purchased algorithm service id."
+                    self.error = "algorithm.service_id_missing"
                     return False
                 logger.debug("validate_order called for ALGORITHM usage.")
                 _tx, _order_log, _provider_fees_log, start_order_tx_id = validate_order(
@@ -230,7 +230,7 @@ class WorkflowValidator:
                 logger.debug(
                     f"validate_order for ALGORITHM failed with error {str(e)}."
                 )
-                self.error = "Algorithm is already in use or can not be found on chain."
+                self.error = "algorithm.in_use_or_not_on_chain"
                 return False
 
         algorithm_dict = StageAlgoSerializer(
@@ -258,7 +258,7 @@ def validate_formatted_algorithm_dict(algorithm_dict, algorithm_did):
     if algorithm_did and not (
         algorithm_dict.get("url") or algorithm_dict.get("remote")
     ):
-        return False, f"cannot get url for the algorithmDid {algorithm_did}"
+        return False, f"algorithm.not_found_{algorithm_did}"
 
     if (
         not algorithm_dict.get("url")
@@ -267,7 +267,7 @@ def validate_formatted_algorithm_dict(algorithm_dict, algorithm_did):
     ):
         return (
             False,
-            "algorithmMeta must define one of `url` or `rawcode` or `remote`, but all seem missing.",
+            "algorithm.meta_oneof_url_rawcode_remote",
         )  # noqa
 
     container = algorithm_dict.get("container", {})
@@ -276,11 +276,11 @@ def validate_formatted_algorithm_dict(algorithm_dict, algorithm_did):
         if not container.get(key):
             return (
                 False,
-                "algorithm `container` must specify values for all of entrypoint, image and checksum.",
+                "algorithm.container.missing_entrypoint_image_checksum",
             )
 
     if not container["checksum"].startswith("sha256:"):
-        return False, "container checksum must start with sha256:"
+        return False, "algorithm.container.checksum_prefix"
 
     try:
         container_image = (
@@ -297,7 +297,7 @@ def validate_formatted_algorithm_dict(algorithm_dict, algorithm_did):
     except Exception:
         return (
             False,
-            "Invalid container values provided on algorithm. Check image, tag and checksum.",
+            "algorithm.container.invalid",
         )
 
     return True, ""
@@ -330,24 +330,24 @@ class InputItemValidator:
 
         for req_item in required_keys:
             if not self.data.get(req_item):
-                self.error = f"No {req_item} in input item."
+                self.error = f"missing_{req_item}"
                 return False
 
         if not self.data.get("serviceId") and self.data.get("serviceId") != 0:
-            self.error = "No serviceId in input item."
+            self.error = "missing_serviceId"
             return False
 
         self.did = self.data.get("documentId")
         self.asset = get_asset_from_metadatastore(get_metadata_url(), self.did)
 
         if not self.asset:
-            self.error = f"Asset for did {self.did} not found."
+            self.error = f"not_found_{self.did}"
             return False
 
         self.service = self.asset.get_service_by_id(self.data["serviceId"])
 
         if not self.service:
-            self.error = f"Service id {self.data['serviceId']} not found."
+            self.error = "service_id_not_found"
             return False
 
         consumable, message = check_asset_consumable(
@@ -359,18 +359,18 @@ class InputItemValidator:
             return False
 
         if self.service.type not in ["access", "compute"]:
-            self.error = "Services in input can only be access or compute."
+            self.error = "service_not_access_compute"
             return False
 
         if self.service.type != "compute" and self.index == 0:
-            self.error = "Service for main asset must be compute."
+            self.error = "main_service_compute"
             return False
 
         asset_urls = get_service_files_list(
             self.service, self.provider_wallet, self.asset
         )
         if self.service.type == "compute" and not asset_urls:
-            self.error = "Services in input with compute type must be in the same provider you are calling."
+            self.error = "compute_services_not_in_same_provider"
             return False
 
         if self.service.type == "compute":
@@ -401,7 +401,7 @@ class InputItemValidator:
         if trusted_publishers:
             algo_ddo = get_asset_from_metadatastore(get_metadata_url(), algorithm_did)
             if algo_ddo.nft["owner"] not in trusted_publishers:
-                self.error = "this algorithm is not from a trusted publisher"
+                self.error = "algorithm.trusted_publisher"
                 return False
 
         if trusted_algorithms:
@@ -410,13 +410,11 @@ class InputItemValidator:
                     algo["did"]: algo for algo in trusted_algorithms
                 }
                 if algorithm_did not in did_to_trusted_algo_dict:
-                    self.error = f"this algorithm did {algorithm_did} is not trusted."
+                    self.error = "algorithm.trusted_algo"
                     return False
 
             except KeyError:
-                self.error = (
-                    "Some algos in the publisherTrustedAlgorithms don't have a did."
-                )
+                self.error = "algorithm.no_publisherTrustedAlgorithms"
                 return False
 
             trusted_algo_dict = did_to_trusted_algo_dict[algorithm_did]
@@ -446,14 +444,14 @@ class InputItemValidator:
 
                 files_checksum = "".join(checksums).lower()
             except Exception:
-                self.error = "Unable to check algorithm file, is it still available?"
+                self.error = "algorithm.file_unavailable"
                 return False
 
             if (
                 allowed_files_checksum
                 and files_checksum != allowed_files_checksum.lower()
             ):
-                self.error = f"filesChecksum for algorithm with did {algo_ddo.did} does not match"
+                self.error = "algorithm.checksum_mismatch"
                 return False
 
             container_section_checksum = msg_hash(
@@ -464,7 +462,7 @@ class InputItemValidator:
                 allowed_container_checksum
                 and container_section_checksum != allowed_container_checksum
             ):
-                self.error = f"containerSectionChecksum for algorithm with did {algo_ddo.did} does not match"
+                self.error = "algorithm.container_checksum_mismatch"
                 return False
 
         return True
@@ -475,7 +473,7 @@ class InputItemValidator:
         algorithm_meta = algo_data.get("meta")
         algorithm_did = algo_data.get("documentId")
         if algorithm_did is None and algorithm_meta is None:
-            self.error = "both meta and documentId are missing from algorithm input, at least one of these is required."
+            self.error = "algorithm.missing_meta_documentId"
             return False
 
         privacy_options = self.service.compute_dict
@@ -489,7 +487,7 @@ class InputItemValidator:
 
         allow_raw_algo = privacy_options.get("allowRawAlgorithm", False)
         if allow_raw_algo is False:
-            self.error = f"cannot run raw algorithm on this did {self.did}."
+            self.error = "algorithm.no_raw_algo_allowed"
             return False
 
         return True
@@ -524,9 +522,7 @@ class InputItemValidator:
             )
         except Exception as e:
             logger.exception(f"validate_usage failed with {str(e)}.")
-            self.error = (
-                f"Order for serviceId {self.service.id} is not valid. {str(e)}."
-            )
+            self.error = "order.invalid"
             return False
 
         return True
