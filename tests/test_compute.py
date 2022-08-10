@@ -114,7 +114,7 @@ def test_compute_raw_algo(
         assert (
             response.status == "400 BAD REQUEST"
         ), f"start compute job failed: {response.status} , {response.data}"
-        assert "cannot run raw algorithm on this did" in response.json["error"]
+        assert "dataset.no_raw_algo_allowed" in response.json["error"]
 
 
 @pytest.mark.integration
@@ -159,10 +159,7 @@ def test_compute_specific_algo_dids(
     assert (
         response.status == "400 BAD REQUEST"
     ), f"start compute job failed: {response.status} , {response.data}"
-    assert (
-        response.json["error"]
-        == f"this algorithm did {another_alg_ddo.did} is not trusted."
-    )
+    assert response.json["error"] == "dataset.not_trusted_algo"
 
 
 @pytest.mark.integration
@@ -371,10 +368,7 @@ def test_compute_allow_all_published(
     assert (
         response.status == "400 BAD REQUEST"
     ), f"start compute job failed: {response.status} , {response.data}"
-    assert (
-        "Mismatch between ordered c2d environment and selected one"
-        in response.json["error"]
-    )
+    assert "dataset.serviceId.order_invalid" in response.json["error"]
 
     # Start on the correct environment
     payload["environment"] = free_c2d_env["id"]

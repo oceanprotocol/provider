@@ -81,6 +81,10 @@ class WorkflowValidator:
         valid_until_list = []
         provider_fee_amounts = []
 
+        status = self.preliminary_algo_validation()
+        if not status:
+            return False
+
         for index, input_item in enumerate(all_data):
             input_item["algorithm"] = algo_data
             input_item_validator = InputItemValidator(
@@ -91,10 +95,12 @@ class WorkflowValidator:
                 {"environment": self.data.get("environment")},
                 index,
             )
+            input_item_validator.algo_files_checksum = self.algo_files_checksum
+            input_item_validator.algo_container_checksum = self.algo_container_checksum
 
             status = input_item_validator.validate()
             if not status:
-                prefix = f"additional_input.invalid_at_{index}" if index else ""
+                prefix = f"datasets[{index}]." if index else "dataset."
                 self.error = prefix + input_item_validator.error
                 return False
 
@@ -173,19 +179,6 @@ class WorkflowValidator:
             algo = get_asset_from_metadatastore(get_metadata_url(), algorithm_did)
 
             try:
-                asset_type = algo.metadata["type"]
-            except ValueError:
-                asset_type = None
-
-            if asset_type != "algorithm":
-                self.error = "algorithm.not_algo"
-                return False
-
-            if not algorithm_service_id:
-                self.error = "algoritm.service_id_missing"
-                return False
-
-            try:
                 self.algo_service = algo.get_service_by_id(algorithm_service_id)
                 algorithm_token_address = self.algo_service.datatoken_address
 
@@ -199,7 +192,7 @@ class WorkflowValidator:
                         return False
 
                 if not self.algo_service:
-                    self.error = "algorithm.service_id_missing"
+                    self.error = "algorithm.serviceId.missing"
                     return False
                 logger.debug("validate_order called for ALGORITHM usage.")
                 _tx, _order_log, _provider_fees_log, start_order_tx_id = validate_order(
@@ -253,12 +246,72 @@ class WorkflowValidator:
 
         return True
 
+    def preliminary_algo_validation(self):
+        algo_data = self.data["algorithm"]
+        algorithm_did = algo_data.get("documentId")
+        algorithm_service_id = algo_data.get("serviceId")
+        algorithm_meta = algo_data.get("meta")
+
+        if algorithm_did is None and algorithm_meta is None:
+            self.error = "algorithm.missing_meta_documentId"
+            return False
+
+        if not algorithm_did:
+            self.algo_files_checksum = None
+            self.algo_container_checksum = None
+            return True
+
+        try:
+            algo_ddo = get_asset_from_metadatastore(get_metadata_url(), algorithm_did)
+        except Exception:
+            self.error = "algorithm.file_unavailable"
+            return False
+
+        try:
+            asset_type = algo_ddo.metadata["type"]
+        except ValueError:
+            asset_type = None
+
+        if asset_type != "algorithm":
+            self.error = "algorithm.not_algo"
+            return False
+
+        if not algorithm_service_id:
+            self.error = "algorithm.serviceId.missing"
+            return False
+
+        try:
+            service = algo_ddo.get_service_by_id(algo_data.get("serviceId"))
+
+            compute_url_objects = get_service_files_list(
+                service, self.provider_wallet, algo_ddo
+            )
+
+            checksums = [
+                FilesTypeFactory.validate_and_create(durl)[1].check_details(
+                    with_checksum=True
+                )[1]["checksum"]
+                for durl in compute_url_objects
+            ]
+
+            self.algo_files_checksum = "".join(checksums).lower()
+
+            self.algo_container_checksum = msg_hash(
+                algo_ddo.metadata["algorithm"]["container"]["entrypoint"]
+                + algo_ddo.metadata["algorithm"]["container"]["checksum"]
+            )
+        except Exception:
+            self.error = "algorithm.file_unavailable"
+            return False
+
+        return True
+
 
 def validate_formatted_algorithm_dict(algorithm_dict, algorithm_did):
     if algorithm_did and not (
         algorithm_dict.get("url") or algorithm_dict.get("remote")
     ):
-        return False, f"algorithm.not_found_{algorithm_did}"
+        return False, "algorithm.did_not_found"
 
     if (
         not algorithm_dict.get("url")
@@ -330,18 +383,18 @@ class InputItemValidator:
 
         for req_item in required_keys:
             if not self.data.get(req_item):
-                self.error = f"missing_{req_item}"
+                self.error = f"{req_item}.missing"
                 return False
 
         if not self.data.get("serviceId") and self.data.get("serviceId") != 0:
-            self.error = "missing_serviceId"
+            self.error = "serviceId.missing"
             return False
 
         self.did = self.data.get("documentId")
         self.asset = get_asset_from_metadatastore(get_metadata_url(), self.did)
 
         if not self.asset:
-            self.error = f"not_found_{self.did}"
+            self.error = "did_not_found"
             return False
 
         self.service = self.asset.get_service_by_id(self.data["serviceId"])
@@ -401,7 +454,7 @@ class InputItemValidator:
         if trusted_publishers:
             algo_ddo = get_asset_from_metadatastore(get_metadata_url(), algorithm_did)
             if algo_ddo.nft["owner"] not in trusted_publishers:
-                self.error = "algorithm.trusted_publisher"
+                self.error = "not_trusted_algo_publisher"
                 return False
 
         if trusted_algorithms:
@@ -410,11 +463,11 @@ class InputItemValidator:
                     algo["did"]: algo for algo in trusted_algorithms
                 }
                 if algorithm_did not in did_to_trusted_algo_dict:
-                    self.error = "algorithm.trusted_algo"
+                    self.error = "not_trusted_algo"
                     return False
 
             except KeyError:
-                self.error = "algorithm.no_publisherTrustedAlgorithms"
+                self.error = "no_publisherTrustedAlgorithms"
                 return False
 
             trusted_algo_dict = did_to_trusted_algo_dict[algorithm_did]
@@ -423,46 +476,18 @@ class InputItemValidator:
                 "containerSectionChecksum"
             )
 
-            try:
-                algo_ddo = get_asset_from_metadatastore(
-                    get_metadata_url(), trusted_algo_dict["did"]
-                )
-                service = algo_ddo.get_service_by_id(
-                    self.data["algorithm"].get("serviceId")
-                )
-
-                compute_url_objects = get_service_files_list(
-                    service, self.provider_wallet, algo_ddo
-                )
-
-                checksums = [
-                    FilesTypeFactory.validate_and_create(durl)[1].check_details(
-                        with_checksum=True
-                    )[1]["checksum"]
-                    for durl in compute_url_objects
-                ]
-
-                files_checksum = "".join(checksums).lower()
-            except Exception:
-                self.error = "algorithm.file_unavailable"
-                return False
-
             if (
                 allowed_files_checksum
-                and files_checksum != allowed_files_checksum.lower()
+                and self.algo_files_checksum != allowed_files_checksum.lower()
             ):
-                self.error = "algorithm.checksum_mismatch"
+                self.error = "algorithm_file_checksum_mismatch"
                 return False
 
-            container_section_checksum = msg_hash(
-                algo_ddo.metadata["algorithm"]["container"]["entrypoint"]
-                + algo_ddo.metadata["algorithm"]["container"]["checksum"]
-            )
             if (
                 allowed_container_checksum
-                and container_section_checksum != allowed_container_checksum
+                and self.algo_container_checksum != allowed_container_checksum
             ):
-                self.error = "algorithm.container_checksum_mismatch"
+                self.error = "algorithm_container_checksum_mismatch"
                 return False
 
         return True
@@ -470,11 +495,7 @@ class InputItemValidator:
     def validate_algo(self):
         """Validates algorithm details that allow the algo dict to be built."""
         algo_data = self.data["algorithm"]
-        algorithm_meta = algo_data.get("meta")
         algorithm_did = algo_data.get("documentId")
-        if algorithm_did is None and algorithm_meta is None:
-            self.error = "algorithm.missing_meta_documentId"
-            return False
 
         privacy_options = self.service.compute_dict
 
@@ -487,7 +508,7 @@ class InputItemValidator:
 
         allow_raw_algo = privacy_options.get("allowRawAlgorithm", False)
         if allow_raw_algo is False:
-            self.error = "algorithm.no_raw_algo_allowed"
+            self.error = "no_raw_algo_allowed"
             return False
 
         return True
@@ -522,7 +543,7 @@ class InputItemValidator:
             )
         except Exception as e:
             logger.exception(f"validate_usage failed with {str(e)}.")
-            self.error = "order.invalid"
+            self.error = "serviceId.order_invalid"
             return False
 
         return True
