@@ -282,29 +282,36 @@ class WorkflowValidator:
 
         try:
             service = algo_ddo.get_service_by_id(algo_data.get("serviceId"))
-
-            compute_url_objects = get_service_files_list(
+            self.algo_files_checksum, self.algo_container_checksum = get_algo_checksums(
                 service, self.provider_wallet, algo_ddo
-            )
-
-            checksums = [
-                FilesTypeFactory.validate_and_create(durl)[1].check_details(
-                    with_checksum=True
-                )[1]["checksum"]
-                for durl in compute_url_objects
-            ]
-
-            self.algo_files_checksum = "".join(checksums).lower()
-
-            self.algo_container_checksum = msg_hash(
-                algo_ddo.metadata["algorithm"]["container"]["entrypoint"]
-                + algo_ddo.metadata["algorithm"]["container"]["checksum"]
             )
         except Exception:
             self.error = "algorithm.file_unavailable"
             return False
 
         return True
+
+
+def get_algo_checksums(algo_service, provider_wallet, algo_ddo):
+    compute_url_objects = get_service_files_list(
+        algo_service, provider_wallet, algo_ddo
+    )
+
+    checksums = [
+        FilesTypeFactory.validate_and_create(durl)[1].check_details(with_checksum=True)[
+            1
+        ]["checksum"]
+        for durl in compute_url_objects
+    ]
+
+    algo_files_checksum = "".join(checksums).lower()
+
+    algo_container_checksum = msg_hash(
+        algo_ddo.metadata["algorithm"]["container"]["entrypoint"]
+        + algo_ddo.metadata["algorithm"]["container"]["checksum"]
+    )
+
+    return algo_files_checksum, algo_container_checksum
 
 
 def validate_formatted_algorithm_dict(algorithm_dict, algorithm_did):
