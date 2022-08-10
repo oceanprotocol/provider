@@ -10,7 +10,6 @@ import requests
 
 from ocean_provider.exceptions import RequestNotFound
 from ocean_provider.utils.accounts import sign_message
-from ocean_provider.utils.asset import Asset
 from ocean_provider.utils.basics import get_provider_wallet
 
 
@@ -81,12 +80,36 @@ class RBACValidator:
     def get_data(self):
         if "data" not in self.request.keys():
             raise Exception("Data to encrypt is empty.")
-        if not isinstance(self.request["data"], list) and not isinstance(
-            self.request["data"], Asset
+        if (
+            not self._check_if_asset()
+            and not self._check_if_respects_file_encryption_schema()
         ):
             raise Exception("Invalid type of data.")
 
         return self.request["data"]
+
+    def _check_if_asset(self):
+        data = self.request["data"]
+        if isinstance(data, dict):
+            if data.get("version") is not None:
+                return True
+        elif isinstance(data, str):
+            data_dict = json.loads(data)
+            if data_dict.get("version") is not None:
+                return True
+        return False
+
+    def _check_if_respects_file_encryption_schema(self):
+        data = self.request["data"]
+        if isinstance(data, list):
+            for file in data:
+                if (
+                    isinstance(file, dict)
+                    and list(file.keys()) == ["nftAddress", "datatokenAddress", "files"]
+                    and isinstance(file["files"], dict)
+                ):
+                    return True
+        return False
 
     def build_payload(self):
         provider_access = (

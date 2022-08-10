@@ -37,13 +37,9 @@ encrypt_endpoint = BaseURLs.SERVICES_URL + "/encrypt"
 def test_encrypt_request_payload(consumer_wallet, publisher_wallet, monkeypatch):
     monkeypatch.setenv("PRIVATE_PROVIDER", "1")
     document = {
-        "url": "http://localhost:8030" + encrypt_endpoint,
-        "index": 0,
-        "checksum": "foo_checksum",
-        "contentLength": "4535431",
-        "contentType": "text/csv",
-        "encoding": "UTF-8",
-        "compression": "zip",
+        "nftAddress": "0x0000000000000000000000000000000000000000",
+        "datatokenAddress": "0x0000000000000000000000000000000000000000",
+        "files": {"some_dict": "test"},
     }
     req = {
         "data": [document],
@@ -63,12 +59,11 @@ def test_encrypt_request_payload(consumer_wallet, publisher_wallet, monkeypatch)
     assert payload["data"] == [document]
 
     ddo = copy.deepcopy(json_dict)
-    asset = Asset(ddo)
-    req["data"] = asset
+    req["data"] = ddo
 
     validator = RBACValidator(request_name="EncryptRequest", request=req)
     payload = validator.build_payload()
-    assert payload["data"] == asset
+    assert payload["data"] == ddo
 
 
 @pytest.mark.unit
