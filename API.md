@@ -19,7 +19,9 @@ Parameters
 ```
 
 Returns:
-Json object containing the nonce value.
+Json object containing the last-used nonce value. 
+The nonce endpoint is just informative, use the current UTC timestamp as a nonce, 
+where required in other endpoints.
 
 Example:
 
@@ -32,7 +34,7 @@ Response:
 
 ```json
 {
-  "nonce": 23
+  "nonce": 1644315615.24195
 }
 ```
 
