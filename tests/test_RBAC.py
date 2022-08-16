@@ -77,6 +77,7 @@ def test_wrong_encrypt_request_payload(consumer_wallet, publisher_wallet, monkey
         validator.build_payload()
     assert err.value.args[0] == "Data to encrypt is empty."
 
+    # Tested with a document which does not respect either of the DDO or encryption file schemas.
     document = {
         "url": "http://localhost:8030" + encrypt_endpoint,
         "index": 0,
@@ -88,6 +89,19 @@ def test_wrong_encrypt_request_payload(consumer_wallet, publisher_wallet, monkey
     }
     req = {
         "data": json.dumps(document),
+        "publisherAddress": publisher_wallet.address,
+    }
+    validator = RBACValidator(request_name="EncryptRequest", request=req)
+    with pytest.raises(Exception) as err:
+        validator.build_payload()
+    assert err.value.args[0] == "Invalid type of data."
+
+    # Test with a wrong type for files key.
+    document = [
+        {"nftAddress": "0x0000000", "datatokenAddress": "0x00000001", "files": "empty"}
+    ]
+    req = {
+        "data": document,
         "publisherAddress": publisher_wallet.address,
     }
     validator = RBACValidator(request_name="EncryptRequest", request=req)
