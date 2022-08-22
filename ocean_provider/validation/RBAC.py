@@ -80,37 +80,7 @@ class RBACValidator:
     def get_data(self):
         if "data" not in self.request.keys():
             raise Exception("Data to encrypt is empty.")
-        if not self._is_asset() and not self._is_file_encryption_data():
-            raise Exception("Invalid type of data.")
-
         return self.request["data"]
-
-    def _is_asset(self) -> bool:
-        data = self.request["data"]
-        if not isinstance(data, dict) and not isinstance(data, str):
-            return False
-
-        if isinstance(data, str):
-            try:
-                data = json.loads(data)
-            except:
-                return False
-
-        if isinstance(data, dict):
-            return data.get("version", False)
-
-    def _is_file_encryption_data(self) -> bool:
-        data = self.request["data"]
-        if not isinstance(data, list):
-            return False
-
-        for file in data:
-            if (
-                isinstance(file, dict)
-                and list(file.keys()) == ["nftAddress", "datatokenAddress", "files"]
-                and isinstance(file["files"], dict)
-            ):
-                return True
 
     def build_payload(self):
         provider_access = (

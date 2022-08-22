@@ -37,48 +37,6 @@ encrypt_endpoint = BaseURLs.SERVICES_URL + "/encrypt"
 def test_encrypt_request_payload(consumer_wallet, publisher_wallet, monkeypatch):
     monkeypatch.setenv("PRIVATE_PROVIDER", "1")
     document = {
-        "nftAddress": "0x0000000000000000000000000000000000000000",
-        "datatokenAddress": "0x0000000000000000000000000000000000000000",
-        "files": {"some_dict": "test"},
-    }
-    req = {
-        "data": [document],
-        "publisherAddress": publisher_wallet.address,
-    }
-    validator = RBACValidator(request_name="EncryptRequest", request=req)
-    payload = validator.build_payload()
-
-    assert validator.request == req
-    assert payload["eventType"] == "encryptUrl"
-    assert payload["providerAccess"] == "private"
-    assert payload["component"] == "provider"
-    assert payload["credentials"] == {
-        "type": "address",
-        "value": publisher_wallet.address,
-    }
-    assert payload["data"] == [document]
-
-    ddo = copy.deepcopy(json_dict)
-    req["data"] = ddo
-
-    validator = RBACValidator(request_name="EncryptRequest", request=req)
-    payload = validator.build_payload()
-    assert payload["data"] == ddo
-
-
-@pytest.mark.unit
-def test_wrong_encrypt_request_payload(consumer_wallet, publisher_wallet, monkeypatch):
-    monkeypatch.setenv("PRIVATE_PROVIDER", "1")
-    req = {
-        "publisherAddress": publisher_wallet.address,
-    }
-    validator = RBACValidator(request_name="EncryptRequest", request=req)
-    with pytest.raises(Exception) as err:
-        validator.build_payload()
-    assert err.value.args[0] == "Data to encrypt is empty."
-
-    # Tested with a document which does not respect either of the DDO or encryption file schemas.
-    document = {
         "url": "http://localhost:8030" + encrypt_endpoint,
         "index": 0,
         "checksum": "foo_checksum",
@@ -92,22 +50,28 @@ def test_wrong_encrypt_request_payload(consumer_wallet, publisher_wallet, monkey
         "publisherAddress": publisher_wallet.address,
     }
     validator = RBACValidator(request_name="EncryptRequest", request=req)
-    with pytest.raises(Exception) as err:
-        validator.build_payload()
-    assert err.value.args[0] == "Invalid type of data."
+    payload = validator.build_payload()
 
-    # Test with a wrong type for files key.
-    document = [
-        {"nftAddress": "0x0000000", "datatokenAddress": "0x00000001", "files": "empty"}
-    ]
+    assert validator.request == req
+    assert payload["eventType"] == "encryptUrl"
+    assert payload["providerAccess"] == "private"
+    assert payload["component"] == "provider"
+    assert payload["credentials"] == {
+        "type": "address",
+        "value": publisher_wallet.address,
+    }
+
+
+@pytest.mark.unit
+def test_wrong_encrypt_request_payload(consumer_wallet, publisher_wallet, monkeypatch):
+    monkeypatch.setenv("PRIVATE_PROVIDER", "1")
     req = {
-        "data": document,
         "publisherAddress": publisher_wallet.address,
     }
     validator = RBACValidator(request_name="EncryptRequest", request=req)
     with pytest.raises(Exception) as err:
         validator.build_payload()
-    assert err.value.args[0] == "Invalid type of data."
+    assert err.value.args[0] == "Data to encrypt is empty."
 
 
 @pytest.mark.unit
