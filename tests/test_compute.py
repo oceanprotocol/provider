@@ -200,12 +200,6 @@ def test_compute(client, publisher_wallet, consumer_wallet, free_c2d_env):
     msg = f"{consumer_wallet.address}{ddo.did}"
     payload["signature"] = sign_message(msg, consumer_wallet)
 
-    # Start compute with auth token
-    token = create_token(client, consumer_wallet)
-    payload.pop("signature")
-    response = post_to_compute(client, payload, headers={"AuthToken": token})
-    assert response.status_code == 200, f"{response.data}"
-
     # Start compute with valid signature
     payload["signature"] = signature
     response = post_to_compute(client, payload)
@@ -590,3 +584,40 @@ def test_compute_paid_env(
     job_info = response.json[0]
     print(f"got response from starting compute job: {job_info}")
     job_id = job_info.get("jobId", "")
+
+
+@pytest.mark.integration
+def test_compute_auth_token(client, publisher_wallet, consumer_wallet, free_c2d_env):
+    valid_until = get_future_valid_until()
+    ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
+        client,
+        publisher_wallet,
+        consumer_wallet,
+        False,
+        None,
+        c2d_address=free_c2d_env["consumerAddress"],
+        valid_until=valid_until,
+        c2d_environment=free_c2d_env["id"],
+    )
+    sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
+    sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
+    nonce, signature = get_compute_signature(client, consumer_wallet, ddo.did)
+
+    # Start the compute job
+    payload = {
+        "dataset": {"documentId": ddo.did, "serviceId": sa.id, "transferTxId": tx_id},
+        "algorithm": {
+            "serviceId": sa_compute.id,
+            "documentId": alg_ddo.did,
+            "transferTxId": alg_tx_id,
+        },
+        # "signature": NO SIGNATURE
+        "nonce": nonce,
+        "consumerAddress": consumer_wallet.address,
+        "environment": free_c2d_env["id"],
+    }
+
+    # Start compute with auth token
+    token = create_token(client, consumer_wallet)
+    response = post_to_compute(client, payload, headers={"AuthToken": token})
+    assert response.status_code == 200, f"{response.data}"
