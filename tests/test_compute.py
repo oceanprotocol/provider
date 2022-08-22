@@ -114,7 +114,7 @@ def test_compute_raw_algo(
         assert (
             response.status == "400 BAD REQUEST"
         ), f"start compute job failed: {response.status} , {response.data}"
-        assert "dataset.no_raw_algo_allowed" in response.json["error"]
+        assert "no_raw_algo_allowed" == response.json["error"]["dataset"]
 
 
 @pytest.mark.integration
@@ -159,7 +159,7 @@ def test_compute_specific_algo_dids(
     assert (
         response.status == "400 BAD REQUEST"
     ), f"start compute job failed: {response.status} , {response.data}"
-    assert response.json["error"] == "dataset.not_trusted_algo"
+    assert response.json["error"]["dataset"] == "not_trusted_algo"
 
 
 @pytest.mark.integration
@@ -368,7 +368,7 @@ def test_compute_allow_all_published(
     assert (
         response.status == "400 BAD REQUEST"
     ), f"start compute job failed: {response.status} , {response.data}"
-    assert "dataset.serviceId.order_invalid" in response.json["error"]
+    assert "order_invalid" in response.json["error"]["dataset.serviceId"]
 
     # Start on the correct environment
     payload["environment"] = free_c2d_env["id"]
