@@ -148,7 +148,8 @@ def test_fails_not_an_algo(provider_wallet, consumer_address, web3):
     ):
         validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
         assert validator.validate() is False
-        assert validator.error == f"algorithm.not_algo"
+        assert validator.resource == f"algorithm"
+        assert validator.message == f"not_algo"
 
 
 @pytest.mark.unit
@@ -176,7 +177,8 @@ def test_fails_meta_issues(provider_wallet, consumer_address, web3):
     ):
         validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
         assert validator.validate() is False
-        assert validator.error == "algorithm.meta_oneof_url_rawcode_remote"
+        assert validator.resource == "algorithm"
+        assert validator.message == "meta_oneof_url_rawcode_remote"
 
     # algorithmMeta container is empty
     data = {
@@ -197,9 +199,8 @@ def test_fails_meta_issues(provider_wallet, consumer_address, web3):
     ):
         validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
         assert validator.validate() is False
-        assert (
-            validator.error == "algorithm.container.missing_entrypoint_image_checksum"
-        )
+        assert validator.resource == "algorithm.container"
+        assert validator.message == "missing_entrypoint_image_checksum"
 
     # algorithmMeta container is missing image
     data = {
@@ -220,9 +221,8 @@ def test_fails_meta_issues(provider_wallet, consumer_address, web3):
     ):
         validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
         assert validator.validate() is False
-        assert (
-            validator.error == "algorithm.container.missing_entrypoint_image_checksum"
-        )
+        assert validator.resource == "algorithm.container"
+        assert validator.message == "missing_entrypoint_image_checksum"
 
     # algorithmMeta container checksum does not start with sha256
     data = {
@@ -248,7 +248,8 @@ def test_fails_meta_issues(provider_wallet, consumer_address, web3):
     ):
         validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
         assert validator.validate() is False
-        assert validator.error == "algorithm.container.checksum_prefix"
+        assert validator.resource == "algorithm.container"
+        assert validator.message == "checksum_prefix"
 
     # algorithmMeta container checksum is wrong
     data = {
@@ -275,7 +276,8 @@ def test_fails_meta_issues(provider_wallet, consumer_address, web3):
     ):
         validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
         assert validator.validate() is False
-        assert validator.error == "algorithm.container.invalid"
+        assert validator.resource == "algorithm.container"
+        assert validator.message == "invalid"
 
 
 @pytest.mark.unit
@@ -334,7 +336,8 @@ def test_additional_datasets(provider_wallet, consumer_address, web3):
 
     validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
     assert validator.validate() is False
-    assert validator.error == "additional_input.invalid"
+    assert validator.resource == "additional_input"
+    assert validator.message == "invalid"
 
     did = ddo.did
 
@@ -355,7 +358,8 @@ def test_additional_datasets(provider_wallet, consumer_address, web3):
     ):
         validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
         assert validator.validate() is False
-        assert validator.error == "datasets[1].documentId.missing"
+        assert validator.resource == "datasets[1].documentId"
+        assert validator.message == "missing"
 
     # Did is not valid
     data = {
@@ -380,7 +384,8 @@ def test_additional_datasets(provider_wallet, consumer_address, web3):
     ):
         validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
         assert validator.validate() is False
-        assert validator.error == "datasets[1].did_not_found"
+        assert validator.resource == "datasets[1].documentId"
+        assert validator.message == "did_not_found"
 
     data = {
         "dataset": {"documentId": did, "transferTxId": "tx_id", "serviceId": sa.id},
@@ -404,7 +409,8 @@ def test_additional_datasets(provider_wallet, consumer_address, web3):
     ):
         validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
         assert validator.validate() is False
-        assert validator.error == "datasets[1].service_id_not_found"
+        assert validator.resource == "datasets[1].serviceId"
+        assert validator.message == "not_found"
 
 
 @pytest.mark.unit
@@ -460,7 +466,8 @@ def test_service_not_compute(provider_wallet, consumer_address, web3):
         ):
             validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
             assert validator.validate() is False
-            assert validator.error == "dataset.service_not_access_compute"
+            assert validator.resource == "dataset.serviceId"
+            assert validator.message == "service_not_access_compute"
 
 
 @pytest.mark.unit
@@ -520,7 +527,8 @@ def test_fails_trusted(provider_wallet, consumer_address, web3):
     ):
         validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
         assert validator.validate() is False
-        assert validator.error == "datasets[1].not_trusted_algo"
+        assert validator.resource == "datasets[1]"
+        assert validator.message == "not_trusted_algo"
 
     # Additional input has other trusted publishers
     _copy = copy.deepcopy(ddo_dict)
@@ -556,7 +564,8 @@ def test_fails_trusted(provider_wallet, consumer_address, web3):
     ):
         validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
         assert validator.validate() is False
-        assert validator.error == "datasets[1].not_trusted_algo_publisher"
+        assert validator.resource == "datasets[1]"
+        assert validator.message == "not_trusted_algo_publisher"
 
 
 @pytest.mark.unit
@@ -579,7 +588,8 @@ def test_fails_no_asset_url(provider_wallet, consumer_address, web3):
     ):
         validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
         assert validator.validate() is False
-        assert validator.error == "dataset.compute_services_not_in_same_provider"
+        assert validator.resource == "dataset.serviceId"
+        assert validator.message == "compute_services_not_in_same_provider"
 
 
 @pytest.mark.unit
@@ -602,7 +612,8 @@ def test_fails_validate_order(provider_wallet, consumer_address, web3):
     ):
         validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
         assert validator.validate() is False
-        assert validator.error == "dataset.serviceId.order_invalid"
+        assert validator.resource == "dataset.serviceId"
+        assert validator.message == "order_invalid"
 
 
 @pytest.mark.unit
@@ -628,7 +639,8 @@ def test_fails_no_service_id(provider_wallet, consumer_address, web3):
     ):
         validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
         assert validator.validate() is False
-        assert validator.error == "dataset.serviceId.missing"
+        assert validator.resource == "dataset.serviceId"
+        assert validator.message == "missing"
 
 
 @pytest.mark.unit
@@ -673,7 +685,8 @@ def test_fails_invalid_algorithm_dict(provider_wallet, consumer_address, web3):
     ):
         validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
         assert validator.validate() is False
-        assert validator.error == "algorithm.did_not_found"
+        assert validator.resource == "algorithm"
+        assert validator.message == "did_not_found"
 
 
 @pytest.mark.unit
@@ -725,7 +738,8 @@ def test_fails_algorithm_in_use(provider_wallet, consumer_address, web3):
         ):
             validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
             assert validator.validate() is False
-            assert validator.error == "algorithm.in_use_or_not_on_chain"
+            assert validator.resource == "algorithm"
+            assert validator.message == "in_use_or_not_on_chain"
 
 
 @pytest.mark.unit
@@ -781,7 +795,8 @@ def test_fail_wrong_algo_type(provider_wallet, consumer_address, web3):
         ):
             validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
             assert validator.validate() is False
-            assert validator.error == "dataset.main_service_compute"
+            assert validator.resource == "dataset.serviceId"
+            assert validator.message == "main_service_compute"
 
 
 @pytest.mark.unit
@@ -831,7 +846,8 @@ def test_fail_allow_raw_false(provider_wallet, consumer_address, web3):
     ):
         validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
         assert validator.validate() is False
-        assert validator.error == "dataset.no_raw_algo_allowed"
+        assert validator.resource == "dataset"
+        assert validator.message == "no_raw_algo_allowed"
 
 
 @pytest.mark.unit
@@ -935,7 +951,8 @@ def test_fail_missing_algo_meta_documentId(provider_wallet, consumer_address, we
         ):
             validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
             assert validator.validate() is False
-            assert validator.error == "algorithm.missing_meta_documentId"
+            assert validator.resource == "algorithm"
+            assert validator.message == "missing_meta_documentId"
 
 
 @pytest.mark.unit
@@ -980,7 +997,8 @@ def test_fee_amount_not_paid(provider_wallet, consumer_address, web3):
             mock.return_value = 10**18
             validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
             assert validator.validate() is False
-            assert validator.error == "order.fees_not_paid"
+            assert validator.resource == "order"
+            assert validator.message == "fees_not_paid"
 
 
 @pytest.mark.unit
@@ -1024,4 +1042,5 @@ def test_algo_ddo_file_broken(provider_wallet, consumer_address, web3):
     ):
         validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
         assert validator.validate() is False
-        assert validator.error == "algorithm.file_unavailable"
+        assert validator.resource == "algorithm"
+        assert validator.message == "file_unavailable"

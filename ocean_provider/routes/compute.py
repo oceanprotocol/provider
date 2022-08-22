@@ -173,8 +173,11 @@ def initializeCompute():
         input_item_validator.algo_container_checksum = algo_container_checksum
         status = input_item_validator.validate()
         if not status:
-            prefix = f"Error in input at index {i}: "
-            return error_response(prefix + input_item_validator.error, 400, logger)
+            return error_response(
+                {input_item_validator.resource: input_item_validator.message},
+                400,
+                logger,
+            )
 
         service = input_item_validator.service
 
@@ -443,7 +446,7 @@ def computeStart():
 
     status = validator.validate()
     if not status:
-        return error_response(validator.error, 400, logger)
+        return error_response({validator.resource: validator.message}, 400, logger)
 
     workflow = validator.workflow
     # workflow is ready, push it to operator
