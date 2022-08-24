@@ -4,6 +4,7 @@
 #
 import json
 import logging
+import requests
 
 from ocean_provider.constants import BaseURLs
 from ocean_provider.file_types.file_types_factory import FilesTypeFactory
@@ -278,6 +279,27 @@ def validate_formatted_algorithm_dict(algorithm_dict, algorithm_did):
                 "algorithm `container` must specify values for all of entrypoint, image and checksum.",
             )
 
+    if not container["checksum"].startswith("sha256:"):
+        return False, "container checksum must start with sha256:"
+
+    try:
+        container_image = (
+            container["image"]
+            if "/" in container["image"]
+            else f"library/{container['image']}"
+        )
+        ns_string = container_image.replace("/", "/repositories/")
+        dh_response = requests.get(
+            f"http://hub.docker.com/v2/namespaces/{ns_string}/tags/{container['tag']}/images"
+        )
+        digests = [item["digest"].lower() for item in dh_response.json()]
+        assert container["checksum"].lower() in digests
+    except Exception:
+        return (
+            False,
+            "Invalid container values provided on algorithm. Check image, tag and checksum.",
+        )
+
     return True, ""
 
 
@@ -435,9 +457,8 @@ class InputItemValidator:
                 return False
 
             container_section_checksum = msg_hash(
-                json.dumps(
-                    algo_ddo.metadata["algorithm"]["container"], separators=(",", ":")
-                )
+                algo_ddo.metadata["algorithm"]["container"]["entrypoint"]
+                + algo_ddo.metadata["algorithm"]["container"]["checksum"]
             )
             if (
                 allowed_container_checksum
