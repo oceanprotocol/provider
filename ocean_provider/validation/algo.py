@@ -4,7 +4,6 @@
 #
 import json
 import logging
-import requests
 
 from ocean_provider.constants import BaseURLs
 from ocean_provider.file_types.file_types_factory import FilesTypeFactory
@@ -25,6 +24,7 @@ from ocean_provider.utils.util import (
     get_service_files_list,
     msg_hash,
 )
+from ocean_provider.validation.images import validate_docker
 
 logger = logging.getLogger(__name__)
 
@@ -344,36 +344,9 @@ def validate_formatted_algorithm_dict(algorithm_dict, algorithm_did):
         )  # noqa
 
     container = algorithm_dict.get("container", {})
-    # Validate `container` data
-    for key in ["entrypoint", "image", "checksum"]:
-        if not container.get(key):
-            return (
-                False,
-                "container",
-                "missing_entrypoint_image_checksum",
-            )
-
-    if not container["checksum"].startswith("sha256:"):
-        return False, "container", "checksum_prefix"
-
-    try:
-        container_image = (
-            container["image"]
-            if "/" in container["image"]
-            else f"library/{container['image']}"
-        )
-        ns_string = container_image.replace("/", "/repositories/")
-        dh_response = requests.get(
-            f"http://hub.docker.com/v2/namespaces/{ns_string}/tags/{container['tag']}/images"
-        )
-        digests = [item["digest"].lower() for item in dh_response.json()]
-        assert container["checksum"].lower() in digests
-    except Exception:
-        return (
-            False,
-            "container",
-            "invalid",
-        )
+    valid, message = validate_docker(container)
+    if not valid:
+        return False, "container", message
 
     return True, "", ""
 
