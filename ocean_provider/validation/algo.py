@@ -24,7 +24,7 @@ from ocean_provider.utils.util import (
     get_service_files_list,
     msg_hash,
 )
-from ocean_provider.validation.images import validate_docker
+from ocean_provider.validation.images import validate_container
 
 logger = logging.getLogger(__name__)
 
@@ -344,7 +344,7 @@ def validate_formatted_algorithm_dict(algorithm_dict, algorithm_did):
         )  # noqa
 
     container = algorithm_dict.get("container", {})
-    valid, message = validate_docker(container)
+    valid, message = validate_container(container)
     if not valid:
         return False, "container", message
 

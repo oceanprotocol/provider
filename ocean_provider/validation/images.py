@@ -8,7 +8,7 @@ import requests
 logger = logging.getLogger(__name__)
 
 
-def validate_docker(container):
+def validate_container(container):
     # Validate `container` data
     for key in ["entrypoint", "image", "checksum"]:
         if not container.get(key):
@@ -17,6 +17,15 @@ def validate_docker(container):
     if not container["checksum"].startswith("sha256:"):
         return False, "checksum_prefix"
 
+    docker_valid, docker_message = validate_docker(container)
+
+    if not docker_valid:
+        return False, {"docker": docker_message}
+
+    return True, ""
+
+
+def validate_docker(container):
     try:
         container_image = (
             container["image"]
