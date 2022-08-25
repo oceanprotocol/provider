@@ -43,6 +43,7 @@ from ocean_provider.validation.algo import (
     InputItemValidator,
     get_algo_checksums,
 )
+from ocean_provider.validation.images import validate_container
 from ocean_provider.validation.provider_requests import (
     ComputeGetResult,
     ComputeRequest,
@@ -583,3 +584,14 @@ def computeEnvironments():
     response.headers = standard_headers
 
     return response
+
+
+@services.route("/validateContainer", methods=["POST"])
+def validateContainer():
+    container = get_request_data(request)
+    valid, messages = validate_container(container)
+
+    if not valid:
+        return error_response(messages, 400, logger)
+
+    return container, 200

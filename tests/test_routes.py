@@ -105,3 +105,47 @@ def test_get_nonce(client, publisher_wallet):
 
     value = response.json if response.json else json.loads(response.data)
     assert value["nonce"] == get_nonce(address)
+
+
+@pytest.mark.unit
+def test_validate_container(client):
+    endpoint = BaseURLs.SERVICES_URL + "/validateContainer"
+
+    valid_payload = {
+        "entrypoint": "node $ALGO",
+        "image": "oceanprotocol/algo_dockers",
+        "tag": "python-branin",
+        "checksum": "sha256:8221d20c1c16491d7d56b9657ea09082c0ee4a8ab1a6621fa720da58b09580e4",
+    }
+
+    response = client.post(endpoint, json=valid_payload)
+    assert response.status_code == 200
+
+    invalid_payload = {
+        "entrypoint": "node $ALGO",
+        "checksum": "sha256:8221d20c1c16491d7d56b9657ea09082c0ee4a8ab1a6621fa720da58b09580e4",
+    }
+
+    response = client.post(endpoint, json=invalid_payload)
+    assert response.status_code == 400
+    assert response.json["error"] == "missing_entrypoint_image_checksum"
+
+    another_valid_payload = {
+        "entrypoint": "node $ALGO",
+        "image": "node",  # missing library prefix
+        "tag": "latest",
+        "checksum": "sha256:5c918be3339c8460d13a38e2fc7c027af1cab382b36561f90d3c03342fa866a4",
+    }
+    response = client.post(endpoint, json=another_valid_payload)
+    assert response.status_code == 200
+
+    invalid_payload = {
+        "entrypoint": "node $ALGO",
+        "image": "doesntexist",
+        "tag": "blabla",
+        "checksum": "sha256:8221d20c1c16491d7d56b9657ea09082c0ee4a8ab1a6621fa720da58b09580e4",
+    }
+
+    response = client.post(endpoint, json=invalid_payload)
+    assert response.status_code == 400
+    assert response.json["error"] == {"docker": "invalid"}
