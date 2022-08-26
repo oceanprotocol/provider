@@ -336,7 +336,8 @@ class DownloadRequest(CustomJsonRequest):
             "nonce": ["bail", "required", "numeric"],
             "signature": [
                 "download_signature:consumerAddress,documentId,nonce",
-            ],        }
+            ],
+        }
 
 
 class InitializeRequest(CustomJsonRequest):

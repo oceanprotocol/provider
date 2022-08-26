@@ -119,7 +119,7 @@ def initializeCompute():
         return error_response(
             "The validUntil value is not correct.",
             400,
-            logger
+            logger,
         )
 
     if not check_environment_exists(get_c2d_environments(), compute_env):

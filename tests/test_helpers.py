@@ -27,6 +27,7 @@ from ocean_provider.utils.did import compute_did_from_data_nft_address_and_chain
 from ocean_provider.utils.encryption import do_encrypt
 from ocean_provider.utils.services import Service, ServiceType
 from ocean_provider.utils.util import sign_send_and_wait_for_receipt, sign_tx
+
 from tests.helpers.ddo_dict_builders import (
     build_credentials_dict,
     build_ddo_dict,

@@ -20,7 +20,7 @@ class FilesTypeFactory:
         if "type" not in file_obj or file_obj["type"] not in ["ipfs", "url", "arweave"]:
             return (
                 False,
-                "malformed or unsupported type for service files."
+                "malformed or unsupported type for service files.",
             )
 
         try:
