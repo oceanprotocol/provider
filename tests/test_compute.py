@@ -337,50 +337,6 @@ def test_compute_arweave(client, publisher_wallet, consumer_wallet, free_c2d_env
     print(f"got response from starting compute job: {job_info}")
     job_id = job_info.get("jobId", "")
 
-    # get a new signature
-    nonce, signature = get_compute_signature(client, consumer_wallet, ddo.did)
-    payload = dict(
-        {
-            "signature": signature,
-            "nonce": nonce,
-            "documentId": ddo.did,
-            "consumerAddress": consumer_wallet.address,
-            "jobId": job_id,
-        }
-    )
-
-    compute_endpoint = BaseURLs.SERVICES_URL + "/compute"
-    job_info = get_compute_job_info(client, compute_endpoint, payload)
-    assert job_info, f"Failed to get job info for jobId {job_id}"
-    print(f"got info for compute job {job_id}: {job_info}")
-    assert job_info["statusText"] in get_possible_compute_job_status_text()
-
-    # wait until job is done, see:
-    # https://github.com/oceanprotocol/operator-service/blob/main/API.md#status-description
-    tries = 0
-    while tries < 200:
-        job_info = get_compute_job_info(client, compute_endpoint, payload)
-        if job_info["dateFinished"] and float(job_info["dateFinished"]) > 0:
-            break
-        tries = tries + 1
-        time.sleep(5)
-
-    assert tries <= 200, "Timeout waiting for the job to be completed"
-    index = 0
-    payload = {
-        "index": index,
-        "consumerAddress": consumer_wallet.address,
-        "jobId": job_id,
-    }
-
-    nonce, signature = get_compute_signature(client, consumer_wallet, index, job_id)
-    payload["signature"] = signature
-    payload["nonce"] = nonce
-    result_data = get_compute_result(
-        client, BaseURLs.SERVICES_URL + "/computeResult", payload
-    )
-    assert result_data is not None, "We should have a result"
-
 
 @pytest.mark.integration
 def test_compute_diff_provider(client, publisher_wallet, consumer_wallet, free_c2d_env):
