@@ -7,6 +7,7 @@ from ocean_provider.file_types.file_types import ArweaveFile, IpfsFile, UrlFile
 
 logger = logging.getLogger(__name__)
 
+ALLOWED_FILE_TYPES = ["ipfs", "url", "arweave"]
 
 @enforce_types
 class FilesTypeFactory:
@@ -17,7 +18,7 @@ class FilesTypeFactory:
         if not file_obj:
             return False, "cannot decrypt files for this service."
 
-        if "type" not in file_obj or file_obj["type"] not in ["ipfs", "url", "arweave"]:
+        if "type" not in file_obj or file_obj["type"] not in ALLOWED_FILE_TYPES:
             return (
                 False,
                 "malformed or unsupported type for service files.",
