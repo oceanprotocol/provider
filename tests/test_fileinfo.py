@@ -6,6 +6,7 @@ import pytest
 
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.services import ServiceType
+from tests.helpers.constants import ARWEAVE_TRANSACTION_ID
 from tests.test_helpers import (
     get_dataset_with_invalid_url_ddo,
     get_first_service_by_type,
@@ -101,7 +102,7 @@ def test_check_url_bad(client):
 def test_check_arweave_good(client):
     payload = {
         "type": "arweave",
-        "transactionId": "cZ6j5PmPVXCq5Az6YGcGqzffYjx2JnsnlSajaHNr20w",
+        "transactionId": ARWEAVE_TRANSACTION_ID,
     }
     response = client.post(fileinfo_url, json=payload)
     result = response.get_json()

@@ -25,6 +25,7 @@ from ocean_provider.utils.util import (
     msg_hash,
 )
 from tests.ddo.ddo_sample1_v4 import json_dict as ddo_sample1_v4
+from tests.helpers.constants import ARWEAVE_TRANSACTION_ID
 
 test_logger = logging.getLogger(__name__)
 
@@ -374,10 +375,10 @@ def test_build_download_response_ipfs():
 @pytest.mark.unit
 def test_build_download_response_arweave(monkeypatch):
     """Test the special cases relevant only to Arweave"""
-    transaction_id = "cZ6j5PmPVXCq5Az6YGcGqzffYjx2JnsnlSajaHNr20w"
+    transaction_id = ARWEAVE_TRANSACTION_ID
     url_object = {
         "type": "arweave",
-        "transactionId": "cZ6j5PmPVXCq5Az6YGcGqzffYjx2JnsnlSajaHNr20w",
+        "transactionId": ARWEAVE_TRANSACTION_ID,
     }
 
     request = Mock()
@@ -386,7 +387,7 @@ def test_build_download_response_arweave(monkeypatch):
     _, instance = FilesTypeFactory.validate_and_create(url_object)
     assert (
         instance.get_download_url()
-        == "https://arweave.net/cZ6j5PmPVXCq5Az6YGcGqzffYjx2JnsnlSajaHNr20w"
+        == f"https://arweave.net/{ARWEAVE_TRANSACTION_ID}"
     )
 
     response = instance.build_download_response(request)

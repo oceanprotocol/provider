@@ -12,6 +12,7 @@ from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.provider_fees import get_provider_fees
 from ocean_provider.utils.services import ServiceType
+from tests.helpers.constants import ARWEAVE_TRANSACTION_ID
 from tests.test_auth import create_token
 from tests.test_helpers import (
     get_dataset_ddo_with_multiple_files,
@@ -316,7 +317,7 @@ def test_download_arweave(client, publisher_wallet, consumer_wallet, web3):
     unencrypted_files_list = [
         {
             "type": "arweave",
-            "transactionId": "cZ6j5PmPVXCq5Az6YGcGqzffYjx2JnsnlSajaHNr20w",
+            "transactionId": ARWEAVE_TRANSACTION_ID,
         }
     ]
     asset = get_registered_asset(

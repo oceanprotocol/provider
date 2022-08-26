@@ -7,6 +7,7 @@ from ocean_provider.utils.provider_fees import get_provider_fees
 from ocean_provider.utils.services import ServiceType
 from ocean_provider.utils.util import msg_hash
 from tests.helpers.ddo_dict_builders import build_metadata_dict_type_algorithm
+from tests.helpers.constants import ARWEAVE_TRANSACTION_ID
 from tests.test_helpers import (
     get_first_service_by_type,
     get_registered_asset,
@@ -75,7 +76,7 @@ def build_and_send_ddo_with_compute_service(
     elif asset_type == "stored_in_arweave":
         arweave_file_object = {
             "type": "arweave",
-            "transactionId": "cZ6j5PmPVXCq5Az6YGcGqzffYjx2JnsnlSajaHNr20w",
+            "transactionId": ARWEAVE_TRANSACTION_ID,
         }
 
         dataset_ddo_w_compute_service = get_registered_asset(
