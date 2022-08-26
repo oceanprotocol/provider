@@ -89,7 +89,7 @@ class ArweaveFile(EndUrlType, FilesType):
     @enforce_types
     def validate_dict(self) -> Tuple[bool, Any]:
         if not self.transactionId:
-            return False, "malformed service files, missing required keys."
+            return False, "malformed service files, missing transactionId."
 
         return True, self
 
