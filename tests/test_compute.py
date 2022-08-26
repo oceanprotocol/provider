@@ -304,7 +304,7 @@ def test_compute_arweave(client, publisher_wallet, consumer_wallet, free_c2d_env
         client,
         publisher_wallet,
         consumer_wallet,
-        False,
+        alg_diff=False,
         asset_type="stored_in_arweave",
         c2d_address=free_c2d_env["consumerAddress"],
         valid_until=valid_until,
