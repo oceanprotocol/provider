@@ -14,9 +14,6 @@ def validate_container(container):
         if not container.get(key):
             return False, "missing_entrypoint_image_checksum"
 
-    if not container["checksum"].startswith("sha256:"):
-        return False, "checksum_prefix"
-
     docker_valid, docker_message = validate_docker(container)
 
     if not docker_valid:
@@ -26,6 +23,9 @@ def validate_container(container):
 
 
 def validate_docker(container):
+    if not container["checksum"].startswith("sha256:"):
+        return False, "checksum_prefix"
+
     try:
         container_image = (
             container["image"]

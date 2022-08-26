@@ -249,7 +249,7 @@ def test_fails_meta_issues(provider_wallet, consumer_address, web3):
         validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
         assert validator.validate() is False
         assert validator.resource == "algorithm.container"
-        assert validator.message == "checksum_prefix"
+        assert validator.message == {"docker": "checksum_prefix"}
 
     # algorithmMeta container checksum is wrong
     data = {
