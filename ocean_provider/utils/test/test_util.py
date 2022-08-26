@@ -320,7 +320,7 @@ def test_validate_url_object():
         {"type": "arweave", "but_transactionId": "missing"}
     )
     assert result is False
-    assert message == "malformed service files, missing required keys."
+    assert message == "malformed service files, missing transactionId."
 
     result, message = FilesTypeFactory.validate_and_create(
         {"type": "url", "url": "x", "headers": "not_a_dict"}
