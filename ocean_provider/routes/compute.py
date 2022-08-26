@@ -21,22 +21,24 @@ from ocean_provider.utils.basics import (
     validate_timestamp,
 )
 from ocean_provider.utils.compute import (
-    get_compute_endpoint,
-    get_compute_result_endpoint,
     process_compute_request,
     sign_for_compute,
+    get_compute_result_endpoint,
+    get_compute_endpoint,
 )
 from ocean_provider.utils.compute_environments import (
-    check_environment_exists,
     get_c2d_environments,
+    check_environment_exists,
 )
 from ocean_provider.utils.error_responses import error_response
 from ocean_provider.utils.provider_fees import (
-    comb_for_valid_transfer_and_fees,
     get_provider_fees_or_remote,
+    comb_for_valid_transfer_and_fees,
 )
-from ocean_provider.utils.util import get_request_data
-from ocean_provider.validation.algo import InputItemValidator, WorkflowValidator
+from ocean_provider.utils.util import (
+    get_request_data,
+)
+from ocean_provider.validation.algo import WorkflowValidator, InputItemValidator
 from ocean_provider.validation.provider_requests import (
     ComputeGetResult,
     ComputeRequest,
@@ -114,7 +116,11 @@ def initializeCompute():
     valid_until = int(valid_until)
 
     if not timestamp_ok:
-        return error_response("The validUntil value is not correct.", 400, logger)
+        return error_response(
+            "The validUntil value is not correct.",
+            400,
+            logger
+        )
 
     if not check_environment_exists(get_c2d_environments(), compute_env):
         return error_response("Compute environment does not exist", 400, logger)
@@ -525,7 +531,7 @@ def computeResult():
     update_nonce(data.get("consumerAddress"), data.get("nonce"))
 
     _, instance = FilesTypeFactory.validate_and_create(
-        {"url": result_url, "type": "url"}
+        {"url": result_url, "type": "url"},
     )
     response = instance.build_download_response(request)
     logger.info(f"computeResult response = {response}")

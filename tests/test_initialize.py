@@ -5,7 +5,6 @@
 import json
 import logging
 import time
-from unittest.mock import patch
 
 import pytest
 from ocean_provider.constants import BaseURLs
@@ -28,6 +27,8 @@ from tests.test_helpers import (
     mint_100_datatokens,
     start_order,
 )
+
+from unittest.mock import patch
 
 logger = logging.getLogger(__name__)
 
@@ -281,7 +282,10 @@ def test_initialize_compute_order_reused(
             "transferTxId": alg_tx_id,
         },
         "consumerAddress": consumer_wallet.address,
-        "compute": {"env": free_c2d_env["id"], "validUntil": valid_until},
+        "compute": {
+            "env": free_c2d_env["id"],
+            "validUntil": valid_until,
+        },
     }
 
     response = client.post(

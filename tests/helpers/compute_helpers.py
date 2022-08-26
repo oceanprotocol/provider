@@ -15,6 +15,7 @@ from tests.test_helpers import (
     start_order,
 )
 
+
 this_is_a_gist = "https://gist.githubusercontent.com/calina-c/5e8c965962bc0240eab516cb7a180670/raw/6e6cd245c039a9aac0a488857c6927d39eaafe4d/sprintf-py-conversions"
 
 

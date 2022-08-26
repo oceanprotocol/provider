@@ -3,9 +3,9 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import copy
+import requests
 from typing import Optional
 
-import requests
 from jsonsempai import magic  # noqa: F401
 from artifacts import ERC721Template
 from ocean_provider.utils.basics import get_web3

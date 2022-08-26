@@ -10,6 +10,7 @@ from typing import Protocol, Tuple
 import requests
 from enforce_typing import enforce_types
 from flask import Response
+
 from ocean_provider.utils.url import is_safe_url
 
 logger = logging.getLogger(__name__)
@@ -57,7 +58,7 @@ class EndUrlType:
 
             for _ in range(int(os.getenv("REQUEST_RETRIES", 1))):
                 result, extra_data = self._get_result_from_url(
-                    with_checksum=with_checksum
+                    with_checksum=with_checksum,
                 )
                 if result and result.status_code == 200:
                     break

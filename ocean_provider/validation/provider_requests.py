@@ -3,17 +3,18 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import logging
-import os
 from datetime import datetime
+import os
 
 from flask import request as flask_request
 from flask_sieve import JsonRequest, ValidationException
 from flask_sieve.rules_processor import RulesProcessor
 from flask_sieve.validator import Validator
+
 from ocean_provider.exceptions import InvalidSignatureError
-from ocean_provider.user_nonce import is_token_valid
-from ocean_provider.utils.accounts import verify_nonce, verify_signature
+from ocean_provider.utils.accounts import verify_signature, verify_nonce
 from ocean_provider.utils.util import get_request_data
+from ocean_provider.user_nonce import is_token_valid
 from ocean_provider.validation.RBAC import RBACValidator
 
 logger = logging.getLogger(__name__)
@@ -279,7 +280,9 @@ class ComputeRequest(CustomJsonRequest):
         return {
             "consumerAddress": ["bail", "required"],
             "nonce": ["bail", "required", "numeric"],
-            "signature": ["signature:consumerAddress,documentId,jobId,nonce"],
+            "signature": [
+                "signature:consumerAddress,documentId,jobId,nonce",
+            ],
         }
 
 
@@ -315,7 +318,10 @@ class ComputeGetResult(CustomJsonRequest):
             "index": ["bail", "required"],
             "consumerAddress": ["bail", "required"],
             "nonce": ["bail", "required", "numeric"],
-            "signature": ["bail", "signature:consumerAddress,index,jobId,nonce"],
+            "signature": [
+                "bail",
+                "signature:consumerAddress,index,jobId,nonce",
+            ],
         }
 
 
@@ -328,8 +334,9 @@ class DownloadRequest(CustomJsonRequest):
             "transferTxId": ["bail", "required"],
             "fileIndex": ["required"],
             "nonce": ["bail", "required", "numeric"],
-            "signature": ["download_signature:consumerAddress,documentId,nonce"],
-        }
+            "signature": [
+                "download_signature:consumerAddress,documentId,nonce",
+            ],        }
 
 
 class InitializeRequest(CustomJsonRequest):
@@ -364,7 +371,10 @@ class CreateTokenRequest(CustomJsonRequest):
             "address": ["bail", "required"],
             "expiration": ["bail", "required", "integer", "timestamp"],
             "nonce": ["bail", "required", "numeric"],
-            "signature": ["required", "signature:address,,,nonce"],
+            "signature": [
+                "required",
+                "signature:address,,,nonce",
+            ],
         }
 
 
@@ -374,5 +384,8 @@ class DeleteTokenRequest(CustomJsonRequest):
             "address": ["bail", "required"],
             "token": ["bail", "required"],
             "nonce": ["bail", "required", "numeric"],
-            "signature": ["required", "signature:address,,,nonce"],
+            "signature": [
+                "required",
+                "signature:address,,,nonce",
+            ],
         }

@@ -2,6 +2,7 @@ import logging
 from typing import Any, Tuple
 
 from enforce_typing import enforce_types
+
 from ocean_provider.file_types.file_types import ArweaveFile, IpfsFile, UrlFile
 
 logger = logging.getLogger(__name__)
@@ -17,7 +18,10 @@ class FilesTypeFactory:
             return False, "cannot decrypt files for this service."
 
         if "type" not in file_obj or file_obj["type"] not in ["ipfs", "url", "arweave"]:
-            return (False, "malformed or unsupported type for service files.")
+            return (
+                False,
+                "malformed or unsupported type for service files."
+            )
 
         try:
             if file_obj["type"] == "url":

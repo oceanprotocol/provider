@@ -2,16 +2,19 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
+import ipfshttpclient
 import copy
 import json
 import logging
 import mimetypes
-from copy import deepcopy
+import pytest
 from unittest.mock import Mock, patch
 
-import ipfshttpclient
-import pytest
 from flask import Request
+from web3.main import Web3
+from werkzeug.utils import get_content_type
+
+from copy import deepcopy
 from ocean_provider.file_types.file_types_factory import FilesTypeFactory
 from ocean_provider.utils.asset import Asset
 from ocean_provider.utils.encryption import do_encrypt
@@ -22,8 +25,6 @@ from ocean_provider.utils.util import (
     msg_hash,
 )
 from tests.ddo.ddo_sample1_v4 import json_dict as ddo_sample1_v4
-from web3.main import Web3
-from werkzeug.utils import get_content_type
 
 test_logger = logging.getLogger(__name__)
 
@@ -339,7 +340,11 @@ def test_validate_url_object():
     )
     assert result is True
 
-    url_object = {"url": "x", "type": "url", "method": "DELETE"}
+    url_object = {
+        "url": "x",
+        "type": "url",
+        "method": "DELETE",
+    }
     result, message = FilesTypeFactory.validate_and_create(url_object)
     assert result is False
     assert message == "Unsafe method delete."

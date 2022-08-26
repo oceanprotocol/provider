@@ -5,6 +5,7 @@ from urllib.parse import urljoin
 from uuid import uuid4
 
 from enforce_typing import enforce_types
+
 from ocean_provider.file_types.definitions import EndUrlType, FilesType
 
 logger = logging.getLogger(__name__)

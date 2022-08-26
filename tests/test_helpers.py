@@ -411,7 +411,10 @@ def initialize_service(
     if reuse_order:
         payload["transferTxId"] = reuse_order
 
-    response = client.get(BaseURLs.SERVICES_URL + "/initialize", json=payload)
+    response = client.get(
+        BaseURLs.SERVICES_URL + "/initialize",
+        json=payload,
+    )
 
     if raw_response:
         return response
