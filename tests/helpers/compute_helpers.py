@@ -82,17 +82,6 @@ def build_and_send_ddo_with_compute_service(
             publisher_wallet,
             unencrypted_files_list=[arweave_file_object],
             custom_services="vanilla_compute",
-            custom_services_args=[
-                {
-                    "did": alg_ddo.did,
-                    # known checksum for the gist
-                    "filesChecksum": "b4908c868c78086097a10f986718a8f3fae1455f0d443c3dc59330207d47cc6d",
-                    "containerSectionChecksum": msg_hash(
-                        alg_ddo.metadata["algorithm"]["container"]["entrypoint"]
-                        + alg_ddo.metadata["algorithm"]["container"]["checksum"]
-                    ),
-                }
-            ],
             timeout=timeout,
         )
     else:
