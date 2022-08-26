@@ -322,7 +322,8 @@ def download():
         return error_response(details, 400, logger)
 
     logger.debug(
-        f"Done processing consume request for asset {did}, url {file_instance.get_download_url()}."
+        f"Done processing consume request for asset {did}, "
+        f" url {file_instance.get_download_url()}"
     )
     update_nonce(consumer_address, data.get("nonce"))
 
