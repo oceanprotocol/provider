@@ -138,3 +138,4 @@ def test_check_arweave_bad(client, monkeypatch):
     response = client.post(fileinfo_url, json=payload)
     result = response.get_json()
     assert response.status == "???"
+    assert result == "???"
