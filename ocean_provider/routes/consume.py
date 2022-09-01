@@ -91,15 +91,12 @@ def fileinfo():
     did = data.get("did")
     service_id = data.get("serviceId")
 
-    try:
-        if did:
-            asset = get_asset_from_metadatastore(get_metadata_url(), did)
-            service = asset.get_service_by_id(service_id)
-            files_list = get_service_files_list(service, provider_wallet, asset)
-        else:
-            files_list = [data]
-    except Exception as e:
-        error_response(f"Failed to get files list: {e}", 400)
+    if did:
+        asset = get_asset_from_metadatastore(get_metadata_url(), did)
+        service = asset.get_service_by_id(service_id)
+        files_list = get_service_files_list(service, provider_wallet, asset)
+    else:
+        files_list = [data]
 
     with_checksum = data.get("checksum", False)
 
