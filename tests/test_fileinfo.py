@@ -119,7 +119,7 @@ def test_check_arweave_good(client):
 
 
 @pytest.mark.unit
-def test_check_arweave_bad(client):
+def test_check_arweave_bad(client, monkeypatch):
     payload = {"type": "arweave", "transactionId": "invalid"}
     response = client.post(fileinfo_url, json=payload)
     result = response.get_json()
@@ -131,3 +131,12 @@ def test_check_arweave_bad(client):
     response = client.post(fileinfo_url, json=payload)
     result = response.get_json()
     assert response.status == "400 BAD REQUEST", f"{result}"
+
+    monkeypatch.setenv("ARWEAVE_GATEWAY", "https://gateway_not_reachable")
+    payload = {
+        "type": "arweave",
+        "transactionId": ARWEAVE_TRANSACTION_ID,
+    }
+    response = client.post(fileinfo_url, json=payload)
+    result = response.get_json()
+    assert response.status == "???"
