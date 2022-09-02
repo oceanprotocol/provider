@@ -333,9 +333,6 @@ def test_compute_arweave(client, publisher_wallet, consumer_wallet, free_c2d_env
     response = post_to_compute(client, payload)
     assert response.status == "200 OK", f"start compute job failed: {response.data}"
 
-    job_info = response.json[0]
-    print(f"got response from starting compute job: {job_info}")
-    job_id = job_info.get("jobId", "")
 
 
 @pytest.mark.integration
