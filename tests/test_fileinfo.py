@@ -112,7 +112,7 @@ def test_check_arweave_good(client):
     assert len(result) == 1
     for file_info in result:
         assert file_info["contentLength"] == "5311"
-        assert file_info["contentType"] == "application/json"
+        assert file_info["contentType"] == "application/octet-stream"
         assert file_info["valid"] is True
 
 
