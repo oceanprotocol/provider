@@ -48,7 +48,7 @@ jobs:
             done
       - name: Test with pytest
         run: |
-          coverage run --source ocean_provider -m pytest --verbose
+          coverage run --source ocean_provider -m pytest
           coverage report
           coverage xml
       - name:  docker logs
