@@ -164,6 +164,34 @@ def test_compute_specific_algo_dids(
         == f"this algorithm did {another_alg_ddo.did} is not trusted."
     )
 
+    job_info = response.json[0]
+    print(f"got response from starting compute job: {job_info}")
+    job_id = job_info.get("jobId", "")
+
+    # get a new signature
+    nonce, signature = get_compute_signature(client, consumer_wallet, ddo.did)
+    payload = dict(
+        {
+            "signature": signature,
+            "nonce": nonce,
+            "documentId": ddo.did,
+            "consumerAddress": consumer_wallet.address,
+            "jobId": job_id,
+        }
+    )
+
+    # wait until job is done, see:
+    # https://github.com/oceanprotocol/operator-service/blob/main/API.md#status-description
+    compute_endpoint = BaseURLs.SERVICES_URL + "/compute"
+    tries = 0
+    while tries < 200:
+        job_info = get_compute_job_info(client, compute_endpoint, payload)
+        if job_info["dateFinished"] and float(job_info["dateFinished"]) > 0:
+            break
+        tries = tries + 1
+        time.sleep(5)
+    assert tries <= 200, "Timeout waiting for the job to be completed"
+
 
 @pytest.mark.integration
 def test_compute(client, publisher_wallet, consumer_wallet, free_c2d_env):
@@ -332,7 +360,6 @@ def test_compute_arweave(client, publisher_wallet, consumer_wallet, free_c2d_env
     payload["signature"] = signature
     response = post_to_compute(client, payload)
     assert response.status == "200 OK", f"start compute job failed: {response.data}"
-
 
 
 @pytest.mark.integration
