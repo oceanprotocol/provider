@@ -33,7 +33,7 @@ class FilesType(Protocol):
     def build_download_response(
         self,
         request,
-        validate_url=True
+        validate_url=True,
     ):
         raise NotImplementedError
 
@@ -176,7 +176,7 @@ class EndUrlType:
     def build_download_response(
         self,
         request,
-        validate_url=True
+        validate_url=True,
     ):
         url = self.get_download_url()
         content_type = (

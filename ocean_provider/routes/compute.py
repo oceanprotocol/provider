@@ -535,7 +535,7 @@ def computeResult():
     )
     response = instance.build_download_response(
         request,
-        validate_url=False
+        validate_url=False,
     )
     logger.info(f"computeResult response = {response}")
 
