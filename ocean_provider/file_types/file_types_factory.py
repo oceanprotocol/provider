@@ -33,11 +33,7 @@ class FilesTypeFactory:
                     userdata=file_obj.get("userdata"),
                 )
             elif file_obj["type"] == "arweave":
-                instance = ArweaveFile(
-                    file_obj.get("transactionId"),
-                    headers=file_obj.get("headers"),
-                    userdata=file_obj.get("userdata"),
-                )
+                instance = ArweaveFile(file_obj.get("transactionId"))
             else:
                 instance = IpfsFile(
                     file_obj.get("hash"),

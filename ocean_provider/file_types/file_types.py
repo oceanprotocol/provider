@@ -78,13 +78,9 @@ class ArweaveFile(EndUrlType, FilesType):
     def __init__(
         self,
         transactionId: Optional[str] = None,
-        headers: Optional[dict] = None,
-        userdata=None,
     ) -> None:
         self.transactionId = transactionId
         self.type = "arweave"
-        self.headers = headers if headers else {}
-        self.userdata = userdata
         self.method = "get"
 
     @enforce_types
