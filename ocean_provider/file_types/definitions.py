@@ -30,7 +30,11 @@ class FilesType(Protocol):
         raise NotImplementedError
 
     @abstractmethod
-    def build_download_response(self, request, validate_url=True):
+    def build_download_response(
+        self,
+        request,
+        validate_url=True
+    ):
         raise NotImplementedError
 
 
@@ -169,7 +173,11 @@ class EndUrlType:
 
         return self.userdata
 
-    def build_download_response(self, request, validate_url=True):
+    def build_download_response(
+        self,
+        request,
+        validate_url=True
+    ):
         url = self.get_download_url()
         content_type = (
             self.checked_details.get("contentType")

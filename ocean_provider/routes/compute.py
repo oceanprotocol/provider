@@ -533,7 +533,10 @@ def computeResult():
     _, instance = FilesTypeFactory.validate_and_create(
         {"url": result_url, "type": "url"},
     )
-    response = instance.build_download_response(request, validate_url=False)
+    response = instance.build_download_response(
+        request,
+        validate_url=False
+    )
     logger.info(f"computeResult response = {response}")
 
     return response
