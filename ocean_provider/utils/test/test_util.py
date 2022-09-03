@@ -55,8 +55,9 @@ def test_build_download_response():
     content_type = mimetypes.guess_type(filename)[0]
     url_object = {"url": f"https://source-lllllll.cccc/{filename}", "type": "url"}
     _, instance = FilesTypeFactory.validate_and_create(url_object)
-    with patch("requests.get", side_effect=[mocked_response]):
-        response = instance.build_download_response(request)
+    with patch("ocean_provider.file_types.definitions.is_safe_url", side_effect=[True]):
+        with patch("requests.get", side_effect=[mocked_response]):
+            response = instance.build_download_response(request)
 
     assert response.headers["content-type"] == content_type
     assert (
@@ -67,8 +68,9 @@ def test_build_download_response():
     filename = "<<filename>>"
     url_object = {"url": f"https://source-lllllll.cccc/{filename}", "type": "url"}
     _, instance = FilesTypeFactory.validate_and_create(url_object)
-    with patch("requests.get", side_effect=[mocked_response]):
-        response = instance.build_download_response(request)
+    with patch("ocean_provider.file_types.definitions.is_safe_url", side_effect=[True]):
+        with patch("requests.get", side_effect=[mocked_response]):
+            response = instance.build_download_response(request)
     assert response.headers["content-type"] == get_content_type(
         response.default_mimetype, response.charset
     )
@@ -81,8 +83,9 @@ def test_build_download_response():
     url_object = {"url": f"https://source-lllllll.cccc/{filename}", "type": "url"}
     _, instance = FilesTypeFactory.validate_and_create(url_object)
     instance.checked_details = {"contentType": content_type}
-    with patch("requests.get", side_effect=[mocked_response]):
-        response = instance.build_download_response(request)
+    with patch("ocean_provider.file_types.definitions.is_safe_url", side_effect=[True]):
+        with patch("requests.get", side_effect=[mocked_response]):
+            response = instance.build_download_response(request)
     assert response.headers["content-type"] == content_type
 
     matched_cd = (
@@ -98,8 +101,9 @@ def test_build_download_response():
 
     url_object = {"url": "https://source-lllllll.cccc/not-a-filename", "type": "url"}
     _, instance = FilesTypeFactory.validate_and_create(url_object)
-    with patch("requests.get", side_effect=[mocked_response_with_attachment]):
-        response = instance.build_download_response(request)
+    with patch("ocean_provider.file_types.definitions.is_safe_url", side_effect=[True]):
+        with patch("requests.get", side_effect=[mocked_response_with_attachment]):
+            response = instance.build_download_response(request)
     assert (
         response.headers["content-type"]
         == mimetypes.guess_type(attachment_file_name)[0]
@@ -119,8 +123,9 @@ def test_build_download_response():
         "headers": {"APIKEY": "sample"},
     }
     _, instance = FilesTypeFactory.validate_and_create(url_object)
-    with patch("requests.get", side_effect=[mocked_response_with_content_type]):
-        response = instance.build_download_response(request)
+    with patch("ocean_provider.file_types.definitions.is_safe_url", side_effect=[True]):
+        with patch("requests.get", side_effect=[mocked_response_with_content_type]):
+            response = instance.build_download_response(request)
     assert response.headers["content-type"] == response_content_type
     assert (
         response.headers.get_all("Content-Disposition")[0]
