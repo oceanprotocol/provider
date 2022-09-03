@@ -186,7 +186,6 @@ class EndUrlType:
         )
 
         try:
-            # TODO: Consider removing this check
             if validate_url and not is_safe_url(url):
                 raise ValueError(f"Unsafe url {url}")
 
