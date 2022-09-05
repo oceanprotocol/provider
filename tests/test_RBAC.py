@@ -14,11 +14,12 @@ from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.asset import Asset
 from ocean_provider.utils.services import Service, ServiceType
 from ocean_provider.validation.provider_requests import RBACValidator
+from tests.ddo.ddo_sa_sample_with_credentials_v4 import json_dict
 from tests.ddo.ddo_sample1_v4 import json_dict as ddo_sample1_v4
 from tests.ddo.ddo_sample_algorithm_v4 import algorithm_ddo_sample
 from tests.helpers.ddo_dict_builders import get_compute_service
 from tests.helpers.compute_helpers import get_compute_signature
-from tests.test_helpers import get_first_service_by_type
+from tests.test_helpers import get_first_service_by_type, get_resource_path
 
 
 @pytest.mark.unit
@@ -45,11 +46,12 @@ def test_encrypt_request_payload(consumer_wallet, publisher_wallet, monkeypatch)
         "compression": "zip",
     }
     req = {
-        "document": json.dumps(document),
+        "data": json.dumps(document),
         "publisherAddress": publisher_wallet.address,
     }
     validator = RBACValidator(request_name="EncryptRequest", request=req)
     payload = validator.build_payload()
+
     assert validator.request == req
     assert payload["eventType"] == "encryptUrl"
     assert payload["providerAccess"] == "private"
@@ -58,6 +60,18 @@ def test_encrypt_request_payload(consumer_wallet, publisher_wallet, monkeypatch)
         "type": "address",
         "value": publisher_wallet.address,
     }
+
+
+@pytest.mark.unit
+def test_wrong_encrypt_request_payload(consumer_wallet, publisher_wallet, monkeypatch):
+    monkeypatch.setenv("PRIVATE_PROVIDER", "1")
+    req = {
+        "publisherAddress": publisher_wallet.address,
+    }
+    validator = RBACValidator(request_name="EncryptRequest", request=req)
+    with pytest.raises(Exception) as err:
+        validator.build_payload()
+    assert err.value.args[0] == "Data to encrypt is empty."
 
 
 @pytest.mark.unit
