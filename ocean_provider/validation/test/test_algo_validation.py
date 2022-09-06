@@ -249,35 +249,7 @@ def test_fails_meta_issues(provider_wallet, consumer_address, web3):
         validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
         assert validator.validate() is False
         assert validator.resource == "algorithm.container"
-        assert validator.message == {"docker": "checksum_prefix"}
-
-    # algorithmMeta container checksum is wrong
-    data = {
-        "dataset": {"documentId": ddo.did, "transferTxId": "tx_id", "serviceId": sa.id},
-        "algorithm": {
-            "serviceId": sa.id,
-            "meta": {
-                "rawcode": "console.log('Hello world'!)",
-                "format": "docker-image",
-                "version": "0.1",
-                "container": {
-                    "entrypoint": "node $ALGO",
-                    "image": "oceanprotocol/algo_dockers",
-                    "tag": "python-branin",
-                    # keep the length, just make it invalid
-                    "checksum": "sha256:8221d20c1c16491d7d56b9657ea09082c0ee4a8ab1a6621fa720da58b0900000",
-                },
-            },
-        },
-    }
-
-    with patch(
-        "ocean_provider.validation.algo.get_asset_from_metadatastore", side_effect=[ddo]
-    ):
-        validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
-        assert validator.validate() is False
-        assert validator.resource == "algorithm.container"
-        assert validator.message == {"docker": "invalid"}
+        assert validator.message == "checksum_prefix"
 
 
 @pytest.mark.unit

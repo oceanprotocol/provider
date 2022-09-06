@@ -143,21 +143,10 @@ def test_validate_container(client):
         "entrypoint": "node $ALGO",
         "image": "doesntexist",
         "tag": "blabla",
-        "checksum": "sha256:8221d20c1c16491d7d56b9657ea09082c0ee4a8ab1a6621fa720da58b09580e4",
-    }
-
-    response = client.post(endpoint, json=invalid_payload)
-    assert response.status_code == 400
-    assert response.json["error"] == {"docker": "invalid"}
-
-    invalid_payload = {
-        "entrypoint": "node $ALGO",
-        "image": "doesntexist",
-        "tag": "blabla",
         # doesn't start with sha256:
         "checksum": "8221d20c1c16491d7d56b9657ea09082c0ee4a8ab1a6621fa720da58b09580e4",
     }
 
     response = client.post(endpoint, json=invalid_payload)
     assert response.status_code == 400
-    assert response.json["error"] == {"docker": "checksum_prefix"}
+    assert response.json["error"] == "checksum_prefix"
