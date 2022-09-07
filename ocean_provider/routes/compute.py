@@ -38,7 +38,12 @@ from ocean_provider.utils.provider_fees import (
 from ocean_provider.utils.util import (
     get_request_data,
 )
-from ocean_provider.validation.algo import WorkflowValidator, InputItemValidator
+from ocean_provider.validation.algo import (
+    WorkflowValidator,
+    InputItemValidator,
+    get_algo_checksums,
+)
+from ocean_provider.validation.images import validate_container
 from ocean_provider.validation.provider_requests import (
     ComputeGetResult,
     ComputeRequest,
@@ -132,6 +137,27 @@ def initializeCompute():
         datasets + [algorithm], compute_env
     )
 
+    algo_files_checksum = None
+    algo_container_checksum = None
+
+    if algorithm.get("documentId"):
+        algo_ddo = get_asset_from_metadatastore(
+            get_metadata_url(), algorithm.get("documentId")
+        )
+
+        try:
+            asset_type = algo_ddo.metadata["type"]
+        except ValueError:
+            asset_type = None
+
+        if asset_type != "algorithm":
+            return error_response("DID is not a valid algorithm", 400, logger)
+
+        algo_service = algo_ddo.get_service_by_id(algorithm.get("serviceId"))
+        algo_files_checksum, algo_container_checksum = get_algo_checksums(
+            algo_service, provider_wallet, algo_ddo
+        )
+
     for i, dataset in enumerate(datasets):
         dataset["algorithm"] = algorithm
         dataset["consumerAddress"] = consumer_address
@@ -144,10 +170,15 @@ def initializeCompute():
             i,
             check_usage=False,
         )
+        input_item_validator.algo_files_checksum = algo_files_checksum
+        input_item_validator.algo_container_checksum = algo_container_checksum
         status = input_item_validator.validate()
         if not status:
-            prefix = f"Error in input at index {i}: "
-            return error_response(prefix + input_item_validator.error, 400, logger)
+            return error_response(
+                {input_item_validator.resource: input_item_validator.message},
+                400,
+                logger,
+            )
 
         service = input_item_validator.service
 
@@ -164,22 +195,9 @@ def initializeCompute():
         )
 
     if algorithm.get("documentId"):
-        algo = get_asset_from_metadatastore(
-            get_metadata_url(), algorithm.get("documentId")
-        )
-
-        try:
-            asset_type = algo.metadata["type"]
-        except ValueError:
-            asset_type = None
-
-        if asset_type != "algorithm":
-            return error_response("DID is not a valid algorithm", 400, logger)
-
-        algo_service = algo.get_service_by_id(algorithm.get("serviceId"))
         algorithm["consumerAddress"] = consumer_address
         approve_params["algorithm"] = get_provider_fees_or_remote(
-            algo,
+            algo_ddo,
             algo_service,
             consumer_address,
             valid_until,
@@ -429,7 +447,7 @@ def computeStart():
 
     status = validator.validate()
     if not status:
-        return error_response(validator.error, 400, logger)
+        return error_response({validator.resource: validator.message}, 400, logger)
 
     workflow = validator.workflow
     # workflow is ready, push it to operator
@@ -566,3 +584,14 @@ def computeEnvironments():
     response.headers = standard_headers
 
     return response
+
+
+@services.route("/validateContainer", methods=["POST"])
+def validateContainer():
+    container = get_request_data(request)
+    valid, messages = validate_container(container)
+
+    if not valid:
+        return error_response(messages, 400, logger)
+
+    return container, 200
