@@ -1,5 +1,6 @@
 import logging
 import os
+import json
 from typing import Any, Optional, Tuple
 from urllib.parse import urljoin
 
@@ -62,3 +63,34 @@ class IpfsFile(EndUrlType, FilesType):
             raise Exception("No IPFS_GATEWAY defined, can not resolve ipfs hash.")
 
         return urljoin(os.getenv("IPFS_GATEWAY"), urljoin("ipfs/", self.hash))
+
+
+class GraphqlQuery(EndUrlType, FilesType):
+    @enforce_types
+    def __init__(
+        self,
+        url: Optional[str] = None,
+        query=None,
+        headers: Optional[dict] = None,
+        userdata=None,
+    ) -> None:
+        self.url = url
+        self.userdata = {"query": query}
+        if userdata:
+            self.userdata["variables"] = (
+                userdata if isinstance(userdata, dict) else json.loads(userdata)
+            )
+
+        self.method = "post"
+        self.headers = headers if headers else {}
+        self.type = "graphql"
+
+    @enforce_types
+    def validate_dict(self) -> Tuple[bool, Any]:
+        if not self.url:
+            return False, "missing graphql endpoint"
+
+        return True, self
+
+    def get_download_url(self):
+        return self.url

@@ -3,7 +3,7 @@ from typing import Any, Tuple
 
 from enforce_typing import enforce_types
 
-from ocean_provider.file_types.file_types import IpfsFile, UrlFile
+from ocean_provider.file_types.file_types import IpfsFile, UrlFile, GraphqlQuery
 
 logger = logging.getLogger(__name__)
 
@@ -17,12 +17,6 @@ class FilesTypeFactory:
         if not file_obj:
             return False, "cannot decrypt files for this service."
 
-        if "type" not in file_obj or file_obj["type"] not in ["ipfs", "url"]:
-            return (
-                False,
-                "malformed or unsupported type for service files.",
-            )
-
         try:
             if file_obj["type"] == "url":
                 instance = UrlFile(
@@ -31,13 +25,22 @@ class FilesTypeFactory:
                     headers=file_obj.get("headers"),
                     userdata=file_obj.get("userdata"),
                 )
-            else:
+            elif file_obj["type"] == "ipfs":
                 instance = IpfsFile(
                     file_obj.get("hash"),
                     headers=file_obj.get("headers"),
                     userdata=file_obj.get("userdata"),
                 )
+            elif file_obj["type"] == "graphql":
+                instance = GraphqlQuery(
+                    url=file_obj.get("url"),
+                    query=file_obj.get("query"),
+                    headers=file_obj.get("headers"),
+                    userdata=file_obj.get("userdata"),
+                )
+            else:
+                return False, f'Unsupported type {file_obj["type"]}'
         except TypeError:
-            return False, "malformed or unsupported types."
+            return False, "malformed file object."
 
         return instance.validate_dict()
