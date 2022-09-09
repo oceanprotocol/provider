@@ -1,5 +1,6 @@
 import logging
 import os
+import json
 from typing import Any, Optional, Tuple
 from urllib.parse import urljoin
 
@@ -76,7 +77,10 @@ class GraphqlQuery(EndUrlType, FilesType):
         self.url = url
         self.userdata = {"query": query}
         if userdata:
-            self.userdata["variables"] = userdata
+            self.userdata["variables"] = (
+                userdata if isinstance(userdata, dict) else json.loads(userdata)
+            )
+
         self.method = "post"
         self.headers = headers if headers else {}
         self.type = "graphql"

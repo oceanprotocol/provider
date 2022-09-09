@@ -171,6 +171,7 @@ def get_registered_asset(
     erc20_enterprise=False,
     service_type="access",
     timeout=3600,
+    custom_userdata=None,
 ):
     web3 = get_web3()
     data_nft_address = deploy_data_nft(
@@ -241,6 +242,7 @@ def get_registered_asset(
                 service_endpoint=service_endpoint,
                 encrypted_files=encrypted_files,
                 timeout=timeout,
+                userdata=custom_userdata,
             )
         ]
         if not custom_services

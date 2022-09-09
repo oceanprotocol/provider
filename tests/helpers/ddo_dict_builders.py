@@ -48,11 +48,12 @@ def _build_service_dict_untyped(
     service_endpoint: str,
     encrypted_files: HexStr,
     timeout: int,
+    userdata: dict = None,
 ) -> dict:
     """Build a service dict with required attributes only. See for details:
     https://github.com/oceanprotocol/docs/blob/v4main/content/concepts/did-ddo.md#services
     """
-    return {
+    service = {
         "id": str(uuid.uuid4()),
         "name": "name doesn't affect tests",
         "description": "decription doesn't affect tests",
@@ -61,6 +62,9 @@ def _build_service_dict_untyped(
         "files": encrypted_files,
         "timeout": timeout,
     }
+    if userdata:
+        service["consumerParameters"] = userdata
+    return service
 
 
 def build_service_dict_type_access(
@@ -68,6 +72,7 @@ def build_service_dict_type_access(
     service_endpoint: str,
     encrypted_files: HexStr,
     timeout: int = 3600,  # 1 hour
+    userdata: dict = None,
 ) -> dict:
     """Build an access service dict, used for testing"""
     access_service = _build_service_dict_untyped(
