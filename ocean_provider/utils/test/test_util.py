@@ -355,14 +355,14 @@ def test_validate_url_object():
         {"type": "url", "url": "x", "headers": "not_a_dict"}
     )
     assert result is False
-    assert message == "alformed file object."
+    assert message == "malformed file object."
 
     result, message = FilesTypeFactory.validate_and_create(
         {"type": "url", "url": "x", "headers": '{"dict": "but_stringified"}'}
     )
     # we purposefully require a dictionary
     assert result is False
-    assert message == "alformed file object."
+    assert message == "malformed file object."
 
     result, message = FilesTypeFactory.validate_and_create(
         {"type": "url", "url": "x", "headers": {"dict": "dict_key"}}
