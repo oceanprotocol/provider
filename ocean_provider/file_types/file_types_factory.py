@@ -18,28 +18,28 @@ class FilesTypeFactory:
             return False, "cannot decrypt files for this service."
 
         try:
-            if file_obj["type"]=='url':
-                    instance = UrlFile(
-                        file_obj.get("url"),
-                        method=file_obj.get("method"),
-                        headers=file_obj.get("headers"),
-                        userdata=file_obj.get("userdata"),
-                    )
-            elif file_obj["type"]=='ipfs':
-                    instance = IpfsFile(
-                        file_obj.get("hash"),
-                        headers=file_obj.get("headers"),
-                        userdata=file_obj.get("userdata"),
-                    )
-            elif file_obj["type"]=='graphql':
-                    instance = GraphqlQuery(
-                        url = file_obj.get("url"),
-                        query = file_obj.get("query"),
-                        headers=file_obj.get("headers"),
-                        userdata=file_obj.get("userdata"),
-                    )
+            if file_obj["type"] == "url":
+                instance = UrlFile(
+                    file_obj.get("url"),
+                    method=file_obj.get("method"),
+                    headers=file_obj.get("headers"),
+                    userdata=file_obj.get("userdata"),
+                )
+            elif file_obj["type"] == "ipfs":
+                instance = IpfsFile(
+                    file_obj.get("hash"),
+                    headers=file_obj.get("headers"),
+                    userdata=file_obj.get("userdata"),
+                )
+            elif file_obj["type"] == "graphql":
+                instance = GraphqlQuery(
+                    url=file_obj.get("url"),
+                    query=file_obj.get("query"),
+                    headers=file_obj.get("headers"),
+                    userdata=file_obj.get("userdata"),
+                )
             else:
-                    return False, f'Unsupported type {file_obj["type"]}'
+                return False, f'Unsupported type {file_obj["type"]}'
         except TypeError:
             return False, "malformed file object."
 

@@ -77,16 +77,15 @@ class GraphqlQuery(EndUrlType, FilesType):
         self.userdata = {"query": query}
         if userdata:
             self.userdata["variables"] = userdata
-        self.method = 'post'
+        self.method = "post"
         self.headers = headers if headers else {}
         self.type = "graphql"
-        
 
     @enforce_types
     def validate_dict(self) -> Tuple[bool, Any]:
         if not self.url:
             return False, "missing graphql endpoint"
-        
+
         return True, self
 
     def get_download_url(self):

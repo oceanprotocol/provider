@@ -23,13 +23,11 @@ from tests.test_helpers import (
 
 
 @pytest.mark.integration
-def test_download_graphql_asset(
-    client, publisher_wallet, consumer_wallet, web3
-):
-    unencrypted_files_list=[
+def test_download_graphql_asset(client, publisher_wallet, consumer_wallet, web3):
+    unencrypted_files_list = [
         {
             "type": "graphql",
-            "url":"http://172.15.0.15:8000/subgraphs/name/oceanprotocol/ocean-subgraph",
+            "url": "http://172.15.0.15:8000/subgraphs/name/oceanprotocol/ocean-subgraph",
             "query": """
                     query{
                         nfts(orderBy: createdTimestamp,orderDirection:desc){
@@ -38,10 +36,12 @@ def test_download_graphql_asset(
                             createdTimestamp
                         }
                     }
-                    """
+                    """,
         }
     ]
-    asset = get_registered_asset(publisher_wallet, unencrypted_files_list = unencrypted_files_list)
+    asset = get_registered_asset(
+        publisher_wallet, unencrypted_files_list=unencrypted_files_list
+    )
     service = get_first_service_by_type(asset, ServiceType.ACCESS)
     mint_100_datatokens(
         web3, service.datatoken_address, consumer_wallet.address, publisher_wallet
@@ -64,7 +64,7 @@ def test_download_graphql_asset(
     }
 
     download_endpoint = BaseURLs.SERVICES_URL + "/download"
-    
+
     # Consume using url index and signature (with nonce)
     nonce = str(datetime.utcnow().timestamp())
     _msg = f"{asset.did}{nonce}"
@@ -74,4 +74,3 @@ def test_download_graphql_asset(
         service.service_endpoint + download_endpoint, query_string=payload
     )
     assert response.status_code == 200, f"{response.data}"
-
