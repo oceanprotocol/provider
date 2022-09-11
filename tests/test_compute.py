@@ -3,11 +3,14 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import time
+from eth_account import Account
 from datetime import datetime
+import os
 
-import pytest
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
+from ocean_provider.utils.currency import to_wei
+from ocean_provider.utils.datatoken import get_datatoken_contract
 from ocean_provider.utils.provider_fees import get_provider_fees
 from ocean_provider.utils.services import ServiceType
 from ocean_provider.validation.provider_requests import RBACValidator
@@ -24,9 +27,11 @@ from tests.helpers.compute_helpers import (
     post_to_compute,
     start_order,
 )
+
+import pytest
 from tests.helpers.ddo_dict_builders import build_metadata_dict_type_algorithm
 from tests.test_auth import create_token
-from tests.test_helpers import get_first_service_by_type
+from tests.test_helpers import get_first_service_by_type, get_ocean_token_address
 
 
 @pytest.mark.unit
@@ -64,9 +69,9 @@ def test_compute_raw_algo(
         "version": "0.1",
         "container": {
             "entrypoint": "node $ALGO",
-            "image": "node",
-            "tag": "10",
-            "checksum": "xx",
+            "image": "oceanprotocol/algo_dockers",
+            "tag": "python-branin",
+            "checksum": "sha256:8221d20c1c16491d7d56b9657ea09082c0ee4a8ab1a6621fa720da58b09580e4",
         },
     }
     tx_id, _ = start_order(
@@ -109,7 +114,7 @@ def test_compute_raw_algo(
         assert (
             response.status == "400 BAD REQUEST"
         ), f"start compute job failed: {response.status} , {response.data}"
-        assert "cannot run raw algorithm on this did" in response.json["error"]
+        assert "no_raw_algo_allowed" == response.json["error"]["dataset"]
 
 
 @pytest.mark.integration
@@ -154,10 +159,7 @@ def test_compute_specific_algo_dids(
     assert (
         response.status == "400 BAD REQUEST"
     ), f"start compute job failed: {response.status} , {response.data}"
-    assert (
-        response.json["error"]
-        == f"this algorithm did {another_alg_ddo.did} is not trusted."
-    )
+    assert response.json["error"]["dataset"] == "not_trusted_algo"
 
 
 @pytest.mark.integration
@@ -194,12 +196,6 @@ def test_compute(client, publisher_wallet, consumer_wallet, free_c2d_env):
     # Start compute using invalid signature (withOUT nonce), should fail
     msg = f"{consumer_wallet.address}{ddo.did}"
     payload["signature"] = sign_message(msg, consumer_wallet)
-
-    # Start compute with auth token
-    token = create_token(client, consumer_wallet)
-    payload.pop("signature")
-    response = post_to_compute(client, payload, headers={"AuthToken": token})
-    assert response.status_code == 200, f"{response.data}"
 
     # Start compute with valid signature
     payload["signature"] = signature
@@ -366,10 +362,7 @@ def test_compute_allow_all_published(
     assert (
         response.status == "400 BAD REQUEST"
     ), f"start compute job failed: {response.status} , {response.data}"
-    assert (
-        "Mismatch between ordered c2d environment and selected one"
-        in response.json["error"]
-    )
+    assert "order_invalid" in response.json["error"]["dataset.serviceId"]
 
     # Start on the correct environment
     payload["environment"] = free_c2d_env["id"]
@@ -535,3 +528,90 @@ def test_compute_environments(client):
     for env in response.json:
         if env["priceMin"] == 0:
             assert env["id"] == "ocean-compute"
+
+
+@pytest.mark.integration
+def test_compute_paid_env(
+    client, publisher_wallet, consumer_wallet, paid_c2d_env, web3
+):
+    valid_until = get_future_valid_until()
+    deployer_wallet = Account.from_key(os.getenv("FACTORY_DEPLOYER_PRIVATE_KEY"))
+    fee_token = get_datatoken_contract(web3, get_ocean_token_address(web3))
+    fee_token.functions.transfer(consumer_wallet.address, to_wei(80)).transact(
+        {"from": deployer_wallet.address}
+    )
+
+    ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
+        client,
+        publisher_wallet,
+        consumer_wallet,
+        False,
+        None,
+        c2d_address=paid_c2d_env["consumerAddress"],
+        valid_until=valid_until,
+        c2d_environment=paid_c2d_env["id"],
+        fee_token_args=(fee_token, to_wei(80)),
+    )
+    sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
+    sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
+    nonce, signature = get_compute_signature(client, consumer_wallet, ddo.did)
+
+    # Start the compute job
+    payload = {
+        "dataset": {"documentId": ddo.did, "serviceId": sa.id, "transferTxId": tx_id},
+        "algorithm": {
+            "serviceId": sa_compute.id,
+            "documentId": alg_ddo.did,
+            "transferTxId": alg_tx_id,
+        },
+        "signature": signature,
+        "nonce": nonce,
+        "consumerAddress": consumer_wallet.address,
+        "environment": paid_c2d_env["id"],
+        "signature": signature,
+    }
+
+    # Start compute with valid signature
+    response = post_to_compute(client, payload)
+    assert response.status == "200 OK", f"start compute job failed: {response.data}"
+
+    job_info = response.json[0]
+    print(f"got response from starting compute job: {job_info}")
+    job_id = job_info.get("jobId", "")
+
+
+@pytest.mark.integration
+def test_compute_auth_token(client, publisher_wallet, consumer_wallet, free_c2d_env):
+    valid_until = get_future_valid_until()
+    ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
+        client,
+        publisher_wallet,
+        consumer_wallet,
+        False,
+        None,
+        c2d_address=free_c2d_env["consumerAddress"],
+        valid_until=valid_until,
+        c2d_environment=free_c2d_env["id"],
+    )
+    sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
+    sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
+    nonce, signature = get_compute_signature(client, consumer_wallet, ddo.did)
+
+    # Start the compute job
+    payload = {
+        "dataset": {"documentId": ddo.did, "serviceId": sa.id, "transferTxId": tx_id},
+        "algorithm": {
+            "serviceId": sa_compute.id,
+            "documentId": alg_ddo.did,
+            "transferTxId": alg_tx_id,
+        },
+        # "signature": NO SIGNATURE
+        "nonce": nonce,
+        "consumerAddress": consumer_wallet.address,
+        "environment": free_c2d_env["id"],
+    }
+
+    # Start compute with auth token
+    token = create_token(client, consumer_wallet)
+    response = post_to_compute(client, payload, headers={"AuthToken": token})
+    assert response.status_code == 200, f"{response.data}"

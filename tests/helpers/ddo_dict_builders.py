@@ -48,11 +48,12 @@ def _build_service_dict_untyped(
     service_endpoint: str,
     encrypted_files: HexStr,
     timeout: int,
+    userdata: dict = None,
 ) -> dict:
     """Build a service dict with required attributes only. See for details:
     https://github.com/oceanprotocol/docs/blob/v4main/content/concepts/did-ddo.md#services
     """
-    return {
+    service = {
         "id": str(uuid.uuid4()),
         "name": "name doesn't affect tests",
         "description": "decription doesn't affect tests",
@@ -61,6 +62,9 @@ def _build_service_dict_untyped(
         "files": encrypted_files,
         "timeout": timeout,
     }
+    if userdata:
+        service["consumerParameters"] = userdata
+    return service
 
 
 def build_service_dict_type_access(
@@ -68,6 +72,7 @@ def build_service_dict_type_access(
     service_endpoint: str,
     encrypted_files: HexStr,
     timeout: int = 3600,  # 1 hour
+    userdata: dict = None,
 ) -> dict:
     """Build an access service dict, used for testing"""
     access_service = _build_service_dict_untyped(
@@ -122,10 +127,10 @@ def build_algorithm_dict() -> dict:
 def build_container_dict() -> dict:
     """Build a container dict, used for testing"""
     return {
-        "entrypoint": "run.sh",
-        "image": "my-docker-image",
-        "tag": "latest",
-        "checksum": "44e10daa6637893f4276bb8d7301eb35306ece50f61ca34dcab550",
+        "entrypoint": "node $ALGO",
+        "image": "oceanprotocol/algo_dockers",
+        "tag": "python-branin",
+        "checksum": "sha256:8221d20c1c16491d7d56b9657ea09082c0ee4a8ab1a6621fa720da58b09580e4",
     }
 
 
