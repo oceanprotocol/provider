@@ -575,7 +575,7 @@ def test_compute_paid_env(
     valid_until = get_future_valid_until()
     deployer_wallet = Account.from_key(os.getenv("FACTORY_DEPLOYER_PRIVATE_KEY"))
     fee_token = get_datatoken_contract(web3, get_ocean_token_address(web3))
-    fee_token.functions.transfer(consumer_wallet.address, to_wei(80)).transact(
+    fee_token.functions.mint(consumer_wallet.address, to_wei(80)).transact(
         {"from": deployer_wallet.address}
     )
 
