@@ -344,7 +344,7 @@ def test_validate_url_object():
 
     result, message = FilesTypeFactory.validate_and_create({"type": "invalid"})
     assert result is False
-    assert message == "Unsupported type not_ipfs_or_url"
+    assert message == "Unsupported type invalid"
 
     result, message = FilesTypeFactory.validate_and_create(
         {"type": "ipfs", "but_hash": "missing"}
