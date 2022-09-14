@@ -36,7 +36,7 @@ from ocean_provider.validation.provider_requests import (
 )
 from web3.main import Web3
 
-from . import services
+from ocean_provider.routes import services
 
 provider_wallet = get_provider_wallet()
 requests_session = get_requests_session()
@@ -314,6 +314,7 @@ def download():
     if file_index > len(files_list):
         return error_response(f"No such fileIndex {file_index}", 400, logger)
     url_object = files_list[file_index]
+    url_object["userdata"] = data.get("userdata")
     url_valid, message = FilesTypeFactory.validate_and_create(url_object)
 
     if not url_valid:

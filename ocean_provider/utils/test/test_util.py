@@ -344,7 +344,7 @@ def test_validate_url_object():
 
     result, message = FilesTypeFactory.validate_and_create({"type": "invalid"})
     assert result is False
-    assert message == "malformed or unsupported type for service files."
+    assert message == "Unsupported type not_ipfs_or_url"
 
     result, message = FilesTypeFactory.validate_and_create(
         {"type": "ipfs", "but_hash": "missing"}
@@ -362,14 +362,14 @@ def test_validate_url_object():
         {"type": "url", "url": "x", "headers": "not_a_dict"}
     )
     assert result is False
-    assert message == "malformed or unsupported types."
+    assert message == "malformed file object."
 
     result, message = FilesTypeFactory.validate_and_create(
         {"type": "url", "url": "x", "headers": '{"dict": "but_stringified"}'}
     )
     # we purposefully require a dictionary
     assert result is False
-    assert message == "malformed or unsupported types."
+    assert message == "malformed file object."
 
     result, message = FilesTypeFactory.validate_and_create(
         {"type": "url", "url": "x", "headers": {"dict": "dict_key"}}

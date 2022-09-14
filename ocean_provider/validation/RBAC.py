@@ -77,6 +77,11 @@ class RBACValidator:
             for additional_input in additional_inputs
         ]
 
+    def get_data(self):
+        if "data" not in self.request.keys():
+            raise Exception("Data to encrypt is empty.")
+        return self.request["data"]
+
     def build_payload(self):
         provider_access = (
             "private" if os.getenv("PRIVATE_PROVIDER", False) else "public"
@@ -97,7 +102,7 @@ class RBACValidator:
         message = "encryptUrl" + json.dumps(self.credentials)
         signature = sign_message(message, get_provider_wallet())
 
-        return {"signature": signature}
+        return {"signature": signature, "data": self.get_data()}
 
     def build_initialize_payload(self):
         message = "initialize" + json.dumps(self.credentials)
