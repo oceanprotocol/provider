@@ -83,16 +83,16 @@ class SmartContractCall(FilesType):
         else:
             result = function().call()
         if isinstance(result, object):
-            return "application/json", json.dumps(result)
+            return json.dumps(result), "application/json"
         else:
-            return "application/text", result
+            return result, "application/text"
 
     def check_details(self, with_checksum=False):
         try:
-            result = self.fetch_smartcontract_call()
+            result, type = self.fetch_smartcontract_call()
             details = {
                 "contentLength": len(result) or "",
-                "contentType": "",
+                "contentType": type
             }
             return True, details
         except Exception as e:
@@ -104,7 +104,7 @@ class SmartContractCall(FilesType):
         validate_url=True,
     ):
         try:
-            result = self.fetch_smartcontract_call()
+            result, type = self.fetch_smartcontract_call()
             return Response(
                 result,
                 200,
