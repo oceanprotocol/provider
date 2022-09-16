@@ -90,10 +90,7 @@ class SmartContractCall(FilesType):
     def check_details(self, with_checksum=False):
         try:
             result, type = self.fetch_smartcontract_call()
-            details = {
-                "contentLength": len(result) or "",
-                "contentType": type
-            }
+            details = {"contentLength": len(result) or "", "contentType": type}
             return True, details
         except Exception as e:
             return False, {}
