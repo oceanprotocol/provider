@@ -172,7 +172,9 @@ def verify_order_tx(
     # this has changed now if the original original_tx was a reuseOrder
     start_order_tx_id = tx_receipt.transactionHash
     try:
-        event_logs = datatoken_contract.events.OrderStarted().processReceipt(tx_receipt)
+        event_logs = datatoken_contract.events.OrderStarted().processReceipt(
+            tx_receipt, errors=DISCARD
+        )
     except Exception as e:
         logger.error(e)
     logger.debug(f"Got events log when searching for OrderStarted : {event_logs}")

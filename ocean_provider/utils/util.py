@@ -5,7 +5,6 @@
 import hashlib
 import json
 import logging
-import os
 from typing import Tuple
 from ocean_provider.utils.asset import Asset
 import werkzeug
@@ -14,10 +13,8 @@ from eth_account.signers.local import LocalAccount
 from eth_keys import KeyAPI
 from eth_keys.backends import NativeECCBackend
 from eth_typing.encoding import HexStr
-from flask import Response
 from ocean_provider.utils.encryption import do_decrypt
 from ocean_provider.utils.services import Service
-from ocean_provider.utils.url import is_safe_url
 from web3 import Web3
 from web3.types import TxParams, TxReceipt
 

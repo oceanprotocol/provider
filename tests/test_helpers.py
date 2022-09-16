@@ -7,7 +7,7 @@ import os
 import pathlib
 import time
 from hashlib import sha256
-from typing import Dict, Tuple
+from typing import Dict, Optional, Tuple
 
 from jsonsempai import magic  # noqa: F401
 from artifacts import ERC721Template
@@ -17,7 +17,7 @@ from eth_typing.evm import HexAddress
 from flask.testing import FlaskClient
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.address import get_contract_address
-from ocean_provider.utils.asset import get_asset_from_metadatastore
+from ocean_provider.utils.asset import Asset, get_asset_from_metadatastore
 from ocean_provider.utils.basics import get_config, get_provider_wallet, get_web3
 from ocean_provider.utils.currency import to_wei
 from ocean_provider.utils.data_nft import Flags, MetadataState, get_data_nft_contract
@@ -25,7 +25,6 @@ from ocean_provider.utils.data_nft_factory import get_data_nft_factory_contract
 from ocean_provider.utils.datatoken import get_datatoken_contract
 from ocean_provider.utils.did import compute_did_from_data_nft_address_and_chain_id
 from ocean_provider.utils.encryption import do_encrypt
-from ocean_provider.utils.provider_fees import get_c2d_environments
 from ocean_provider.utils.services import Service, ServiceType
 from ocean_provider.utils.util import sign_send_and_wait_for_receipt, sign_tx
 
@@ -172,7 +171,7 @@ def get_registered_asset(
     service_type="access",
     timeout=3600,
     custom_userdata=None,
-):
+) -> Optional[Asset]:
     web3 = get_web3()
     data_nft_address = deploy_data_nft(
         web3=web3,
@@ -379,7 +378,7 @@ def get_resource_path(dir_name, file_name):
         return pathlib.Path(os.path.join(os.path.sep, *base, file_name))
 
 
-def wait_for_asset(metadata_cache_url, did, timeout=30):
+def wait_for_asset(metadata_cache_url, did, timeout=30) -> Optional[Asset]:
     start = time.time()
     ddo = None
     while not ddo:

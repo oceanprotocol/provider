@@ -3,7 +3,7 @@ from typing import Any, Tuple
 
 from enforce_typing import enforce_types
 
-from ocean_provider.file_types.file_types import IpfsFile, UrlFile, GraphqlQuery
+from ocean_provider.file_types.file_types import ArweaveFile, IpfsFile, UrlFile, GraphqlQuery
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +22,12 @@ class FilesTypeFactory:
                 instance = UrlFile(
                     file_obj.get("url"),
                     method=file_obj.get("method"),
+                    headers=file_obj.get("headers"),
+                    userdata=file_obj.get("userdata"),
+                )
+            elif file_obj["type"] == "arweave":
+                instance = ArweaveFile(
+                    file_obj.get("transactionId"),
                     headers=file_obj.get("headers"),
                     userdata=file_obj.get("userdata"),
                 )
