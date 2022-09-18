@@ -489,7 +489,7 @@ class InputItemValidator:
                 allowed_files_checksum
                 and self.algo_files_checksum != allowed_files_checksum.lower()
             ):
-                self.error = f"filesChecksum for algorithm with did {algo_ddo.did} does not match"
+                self.error = f"filesChecksum for algorithm with did algo_ddo.did does not match"
                 return True
 
             if (

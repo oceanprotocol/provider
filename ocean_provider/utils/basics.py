@@ -74,8 +74,8 @@ def get_web3(network_url: Optional[str] = None, cached=True) -> Web3:
 
     web3 = Web3(provider=get_web3_connection_provider(network_url))
 
-    if get_config().is_poa_network:
-        web3.middleware_onion.inject(geth_poa_middleware, layer=0)
+    #if get_config().is_poa_network()
+    web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
     web3.chain_id = web3.eth.chain_id
     app_web3_instance = web3
