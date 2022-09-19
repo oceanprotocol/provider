@@ -355,4 +355,7 @@ def test_download_arweave(client, publisher_wallet, consumer_wallet, web3):
         service.service_endpoint + download_endpoint, query_string=payload
     )
     assert response.status_code == 200, f"{response.data}"
-    assert response.data.decode("utf-8").partition('\n')[0] == "% 1. Title: Branin Function"
+    assert (
+        response.data.decode("utf-8").partition("\n")[0]
+        == "% 1. Title: Branin Function"
+    )

@@ -3,7 +3,13 @@ from typing import Any, Tuple
 
 from enforce_typing import enforce_types
 
-from ocean_provider.file_types.file_types import ArweaveFile, IpfsFile, UrlFile, GraphqlQuery
+from ocean_provider.file_types.file_types import (
+    ArweaveFile,
+    IpfsFile,
+    UrlFile,
+    GraphqlQuery,
+)
+from ocean_provider.file_types.types.smartcontract import SmartContractCall
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +48,12 @@ class FilesTypeFactory:
                     url=file_obj.get("url"),
                     query=file_obj.get("query"),
                     headers=file_obj.get("headers"),
+                    userdata=file_obj.get("userdata"),
+                )
+            elif file_obj["type"] == "smartcontract":
+                instance = SmartContractCall(
+                    address=file_obj.get("address"),
+                    abi=file_obj.get("abi"),
                     userdata=file_obj.get("userdata"),
                 )
             else:

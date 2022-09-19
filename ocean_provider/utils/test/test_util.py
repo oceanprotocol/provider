@@ -421,8 +421,7 @@ def test_build_download_response_arweave(monkeypatch):
 
     _, instance = FilesTypeFactory.validate_and_create(url_object)
     assert (
-        instance.get_download_url()
-        == f"https://arweave.net/{ARWEAVE_TRANSACTION_ID}"
+        instance.get_download_url() == f"https://arweave.net/{ARWEAVE_TRANSACTION_ID}"
     )
 
     response = instance.build_download_response(request)

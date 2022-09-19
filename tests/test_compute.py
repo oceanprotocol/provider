@@ -325,7 +325,6 @@ def test_compute_arweave(client, publisher_wallet, consumer_wallet, free_c2d_env
     assert response.status == "200 OK", f"start compute job failed: {response.data}"
 
 
-
 @pytest.mark.integration
 def test_compute_diff_provider(client, publisher_wallet, consumer_wallet, free_c2d_env):
     valid_until = get_future_valid_until()
