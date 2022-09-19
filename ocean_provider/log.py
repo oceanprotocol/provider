@@ -27,7 +27,7 @@ def setup_logging(log_config_path="logging.yaml", log_level=None):
     if log_level:
         print(f"Using basic logging config, log level = {log_level}")
         logging_level = logging._nameToLevel.get(log_level)
-        logging.basicConfig(level=logging_level, filename="/home/ec2-user/debug.log")
+        logging.basicConfig(level=logging_level, filename="/var/log/debug.log")
         coloredlogs.install(level=logging_level)
     else:
         log_config_path = Path(log_config_path).expanduser().resolve()
