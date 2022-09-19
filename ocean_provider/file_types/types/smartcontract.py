@@ -67,17 +67,14 @@ class SmartContractCall(FilesType):
             address=web3.toChecksumAddress(self.address), abi=[self.abi]
         )
         function = contract.functions[self.abi.get("name")]
-        args = dict() if len(self.abi.get("inputs")) > 0 else None
+        args = dict()
         for input in self.abi.get("inputs"):
             args[input.get("name")] = self.userdata.get(input.get("name"))
             if input.get("type") == "address":
                 args[input.get("name")] = web3.toChecksumAddress(
                     args[input.get("name")]
                 )
-        if args:
-            result = function(**args).call()
-        else:
-            result = function().call()
+        result = function(**args).call()
         if isinstance(result, object):
             return json.dumps(result), "application/json"
         return result, "application/text"
