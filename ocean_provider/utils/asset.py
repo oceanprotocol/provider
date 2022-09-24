@@ -85,7 +85,7 @@ class Asset:
         return ConsumableCodes.OK
 
 
-def get_asset_from_metadatastore(metadata_url, document_id):
+def get_asset_from_metadatastore(metadata_url, document_id) -> Optional[Asset]:
     """
     :return: `Asset` instance or None
     """

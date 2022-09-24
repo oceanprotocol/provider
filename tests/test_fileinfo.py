@@ -6,6 +6,7 @@ import pytest
 
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.services import ServiceType
+from tests.helpers.constants import ARWEAVE_TRANSACTION_ID
 from tests.test_helpers import (
     get_dataset_with_invalid_url_ddo,
     get_first_service_by_type,
@@ -95,3 +96,46 @@ def test_check_url_bad(client):
     response = client.post(fileinfo_url, json=data)
     result = response.get_json()
     assert response.status == "400 BAD REQUEST"
+
+
+@pytest.mark.unit
+def test_check_arweave_good(client):
+    payload = {
+        "type": "arweave",
+        "transactionId": ARWEAVE_TRANSACTION_ID,
+    }
+    response = client.post(fileinfo_url, json=payload)
+    result = response.get_json()
+
+    assert response.status == "200 OK", f"{result}"
+    assert isinstance(result, list)
+    assert len(result) == 1
+    for file_info in result:
+        assert file_info["contentLength"] == "5311"
+        assert file_info["contentType"] == "application/octet-stream"
+        assert file_info["valid"] is True
+
+
+@pytest.mark.unit
+def test_check_arweave_bad(client, monkeypatch):
+    payload = {"type": "arweave", "transactionId": "invalid"}
+    response = client.post(fileinfo_url, json=payload)
+    result = response.get_json()
+    assert response.status == "200 OK"
+    for file_info in result:
+        assert file_info["valid"] is False
+
+    payload = {"type": "arweave"}  # No transactionId
+    response = client.post(fileinfo_url, json=payload)
+    result = response.get_json()
+    assert response.status == "400 BAD REQUEST", f"{result}"
+
+    monkeypatch.setenv("ARWEAVE_GATEWAY", "https://gateway_not_reachable")
+    payload = {
+        "type": "arweave",
+        "transactionId": ARWEAVE_TRANSACTION_ID,
+    }
+    response = client.post(fileinfo_url, json=payload)
+    result = response.get_json()
+    assert response.status == "200 OK"
+    assert result[0]["valid"] == False

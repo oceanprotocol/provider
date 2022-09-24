@@ -43,6 +43,11 @@ class EndUrlType:
     def get_download_url(self):
         raise NotImplementedError
 
+    @enforce_types
+    @abstractmethod
+    def get_filename(self):
+        raise NotImplementedError
+
     def check_details(self, with_checksum=False):
         """
         If the url argument is invalid, returns False and empty dictionary.
@@ -199,7 +204,7 @@ class EndUrlType:
 
             response = func_method(**func_args)
             if not is_range_request:
-                filename = url.split("/")[-1]
+                filename = self.get_filename()
 
                 content_disposition_header = response.headers.get("content-disposition")
                 if content_disposition_header:

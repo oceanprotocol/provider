@@ -12,6 +12,7 @@ from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.provider_fees import get_provider_fees
 from ocean_provider.utils.services import ServiceType
+from tests.helpers.constants import ARWEAVE_TRANSACTION_ID
 from tests.test_auth import create_token
 from tests.test_helpers import (
     get_dataset_ddo_with_multiple_files,
@@ -310,3 +311,51 @@ def test_download_compute_asset_by_user_fails(
                 response.json["error"]
                 == f"Service with index={service.id} is not an access service."
             )
+
+
+def test_download_arweave(client, publisher_wallet, consumer_wallet, web3):
+    unencrypted_files_list = [
+        {
+            "type": "arweave",
+            "transactionId": ARWEAVE_TRANSACTION_ID,
+        }
+    ]
+    asset = get_registered_asset(
+        publisher_wallet, unencrypted_files_list=unencrypted_files_list
+    )
+    service = get_first_service_by_type(asset, ServiceType.ACCESS)
+    mint_100_datatokens(
+        web3, service.datatoken_address, consumer_wallet.address, publisher_wallet
+    )
+    tx_id, _ = start_order(
+        web3,
+        service.datatoken_address,
+        consumer_wallet.address,
+        service.index,
+        get_provider_fees(asset.did, service, consumer_wallet.address, 0),
+        consumer_wallet,
+    )
+
+    payload = {
+        "documentId": asset.did,
+        "serviceId": service.id,
+        "consumerAddress": consumer_wallet.address,
+        "transferTxId": tx_id,
+        "fileIndex": 0,
+    }
+
+    download_endpoint = BaseURLs.SERVICES_URL + "/download"
+
+    # Consume using index and signature (with nonce)
+    nonce = str(datetime.utcnow().timestamp())
+    _msg = f"{asset.did}{nonce}"
+    payload["signature"] = sign_message(_msg, consumer_wallet)
+    payload["nonce"] = nonce
+    response = client.get(
+        service.service_endpoint + download_endpoint, query_string=payload
+    )
+    assert response.status_code == 200, f"{response.data}"
+    assert (
+        response.data.decode("utf-8").partition("\n")[0]
+        == "% 1. Title: Branin Function"
+    )

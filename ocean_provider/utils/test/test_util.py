@@ -8,7 +8,7 @@ import json
 import logging
 import mimetypes
 import pytest
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 from flask import Request
 from web3.main import Web3
@@ -25,6 +25,7 @@ from ocean_provider.utils.util import (
     msg_hash,
 )
 from tests.ddo.ddo_sample1_v4 import json_dict as ddo_sample1_v4
+from tests.helpers.constants import ARWEAVE_TRANSACTION_ID
 
 test_logger = logging.getLogger(__name__)
 
@@ -341,15 +342,21 @@ def test_validate_url_object():
     assert result is False
     assert message == "cannot decrypt files for this service."
 
-    result, message = FilesTypeFactory.validate_and_create({"type": "not_ipfs_or_url"})
+    result, message = FilesTypeFactory.validate_and_create({"type": "invalid"})
     assert result is False
-    assert message == "Unsupported type not_ipfs_or_url"
+    assert message == "Unsupported type invalid"
 
     result, message = FilesTypeFactory.validate_and_create(
         {"type": "ipfs", "but_hash": "missing"}
     )
     assert result is False
     assert message == "malformed service files, missing required keys."
+
+    result, message = FilesTypeFactory.validate_and_create(
+        {"type": "arweave", "but_transactionId": "missing"}
+    )
+    assert result is False
+    assert message == "malformed service files, missing transactionId."
 
     result, message = FilesTypeFactory.validate_and_create(
         {"type": "url", "url": "x", "headers": "not_a_dict"}
@@ -380,7 +387,7 @@ def test_validate_url_object():
 
 
 @pytest.mark.unit
-def test_download_ipfs_file():
+def test_build_download_response_ipfs():
     client = ipfshttpclient.connect("/dns/172.15.0.16/tcp/5001/http")
     cid = client.add("./tests/resources/ddo_sample_file.txt")["Hash"]
     url_object = {"type": "ipfs", "hash": cid}
@@ -395,3 +402,39 @@ def test_download_ipfs_file():
 
     response = instance.build_download_response(request)
     assert response.data, f"got no data {response.data}"
+
+    # Assert that Content-Disposition header doesn't leak CID
+    assert cid not in response.headers["Content-Disposition"]
+
+
+@pytest.mark.unit
+def test_build_download_response_arweave(monkeypatch):
+    """Test the special cases relevant only to Arweave"""
+    transaction_id = ARWEAVE_TRANSACTION_ID
+    url_object = {
+        "type": "arweave",
+        "transactionId": ARWEAVE_TRANSACTION_ID,
+    }
+
+    request = Mock()
+    request.range = None
+
+    _, instance = FilesTypeFactory.validate_and_create(url_object)
+    assert (
+        instance.get_download_url() == f"https://arweave.net/{ARWEAVE_TRANSACTION_ID}"
+    )
+
+    response = instance.build_download_response(request)
+    assert response.status == "200 OK"
+    assert response.data, f"got no data {response.data}"
+
+    # Assert that Content-Disposition header doesn't leak transaction ID
+    assert transaction_id not in response.headers["Content-Disposition"]
+
+    # Unset ARWEAVE_GATEWAY
+    monkeypatch.delenv("ARWEAVE_GATEWAY")
+    with pytest.raises(
+        Exception,
+        match="No ARWEAVE_GATEWAY defined, can not resolve arweave transaction id.",
+    ):
+        instance.get_download_url()

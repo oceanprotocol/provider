@@ -289,6 +289,43 @@ def test_compute(client, publisher_wallet, consumer_wallet, free_c2d_env):
 
 
 @pytest.mark.integration
+def test_compute_arweave(client, publisher_wallet, consumer_wallet, free_c2d_env):
+    valid_until = get_future_valid_until()
+    ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
+        client,
+        publisher_wallet,
+        consumer_wallet,
+        alg_diff=False,
+        asset_type="stored_in_arweave",
+        c2d_address=free_c2d_env["consumerAddress"],
+        valid_until=valid_until,
+        c2d_environment=free_c2d_env["id"],
+    )
+    sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
+    sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
+    nonce, signature = get_compute_signature(client, consumer_wallet, ddo.did)
+
+    # Start the compute job
+    payload = {
+        "dataset": {"documentId": ddo.did, "serviceId": sa.id, "transferTxId": tx_id},
+        "algorithm": {
+            "serviceId": sa_compute.id,
+            "documentId": alg_ddo.did,
+            "transferTxId": alg_tx_id,
+        },
+        "signature": signature,
+        "nonce": nonce,
+        "consumerAddress": consumer_wallet.address,
+        "environment": free_c2d_env["id"],
+    }
+
+    # Start compute with valid signature
+    payload["signature"] = signature
+    response = post_to_compute(client, payload)
+    assert response.status == "200 OK", f"start compute job failed: {response.data}"
+
+
+@pytest.mark.integration
 def test_compute_diff_provider(client, publisher_wallet, consumer_wallet, free_c2d_env):
     valid_until = get_future_valid_until()
     ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
@@ -537,7 +574,7 @@ def test_compute_paid_env(
     valid_until = get_future_valid_until()
     deployer_wallet = Account.from_key(os.getenv("FACTORY_DEPLOYER_PRIVATE_KEY"))
     fee_token = get_datatoken_contract(web3, get_ocean_token_address(web3))
-    fee_token.functions.transfer(consumer_wallet.address, to_wei(80)).transact(
+    fee_token.functions.mint(consumer_wallet.address, to_wei(80)).transact(
         {"from": deployer_wallet.address}
     )
 

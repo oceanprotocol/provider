@@ -3,6 +3,7 @@ import os
 import json
 from typing import Any, Optional, Tuple
 from urllib.parse import urljoin
+from uuid import uuid4
 
 from enforce_typing import enforce_types
 
@@ -39,6 +40,10 @@ class UrlFile(EndUrlType, FilesType):
     def get_download_url(self):
         return self.url
 
+    @enforce_types
+    def get_filename(self) -> str:
+        return self.url.split("/")[-1]
+
 
 class IpfsFile(EndUrlType, FilesType):
     @enforce_types
@@ -63,6 +68,44 @@ class IpfsFile(EndUrlType, FilesType):
             raise Exception("No IPFS_GATEWAY defined, can not resolve ipfs hash.")
 
         return urljoin(os.getenv("IPFS_GATEWAY"), urljoin("ipfs/", self.hash))
+
+    @enforce_types
+    def get_filename(self):
+        return uuid4().hex
+
+
+class ArweaveFile(EndUrlType, FilesType):
+    @enforce_types
+    def __init__(
+        self,
+        transactionId: Optional[str] = None,
+        headers: Optional[dict] = None,
+        userdata=None,
+    ) -> None:
+        self.transactionId = transactionId
+        self.type = "arweave"
+        self.headers = headers if headers else {}
+        self.userdata = userdata
+        self.method = "get"
+
+    @enforce_types
+    def validate_dict(self) -> Tuple[bool, Any]:
+        if not self.transactionId:
+            return False, "malformed service files, missing transactionId."
+
+        return True, self
+
+    def get_download_url(self):
+        if not os.getenv("ARWEAVE_GATEWAY"):
+            raise Exception(
+                "No ARWEAVE_GATEWAY defined, can not resolve arweave transaction id."
+            )
+
+        return urljoin(os.getenv("ARWEAVE_GATEWAY"), self.transactionId)
+
+    @enforce_types
+    def get_filename(self):
+        return uuid4().hex
 
 
 class GraphqlQuery(EndUrlType, FilesType):
@@ -94,3 +137,7 @@ class GraphqlQuery(EndUrlType, FilesType):
 
     def get_download_url(self):
         return self.url
+
+    @enforce_types
+    def get_filename(self):
+        return uuid4().hex

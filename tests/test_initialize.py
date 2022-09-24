@@ -302,7 +302,7 @@ def test_initialize_compute_order_reused(
     assert "providerFee" not in response.json["algorithm"]
 
     # Sleep long enough for provider fees to expire
-    timeout = time.time() + (30 * 4)
+    timeout = time.time() + (30 * 5)
     while True:
         payload["compute"]["validUntil"] = get_future_valid_until(short=True) + 30
         response = client.post(
