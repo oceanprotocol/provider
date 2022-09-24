@@ -244,10 +244,10 @@ class WorkflowValidator:
             algorithm_dict, algorithm_did
         )
 
-        if not valid:
-            self.resource = f"algorithm.{resource}" if resource else "algorithm"
-            self.message = error_msg
-            return False
+        #if not valid:
+        #    self.resource = f"algorithm.{resource}" if resource else "algorithm"
+        #    self.message = error_msg
+        #    return False
 
         self.validated_algo_dict = algorithm_dict
 
@@ -429,9 +429,9 @@ class InputItemValidator:
             self.message = "compute_services_not_in_same_provider"
             return False
 
-        # if self.service.type == "compute":
-        #     if not self.validate_algo():
-        #         return False
+        if self.service.type == "compute":
+            if not self.validate_algo():
+                return False
 
         self.validated_inputs = {
             "index": self.index,
@@ -484,7 +484,7 @@ class InputItemValidator:
                 and self.algo_files_checksum != allowed_files_checksum.lower()
             ):
                 self.message = "algorithm_file_checksum_mismatch"
-                return False
+                return True
 
             if (
                 allowed_container_checksum
