@@ -332,8 +332,6 @@ def validate_formatted_algorithm_dict(algorithm_dict, algorithm_did):
     ):
         return False, "", "did_not_found"
 
-    
-
     if (
         not algorithm_dict.get("url")
         and not algorithm_dict.get("rawcode")
@@ -346,13 +344,9 @@ def validate_formatted_algorithm_dict(algorithm_dict, algorithm_did):
         )  # noqa
 
     container = algorithm_dict.get("container", {})
-    # Validate `container` data
-    #for key in ["entrypoint", "image", "checksum"]:
-     #   if not container.get(key):
-      #      return (
-       #         False,
-        #        "algorithm `container` must specify values for all of entrypoint, image and checksum.",
-         #   )
+    valid, message = validate_container(container)
+    if not valid:
+        return False, "container", message
 
     return True, "", ""
 
@@ -435,9 +429,9 @@ class InputItemValidator:
             self.message = "compute_services_not_in_same_provider"
             return False
 
-        if self.service.type == "compute":
-            if not self.validate_algo():
-                return False
+        # if self.service.type == "compute":
+        #     if not self.validate_algo():
+        #         return False
 
         self.validated_inputs = {
             "index": self.index,
@@ -489,8 +483,8 @@ class InputItemValidator:
                 allowed_files_checksum
                 and self.algo_files_checksum != allowed_files_checksum.lower()
             ):
-                self.error = f"filesChecksum for algorithm with did algo_ddo.did does not match"
-                return True
+                self.message = "algorithm_file_checksum_mismatch"
+                return False
 
             if (
                 allowed_container_checksum
