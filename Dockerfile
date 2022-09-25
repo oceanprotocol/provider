@@ -24,19 +24,19 @@ RUN python3.8 -m pip install wheel
 RUN python3.8 -m pip install .
 
 # config.ini configuration file variables
-ENV NETWORK_URL='http://127.0.0.1:8545'
+ENV NETWORK_URL='https://rinkeby.infura.io/v3/953659398bd94786a13b867b5d3b5700'
 
-ENV PROVIDER_PRIVATE_KEY=''
-ENV PROVIDER_ADDRESS=''
+# ENV PROVIDER_PRIVATE_KEY=''
+# ENV PROVIDER_ADDRESS=''
 
-ENV AZURE_ACCOUNT_NAME=''
-ENV AZURE_ACCOUNT_KEY=''
-ENV AZURE_RESOURCE_GROUP=''
-ENV AZURE_LOCATION=''
-ENV AZURE_CLIENT_ID=''
-ENV AZURE_CLIENT_SECRET=''
-ENV AZURE_TENANT_ID=''
-ENV AZURE_SUBSCRIPTION_ID=''
+# ENV AZURE_ACCOUNT_NAME=''
+# ENV AZURE_ACCOUNT_KEY=''
+# ENV AZURE_RESOURCE_GROUP=''
+# ENV AZURE_LOCATION=''
+# ENV AZURE_CLIENT_ID=''
+# ENV AZURE_CLIENT_SECRET=''
+# ENV AZURE_TENANT_ID=''
+# ENV AZURE_SUBSCRIPTION_ID=''
 # Note: AZURE_SHARE_INPUT and AZURE_SHARE_OUTPUT are only used
 # for Azure Compute data assets (not for Azure Storage data assets).
 # If you're not supporting Azure Compute, just leave their values
