@@ -2,15 +2,25 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
+import json
 import time
+import uuid
+from hashlib import sha256
+
 from eth_account import Account
 from datetime import datetime
 import os
 
+from web3 import Web3
+
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
+from ocean_provider.utils.basics import get_provider_wallet
 from ocean_provider.utils.currency import to_wei
+from ocean_provider.utils.data_nft import MetadataState, Flags
 from ocean_provider.utils.datatoken import get_datatoken_contract
+from ocean_provider.utils.did import compute_did_from_data_nft_address_and_chain_id
+from ocean_provider.utils.encryption import do_encrypt
 from ocean_provider.utils.provider_fees import get_provider_fees
 from ocean_provider.utils.services import ServiceType
 from ocean_provider.validation.provider_requests import RBACValidator
@@ -29,9 +39,11 @@ from tests.helpers.compute_helpers import (
 )
 
 import pytest
-from tests.helpers.ddo_dict_builders import build_metadata_dict_type_algorithm
+from tests.helpers.ddo_dict_builders import build_metadata_dict_type_algorithm, build_credentials_dict, \
+    get_current_iso_timestamp, build_ddo_dict
 from tests.test_auth import create_token
-from tests.test_helpers import get_first_service_by_type, get_ocean_token_address
+from tests.test_helpers import get_first_service_by_type, get_ocean_token_address, BLACK_HOLE_ADDRESS, deploy_data_nft, \
+    deploy_datatoken, set_metadata, wait_for_asset, initialize_service
 
 
 @pytest.mark.unit
@@ -39,6 +51,230 @@ def test_compute_rejected(client, monkeypatch):
     monkeypatch.delenv("OPERATOR_SERVICE_URL")
     response = post_to_compute(client, {})
     assert response.status_code == 404
+
+def _get_registered_asset_with_compute(from_wallet, web3):
+    data_nft_address = deploy_data_nft(
+        web3=web3,
+        name="Data NFT 1",
+        symbol="DNFT1",
+        template_index=1,
+        additional_erc20_deployer=BLACK_HOLE_ADDRESS,
+        additional_metadata_updater=BLACK_HOLE_ADDRESS,
+        base_uri="",
+        from_wallet=from_wallet,
+    )
+
+    template_index = 1
+    datatoken_address = deploy_datatoken(
+        web3=web3,
+        data_nft_address=data_nft_address,
+        template_index=template_index,
+        name="Datatoken 1",
+        symbol="DT1",
+        minter=from_wallet.address,
+        fee_manager=from_wallet.address,
+        publishing_market=BLACK_HOLE_ADDRESS,
+        publishing_market_fee_token=Web3.toChecksumAddress('0xCfDdA22C9837aE76E0faA845354f33C62E03653a'),
+        cap=to_wei(1000),
+        publishing_market_fee_amount=0,
+        from_wallet=from_wallet,
+    )
+
+    unencrypted_files_list = [
+        {
+            "url": "https://raw.githubusercontent.com/oceanprotocol/c2d-examples/main/branin_and_gpr/branin.arff",
+            "type": "url",
+            "method": "GET",
+        }
+    ]
+
+    unencrypted_files_list = {
+        "datatokenAddress": datatoken_address,
+        "nftAddress": data_nft_address,
+        "files": unencrypted_files_list,
+    }
+    encrypted_files_str = json.dumps(unencrypted_files_list, separators=(",", ":"))
+
+    encrypted_files = do_encrypt(
+        Web3.toHex(text=encrypted_files_str), get_provider_wallet()
+    )
+
+    credentials = build_credentials_dict()
+
+    did = compute_did_from_data_nft_address_and_chain_id(data_nft_address, 5)
+    metadata = {
+        "created": f"{get_current_iso_timestamp()}",
+        "updated": f"{get_current_iso_timestamp()}",
+        "description": "Branin dataset",
+        "name": "Branin dataset",
+        "type": "dataset",
+        "author": "Trent",
+        "license": "CC0: PublicDomain",
+        "additionalInformation": {},
+    }
+    service_endpoint = "https://v4.provider.goerli.oceanprotocol.com"
+    DATASET_compute_values = {
+        "allowRawAlgorithm": False,
+        "allowNetworkAccess": True,
+        "publisherTrustedAlgorithms": [],
+        "publisherTrustedAlgorithmPublishers": [],
+    }
+
+    service = [{
+        "id": str(uuid.uuid4()),
+        "type": "compute",
+        "name": "compute_1",
+        "description": "compute_1",
+        "datatokenAddress": datatoken_address,
+        "serviceEndpoint": service_endpoint,
+        "files": encrypted_files,
+        "timeout": 3600 * 24 * 30,
+        "compute": DATASET_compute_values
+    }]
+
+    ddo = build_ddo_dict(
+        did=did,
+        nft_address=data_nft_address,
+        chain_id=5,
+        metadata=metadata,
+        services=service,
+        credentials=credentials,
+    )
+
+    ddo_string = json.dumps(ddo)
+    ddo_bytes = ddo_string.encode("utf-8")
+    encrypted_ddo = ddo_bytes
+    ddo_hash = sha256(ddo_bytes).hexdigest()
+
+    set_metadata(
+        web3,
+        data_nft_address,
+        MetadataState.ACTIVE,
+        service_endpoint,
+        from_wallet.address,
+        Flags.PLAIN.to_byte(),
+        encrypted_ddo,
+        ddo_hash,
+        from_wallet,
+    )
+
+    aqua_root = "https://v4.aquarius.oceanprotocol.com"
+    asset = wait_for_asset(aqua_root, did)
+    assert asset, f"resolve did {did} failed."
+
+    data_nft_address_algo = deploy_data_nft(
+        web3=web3,
+        name="Data NFT 1",
+        symbol="DNFT1",
+        template_index=1,
+        additional_erc20_deployer=BLACK_HOLE_ADDRESS,
+        additional_metadata_updater=BLACK_HOLE_ADDRESS,
+        base_uri="",
+        from_wallet=from_wallet,
+    )
+    assert data_nft_address_algo, "data nft address not found"
+
+    template_index = 1
+    datatoken_address_algo = deploy_datatoken(
+        web3=web3,
+        data_nft_address=data_nft_address,
+        template_index=template_index,
+        name="Datatoken 1",
+        symbol="DT1",
+        minter=from_wallet.address,
+        fee_manager=from_wallet.address,
+        publishing_market=BLACK_HOLE_ADDRESS,
+        publishing_market_fee_token=Web3.toChecksumAddress('0xCfDdA22C9837aE76E0faA845354f33C62E03653a'),
+        cap=to_wei(1000),
+        publishing_market_fee_amount=0,
+        from_wallet=from_wallet,
+    )
+    assert datatoken_address_algo, "datatoken for algo not created."
+
+    ALGO_metadata = {
+        "created": f"{get_current_iso_timestamp()}",
+        "updated": f"{get_current_iso_timestamp()}",
+        "description": "gpr",
+        "name": "gpr",
+        "type": "algorithm",
+        "author": "Trent",
+        "license": "CC0: PublicDomain",
+        "algorithm": {
+            "language": "python",
+            "format": "docker-image",
+            "version": "0.1",
+            "container": {
+                "entrypoint": "python $ALGO",
+                "image": "oceanprotocol/algo_dockers",
+                "tag": "python-branin",
+                "checksum": "sha256:8221d20c1c16491d7d56b9657ea09082c0ee4a8ab1a6621fa720da58b09580e4",
+            },
+        }
+    }
+
+    unencrypted_files_list_algo = [
+        {
+            "url": "https://raw.githubusercontent.com/oceanprotocol/c2d-examples/main/branin_and_gpr/gpr.py",
+            "type": "url",
+            "method": "GET",
+        }
+    ]
+
+    unencrypted_files_list_algo = {
+        "datatokenAddress": datatoken_address,
+        "nftAddress": data_nft_address,
+        "files": unencrypted_files_list_algo,
+    }
+    encrypted_files_str_algo = json.dumps(unencrypted_files_list_algo, separators=(",", ":"))
+    encrypted_files_algo = do_encrypt(
+        Web3.toHex(text=encrypted_files_str_algo), get_provider_wallet()
+    )
+
+    credentials_algo = build_credentials_dict()
+
+    did_algo = compute_did_from_data_nft_address_and_chain_id(data_nft_address_algo, 5)
+
+    service_algo = [{
+        "id": str(uuid.uuid4()),
+        "type": "access",
+        "name": "access",
+        "description": "access",
+        "datatokenAddress": datatoken_address_algo,
+        "serviceEndpoint": service_endpoint,
+        "files": encrypted_files_algo,
+        "timeout": 3600 * 24 * 30
+    }]
+
+    ddo_algo = build_ddo_dict(
+        did=did_algo,
+        nft_address=data_nft_address_algo,
+        chain_id=5,
+        metadata=ALGO_metadata,
+        services=service_algo,
+        credentials=credentials_algo,
+    )
+
+    ddo_string_algo = json.dumps(ddo_algo)
+    ddo_bytes_algo = ddo_string_algo.encode("utf-8")
+    encrypted_ddo_algo = ddo_bytes_algo
+    ddo_hash_algo = sha256(ddo_bytes_algo).hexdigest()
+
+    set_metadata(
+        web3,
+        data_nft_address_algo,
+        MetadataState.ACTIVE,
+        service_endpoint,
+        from_wallet.address,
+        Flags.PLAIN.to_byte(),
+        encrypted_ddo_algo,
+        ddo_hash_algo,
+        from_wallet,
+    )
+
+    asset_algo = wait_for_asset(aqua_root, did_algo)
+    assert asset_algo, f"resolve did {did_algo} failed."
+
+    return asset, asset_algo, data_nft_address, datatoken_address, data_nft_address_algo, datatoken_address_algo
 
 
 @pytest.mark.integration

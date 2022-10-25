@@ -39,4 +39,4 @@ def get_provider_fee_token(chain_id):
 
 
 def get_ocean_address(chain_id):
-    return get_contract_address(get_config().address_file, "Ocean", chain_id)
+    return get_contract_address(get_config().address_file, "Ocean", 5)

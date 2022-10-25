@@ -89,6 +89,7 @@ def deploy_data_nft(
     from_wallet: LocalAccount,
 ) -> HexAddress:
     data_nft_factory = get_data_nft_factory_contract(web3)
+    history = web3.eth.fee_history(block_count=1, newest_block="latest")
     deploy_data_nft_tx = data_nft_factory.functions.deployERC721Contract(
         name,
         symbol,
@@ -98,7 +99,8 @@ def deploy_data_nft(
         base_uri,
         True,
         from_wallet.address,
-    ).buildTransaction({"from": from_wallet.address, "gasPrice": get_gas_price(web3)})
+    ).buildTransaction({"from": from_wallet.address, "maxPriorityFeePerGas": web3.eth.max_priority_fee, "maxFeePerGas": web3.eth.max_priority_fee + 2 * history["baseFeePerGas"][0],
+                        "gas": 1000000})
     _, deploy_data_nft_receipt = sign_send_and_wait_for_receipt(
         web3, deploy_data_nft_tx, from_wallet
     )
@@ -302,9 +304,12 @@ def set_metadata(
     """Publish encrypted DDO on-chain by calling the ERC721Template setMetaData
     contract function"""
     data_nft_contract = get_data_nft_contract(web3, data_nft_address)
+    history = web3.eth.fee_history(block_count=1, newest_block="latest")
     transaction = data_nft_contract.functions.setMetaData(
         state, provider_url, provider_address, flags, encrypted_ddo, ddo_hash, []
-    ).buildTransaction({"from": from_wallet.address, "gasPrice": get_gas_price(web3)})
+    ).buildTransaction({"from": from_wallet.address, "maxPriorityFeePerGas": web3.eth.max_priority_fee,
+    "maxFeePerGas": web3.eth.max_priority_fee + 2 * history["baseFeePerGas"][0],
+    "gas": 1000000})
     return sign_send_and_wait_for_receipt(web3, transaction, from_wallet)
 
 
@@ -385,7 +390,7 @@ def wait_for_asset(metadata_cache_url, did, timeout=30) -> Optional[Asset]:
         ddo = get_asset_from_metadatastore(metadata_cache_url, did)
 
         if not ddo:
-            time.sleep(0.2)
+            time.sleep(10)
 
         if time.time() - start > timeout:
             break

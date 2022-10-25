@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
+from ocean_provider.utils.compute import get_compute_endpoint
 from ocean_provider.utils.provider_fees import get_provider_fees
 from ocean_provider.utils.services import ServiceType
 from ocean_provider.utils.util import msg_hash
