@@ -99,8 +99,14 @@ def deploy_data_nft(
         base_uri,
         True,
         from_wallet.address,
-    ).buildTransaction({"from": from_wallet.address, "maxPriorityFeePerGas": web3.eth.max_priority_fee, "maxFeePerGas": web3.eth.max_priority_fee + 2 * history["baseFeePerGas"][0],
-                        "gas": 1000000})
+    ).buildTransaction(
+        {
+            "from": from_wallet.address,
+            "maxPriorityFeePerGas": web3.eth.max_priority_fee,
+            "maxFeePerGas": web3.eth.max_priority_fee + 2 * history["baseFeePerGas"][0],
+            "gas": 1000000,
+        }
+    )
     _, deploy_data_nft_receipt = sign_send_and_wait_for_receipt(
         web3, deploy_data_nft_tx, from_wallet
     )
@@ -307,9 +313,14 @@ def set_metadata(
     history = web3.eth.fee_history(block_count=1, newest_block="latest")
     transaction = data_nft_contract.functions.setMetaData(
         state, provider_url, provider_address, flags, encrypted_ddo, ddo_hash, []
-    ).buildTransaction({"from": from_wallet.address, "maxPriorityFeePerGas": web3.eth.max_priority_fee,
-    "maxFeePerGas": web3.eth.max_priority_fee + 2 * history["baseFeePerGas"][0],
-    "gas": 1000000})
+    ).buildTransaction(
+        {
+            "from": from_wallet.address,
+            "maxPriorityFeePerGas": web3.eth.max_priority_fee,
+            "maxFeePerGas": web3.eth.max_priority_fee + 2 * history["baseFeePerGas"][0],
+            "gas": 1000000,
+        }
+    )
     return sign_send_and_wait_for_receipt(web3, transaction, from_wallet)
 
 

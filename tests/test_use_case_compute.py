@@ -44,19 +44,30 @@ print(f"chain id for this network is: {web3.eth.chain_id}")
 #########################################
 
 print(f"Step 2: Fresh consume the dataset + algo C2D")
-dataset, algo, data_nft_dataset, datatoken_dataset, data_nft_algo, datatoken_algo = _get_registered_asset_with_compute(
-    publisher_wallet, web3)
+(
+    dataset,
+    algo,
+    data_nft_dataset,
+    datatoken_dataset,
+    data_nft_algo,
+    datatoken_algo,
+) = _get_registered_asset_with_compute(publisher_wallet, web3)
 
 sa = get_first_service_by_type(dataset, ServiceType.COMPUTE)
 datatoken_contract = web3.eth.contract(
     address=web3.toChecksumAddress(datatoken_dataset), abi=ERC20Template.abi
 )
 history = web3.eth.fee_history(block_count=1, newest_block="latest")
-mint_datatoken_tx = datatoken_contract.functions.mint(publisher_wallet.address, to_wei(50)).buildTransaction({
-    "from": publisher_wallet.address, "maxPriorityFeePerGas": web3.eth.max_priority_fee,
-    "maxFeePerGas": web3.eth.max_priority_fee + 2 * history["baseFeePerGas"][0],
-    "gas": 1000000
-})
+mint_datatoken_tx = datatoken_contract.functions.mint(
+    publisher_wallet.address, to_wei(50)
+).buildTransaction(
+    {
+        "from": publisher_wallet.address,
+        "maxPriorityFeePerGas": web3.eth.max_priority_fee,
+        "maxFeePerGas": web3.eth.max_priority_fee + 2 * history["baseFeePerGas"][0],
+        "gas": 1000000,
+    }
+)
 sign_send_and_wait_for_receipt(web3, mint_datatoken_tx, publisher_wallet)
 assert datatoken_contract.caller.balanceOf(publisher_wallet.address) == to_wei(50)
 tx_id, _ = start_order(
@@ -73,9 +84,7 @@ tx_id, _ = start_order(
     ),
     publisher_wallet,
 )
-nonce, signature = get_compute_signature(
-    client, publisher_wallet, dataset.did
-)
+nonce, signature = get_compute_signature(client, publisher_wallet, dataset.did)
 
 # Start the compute job
 print(f"Step 3: Start compute job")
@@ -100,7 +109,9 @@ payload = {
 
 response = post_to_compute(client, payload)
 
-assert response.status == "200 OK", f"start compute job failed at step 3: {response.data}"
+assert (
+    response.status == "200 OK"
+), f"start compute job failed at step 3: {response.data}"
 job_info = response.json[0]
 print(f"got response from starting compute job: {job_info}")
 job_id = job_info.get("jobId", "")
@@ -131,15 +142,21 @@ assert tries <= 200, "Timeout waiting for the job to be completed"
 print(f"Finished monitoring at step 4...")
 print(f"Reusing existing order for publisher wallet...")
 
-response = initialize_service(client=client, did=dataset.did, service=sa, from_wallet=publisher_wallet,
-                              raw_response=True, reuse_order=tx_id)
+response = initialize_service(
+    client=client,
+    did=dataset.did,
+    service=sa,
+    from_wallet=publisher_wallet,
+    raw_response=True,
+    reuse_order=tx_id,
+)
 assert response.json["validOrder"] == tx_id
 
-print(f"Steps 4-5: Reused order for publisher wallet. Now starting again the compute job")
-# Start the compute job
-nonce2, signature2 = get_compute_signature(
-    client, consumer_wallet, dataset.did
+print(
+    f"Steps 4-5: Reused order for publisher wallet. Now starting again the compute job"
 )
+# Start the compute job
+nonce2, signature2 = get_compute_signature(client, consumer_wallet, dataset.did)
 payload = {
     "dataset": {
         "documentId": dataset.did,
@@ -157,13 +174,20 @@ resp = post_to_compute(client, payload)
 assert resp.status == "200 OK", f"start compute job failed at step 5: {resp.data}"
 
 print(f"Switch to consumer wallet")
-print(f"Steps 7-8: Consume the same dataset, start a different order and a different compute job.")
+print(
+    f"Steps 7-8: Consume the same dataset, start a different order and a different compute job."
+)
 history = web3.eth.fee_history(block_count=1, newest_block="latest")
-mint_datatoken_tx = datatoken_contract.functions.mint(consumer_wallet.address, to_wei(50)).buildTransaction({
-    "from": consumer_wallet.address, "maxPriorityFeePerGas": web3.eth.max_priority_fee,
-    "maxFeePerGas": web3.eth.max_priority_fee + 2 * history["baseFeePerGas"][0],
-    "gas": 1000000
-})
+mint_datatoken_tx = datatoken_contract.functions.mint(
+    consumer_wallet.address, to_wei(50)
+).buildTransaction(
+    {
+        "from": consumer_wallet.address,
+        "maxPriorityFeePerGas": web3.eth.max_priority_fee,
+        "maxFeePerGas": web3.eth.max_priority_fee + 2 * history["baseFeePerGas"][0],
+        "gas": 1000000,
+    }
+)
 sign_send_and_wait_for_receipt(web3, mint_datatoken_tx, consumer_wallet)
 assert datatoken_contract.caller.balanceOf(consumer_wallet.address) == to_wei(50)
 tx_id_c, _ = start_order(
@@ -174,9 +198,7 @@ tx_id_c, _ = start_order(
     response.json["providerFees"],
     consumer_wallet,
 )
-nonce_c1, signature_c1 = get_compute_signature(
-    client, consumer_wallet, dataset.did
-)
+nonce_c1, signature_c1 = get_compute_signature(client, consumer_wallet, dataset.did)
 
 # Start the compute job
 payload = {
@@ -193,11 +215,15 @@ payload = {
 }
 
 response = post_to_compute(client, payload)
-assert response.status == "200 OK", f"start compute job failed at step 8: {response.data}"
+assert (
+    response.status == "200 OK"
+), f"start compute job failed at step 8: {response.data}"
 job_info_c = response.json[0]
 print(f"got response from starting compute job: {job_info}")
 
-print(f"Step 9: Waiting time for fetching the job and reusing the previous order for consumer")
+print(
+    f"Step 9: Waiting time for fetching the job and reusing the previous order for consumer"
+)
 job_id_c = job_info_c.get("jobId", "")
 nonce_c, signature_c = get_compute_signature(client, consumer_wallet, dataset.did)
 payload = dict(
@@ -224,14 +250,18 @@ assert tries <= 200, "Timeout waiting for the job to be completed"
 
 print(f"Finished monitoring for step 9...")
 print(f"Reusing order for consumer wallet...")
-response = initialize_service(client=client, did=dataset.did, service=sa, from_wallet=consumer_wallet,
-                              raw_response=True, reuse_order=tx_id_c)
+response = initialize_service(
+    client=client,
+    did=dataset.did,
+    service=sa,
+    from_wallet=consumer_wallet,
+    raw_response=True,
+    reuse_order=tx_id_c,
+)
 assert response.json["validOrder"] == tx_id_c
 
 print(f"Step 10 - Start compute job again for consumer wallet")
-nonce3, signature3 = get_compute_signature(
-    client, consumer_wallet, dataset.did
-)
+nonce3, signature3 = get_compute_signature(client, consumer_wallet, dataset.did)
 # Start the compute job
 payload = {
     "dataset": {
@@ -249,15 +279,21 @@ payload = {
 resp = post_to_compute(client, payload)
 assert resp.status == "200 OK", f"start compute job failed at step 10: {resp.data}"
 
-print(f"Step 11-12: Switch back to publisher wallet and reuse order from publisher wallet")
-response = initialize_service(client=client, did=dataset.did, service=sa, from_wallet=publisher_wallet,
-                              raw_response=True, reuse_order=tx_id_c)
+print(
+    f"Step 11-12: Switch back to publisher wallet and reuse order from publisher wallet"
+)
+response = initialize_service(
+    client=client,
+    did=dataset.did,
+    service=sa,
+    from_wallet=publisher_wallet,
+    raw_response=True,
+    reuse_order=tx_id_c,
+)
 assert response.json["validOrder"] == tx_id_c
 
 print(f"Step 13: Start again the compute job from publisher wallet")
-nonce4, signature4 = get_compute_signature(
-    client, publisher_wallet, dataset.did
-)
+nonce4, signature4 = get_compute_signature(client, publisher_wallet, dataset.did)
 # Start the compute job
 payload = {
     "dataset": {
@@ -273,4 +309,6 @@ payload = {
 }
 
 response = post_to_compute(client, payload)
-assert response.status == "200 OK", f"start compute job failed at step 13: {response.data}"
+assert (
+    response.status == "200 OK"
+), f"start compute job failed at step 13: {response.data}"

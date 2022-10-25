@@ -39,11 +39,23 @@ from tests.helpers.compute_helpers import (
 )
 
 import pytest
-from tests.helpers.ddo_dict_builders import build_metadata_dict_type_algorithm, build_credentials_dict, \
-    get_current_iso_timestamp, build_ddo_dict
+from tests.helpers.ddo_dict_builders import (
+    build_metadata_dict_type_algorithm,
+    build_credentials_dict,
+    get_current_iso_timestamp,
+    build_ddo_dict,
+)
 from tests.test_auth import create_token
-from tests.test_helpers import get_first_service_by_type, get_ocean_token_address, BLACK_HOLE_ADDRESS, deploy_data_nft, \
-    deploy_datatoken, set_metadata, wait_for_asset, initialize_service
+from tests.test_helpers import (
+    get_first_service_by_type,
+    get_ocean_token_address,
+    BLACK_HOLE_ADDRESS,
+    deploy_data_nft,
+    deploy_datatoken,
+    set_metadata,
+    wait_for_asset,
+    initialize_service,
+)
 
 
 @pytest.mark.unit
@@ -51,6 +63,7 @@ def test_compute_rejected(client, monkeypatch):
     monkeypatch.delenv("OPERATOR_SERVICE_URL")
     response = post_to_compute(client, {})
     assert response.status_code == 404
+
 
 def _get_registered_asset_with_compute(from_wallet, web3):
     data_nft_address = deploy_data_nft(
@@ -74,7 +87,9 @@ def _get_registered_asset_with_compute(from_wallet, web3):
         minter=from_wallet.address,
         fee_manager=from_wallet.address,
         publishing_market=BLACK_HOLE_ADDRESS,
-        publishing_market_fee_token=Web3.toChecksumAddress('0xCfDdA22C9837aE76E0faA845354f33C62E03653a'),
+        publishing_market_fee_token=Web3.toChecksumAddress(
+            "0xCfDdA22C9837aE76E0faA845354f33C62E03653a"
+        ),
         cap=to_wei(1000),
         publishing_market_fee_amount=0,
         from_wallet=from_wallet,
@@ -120,17 +135,19 @@ def _get_registered_asset_with_compute(from_wallet, web3):
         "publisherTrustedAlgorithmPublishers": [],
     }
 
-    service = [{
-        "id": str(uuid.uuid4()),
-        "type": "compute",
-        "name": "compute_1",
-        "description": "compute_1",
-        "datatokenAddress": datatoken_address,
-        "serviceEndpoint": service_endpoint,
-        "files": encrypted_files,
-        "timeout": 3600 * 24 * 30,
-        "compute": DATASET_compute_values
-    }]
+    service = [
+        {
+            "id": str(uuid.uuid4()),
+            "type": "compute",
+            "name": "compute_1",
+            "description": "compute_1",
+            "datatokenAddress": datatoken_address,
+            "serviceEndpoint": service_endpoint,
+            "files": encrypted_files,
+            "timeout": 3600 * 24 * 30,
+            "compute": DATASET_compute_values,
+        }
+    ]
 
     ddo = build_ddo_dict(
         did=did,
@@ -184,7 +201,9 @@ def _get_registered_asset_with_compute(from_wallet, web3):
         minter=from_wallet.address,
         fee_manager=from_wallet.address,
         publishing_market=BLACK_HOLE_ADDRESS,
-        publishing_market_fee_token=Web3.toChecksumAddress('0xCfDdA22C9837aE76E0faA845354f33C62E03653a'),
+        publishing_market_fee_token=Web3.toChecksumAddress(
+            "0xCfDdA22C9837aE76E0faA845354f33C62E03653a"
+        ),
         cap=to_wei(1000),
         publishing_market_fee_amount=0,
         from_wallet=from_wallet,
@@ -209,7 +228,7 @@ def _get_registered_asset_with_compute(from_wallet, web3):
                 "tag": "python-branin",
                 "checksum": "sha256:8221d20c1c16491d7d56b9657ea09082c0ee4a8ab1a6621fa720da58b09580e4",
             },
-        }
+        },
     }
 
     unencrypted_files_list_algo = [
@@ -225,7 +244,9 @@ def _get_registered_asset_with_compute(from_wallet, web3):
         "nftAddress": data_nft_address,
         "files": unencrypted_files_list_algo,
     }
-    encrypted_files_str_algo = json.dumps(unencrypted_files_list_algo, separators=(",", ":"))
+    encrypted_files_str_algo = json.dumps(
+        unencrypted_files_list_algo, separators=(",", ":")
+    )
     encrypted_files_algo = do_encrypt(
         Web3.toHex(text=encrypted_files_str_algo), get_provider_wallet()
     )
@@ -234,16 +255,18 @@ def _get_registered_asset_with_compute(from_wallet, web3):
 
     did_algo = compute_did_from_data_nft_address_and_chain_id(data_nft_address_algo, 5)
 
-    service_algo = [{
-        "id": str(uuid.uuid4()),
-        "type": "access",
-        "name": "access",
-        "description": "access",
-        "datatokenAddress": datatoken_address_algo,
-        "serviceEndpoint": service_endpoint,
-        "files": encrypted_files_algo,
-        "timeout": 3600 * 24 * 30
-    }]
+    service_algo = [
+        {
+            "id": str(uuid.uuid4()),
+            "type": "access",
+            "name": "access",
+            "description": "access",
+            "datatokenAddress": datatoken_address_algo,
+            "serviceEndpoint": service_endpoint,
+            "files": encrypted_files_algo,
+            "timeout": 3600 * 24 * 30,
+        }
+    ]
 
     ddo_algo = build_ddo_dict(
         did=did_algo,
@@ -274,7 +297,14 @@ def _get_registered_asset_with_compute(from_wallet, web3):
     asset_algo = wait_for_asset(aqua_root, did_algo)
     assert asset_algo, f"resolve did {did_algo} failed."
 
-    return asset, asset_algo, data_nft_address, datatoken_address, data_nft_address_algo, datatoken_address_algo
+    return (
+        asset,
+        asset_algo,
+        data_nft_address,
+        datatoken_address,
+        data_nft_address_algo,
+        datatoken_address_algo,
+    )
 
 
 @pytest.mark.integration
