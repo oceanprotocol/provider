@@ -151,13 +151,15 @@ def test_download_smartcontract_asset_with_pure_function(
     dummy_asset = get_registered_asset(publisher_wallet)
     dummy_service = get_first_service_by_type(dummy_asset, ServiceType.ACCESS)
     # create abi for getId
-    abi = {
-        "inputs": [],
-        "name": "decimals",
-        "outputs": [{"internalType": "uint8", "name": "", "type": "uint8"}],
-        "stateMutability": "pure",
-        "type": "function",
-    }
+    abi = (
+        {
+            "inputs": [],
+            "name": "getId",
+            "outputs": [{"internalType": "uint8", "name": "", "type": "uint8"}],
+            "stateMutability": "pure",
+            "type": "function",
+        },
+    )
     unencrypted_files_list = [
         {
             "type": "smartcontract",
