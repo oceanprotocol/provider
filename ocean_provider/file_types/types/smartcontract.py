@@ -43,8 +43,9 @@ class SmartContractCall(FilesType):
         type = self.abi.get("type")
         if inputs is None or type != "function":
             return False, "invalid abi"
-        if self.abi.get("stateMutability") != "view":
-            return False, "only view functions are allowed"
+        mutability = self.abi.get("stateMutability", None)
+        if mutability not in ["view", "pure"]:
+            return False, "only view or pure functions are allowed"
         if not self.abi.get("name"):
             return False, "missing name"
 
