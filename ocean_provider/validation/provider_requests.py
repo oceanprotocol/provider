@@ -20,7 +20,7 @@ from ocean_provider.validation.RBAC import RBACValidator
 logger = logging.getLogger(__name__)
 
 
-ALLOWED_FILE_TYPES = ["ipfs", "url", "arweave", "graphql"]
+ALLOWED_FILE_TYPES = ["ipfs", "url", "arweave", "graphql", "smartcontract"]
 
 
 class CustomJsonRequest(JsonRequest):

@@ -149,9 +149,9 @@ def test_check_smartcontract_simple(client, publisher_wallet, consumer_wallet, w
         get_config().address_file, "Router", web3.chain_id
     )
     abi = {
-        "inputs": [{"internalType": "address", "name": "baseToken", "type": "address"}],
-        "name": "getOPCFee",
-        "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+        "inputs": [],
+        "name": "getApprovedTokens",
+        "outputs": [{"internalType": "address[]", "name": "", "type": "address[]"}],
         "stateMutability": "view",
         "type": "function",
     }
@@ -178,7 +178,7 @@ def test_check_smartcontract_with_userdata(
         "stateMutability": "view",
         "type": "function",
     }
-    userdata = {"user": publisher_wallet}
+    userdata = {"user": publisher_wallet.address}
 
     payload = {
         "type": "smartcontract",
