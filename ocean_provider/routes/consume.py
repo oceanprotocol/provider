@@ -102,6 +102,7 @@ def fileinfo():
 
     files_info = []
     for i, file in enumerate(files_list):
+        file["userdata"] = data.get("userdata")
         valid, message = FilesTypeFactory.validate_and_create(file)
         if not valid:
             return error_response(message, 400, logger)
@@ -190,11 +191,13 @@ def initialize():
     # we check if the file is valid only if we have fileIndex
     if file_index > -1:
         url_object = get_service_files_list(service, provider_wallet, asset)[file_index]
+        url_object["userdata"] = data.get("userdata")
         valid, message = FilesTypeFactory.validate_and_create(url_object)
         if not valid:
             return error_response(message, 400, logger)
 
         file_instance = message
+
         valid, url_details = file_instance.check_details(url_object)
         if not valid or not url_details:
             return error_response(
