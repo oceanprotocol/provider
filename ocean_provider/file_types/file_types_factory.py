@@ -18,6 +18,8 @@ logger = logging.getLogger(__name__)
 class FilesTypeFactory:
     """Factory Method"""
 
+    ALLOWED_FILE_TYPES = ["ipfs", "url", "arweave", "graphql", "smartcontract"]
+
     @staticmethod
     def validate_and_create(file_obj) -> Tuple[bool, Any]:
         if not file_obj:

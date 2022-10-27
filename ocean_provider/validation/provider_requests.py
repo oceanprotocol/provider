@@ -12,15 +12,14 @@ from flask_sieve.rules_processor import RulesProcessor
 from flask_sieve.validator import Validator
 
 from ocean_provider.exceptions import InvalidSignatureError
+from ocean_provider.file_types.file_types_factory import FilesTypeFactory
 from ocean_provider.utils.accounts import verify_signature, verify_nonce
 from ocean_provider.utils.util import get_request_data
 from ocean_provider.user_nonce import is_token_valid
 from ocean_provider.validation.RBAC import RBACValidator
 
+
 logger = logging.getLogger(__name__)
-
-
-ALLOWED_FILE_TYPES = ["ipfs", "url", "arweave", "graphql", "smartcontract"]
 
 
 class CustomJsonRequest(JsonRequest):
@@ -269,7 +268,10 @@ class DecryptRequest(CustomJsonRequest):
 class FileInfoRequest(CustomJsonRequest):
     def rules(self):
         return {
-            "type": ["required_without:did", f"in:{','.join(ALLOWED_FILE_TYPES)}"],
+            "type": [
+                "required_without:did",
+                f"in:{','.join(FilesTypeFactory.ALLOWED_FILE_TYPES)}",
+            ],
             "did": ["required_without:type", "regex:^did:op"],
             "hash": ["required_if:type,ipfs"],
             "url": ["required_if:type,url"],
