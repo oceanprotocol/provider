@@ -155,7 +155,7 @@ def test_check_smartcontract_simple(client, publisher_wallet, consumer_wallet, w
         "stateMutability": "view",
         "type": "function",
     }
-    payload = [{"type": "smartcontract", "address": router_address, "abi": abi}]
+    payload = {"type": "smartcontract", "address": router_address, "abi": abi}
     response = client.post(fileinfo_url, json=payload)
     result = response.get_json()
 
@@ -180,27 +180,24 @@ def test_check_smartcontract_with_userdata(
     }
     userdata = {"user": publisher_wallet}
 
-    payload = [
-        {
-            "type": "smartcontract",
-            "address": dummy_service.datatoken_address,
-            "abi": abi,
-        }
-    ]
+    payload = {
+        "type": "smartcontract",
+        "address": dummy_service.datatoken_address,
+        "abi": abi,
+    }
+
     # try first without userdata, should fail
     response = client.post(fileinfo_url, json=payload)
     result = response.get_json()
     assert response.status == "400 BAD REQUEST", f"{result}"
 
     # try with userdata, should be fine
-    payload_with_userdata = [
-        {
-            "type": "smartcontract",
-            "address": dummy_service.datatoken_address,
-            "abi": abi,
-            "userdata": userdata,
-        }
-    ]
+    payload_with_userdata = {
+        "type": "smartcontract",
+        "address": dummy_service.datatoken_address,
+        "abi": abi,
+        "userdata": userdata,
+    }
     response = client.post(fileinfo_url, json=payload_with_userdata)
     result = response.get_json()
     assert response.status == "200 OK"
