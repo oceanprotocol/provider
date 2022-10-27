@@ -5,6 +5,8 @@
 import pytest
 
 from ocean_provider.constants import BaseURLs
+from ocean_provider.utils.address import get_contract_address
+from ocean_provider.utils.basics import get_config
 from ocean_provider.utils.services import ServiceType
 from tests.helpers.constants import ARWEAVE_TRANSACTION_ID
 from tests.test_helpers import (
@@ -139,3 +141,66 @@ def test_check_arweave_bad(client, monkeypatch):
     result = response.get_json()
     assert response.status == "200 OK"
     assert result[0]["valid"] == False
+
+
+@pytest.mark.integration
+def test_check_smartcontract_simple(client, publisher_wallet, consumer_wallet, web3):
+    router_address = get_contract_address(
+        get_config().address_file, "Router", web3.chain_id
+    )
+    abi = {
+        "inputs": [{"internalType": "address", "name": "baseToken", "type": "address"}],
+        "name": "getOPCFee",
+        "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+        "stateMutability": "view",
+        "type": "function",
+    }
+    payload = [{"type": "smartcontract", "address": router_address, "abi": abi}]
+    response = client.post(fileinfo_url, json=payload)
+    result = response.get_json()
+
+    assert response.status == "200 OK", f"{result}"
+    assert isinstance(result, list)
+    assert len(result) == 1
+
+
+@pytest.mark.integration
+def test_check_smartcontract_with_userdata(
+    client, publisher_wallet, consumer_wallet, web3
+):
+    dummy_asset = get_registered_asset(publisher_wallet)
+    dummy_service = get_first_service_by_type(dummy_asset, ServiceType.ACCESS)
+    # create abi for getId
+    abi = {
+        "inputs": [{"internalType": "address", "name": "user", "type": "address"}],
+        "name": "isERC20Deployer",
+        "outputs": [{"internalType": "bool", "name": "", "type": "bool"}],
+        "stateMutability": "view",
+        "type": "function",
+    }
+    userdata = {"user": publisher_wallet}
+
+    payload = [
+        {
+            "type": "smartcontract",
+            "address": dummy_service.datatoken_address,
+            "abi": abi,
+        }
+    ]
+    # try first without userdata, should fail
+    response = client.post(fileinfo_url, json=payload)
+    result = response.get_json()
+    assert response.status == "400 BAD REQUEST", f"{result}"
+
+    # try with userdata, should be fine
+    payload_with_userdata = [
+        {
+            "type": "smartcontract",
+            "address": dummy_service.datatoken_address,
+            "abi": abi,
+            "userdata": userdata,
+        }
+    ]
+    response = client.post(fileinfo_url, json=payload_with_userdata)
+    result = response.get_json()
+    assert response.status == "200 OK"
