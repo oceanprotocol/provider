@@ -16,11 +16,27 @@ one datatoken to the provider, as well as provider fees for the compute job.
 #### 400 - Bad Request
 
 It occurs when the payload is incorrect, either at least one parameter is missing.
-The following messages attached to this status code are:
+The following errors are displayed in JSON format:
 
-- **The validUntil value is not correct.**
-- **Compute environment does not exist.**
-- **DID is not a valid algorithm.**
+```python
+{
+    "error": "The validUntil value is not correct."
+}
+```
+**Reason** `validUntil` value is most probably expired.
+
+```python
+{
+    "error": "Compute environment does not exist."
+}
+```
+**Reason** If you are trying to initialize a compute service, the compute values need to be provided.
+```python
+{
+    "error": "DID is not a valid algorithm."
+}
+```
+**Reason** Either the DID is incorrect typed, either the algorithm timeout expired.
 
 #### 503 - Service Unavailable
 
