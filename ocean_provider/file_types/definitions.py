@@ -56,7 +56,9 @@ class EndUrlType:
         contentLength. If the with_checksum flag is set to True, it also returns
         the file checksum and the checksumType (currently hardcoded to sha256)
         """
+
         url = self.get_download_url()
+
         try:
             if not is_safe_url(url):
                 return False, {}
@@ -110,27 +112,25 @@ class EndUrlType:
 
     def _get_result_from_url(self, with_checksum=False):
         lightweight_methods = [] if self.method == "post" else ["head", "options"]
-
-        for method in lightweight_methods:
-            url = self.get_download_url()
-            func = getattr(requests, method)
-            result = func(
-                url,
-                timeout=REQUEST_TIMEOUT,
-                headers=self.headers,
-                params=self.format_userdata(),
-            )
-
-            if (
-                not with_checksum
-                and result.status_code == 200
-                and (
-                    result.headers.get("Content-Type")
-                    or result.headers.get("Content-Range")
+        if not with_checksum:
+            for method in lightweight_methods:
+                url = self.get_download_url()
+                func = getattr(requests, method)
+                result = func(
+                    url,
+                    timeout=REQUEST_TIMEOUT,
+                    headers=self.headers,
+                    params=self.format_userdata(),
                 )
-                and result.headers.get("Content-Length")
-            ):
-                return result, {}
+                if (
+                    result.status_code == 200
+                    and (
+                        result.headers.get("Content-Type")
+                        or result.headers.get("Content-Range")
+                    )
+                    and result.headers.get("Content-Length")
+                ):
+                    return result, {}
 
         func, func_args = self._get_func_and_args()
 

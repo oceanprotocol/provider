@@ -197,8 +197,7 @@ def initialize():
             return error_response(message, 400, logger)
 
         file_instance = message
-
-        valid, url_details = file_instance.check_details(url_object)
+        valid, url_details = file_instance.check_details(with_checksum=False)
         if not valid or not url_details:
             return error_response(
                 f"Error: Asset URL not found or not available. \n"
