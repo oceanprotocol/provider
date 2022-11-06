@@ -1,3 +1,4 @@
+import copy
 import hashlib
 import json
 import logging
@@ -59,18 +60,24 @@ class EndUrlType:
         try:
             if not is_safe_url(url):
                 return False, {}
-
+            status = None
+            headers = None
             for _ in range(int(os.getenv("REQUEST_RETRIES", 1))):
                 result, extra_data = self._get_result_from_url(
                     with_checksum=with_checksum,
                 )
-                if result and result.status_code == 200:
-                    break
+                if result:
+                    status_code = result.status_code
+                    headers = copy.deepcopy(result.headers)
+                    # always close requests session, see https://requests.readthedocs.io/en/latest/user/advanced/#body-content-workflow
+                    result.close()
+                    if status_code == 200:
+                        break
 
-            if result.status_code == 200:
-                content_type = result.headers.get("Content-Type")
-                content_length = result.headers.get("Content-Length")
-                content_range = result.headers.get("Content-Range")
+            if status_code == 200:
+                content_type = headers.get("Content-Type")
+                content_length = headers.get("Content-Length")
+                content_range = headers.get("Content-Range")
 
                 if not content_length and content_range:
                     # sometimes servers send content-range instead
