@@ -60,7 +60,7 @@ class EndUrlType:
         try:
             if not is_safe_url(url):
                 return False, {}
-            status = None
+            status_code = None
             headers = None
             for _ in range(int(os.getenv("REQUEST_RETRIES", 1))):
                 result, extra_data = self._get_result_from_url(
