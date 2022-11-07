@@ -93,7 +93,19 @@ def fileinfo():
 
     if did:
         asset = get_asset_from_metadatastore(get_metadata_url(), did)
+        if not asset:
+            return error_response(
+                "Cannot resolve DID",
+                400,
+                logger,
+            )
         service = asset.get_service_by_id(service_id)
+        if not service:
+            return error_response(
+                "Invalid serviceId.",
+                400,
+                logger,
+            )
         files_list = get_service_files_list(service, provider_wallet, asset)
         if not files_list:
             return error_response("Unable to get dataset files", 400, logger)
@@ -158,6 +170,12 @@ def initialize():
     consumer_address = data.get("consumerAddress")
 
     asset = get_asset_from_metadatastore(get_metadata_url(), did)
+    if not asset:
+        return error_response(
+            "Cannot resolve DID",
+            400,
+            logger,
+        )
     consumable, message = check_asset_consumable(asset, consumer_address, logger)
     if not consumable:
         return error_response(message, 400, logger)
