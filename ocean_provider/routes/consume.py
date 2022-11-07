@@ -95,6 +95,8 @@ def fileinfo():
         asset = get_asset_from_metadatastore(get_metadata_url(), did)
         service = asset.get_service_by_id(service_id)
         files_list = get_service_files_list(service, provider_wallet, asset)
+        if not files_list:
+            return error_response("Unable to get dataset files", 400, logger)
     else:
         files_list = [data]
 
