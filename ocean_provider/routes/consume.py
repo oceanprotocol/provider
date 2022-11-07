@@ -164,7 +164,12 @@ def initialize():
 
     service_id = data.get("serviceId")
     service = asset.get_service_by_id(service_id)
-
+    if not service:
+        return error_response(
+            "Invalid serviceId.",
+            400,
+            logger,
+        )
     if service.type == "compute":
         return error_response(
             "Use the initializeCompute endpoint to initialize compute jobs.",
