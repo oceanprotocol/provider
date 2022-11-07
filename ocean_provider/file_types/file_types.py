@@ -8,6 +8,7 @@ from uuid import uuid4
 from enforce_typing import enforce_types
 
 from ocean_provider.file_types.definitions import EndUrlType, FilesType
+from ocean_provider.utils.url import is_safe_url
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +35,8 @@ class UrlFile(EndUrlType, FilesType):
 
         if self.method not in ["get", "post"]:
             return False, f"Unsafe method {self.method}."
-
+        if not is_safe_url(self.url):
+            return False, "Invalid URL"
         return True, self
 
     def get_download_url(self):

@@ -207,7 +207,7 @@ def initialize():
         valid, url_details = file_instance.check_details(with_checksum=False)
         if not valid or not url_details:
             return error_response(
-                f"Error: Asset URL not found or not available. \n"
+                f"Error: Asset URL not found, not available or invalid. \n"
                 f"Payload was: {data}",
                 400,
                 logger,
