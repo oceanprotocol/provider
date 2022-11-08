@@ -8,7 +8,6 @@ from uuid import uuid4
 from enforce_typing import enforce_types
 
 from ocean_provider.file_types.definitions import EndUrlType, FilesType
-from ocean_provider.utils.url import is_safe_url
 
 logger = logging.getLogger(__name__)
 
