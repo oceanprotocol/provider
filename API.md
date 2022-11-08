@@ -225,6 +225,8 @@ For published assets:
 ```
 For file objects,see https://docs.oceanprotocol.com/core-concepts/did-ddo#files
 
+If checksum is requests, file size should be lower < MAX_CHECKSUM_LENGTH (see Provider ENVs)
+If file is larger, checksum WILL NOT be computed.
 
 Returns:
 Json document file info object
