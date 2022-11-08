@@ -112,6 +112,7 @@ class EndUrlType:
 
     def _get_result_from_url(self, with_checksum=False):
         lightweight_methods = [] if self.method == "post" else ["head", "options"]
+        # if checksum is not needed, try with head/options, mabye we are lucky
         if not with_checksum:
             for method in lightweight_methods:
                 url = self.get_download_url()
@@ -134,17 +135,33 @@ class EndUrlType:
 
         func, func_args = self._get_func_and_args()
 
+        # overwrite checksum flag if file is too large
+        max_length = int(os.getenv("MAX_CHECKSUM_LENGTH", 0))
+        with func(**func_args) as r:
+            length = int(r.headers.get("Content-Length"))
+            logger.debug(f"File size {length} > {max_length}")
+            if length > max_length:
+                # file size too large, bail out
+                logger.debug(
+                    f"File size {length} > {max_length}, forcing with_checksum=False"
+                )
+                with_checksum = False
+
         if not with_checksum:
             # fallback on full request, since head and options did not work
             return func(**func_args), {}
 
         sha = hashlib.sha256()
-
+        done_bytes = 0
         with func(**func_args) as r:
             r.raise_for_status()
             for chunk in r.iter_content(chunk_size=CHUNK_SIZE):
                 sha.update(chunk)
-
+                done_bytes += len(chunk)
+                # too much bytes already for hash, bail out
+                if done_bytes > max_length:
+                    logger.debug(f"Already done {done_bytes} of hash, bail out")
+                    return r, {}
         return r, {"checksum": sha.hexdigest(), "checksumType": "sha256"}
 
     def _get_func_and_args(self):
