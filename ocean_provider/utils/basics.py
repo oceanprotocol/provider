@@ -15,6 +15,7 @@ from ocean_provider.http_provider import CustomHTTPProvider
 from requests_testadapter import Resp
 from web3.middleware import geth_poa_middleware
 from web3 import WebsocketProvider
+from web3.exceptions import ExtraDataLengthError
 from web3.main import Web3
 
 logger = logging.getLogger(__name__)
@@ -74,7 +75,9 @@ def get_web3(network_url: Optional[str] = None, cached=True) -> Web3:
 
     web3 = Web3(provider=get_web3_connection_provider(network_url))
 
-    if get_config().is_poa_network:
+    try:
+        web3.eth.get_block("latest")
+    except ExtraDataLengthError:
         web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
     web3.chain_id = web3.eth.chain_id
