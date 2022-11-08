@@ -21,12 +21,16 @@ def get_redirect(url, redirect_count=0):
         logger.info(f"More than 5 redirects for url {url}. Aborting.")
 
         return None
-
-    result = requests.head(url, allow_redirects=False)
-
+    try:
+        result = requests.head(url, allow_redirects=False)
+    except Exception as e:
+        return None
     if result.status_code == 405:
         # HEAD not allowed, so defaulting to get
-        result = requests.get(url, allow_redirects=False)
+        try:
+            result = requests.get(url, allow_redirects=False)
+        except Exception as e:
+            return None
 
     if result.is_redirect:
         location = urljoin(

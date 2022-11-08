@@ -216,13 +216,17 @@ Retrieves Content-Type and Content-Length from the given URL or asset.
 
 Parameters
 
+For published assets:
 ```
-    type: String, either "url" or "asset"
+{
     did: String, DID of the dataset
-    hash: String, hash of the file
-    url: String, URL of the file
-    serviceId: String, ID of the service the datatoken is attached to
+    serviceId: String, ID of the service
+}
 ```
+For file objects,see https://docs.oceanprotocol.com/core-concepts/did-ddo#files
+
+If checksum is requests, file size should be lower < MAX_CHECKSUM_LENGTH (see Provider ENVs)
+If file is larger, checksum WILL NOT be computed.
 
 Returns:
 Json document file info object

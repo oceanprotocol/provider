@@ -37,6 +37,10 @@ ENV AZURE_CLIENT_ID=''
 ENV AZURE_CLIENT_SECRET=''
 ENV AZURE_TENANT_ID=''
 ENV AZURE_SUBSCRIPTION_ID=''
+
+# do checksums only if file size < 5 Mb
+ENV MAX_CHECKSUM_LENGTH = '5242880'
+
 # Note: AZURE_SHARE_INPUT and AZURE_SHARE_OUTPUT are only used
 # for Azure Compute data assets (not for Azure Storage data assets).
 # If you're not supporting Azure Compute, just leave their values
@@ -50,6 +54,9 @@ ENV OCEAN_PROVIDER_URL='http://0.0.0.0:8030'
 ENV OCEAN_PROVIDER_WORKERS='1'
 ENV OCEAN_PROVIDER_TIMEOUT='9000'
 ENV ALLOW_NON_PUBLIC_IP=False
+ENV ARWEAVE_GATEWAY=https://arweave.net/
+ENV IPFS_GATEWAY=https://ipfs.io
+
 
 ENTRYPOINT ["/ocean-provider/docker-entrypoint.sh"]
 

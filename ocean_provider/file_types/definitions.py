@@ -1,3 +1,4 @@
+import copy
 import hashlib
 import json
 import logging
@@ -55,22 +56,30 @@ class EndUrlType:
         contentLength. If the with_checksum flag is set to True, it also returns
         the file checksum and the checksumType (currently hardcoded to sha256)
         """
+
         url = self.get_download_url()
+
         try:
             if not is_safe_url(url):
                 return False, {}
-
+            status_code = None
+            headers = None
             for _ in range(int(os.getenv("REQUEST_RETRIES", 1))):
                 result, extra_data = self._get_result_from_url(
                     with_checksum=with_checksum,
                 )
-                if result and result.status_code == 200:
-                    break
+                if result:
+                    status_code = result.status_code
+                    headers = copy.deepcopy(result.headers)
+                    # always close requests session, see https://requests.readthedocs.io/en/latest/user/advanced/#body-content-workflow
+                    result.close()
+                    if status_code == 200:
+                        break
 
-            if result.status_code == 200:
-                content_type = result.headers.get("Content-Type")
-                content_length = result.headers.get("Content-Length")
-                content_range = result.headers.get("Content-Range")
+            if status_code == 200:
+                content_type = headers.get("Content-Type")
+                content_length = headers.get("Content-Length")
+                content_range = headers.get("Content-Range")
 
                 if not content_length and content_range:
                     # sometimes servers send content-range instead
@@ -103,41 +112,56 @@ class EndUrlType:
 
     def _get_result_from_url(self, with_checksum=False):
         lightweight_methods = [] if self.method == "post" else ["head", "options"]
-
-        for method in lightweight_methods:
-            url = self.get_download_url()
-            func = getattr(requests, method)
-            result = func(
-                url,
-                timeout=REQUEST_TIMEOUT,
-                headers=self.headers,
-                params=self.format_userdata(),
-            )
-
-            if (
-                not with_checksum
-                and result.status_code == 200
-                and (
-                    result.headers.get("Content-Type")
-                    or result.headers.get("Content-Range")
+        # if checksum is not needed, try with head/options, mabye we are lucky
+        if not with_checksum:
+            for method in lightweight_methods:
+                url = self.get_download_url()
+                func = getattr(requests, method)
+                result = func(
+                    url,
+                    timeout=REQUEST_TIMEOUT,
+                    headers=self.headers,
+                    params=self.format_userdata(),
                 )
-                and result.headers.get("Content-Length")
-            ):
-                return result, {}
+                if (
+                    result.status_code == 200
+                    and (
+                        result.headers.get("Content-Type")
+                        or result.headers.get("Content-Range")
+                    )
+                    and result.headers.get("Content-Length")
+                ):
+                    return result, {}
 
         func, func_args = self._get_func_and_args()
+
+        # overwrite checksum flag if file is too large
+        max_length = int(os.getenv("MAX_CHECKSUM_LENGTH", 0))
+        with func(**func_args) as r:
+            length = int(r.headers.get("Content-Length"))
+            logger.debug(f"File size {length} > {max_length}")
+            if length > max_length:
+                # file size too large, bail out
+                logger.debug(
+                    f"File size {length} > {max_length}, forcing with_checksum=False"
+                )
+                with_checksum = False
 
         if not with_checksum:
             # fallback on full request, since head and options did not work
             return func(**func_args), {}
 
         sha = hashlib.sha256()
-
+        done_bytes = 0
         with func(**func_args) as r:
             r.raise_for_status()
             for chunk in r.iter_content(chunk_size=CHUNK_SIZE):
                 sha.update(chunk)
-
+                done_bytes += len(chunk)
+                # too much bytes already for hash, bail out
+                if done_bytes > max_length:
+                    logger.debug(f"Already done {done_bytes} of hash, bail out")
+                    return r, {}
         return r, {"checksum": sha.hexdigest(), "checksumType": "sha256"}
 
     def _get_func_and_args(self):
