@@ -35,8 +35,7 @@ class UrlFile(EndUrlType, FilesType):
 
         if self.method not in ["get", "post"]:
             return False, f"Unsafe method {self.method}."
-        if not is_safe_url(self.url):
-            return False, "Invalid URL"
+
         return True, self
 
     def get_download_url(self):
