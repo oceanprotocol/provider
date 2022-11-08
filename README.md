@@ -115,7 +115,6 @@ Refer to the [API.md](API.md) file for endpoints and payloads.
 * `ARWEAVE_GATEWAY` defines arweave gateway for resolving arweave transaction ids.
 * `AUTHORIZED_DECRYPTERS` list of authorized addresses that are allowed to decrypt chain data. Use it to restrict access only to certain callers (e.g. custom Aquarius instance). Empty by default, meaning all decrypters are authorized.
 * `USE_CHAIN_PROOF` or `USE_HTTP_PROOF` set a mechanism for saving proof-of-download information. For any present true-ish value of `USE_CHAIN_PROOF`, the proof is sent on-chain. When defining `USE_HTTP_PROOF` the env var must configure a HTTP endpoint that accepts a POST request.
-* `IS_POA_NETWORK` define that the network used is POA style, requiring special middlewares
 * `MAX_CHECKSUM_LENGTH` define the maximum length for a file if checksum is required. If file size is greater, we do not compute checksum
 
 
