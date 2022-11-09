@@ -136,16 +136,23 @@ class EndUrlType:
         func, func_args = self._get_func_and_args()
 
         # overwrite checksum flag if file is too large
-        max_length = int(os.getenv("MAX_CHECKSUM_LENGTH", 0))
-        with func(**func_args) as r:
-            length = int(r.headers.get("Content-Length"))
-            logger.debug(f"File size {length} > {max_length}")
-            if length > max_length:
-                # file size too large, bail out
-                logger.debug(
-                    f"File size {length} > {max_length}, forcing with_checksum=False"
-                )
-                with_checksum = False
+        if with_checksum:
+            max_length = int(os.getenv("MAX_CHECKSUM_LENGTH", 0))
+            with func(**func_args) as r:
+                length = 0
+                try:
+                    length = int(r.headers.get("Content-Length", "0"))
+                except Exception as e:
+                    logger.warning(
+                        f"Failed to parse Content-Length header {r.headers} {e}"
+                    )
+                logger.debug(f"File size {length} > {max_length}")
+                if length > max_length:
+                    # file size too large, bail out
+                    logger.debug(
+                        f"File size {length} > {max_length}, forcing with_checksum=False"
+                    )
+                    with_checksum = False
 
         if not with_checksum:
             # fallback on full request, since head and options did not work
