@@ -137,7 +137,7 @@ class EndUrlType:
 
         # overwrite checksum flag if file is too large
         if with_checksum:
-            max_length = int(os.getenv("MAX_CHECKSUM_LENGTH", 0))
+            max_length = int(os.getenv("MAX_CHECKSUM_LENGTH", "0"))
             with func(**func_args) as r:
                 length = 0
                 try:
