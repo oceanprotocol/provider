@@ -17,6 +17,7 @@ from tests.helpers.compute_helpers import (
 )
 from tests.test_helpers import (
     get_dataset_ddo_disabled,
+    get_dataset_ddo_unlisted,
     get_dataset_ddo_with_denied_consumer,
     get_dataset_ddo_with_multiple_files,
     get_dataset_with_invalid_url_ddo,
@@ -25,7 +26,6 @@ from tests.test_helpers import (
     get_registered_asset,
     initialize_service,
     mint_100_datatokens,
-    set_nft_state,
     start_order,
 )
 
@@ -54,11 +54,9 @@ def test_initialize_on_bad_url(client, publisher_wallet, consumer_wallet, web3):
 def test_initialize_on_ipfs_url(client, publisher_wallet, consumer_wallet, web3):
     asset = get_dataset_with_ipfs_url_ddo(client, publisher_wallet)
     service = get_first_service_by_type(asset, ServiceType.ACCESS)
-
     mint_100_datatokens(
         web3, service.datatoken_address, consumer_wallet.address, publisher_wallet
     )
-
     datatoken, nonce, computeAddress, providerFees = initialize_service(
         client, asset.did, service, consumer_wallet
     )
@@ -82,8 +80,17 @@ def test_initialize_on_disabled_asset(client, publisher_wallet, consumer_wallet,
     assert "error" in response.json
     assert response.json["error"] == "Asset is not consumable."
 
-    # change state to 5, and check for valid initialize reponse
-    set_nft_state(asset.nft["address"], 5, publisher_wallet)
+
+@pytest.mark.integration
+def test_initialize_on_unlisted_asset(client, publisher_wallet, consumer_wallet, web3):
+    asset, real_asset = get_dataset_ddo_unlisted(client, publisher_wallet)
+    assert real_asset
+    service = get_first_service_by_type(asset, ServiceType.ACCESS)
+
+    mint_100_datatokens(
+        web3, service.datatoken_address, consumer_wallet.address, publisher_wallet
+    )
+
     datatoken, nonce, computeAddress, providerFees = initialize_service(
         client, asset.did, service, consumer_wallet
     )

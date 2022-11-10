@@ -344,6 +344,15 @@ def get_dataset_ddo_disabled(client, wallet):
     return asset, wait_for_asset(aqua_root, did)
 
 
+def get_dataset_ddo_unlisted(client, wallet):
+    asset = get_registered_asset(wallet)
+    did = asset.did
+    set_nft_state(asset.nft["address"], 5, wallet)
+    aqua_root = "http://172.15.0.5:5000"
+    time.sleep(5)
+    return asset, wait_for_asset(aqua_root, did)
+
+
 def get_dataset_ddo_with_denied_consumer(client, wallet, consumer_addr):
     return get_registered_asset(
         wallet,
