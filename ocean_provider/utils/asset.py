@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import copy
+import logging
 import requests
 from typing import Optional
 
@@ -12,6 +13,8 @@ from ocean_provider.utils.basics import get_web3
 from ocean_provider.utils.consumable import ConsumableCodes
 from ocean_provider.utils.credentials import AddressCredential
 from ocean_provider.utils.services import Service
+
+logger = logging.getLogger(__name__)
 
 
 class Asset:
@@ -65,7 +68,7 @@ class Asset:
 
     @property
     def is_disabled(self) -> bool:
-        return not self.metadata or (self.nft and self.nft["state"] != 0)
+        return not self.metadata or (self.nft and self.nft["state"] not in [0, 5])
 
     def is_consumable(
         self,
@@ -99,11 +102,11 @@ def check_asset_consumable(asset, consumer_address, logger, custom_url=None):
     if not asset.nft or "address" not in asset.nft:
         return False, "Asset malformed"
     web3 = get_web3()
-    dt_contract = web3.eth.contract(
+    nft_contract = web3.eth.contract(
         abi=ERC721Template.abi, address=web3.toChecksumAddress(asset.nft["address"])
     )
 
-    if dt_contract.caller.getMetaData()[2] != 0:
+    if nft_contract.caller.getMetaData()[2] not in [0, 5]:
         return False, "Asset is not consumable."
 
     code = asset.is_consumable({"type": "address", "value": consumer_address})
