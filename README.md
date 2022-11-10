@@ -11,7 +11,7 @@ SPDX-License-Identifier: Apache-2.0
 # Provider
 REST API for provider of data services
 
-This is part of the Ocean Protocol V3 tools.
+This is part of the Ocean Protocol stack.
 
 This is feature complete and is a BETA version.
 
