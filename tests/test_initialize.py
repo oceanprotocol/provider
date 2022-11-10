@@ -25,6 +25,7 @@ from tests.test_helpers import (
     get_registered_asset,
     initialize_service,
     mint_100_datatokens,
+    set_nft_state,
     start_order,
 )
 
@@ -80,6 +81,14 @@ def test_initialize_on_disabled_asset(client, publisher_wallet, consumer_wallet,
     )
     assert "error" in response.json
     assert response.json["error"] == "Asset is not consumable."
+
+    # change state to 5, and check for valid initialize reponse
+    set_nft_state(asset.nft["address"], 5, publisher_wallet)
+    datatoken, nonce, computeAddress, providerFees = initialize_service(
+        client, asset.did, service, consumer_wallet
+    )
+
+    assert datatoken == service.datatoken_address
 
 
 @pytest.mark.integration
