@@ -39,7 +39,7 @@ ENV AZURE_TENANT_ID=''
 ENV AZURE_SUBSCRIPTION_ID=''
 
 # do checksums only if file size < 5 Mb
-ENV MAX_CHECKSUM_LENGTH = '5242880'
+ENV MAX_CHECKSUM_LENGTH='5242880'
 
 # Note: AZURE_SHARE_INPUT and AZURE_SHARE_OUTPUT are only used
 # for Azure Compute data assets (not for Azure Storage data assets).
