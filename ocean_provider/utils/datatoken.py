@@ -245,7 +245,7 @@ def validate_order(
     allow_expired_provider_fees=False,
 ):
     did = asset.did
-    token_address = service.datatoken_address
+    token_address = web3.toChecksumAddress(service.datatoken_address)
     num_tokens = 1
 
     logger.debug(
