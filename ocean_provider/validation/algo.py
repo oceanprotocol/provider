@@ -38,6 +38,7 @@ class WorkflowValidator:
         self.data = data
         self.workflow = dict({"stages": []})
 
+    #Umesh
     def validate(self):
         """Validates for input and output contents."""
         if not self.validate_input():
@@ -47,21 +48,23 @@ class WorkflowValidator:
             return False
 
         self.workflow["stages"].append(
-            {
-                "index": 0,
-                "input": self.validated_inputs,
-                "compute": {
-                    "Instances": 1,
-                    "namespace": "ocean-compute",
-                    "maxtime": 3600,
-                },
-                "algorithm": self.validated_algo_dict,
-                "output": self.validated_output_dict,
-            }
-        )
+                {
+                    "index": 0,
+                    "input": self.validated_inputs,
+                    "compute": {
+                        "Instances": 1,
+                        "namespace": "ocean-compute",
+                        "maxtime": 3600,
+                    },
+                    "algorithm": self.validated_algo_dict,
+                    "claim": self.validated_claim_dict,
+                    "output": self.validated_output_dict,
+                }
+            )
 
         return True
 
+    #Umesh
     def validate_input(self, index=0):
         """Validates input dictionary."""
         main_input = self.data["dataset"]
@@ -77,6 +80,7 @@ class WorkflowValidator:
 
         all_data = [main_input] + additional_inputs
         algo_data = self.data["algorithm"]
+        claim_data = self.data["claim"]
 
         self.validated_inputs = []
         valid_until_list = []
@@ -112,10 +116,37 @@ class WorkflowValidator:
             if index == 0:
                 self.service_endpoint = input_item_validator.service.service_endpoint
 
-        status = self._build_and_validate_algo(algo_data)
-        if not status:
-            return False
+        self.validated_algo_dict = self._build_and_validate_algo(algo_data)
+        
 
+        for index, input_item in enumerate(all_data):
+            input_item["claim"] = claim_data
+            input_item_validator = InputItemValidator(
+                self.web3,
+                self.consumer_address,
+                self.provider_wallet,
+                input_item,
+                {"environment": self.data.get("environment")},
+                index,
+            )
+            input_item_validator.algo_files_checksum = self.algo_files_checksum
+            input_item_validator.algo_container_checksum = self.algo_container_checksum
+
+            status = input_item_validator.validate()
+            if not status:
+                self.resource = input_item_validator.resource
+                self.message = input_item_validator.message
+                return False
+
+            self.validated_inputs.append(input_item_validator.validated_inputs)
+            valid_until_list.append(input_item_validator.valid_until)
+            provider_fee_amounts.append(input_item_validator.provider_fee_amount)
+
+            if index == 0:
+                self.service_endpoint = input_item_validator.service.service_endpoint
+
+        self.validated_claim_dict = self._build_and_validate_algo(algo_data)
+       
         if algo_data.get("documentId"):
             valid_until_list.append(self.algo_valid_until)
             provider_fee_amounts.append(self.algo_fee_amount)
@@ -249,9 +280,9 @@ class WorkflowValidator:
         #    self.message = error_msg
         #    return False
 
-        self.validated_algo_dict = algorithm_dict
+        return algorithm_dict
 
-        return True
+       
 
     def preliminary_algo_validation(self):
         algo_data = self.data["algorithm"]
