@@ -183,7 +183,7 @@ def test_check_arweave_bad(client, monkeypatch):
 @pytest.mark.integration
 def test_check_smartcontract_simple(client, publisher_wallet, consumer_wallet, web3):
     router_address = get_contract_address(
-        get_config().address_file, "Router", web3.chain_id
+        get_config().address_file, "Router", 8996
     )
     abi = {
         "inputs": [],

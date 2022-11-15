@@ -107,14 +107,6 @@ def version():
     info = dict()
     info["software"] = Metadata.TITLE
     info["version"] = get_version()
-
-    chain_id = app.config.get("chain_id")
-    if not chain_id:
-        logger.debug("get chain_id from node")
-        chain_id = get_web3().chain_id
-        app.config["chain_id"] = chain_id
-
-    info["chainId"] = chain_id
     info["providerAddress"] = get_provider_address()
     info["serviceEndpoints"] = get_services_endpoints()
     response = jsonify(info)

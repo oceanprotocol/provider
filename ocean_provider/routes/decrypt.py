@@ -124,8 +124,8 @@ def _decrypt(
     update_nonce(decrypter_address, nonce)
 
     # Check if given chain_id matches Provider's chain_id
-    web3 = get_web3()
-    if web3.chain_id != chain_id:
+    web3 = get_web3(chain_id)
+    if not web3:
         return error_response(f"Unsupported chain ID {chain_id}", 400, logger)
 
     # Check if decrypter is authorized

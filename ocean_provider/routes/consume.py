@@ -235,7 +235,7 @@ def initialize():
     # of tokens required for this service
     # The consumer must sign and execute this transaction in order to be
     # able to consume the service
-    provider_fee = get_provider_fees(did, service, consumer_address, 0)
+    provider_fee = get_provider_fees(asset, service, consumer_address, 0)
     if provider_fee:
         provider_fee["providerFeeAmount"] = str(provider_fee["providerFeeAmount"])
     approve_params = {
@@ -327,7 +327,7 @@ def download():
 
     try:
         _tx, _order_log, _, _ = validate_order(
-            get_web3(), consumer_address, tx_id, asset, service
+            get_web3(asset.chain_id), consumer_address, tx_id, asset, service
         )
     except Exception as e:
         return error_response(
@@ -375,7 +375,7 @@ def download():
     consumer_data = f'{did}{data.get("nonce")}'
 
     send_proof(
-        web3=get_web3(),
+        web3=get_web3(asset.chain_id),
         order_tx_id=_tx.hash,
         provider_data=provider_proof_data,
         consumer_data=consumer_data,

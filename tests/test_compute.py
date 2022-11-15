@@ -80,7 +80,7 @@ def test_compute_raw_algo(
         free_c2d_env["consumerAddress"],
         sa.index,
         get_provider_fees(
-            dataset_ddo_w_compute_service.did,
+            dataset_ddo_w_compute_service,
             sa,
             consumer_wallet.address,
             valid_until,
@@ -409,7 +409,7 @@ def test_compute_allow_all_published(
 
 @pytest.mark.integration
 def test_compute_additional_input(
-    client, publisher_wallet, consumer_wallet, monkeypatch, free_c2d_env
+    client, publisher_wallet, consumer_wallet, monkeypatch, free_c2d_env, web3
 ):
     valid_until = get_future_valid_until()
     ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
@@ -432,7 +432,6 @@ def test_compute_additional_input(
         custom_services_args=ddo.services[0].compute_dict["publisherTrustedAlgorithms"],
     )
 
-    web3 = get_web3()
     sa2 = get_first_service_by_type(ddo2, ServiceType.COMPUTE)
     mint_100_datatokens(
         web3, sa2.datatoken_address, consumer_wallet.address, publisher_wallet
@@ -444,7 +443,7 @@ def test_compute_additional_input(
         free_c2d_env["consumerAddress"],
         sa2.index,
         get_provider_fees(
-            ddo2.did,
+            ddo2,
             sa2,
             consumer_wallet.address,
             valid_until,

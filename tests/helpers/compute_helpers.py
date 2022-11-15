@@ -33,7 +33,7 @@ def build_and_send_ddo_with_compute_service(
     c2d_environment="ocean-compute",
     fee_token_args=None,
 ):
-    web3 = get_web3()
+    web3 = get_web3(8996)
     if valid_until is None:
         valid_until = get_future_valid_until(short=True)
     algo_metadata = build_metadata_dict_type_algorithm()
@@ -124,7 +124,7 @@ def build_and_send_ddo_with_compute_service(
         c2d_address,
         service.index,
         get_provider_fees(
-            dataset_ddo_w_compute_service.did,
+            dataset_ddo_w_compute_service,
             service,
             consumer_wallet.address,
             valid_until,

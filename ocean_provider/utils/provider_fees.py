@@ -4,6 +4,7 @@ import os
 import requests
 from datetime import datetime
 from typing import Any, Dict
+from web3.main import Web3
 
 from eth_keys import KeyAPI
 from eth_keys.backends import NativeECCBackend
@@ -30,17 +31,18 @@ requests_session = get_requests_session()
 
 
 def get_provider_fees(
-    did: str,
+    asset,
     service: Service,
     consumer_address: str,
     valid_until: int,
     compute_env: str = None,
     force_zero: bool = False,
 ) -> Dict[str, Any]:
-    web3 = get_web3()
     provider_wallet = get_provider_wallet()
     provider_fee_address = provider_wallet.address
-    provider_fee_token = get_provider_fee_token(web3.chain_id)
+    provider_fee_token = get_provider_fee_token(asset.chain_id)
+
+    web3 = get_web3(asset.chain_id)
 
     if compute_env and not force_zero:
         provider_fee_amount = get_provider_fee_amount(
@@ -53,12 +55,12 @@ def get_provider_fees(
         {"environment": compute_env, "timestamp": datetime.utcnow().timestamp()},
         separators=(",", ":"),
     )
-    message_hash = web3.solidityKeccak(
+    message_hash = Web3.solidityKeccak(
         ["bytes", "address", "address", "uint256", "uint256"],
         [
-            web3.toHex(web3.toBytes(text=provider_data)),
-            web3.toChecksumAddress(provider_fee_address),
-            web3.toChecksumAddress(provider_fee_token),
+            Web3.toHex(Web3.toBytes(text=provider_data)),
+            Web3.toChecksumAddress(provider_fee_address),
+            Web3.toChecksumAddress(provider_fee_token),
             provider_fee_amount,
             valid_until,
         ],
@@ -66,8 +68,8 @@ def get_provider_fees(
 
     pk = keys.PrivateKey(provider_wallet.key)
     prefix = "\x19Ethereum Signed Message:\n32"
-    signable_hash = web3.solidityKeccak(
-        ["bytes", "bytes"], [web3.toBytes(text=prefix), web3.toBytes(message_hash)]
+    signable_hash = Web3.solidityKeccak(
+        ["bytes", "bytes"], [Web3.toBytes(text=prefix), Web3.toBytes(message_hash)]
     )
     signed = keys.ecdsa_sign(message_hash=signable_hash, private_key=pk)
 
@@ -75,11 +77,11 @@ def get_provider_fees(
         "providerFeeAddress": provider_fee_address,
         "providerFeeToken": provider_fee_token,
         "providerFeeAmount": provider_fee_amount,
-        "providerData": web3.toHex(web3.toBytes(text=provider_data)),
+        "providerData": Web3.toHex(Web3.toBytes(text=provider_data)),
         # make it compatible with last openzepellin https://github.com/OpenZeppelin/openzeppelin-contracts/pull/1622
         "v": (signed.v + 27) if signed.v <= 1 else signed.v,
-        "r": web3.toHex(web3.toBytes(signed.r).rjust(32, b"\0")),
-        "s": web3.toHex(web3.toBytes(signed.s).rjust(32, b"\0")),
+        "r": Web3.toHex(Web3.toBytes(signed.r).rjust(32, b"\0")),
+        "s": Web3.toHex(Web3.toBytes(signed.s).rjust(32, b"\0")),
         "validUntil": valid_until,
     }
     logger.debug(f"Returning provider_fees: {provider_fee}")
@@ -144,7 +146,7 @@ def get_provider_fees_or_remote(
             pass
     if is_this_same_provider(service.service_endpoint):
         provider_fee = get_provider_fees(
-            asset.did,
+            asset,
             service,
             consumer_address,
             valid_until,

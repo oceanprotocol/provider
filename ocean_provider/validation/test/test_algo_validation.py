@@ -34,7 +34,6 @@ this_is_a_gist = "https://gist.githubusercontent.com/calina-c/5e8c965962bc0240ea
 )
 def test_passes_algo_ddo(provider_wallet, consumer_address, web3):
     """Tests happy flow of validator with algo ddo."""
-    web3 = get_web3()
     ddo = Asset(ddo_dict)
     alg_ddo = Asset(alg_ddo_dict)
     sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
@@ -77,7 +76,6 @@ def test_passes_algo_ddo(provider_wallet, consumer_address, web3):
 )
 def test_passes_raw(provider_wallet, consumer_address, web3):
     """Tests happy flow of validator with raw algo."""
-    web3 = get_web3()
     ddo = Asset(ddo_dict)
     sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
     data = {
@@ -263,7 +261,6 @@ def test_fails_meta_issues(provider_wallet, consumer_address, web3):
     return_value=[{"url": this_is_a_gist, "type": "url"}],
 )
 def test_additional_datasets(provider_wallet, consumer_address, web3):
-    web3 = get_web3()
     ddo = Asset(ddo_dict)
     alg_ddo = Asset(alg_ddo_dict)
     sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
@@ -939,7 +936,6 @@ def test_fail_missing_algo_meta_documentId(provider_wallet, consumer_address, we
 )
 def test_fee_amount_not_paid(provider_wallet, consumer_address, web3):
     """Tests happy flow of validator with algo ddo."""
-    web3 = get_web3()
     ddo = Asset(ddo_dict)
     alg_ddo = Asset(alg_ddo_dict)
     sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
@@ -985,7 +981,6 @@ def test_fee_amount_not_paid(provider_wallet, consumer_address, web3):
 )
 def test_algo_ddo_file_broken(provider_wallet, consumer_address, web3):
     """Tests case where algo checksum can not be computed."""
-    web3 = get_web3()
     ddo = Asset(ddo_dict)
     alg_ddo = Asset(alg_ddo_dict)
     sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)

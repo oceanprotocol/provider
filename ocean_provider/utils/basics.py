@@ -36,13 +36,10 @@ def get_metadata_url():
     return get_config().aquarius_url
 
 
-def get_provider_wallet(web3: Optional[Web3] = None):
+def get_provider_wallet():
     """
     :return: Wallet instance
     """
-    if web3 is None:
-        web3 = get_web3()
-
     pk = os.environ.get("PROVIDER_PRIVATE_KEY")
     wallet = Account.from_key(private_key=pk)
 
@@ -61,17 +58,20 @@ def get_provider_wallet(web3: Optional[Web3] = None):
     return wallet
 
 
-def get_web3(network_url: Optional[str] = None, cached=True) -> Web3:
+def get_web3(chain_id, cached=True) -> Web3:
     """
     :return: `Web3` instance
     """
-    global app_web3_instance
+    global app_web3_instances
 
-    if cached and "app_web3_instance" in globals():
-        return app_web3_instance
+    if cached and "app_web3_instances" in globals() and chain_id in app_web3_instances:
+        return app_web3_instances[chain_id]
 
-    if network_url is None:
-        network_url = get_config().network_url
+    # TODO: make list from envs
+    if chain_id == 8996:
+        network_url = "http://127.0.0.1:8545"
+    #if chain_id is None:
+    #    network_url = get_config().network_url
 
     web3 = Web3(provider=get_web3_connection_provider(network_url))
 
@@ -81,7 +81,9 @@ def get_web3(network_url: Optional[str] = None, cached=True) -> Web3:
         web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
     web3.chain_id = web3.eth.chain_id
-    app_web3_instance = web3
+    if "app_web3_instances" not in globals():
+        app_web3_instances = {}
+    app_web3_instances[chain_id] = web3
     return web3
 
 

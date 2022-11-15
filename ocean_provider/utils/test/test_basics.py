@@ -36,7 +36,7 @@ def test_get_web3_connection_provider(monkeypatch):
 @pytest.mark.unit
 def test_send_ether(publisher_wallet, consumer_address):
     assert send_ether(
-        get_web3(), publisher_wallet, consumer_address, to_wei(1)
+        get_web3(8996), publisher_wallet, consumer_address, to_wei(1)
     ), "Send ether was unsuccessful."
 
 

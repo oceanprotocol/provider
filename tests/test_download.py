@@ -41,7 +41,7 @@ def test_download_service(
         service.datatoken_address,
         consumer_wallet.address,
         service.index,
-        get_provider_fees(asset.did, service, consumer_wallet.address, 0),
+        get_provider_fees(asset, service, consumer_wallet.address, 0),
         consumer_wallet,
     )
 
@@ -113,7 +113,7 @@ def test_download_timeout(client, publisher_wallet, consumer_wallet, web3, timeo
         service.datatoken_address,
         consumer_wallet.address,
         service.index,
-        get_provider_fees(asset.did, service, consumer_wallet.address, 0),
+        get_provider_fees(asset, service, consumer_wallet.address, 0),
         consumer_wallet,
     )
 
@@ -168,7 +168,7 @@ def test_download_multiple_files(client, publisher_wallet, consumer_wallet, web3
         service.datatoken_address,
         consumer_wallet.address,
         service.index,
-        get_provider_fees(asset.did, service, consumer_wallet.address, 0),
+        get_provider_fees(asset, service, consumer_wallet.address, 0),
         consumer_wallet,
     )
 
@@ -225,7 +225,7 @@ def test_download_compute_asset_by_c2d(client, publisher_wallet, consumer_wallet
         service.datatoken_address,
         consumer_wallet.address,
         service.index,
-        get_provider_fees(asset.did, service, consumer_wallet.address, 0),
+        get_provider_fees(asset, service, consumer_wallet.address, 0),
         consumer_wallet,
     )
 
@@ -274,7 +274,7 @@ def test_download_compute_asset_by_user_fails(
         service.datatoken_address,
         consumer_wallet.address,
         service.index,
-        get_provider_fees(asset.did, service, consumer_wallet.address, 0),
+        get_provider_fees(asset, service, consumer_wallet.address, 0),
         consumer_wallet,
     )
 
@@ -332,7 +332,7 @@ def test_download_arweave(client, publisher_wallet, consumer_wallet, web3):
         service.datatoken_address,
         consumer_wallet.address,
         service.index,
-        get_provider_fees(asset.did, service, consumer_wallet.address, 0),
+        get_provider_fees(asset, service, consumer_wallet.address, 0),
         consumer_wallet,
     )
 

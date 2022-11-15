@@ -172,7 +172,7 @@ def get_registered_asset(
     timeout=3600,
     custom_userdata=None,
 ) -> Optional[Asset]:
-    web3 = get_web3()
+    web3 = get_web3(8996)
     data_nft_address = deploy_data_nft(
         web3=web3,
         name="Data NFT 1",
@@ -325,8 +325,8 @@ def get_dataset_ddo_with_multiple_files(client, wallet, service_type="access"):
 
 
 def set_nft_state(nft_address, nft_state, wallet):
-    web3 = get_web3()
-    dt_contract = get_web3().eth.contract(abi=ERC721Template.abi, address=nft_address)
+    web3 = get_web3(8996)
+    dt_contract = web3.eth.contract(abi=ERC721Template.abi, address=nft_address)
 
     time.sleep(10)
     txn_hash = dt_contract.functions.setMetaDataState(nft_state).transact(

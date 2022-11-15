@@ -68,7 +68,7 @@ def test_chain_proof(client, monkeypatch, web3, publisher_wallet, consumer_walle
         service.datatoken_address,
         consumer_wallet.address,
         service.index,
-        get_provider_fees(asset.did, service, consumer_wallet.address, 0),
+        get_provider_fees(asset, service, consumer_wallet.address, 0),
         consumer_wallet,
     )
 

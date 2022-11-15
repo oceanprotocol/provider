@@ -137,7 +137,7 @@ def test_initialize_reuse(client, publisher_wallet, consumer_wallet, web3):
         service.datatoken_address,
         consumer_wallet.address,
         service.index,
-        get_provider_fees(asset.did, service, consumer_wallet.address, 0),
+        get_provider_fees(asset, service, consumer_wallet.address, 0),
         consumer_wallet,
     )
 

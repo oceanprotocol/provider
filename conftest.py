@@ -43,7 +43,7 @@ def consumer_address(consumer_wallet):
 
 @pytest.fixture
 def ganache_wallet():
-    web3 = get_web3()
+    web3 = get_web3(8996)
     if (
         web3.eth.accounts
         and web3.eth.accounts[0].lower()
@@ -69,7 +69,7 @@ def provider_address(provider_wallet):
 
 @pytest.fixture(autouse=True)
 def setup_all(provider_address, consumer_address, ganache_wallet):
-    web3 = get_web3()
+    web3 = get_web3(8996)
     if ganache_wallet:
         if (
             web3.fromWei(
@@ -92,7 +92,7 @@ def setup_all(provider_address, consumer_address, ganache_wallet):
 
 @pytest.fixture
 def web3():
-    return get_web3()
+    return get_web3(8996)
 
 
 @pytest.fixture
