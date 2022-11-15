@@ -28,9 +28,7 @@ from tests.test_helpers import (
 @pytest.mark.integration
 def test_download_smartcontract_asset(client, publisher_wallet, consumer_wallet, web3):
     # publish asset, that calls Router's swapOceanFee function (does not need params)
-    router_address = get_contract_address(
-        get_config().address_file, "Router", 8996
-    )
+    router_address = get_contract_address(get_config().address_file, "Router", 8996)
     abi = {
         "inputs": [],
         "name": "swapOceanFee",
@@ -83,9 +81,7 @@ def test_download_smartcontract_asset_with_userdata(
     client, publisher_wallet, consumer_wallet, web3
 ):
     # publish asset, that calls Router's getOPCFee for a provided  baseToken userdata
-    router_address = get_contract_address(
-        get_config().address_file, "Router", 8996
-    )
+    router_address = get_contract_address(get_config().address_file, "Router", 8996)
     abi = {
         "inputs": [{"internalType": "address", "name": "baseToken", "type": "address"}],
         "name": "getOPCFee",

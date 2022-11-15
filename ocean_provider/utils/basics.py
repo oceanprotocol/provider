@@ -70,7 +70,7 @@ def get_web3(chain_id, cached=True) -> Web3:
     # TODO: make list from envs
     if chain_id == 8996:
         network_url = "http://127.0.0.1:8545"
-    #if chain_id is None:
+    # if chain_id is None:
     #    network_url = get_config().network_url
 
     web3 = Web3(provider=get_web3_connection_provider(network_url))
