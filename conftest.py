@@ -62,7 +62,7 @@ def ganache_wallet():
 
 @pytest.fixture
 def provider_wallet():
-    pk = get_provider_private_key()
+    pk = get_provider_private_key(8996)
     return Account.from_key(pk)
 
 

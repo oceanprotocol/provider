@@ -35,6 +35,7 @@ def get_config(config_file: Optional[str] = None) -> Config:
 
 
 def get_provider_private_key(chain_id: int = None, any_chain: bool = False):
+    chain_id = str(chain_id)
     try:
         decoded = json.loads(os.environ.get("PROVIDER_PRIVATE_KEY"))
         if not chain_id or chain_id not in decoded:
@@ -53,7 +54,7 @@ def get_provider_wallet(chain_id):
     """
     :return: Wallet instance
     """
-    pk = get_provider_private_key()
+    pk = get_provider_private_key(chain_id)
     wallet = Account.from_key(private_key=pk)
 
     if wallet is None:
