@@ -2,14 +2,15 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
-import jwt
 import logging
 import os
-from web3.main import Web3
 
+import jwt
 from flask_caching import Cache
 from ocean_provider import models
 from ocean_provider.myapp import app
+from ocean_provider.utils.basics import get_provider_private_key
+from web3.main import Web3
 
 logger = logging.getLogger(__name__)
 db = app.session
@@ -133,7 +134,7 @@ def is_token_valid(token, address):
     :param: token
     """
     try:
-        pk = os.environ.get("PROVIDER_PRIVATE_KEY")
+        pk = get_provider_private_key(any_chain=True)
         decoded = jwt.decode(token, pk, algorithms=["HS256"])
         if Web3.toChecksumAddress(decoded["address"]) != Web3.toChecksumAddress(
             address

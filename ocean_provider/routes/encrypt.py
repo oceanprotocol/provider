@@ -12,7 +12,7 @@ from ocean_provider.utils.error_responses import error_response
 
 from . import services
 
-provider_wallet = get_provider_wallet()
+# provider_wallet = get_provider_wallet()
 requests_session = get_requests_session()
 
 logger = logging.getLogger(__name__)

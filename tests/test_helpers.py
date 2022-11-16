@@ -9,12 +9,12 @@ import time
 from hashlib import sha256
 from typing import Dict, Optional, Tuple
 
-from jsonsempai import magic  # noqa: F401
 from artifacts import ERC721Template
 from eth_account.signers.local import LocalAccount
 from eth_typing.encoding import HexStr
 from eth_typing.evm import HexAddress
 from flask.testing import FlaskClient
+from jsonsempai import magic  # noqa: F401
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.address import get_contract_address
 from ocean_provider.utils.asset import Asset, get_asset_from_metadatastore
@@ -27,7 +27,6 @@ from ocean_provider.utils.did import compute_did_from_data_nft_address_and_chain
 from ocean_provider.utils.encryption import do_encrypt
 from ocean_provider.utils.services import Service, ServiceType
 from ocean_provider.utils.util import sign_send_and_wait_for_receipt, sign_tx
-
 from tests.helpers.ddo_dict_builders import (
     build_credentials_dict,
     build_ddo_dict,
@@ -216,7 +215,7 @@ def get_registered_asset(
     }
     encrypted_files_str = json.dumps(unencrypted_files_list, separators=(",", ":"))
     encrypted_files = do_encrypt(
-        Web3.toHex(text=encrypted_files_str), get_provider_wallet()
+        Web3.toHex(text=encrypted_files_str), get_provider_wallet(8996)
     )
 
     credentials = (

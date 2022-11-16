@@ -7,9 +7,13 @@ import os
 
 import pytest
 from eth_account import Account
-
 from ocean_provider.run import app
-from ocean_provider.utils.basics import get_config, get_web3, send_ether
+from ocean_provider.utils.basics import (
+    get_config,
+    get_provider_private_key,
+    get_web3,
+    send_ether,
+)
 from ocean_provider.utils.provider_fees import get_c2d_environments
 
 app = app
@@ -58,7 +62,7 @@ def ganache_wallet():
 
 @pytest.fixture
 def provider_wallet():
-    pk = os.environ.get("PROVIDER_PRIVATE_KEY")
+    pk = get_provider_private_key()
     return Account.from_key(pk)
 
 

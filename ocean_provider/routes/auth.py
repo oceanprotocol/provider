@@ -2,19 +2,19 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
-import jwt
 import logging
 import os
 
-from flask import request, jsonify
+import jwt
+from flask import jsonify, request
 from flask_sieve import validate
-
-from ocean_provider.utils.util import get_request_data
 from ocean_provider.user_nonce import (
     force_expire_token,
     force_restore_token,
     is_token_valid,
 )
+from ocean_provider.utils.basics import get_provider_private_key
+from ocean_provider.utils.util import get_request_data
 from ocean_provider.validation.provider_requests import (
     CreateTokenRequest,
     DeleteTokenRequest,
@@ -64,7 +64,7 @@ def create_auth_token():
     address = data.get("address")
     expiration = int(data.get("expiration"))
 
-    pk = os.environ.get("PROVIDER_PRIVATE_KEY")
+    pk = get_provider_private_key(any_chain=True)
     token = jwt.encode({"exp": expiration, "address": address}, pk, algorithm="HS256")
     token = token.decode("utf-8") if isinstance(token, bytes) else token
 

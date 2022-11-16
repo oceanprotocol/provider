@@ -21,26 +21,24 @@ from ocean_provider.utils.basics import (
     validate_timestamp,
 )
 from ocean_provider.utils.compute import (
+    get_compute_endpoint,
+    get_compute_result_endpoint,
     process_compute_request,
     sign_for_compute,
-    get_compute_result_endpoint,
-    get_compute_endpoint,
 )
 from ocean_provider.utils.compute_environments import (
-    get_c2d_environments,
     check_environment_exists,
+    get_c2d_environments,
 )
 from ocean_provider.utils.error_responses import error_response
 from ocean_provider.utils.provider_fees import (
-    get_provider_fees_or_remote,
     comb_for_valid_transfer_and_fees,
+    get_provider_fees_or_remote,
 )
-from ocean_provider.utils.util import (
-    get_request_data,
-)
+from ocean_provider.utils.util import get_request_data
 from ocean_provider.validation.algo import (
-    WorkflowValidator,
     InputItemValidator,
+    WorkflowValidator,
     get_algo_checksums,
 )
 from ocean_provider.validation.images import validate_container
@@ -55,7 +53,6 @@ from requests.models import PreparedRequest
 
 from . import services
 
-provider_wallet = get_provider_wallet()
 requests_session = get_requests_session()
 
 logger = logging.getLogger(__name__)
@@ -154,6 +151,7 @@ def initializeCompute():
             return error_response("DID is not a valid algorithm", 400, logger)
 
         algo_service = algo_ddo.get_service_by_id(algorithm.get("serviceId"))
+        provider_wallet = get_provider_wallet(algo_ddo.chain_id)
         algo_files_checksum, algo_container_checksum = get_algo_checksums(
             algo_service, provider_wallet, algo_ddo
         )
@@ -161,6 +159,7 @@ def initializeCompute():
     for i, dataset in enumerate(datasets):
         dataset["algorithm"] = algorithm
         dataset["consumerAddress"] = consumer_address
+        provider_wallet = get_provider_wallet(dataset.chain_id)
         input_item_validator = InputItemValidator(
             web3,
             consumer_address,

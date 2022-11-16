@@ -2,9 +2,11 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
-from datetime import datetime
+import json
 import logging
 import os
+from datetime import datetime
+from json.decoder import JSONDecodeError
 from typing import Optional, Union
 
 import requests
@@ -13,10 +15,10 @@ from hexbytes import HexBytes
 from ocean_provider.config import Config
 from ocean_provider.http_provider import CustomHTTPProvider
 from requests_testadapter import Resp
-from web3.middleware import geth_poa_middleware
 from web3 import WebsocketProvider
 from web3.exceptions import ExtraDataLengthError
 from web3.main import Web3
+from web3.middleware import geth_poa_middleware
 
 logger = logging.getLogger(__name__)
 
@@ -32,15 +34,26 @@ def get_config(config_file: Optional[str] = None) -> Config:
     )
 
 
+def get_provider_private_key(chain_id: int = None, any_chain: bool = False):
+    try:
+        decoded = json.loads(os.environ.get("PROVIDER_PRIVATE_KEY"))
+        if not chain_id or chain_id not in decoded:
+            raise Exception("Unconfigured chain_id")
+
+        return decoded[chain_id]
+    except JSONDecodeError:
+        return os.environ.get("PROVIDER_PRIVATE_KEY")
+
+
 def get_metadata_url():
     return get_config().aquarius_url
 
 
-def get_provider_wallet():
+def get_provider_wallet(chain_id):
     """
     :return: Wallet instance
     """
-    pk = os.environ.get("PROVIDER_PRIVATE_KEY")
+    pk = get_provider_private_key()
     wallet = Account.from_key(private_key=pk)
 
     if wallet is None:

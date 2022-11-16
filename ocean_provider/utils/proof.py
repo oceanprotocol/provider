@@ -1,14 +1,15 @@
 import os
+
 import requests
-from ocean_provider.utils.basics import get_provider_wallet
 from ocean_provider.utils.accounts import sign_message
+from ocean_provider.utils.basics import get_provider_wallet, get_web3
 from ocean_provider.utils.datatoken import get_datatoken_contract
 from ocean_provider.utils.util import sign_and_send
 from web3.main import Web3
 
 
 def send_proof(
-    web3,
+    chain_id,
     order_tx_id,
     provider_data,
     consumer_data,
@@ -19,7 +20,8 @@ def send_proof(
     if not os.getenv("USE_CHAIN_PROOF") and not os.getenv("USE_HTTP_PROOF"):
         return
 
-    provider_wallet = get_provider_wallet()
+    web3 = get_web3(chain_id)
+    provider_wallet = get_provider_wallet(chain_id)
     provider_signature = sign_message(provider_data, provider_wallet)
 
     if os.getenv("USE_HTTP_PROOF"):

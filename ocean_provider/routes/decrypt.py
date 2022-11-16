@@ -12,11 +12,7 @@ from flask import Response, request
 from flask_sieve import validate
 from ocean_provider.requests_session import get_requests_session
 from ocean_provider.user_nonce import update_nonce
-from ocean_provider.utils.basics import (
-    get_config,
-    get_provider_wallet,
-    get_web3,
-)
+from ocean_provider.utils.basics import get_config, get_provider_wallet, get_web3
 from ocean_provider.utils.data_nft import (
     MetadataState,
     get_metadata,
@@ -31,7 +27,6 @@ from web3.main import Web3
 
 from . import services
 
-provider_wallet = get_provider_wallet()
 requests_session = get_requests_session()
 
 logger = logging.getLogger(__name__)
@@ -181,7 +176,9 @@ def _decrypt(
     # bit 2:  check if DDO is ecies encrypted
     if flags[0] & 2:
         try:
-            working_document = do_decrypt(working_document, get_provider_wallet())
+            working_document = do_decrypt(
+                working_document, get_provider_wallet(chain_id)
+            )
             logger.info("Successfully decrypted document.")
         except Exception:
             return error_response("Failed to decrypt.", 400, logger)
