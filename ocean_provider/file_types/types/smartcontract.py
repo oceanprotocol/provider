@@ -6,10 +6,9 @@ from uuid import uuid4
 
 from enforce_typing import enforce_types
 from flask import Response
-from web3.main import Web3
-
 from ocean_provider.file_types.definitions import FilesType
 from ocean_provider.utils.basics import get_provider_wallet, get_web3
+from web3.main import Web3
 
 logger = logging.getLogger(__name__)
 
@@ -19,10 +18,12 @@ class SmartContractCall(FilesType):
     def __init__(
         self,
         address: Optional[str] = None,
+        chain_id: Optional[int] = None,
         abi: Optional[dict] = None,
         userdata=None,
     ) -> None:
         self.address = address
+        self.chain_id = chain_id
         self.type = "smartcontract"
         self.abi = abi
         self.userdata = None
@@ -63,7 +64,7 @@ class SmartContractCall(FilesType):
         return uuid4().hex
 
     def fetch_smartcontract_call(self):
-        web3 = get_web3()
+        web3 = get_web3(self.chain_id)
         contract = web3.eth.contract(
             address=web3.toChecksumAddress(self.address), abi=[self.abi]
         )

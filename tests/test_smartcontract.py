@@ -9,7 +9,6 @@ from datetime import datetime
 from unittest.mock import patch
 
 import pytest
-
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.address import get_contract_address
@@ -37,7 +36,12 @@ def test_download_smartcontract_asset(client, publisher_wallet, consumer_wallet,
         "type": "function",
     }
     unencrypted_files_list = [
-        {"type": "smartcontract", "address": router_address, "abi": abi}
+        {
+            "type": "smartcontract",
+            "address": router_address,
+            "abi": abi,
+            "chainId": 8996,
+        }
     ]
     asset = get_registered_asset(
         publisher_wallet, unencrypted_files_list=unencrypted_files_list
@@ -90,7 +94,12 @@ def test_download_smartcontract_asset_with_userdata(
         "type": "function",
     }
     unencrypted_files_list = [
-        {"type": "smartcontract", "address": router_address, "abi": abi}
+        {
+            "type": "smartcontract",
+            "address": router_address,
+            "abi": abi,
+            "chainId": 8996,
+        }
     ]
     asset = get_registered_asset(
         publisher_wallet,

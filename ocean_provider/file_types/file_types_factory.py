@@ -2,12 +2,11 @@ import logging
 from typing import Any, Tuple
 
 from enforce_typing import enforce_types
-
 from ocean_provider.file_types.file_types import (
     ArweaveFile,
+    GraphqlQuery,
     IpfsFile,
     UrlFile,
-    GraphqlQuery,
 )
 from ocean_provider.file_types.types.smartcontract import SmartContractCall
 
@@ -55,6 +54,7 @@ class FilesTypeFactory:
             elif file_obj["type"] == "smartcontract":
                 instance = SmartContractCall(
                     address=file_obj.get("address"),
+                    chain_id=file_obj.get("chainId"),
                     abi=file_obj.get("abi"),
                     userdata=file_obj.get("userdata"),
                 )
