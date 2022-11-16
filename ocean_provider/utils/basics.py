@@ -34,16 +34,42 @@ def get_config(config_file: Optional[str] = None) -> Config:
     )
 
 
-def get_provider_private_key(chain_id: int = None, any_chain: bool = False):
+# TODO: use or remove any_chain
+def get_value_from_decoded_env(chain_id, env_key, any_chain=False):
     chain_id = str(chain_id)
     try:
-        decoded = json.loads(os.environ.get("PROVIDER_PRIVATE_KEY"))
+        decoded = json.loads(os.environ.get(env_key))
         if not chain_id or chain_id not in decoded:
             raise Exception("Unconfigured chain_id")
 
         return decoded[chain_id]
-    except JSONDecodeError:
-        return os.environ.get("PROVIDER_PRIVATE_KEY")
+    except (JSONDecodeError, TypeError):
+        return os.environ.get(env_key)
+
+
+def get_configured_chains():
+    if not os.environ.get("NETWORK_URL"):
+        raise Exception("No chains configured")
+
+    try:
+        decoded = json.loads(os.environ.get("NETWORK_URL"))
+        return [int(key) for key in decoded.keys()]
+    except (JSONDecodeError, TypeError):
+        web3 = get_web3(os.environ.get("NETWORK_URL"))
+        return [web3.chain_id]
+
+
+def get_provider_addresses():
+    chain_ids = get_configured_chains()
+    if not chain_ids:
+        wallet = Account.from_key(private_key=os.environ.get("PROVIDER_PRIVATE_KEY"))
+        return wallet.address
+
+    return {chain_id: get_provider_wallet(chain_id).address for chain_id in chain_ids}
+
+
+def get_provider_private_key(chain_id: int = None, any_chain: bool = False):
+    return get_value_from_decoded_env(chain_id, "PROVIDER_PRIVATE_KEY")
 
 
 def get_metadata_url():
@@ -81,11 +107,7 @@ def get_web3(chain_id, cached=True) -> Web3:
     if cached and "app_web3_instances" in globals() and chain_id in app_web3_instances:
         return app_web3_instances[chain_id]
 
-    # TODO: make list from envs
-    if chain_id == 8996:
-        network_url = "http://127.0.0.1:8545"
-    # if chain_id is None:
-    #    network_url = get_config().network_url
+    network_url = get_value_from_decoded_env(chain_id, "NETWORK_URL")
 
     web3 = Web3(provider=get_web3_connection_provider(network_url))
 
