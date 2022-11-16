@@ -34,8 +34,10 @@ def get_config(config_file: Optional[str] = None) -> Config:
     )
 
 
-# TODO: use or remove any_chain
 def get_value_from_decoded_env(chain_id, env_key, any_chain=False):
+    if any_chain:
+        chain_id = get_configured_chains()[0]
+
     chain_id = str(chain_id)
     try:
         decoded = json.loads(os.environ.get(env_key))
@@ -69,7 +71,7 @@ def get_provider_addresses():
 
 
 def get_provider_private_key(chain_id: int = None, any_chain: bool = False):
-    return get_value_from_decoded_env(chain_id, "PROVIDER_PRIVATE_KEY")
+    return get_value_from_decoded_env(chain_id, "PROVIDER_PRIVATE_KEY", any_chain)
 
 
 def get_metadata_url():
