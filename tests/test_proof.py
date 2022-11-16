@@ -2,25 +2,25 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
-from datetime import datetime
 import json
-import pytest
-from requests.models import Response
-from unittest.mock import patch, Mock
+from datetime import datetime
+from unittest.mock import Mock, patch
 
-from ocean_provider.utils.accounts import sign_message
+import pytest
 from ocean_provider.constants import BaseURLs
+from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.proof import send_proof
 from ocean_provider.utils.provider_fees import get_provider_fees
 from ocean_provider.utils.services import ServiceType
+from requests.models import Response
 from tests.test_helpers import (
-    get_first_service_by_type,
-    get_registered_asset,
-    mint_100_datatokens,
     BLACK_HOLE_ADDRESS,
     deploy_data_nft,
     deploy_datatoken,
+    get_first_service_by_type,
     get_ocean_token_address,
+    get_registered_asset,
+    mint_100_datatokens,
     start_order,
 )
 
@@ -41,14 +41,14 @@ def test_http_proof(client, monkeypatch):
         response.status_code = 200
         mock.return_value = response
 
-        assert send_proof(None, b"1", provider_data, None, None, None, None) is True
+        assert send_proof(8996, b"1", provider_data, None, None, None, None) is True
 
     mock.assert_called_once()
 
     with patch("requests.post") as mock:
         mock.side_effect = Exception("Boom!")
 
-        assert send_proof(None, b"1", provider_data, None, None, None, None) is None
+        assert send_proof(8996, b"1", provider_data, None, None, None, None) is None
 
     mock.assert_called_once()
 
@@ -78,7 +78,7 @@ def test_chain_proof(client, monkeypatch, web3, publisher_wallet, consumer_walle
     signature = sign_message(_msg, consumer_wallet)
 
     assert send_proof(
-        web3,
+        8996,
         receipt.transactionHash,
         provider_data,
         consumer_data,
