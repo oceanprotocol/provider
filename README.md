@@ -95,8 +95,8 @@ Add the corresponding environment variables in your `.env` file. Here is an exam
 FLASK_APP=ocean_provider/run.py
 PROVIDER_CONFIG_FILE=config.ini
 PROVIDER_ADDRESS=your ethereum address goes here
-PROVIDER_PRIVATE_KEY=the private key or string containing a dict of chain_id to private key pairs
-PROVIDER_FEE_TOKEN = address of ERC20 token used to get fees
+PROVIDER_PRIVATE_KEY= the private key or string containing a dict of chain_id to private key pairs
+PROVIDER_FEE_TOKEN = the address of ERC20 token used to get fees, or string containing a dict of chain_id to token address pairs
 ```
 
 You might also want to set `FLASK_ENV=development`. Then run ```flask run --port=8030```

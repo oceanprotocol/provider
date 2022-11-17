@@ -3,11 +3,11 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import json
-import os
 from pathlib import Path
 from typing import Any, Dict, Union
+
 from eth_typing.evm import HexAddress
-from ocean_provider.utils.basics import get_config
+from ocean_provider.utils.basics import get_config, get_value_from_decoded_env
 
 BLACK_HOLE_ADDRESS = "0x0000000000000000000000000000000000000000"
 
@@ -34,7 +34,11 @@ def get_contract_address(
 
 
 def get_provider_fee_token(chain_id):
-    fee_token = os.environ.get("PROVIDER_FEE_TOKEN", get_ocean_address(chain_id))
+    fee_token = get_value_from_decoded_env(chain_id, "PROVIDER_FEE_TOKEN")
+
+    if not fee_token:
+        fee_token = get_ocean_address(chain_id)
+
     return fee_token if fee_token else BLACK_HOLE_ADDRESS
 
 
