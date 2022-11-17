@@ -189,7 +189,7 @@ def test_encrypt_and_decrypt_with_only_encryption(
 
     # Encrypt DDO
     encrypt_response = client.post(
-        BaseURLs.SERVICES_URL + "/encrypt",
+        BaseURLs.SERVICES_URL + "/encrypt?chainId=8996",
         data=ddo_string,
         content_type="application/octet-stream",
     )
@@ -275,7 +275,7 @@ def test_encrypt_and_decrypt_with_compression_and_encryption(
 
     # Encrypt DDO
     encrypt_response = client.post(
-        BaseURLs.SERVICES_URL + "/encrypt",
+        BaseURLs.SERVICES_URL + "/encrypt?chainId=8996",
         data=ddo_compressed,
         content_type="application/octet-stream",
     )

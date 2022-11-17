@@ -68,7 +68,7 @@ def test_encrypt_endpoint(client, provider_wallet, publisher_wallet):
         "document": files_list_str,
         "publisherAddress": provider_wallet.address,
     }
-    encrypt_endpoint = BaseURLs.SERVICES_URL + "/encrypt"
+    encrypt_endpoint = BaseURLs.SERVICES_URL + "/encrypt?chainId=8996"
     response = client.post(
         encrypt_endpoint, json=payload, content_type="application/octet-stream"
     )
