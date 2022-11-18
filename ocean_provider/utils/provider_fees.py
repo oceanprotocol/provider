@@ -1,6 +1,5 @@
 import json
 import logging
-import os
 from datetime import datetime
 from typing import Any, Dict
 
@@ -140,7 +139,7 @@ def get_provider_fees_or_remote(
         except Exception:
             # order does not exist or is expired, so we need new provider fees
             pass
-    if is_this_same_provider(service.service_endpoint):
+    if is_this_same_provider(service.service_endpoint, asset.chain_id):
         provider_fee = get_provider_fees(
             asset,
             service,
