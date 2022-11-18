@@ -7,7 +7,6 @@ import json
 import os
 
 import requests
-
 from ocean_provider.exceptions import RequestNotFound
 from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.basics import get_provider_wallet
@@ -24,7 +23,7 @@ class RBACValidator:
         if request_name not in action_mapping.keys():
             raise RequestNotFound("Request name is not valid!")
         self.action = action_mapping[request_name]
-        self.provider_address = get_provider_wallet().address
+        self.provider_address = get_provider_wallet(use_universal_key=True).address
         address = self.request.get(
             "consumerAddress", self.request.get("publisherAddress")
         )
@@ -100,13 +99,13 @@ class RBACValidator:
 
     def build_encryptUrl_payload(self):
         message = "encryptUrl" + json.dumps(self.credentials)
-        signature = sign_message(message, get_provider_wallet())
+        signature = sign_message(message, get_provider_wallet(use_universal_key=True))
 
         return {"signature": signature, "data": self.get_data()}
 
     def build_initialize_payload(self):
         message = "initialize" + json.dumps(self.credentials)
-        signature = sign_message(message, get_provider_wallet())
+        signature = sign_message(message, get_provider_wallet(use_universal_key=True))
         return {
             "signature": signature,
             "dids": self.get_dids(),
@@ -114,7 +113,7 @@ class RBACValidator:
 
     def build_access_payload(self):
         message = "access" + json.dumps(self.credentials)
-        signature = sign_message(message, get_provider_wallet())
+        signature = sign_message(message, get_provider_wallet(use_universal_key=True))
         return {"signature": signature, "dids": self.get_dids()}
 
     def build_compute_payload(self):
@@ -130,7 +129,7 @@ class RBACValidator:
             + algos_text
             + additional_dids_text
         )
-        signature = sign_message(message, get_provider_wallet())
+        signature = sign_message(message, get_provider_wallet(use_universal_key=True))
         compute_payload = {"signature": signature, "dids": dids}
         if algos:
             compute_payload["algos"] = algos

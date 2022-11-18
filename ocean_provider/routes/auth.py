@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import logging
-import os
 
 import jwt
 from flask import jsonify, request
@@ -64,7 +63,7 @@ def create_auth_token():
     address = data.get("address")
     expiration = int(data.get("expiration"))
 
-    pk = get_provider_private_key(any_chain=True)
+    pk = get_provider_private_key(use_universal_key=True)
     token = jwt.encode({"exp": expiration, "address": address}, pk, algorithm="HS256")
     token = token.decode("utf-8") if isinstance(token, bytes) else token
 

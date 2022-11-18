@@ -134,7 +134,7 @@ def is_token_valid(token, address):
     :param: token
     """
     try:
-        pk = get_provider_private_key(any_chain=True)
+        pk = get_provider_private_key(use_universal_key=True)
         decoded = jwt.decode(token, pk, algorithms=["HS256"])
         if Web3.toChecksumAddress(decoded["address"]) != Web3.toChecksumAddress(
             address

@@ -9,12 +9,10 @@ from datetime import datetime
 from json.decoder import JSONDecodeError
 from typing import Optional, Union
 
-import requests
 from eth_account import Account
 from hexbytes import HexBytes
 from ocean_provider.config import Config
 from ocean_provider.http_provider import CustomHTTPProvider
-from requests_testadapter import Resp
 from web3 import WebsocketProvider
 from web3.exceptions import ExtraDataLengthError
 from web3.main import Web3
@@ -34,54 +32,80 @@ def get_config(config_file: Optional[str] = None) -> Config:
     )
 
 
-def get_value_from_decoded_env(chain_id, env_key, any_chain=False):
-    if any_chain:
-        chain_id = get_configured_chains()[0]
-
-    chain_id = str(chain_id)
+def decode_keyed(env_key):
     try:
         decoded = json.loads(os.environ.get(env_key))
-        if not chain_id or chain_id not in decoded:
-            raise Exception("Unconfigured chain_id")
-
-        return decoded[chain_id]
+        return decoded
     except (JSONDecodeError, TypeError):
+        return False
+
+    return False
+
+
+def get_value_from_decoded_env(chain_id, env_key):
+    chain_id = str(chain_id)
+    decoded = decode_keyed(env_key)
+
+    if not decoded:
         return os.environ.get(env_key)
+
+    if not chain_id or chain_id not in decoded:
+        raise Exception("Unconfigured chain_id")
+
+    return decoded[chain_id]
 
 
 def get_configured_chains():
-    if not os.environ.get("NETWORK_URL"):
+    decoded = decode_keyed("NETWORK_URL")
+    single = os.environ.get("NETWORK_URL")
+
+    if not decoded and not single:
         raise Exception("No chains configured")
 
-    try:
-        decoded = json.loads(os.environ.get("NETWORK_URL"))
-        return [int(key) for key in decoded.keys()]
-    except (JSONDecodeError, TypeError):
+    if not decoded:
         web3 = get_web3(os.environ.get("NETWORK_URL"))
         return [web3.chain_id]
+
+    return [int(key) for key in decoded.keys()]
 
 
 def get_provider_addresses():
     chain_ids = get_configured_chains()
-    if not chain_ids:
+    if not decode_keyed("NETWORK_URL") and not decode_keyed("PROVIDER_PRIVATE_KEY"):
         wallet = Account.from_key(private_key=os.environ.get("PROVIDER_PRIVATE_KEY"))
-        return wallet.address
+        return {chain_ids[0]: wallet.address}
 
     return {chain_id: get_provider_wallet(chain_id).address for chain_id in chain_ids}
 
 
-def get_provider_private_key(chain_id: int = None, any_chain: bool = False):
-    return get_value_from_decoded_env(chain_id, "PROVIDER_PRIVATE_KEY", any_chain)
+def get_provider_private_key(chain_id: int = None, use_universal_key: bool = False):
+    if use_universal_key:
+        universal_key = os.getenv("UNIVERSAL_PRIVATE_KEY")
+        if universal_key:
+            return universal_key
+
+        default_key = os.getenv("PROVIDER_PRIVATE_KEY")
+        default_key = default_key if not decode_keyed(default_key) else None
+
+        return default_key
+
+    return get_value_from_decoded_env(chain_id, "PROVIDER_PRIVATE_KEY")
 
 
 def get_metadata_url():
     return get_config().aquarius_url
 
 
-def get_provider_wallet(chain_id):
+def get_provider_wallet(chain_id=None, use_universal_key=False):
     """
     :return: Wallet instance
     """
+    if use_universal_key:
+        wallet = Account.from_key(
+            private_key=get_provider_private_key(0, use_universal_key=True)
+        )
+        return wallet
+
     pk = get_provider_private_key(chain_id)
     wallet = Account.from_key(private_key=pk)
 
