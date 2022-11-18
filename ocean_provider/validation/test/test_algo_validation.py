@@ -60,7 +60,7 @@ def test_passes_algo_ddo(provider_wallet, consumer_address, web3):
         "ocean_provider.validation.algo.get_asset_from_metadatastore",
         side_effect=side_effect,
     ):
-        validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
+        validator = WorkflowValidator(consumer_address, data)
         assert validator.validate() is True
 
 
@@ -100,7 +100,7 @@ def test_passes_raw(provider_wallet, consumer_address, web3):
     with patch(
         "ocean_provider.validation.algo.get_asset_from_metadatastore", side_effect=[ddo]
     ):
-        validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
+        validator = WorkflowValidator(consumer_address, data)
         assert validator.validate() is True
 
 
@@ -144,7 +144,7 @@ def test_fails_not_an_algo(provider_wallet, consumer_address, web3):
         "ocean_provider.validation.algo.get_asset_from_metadatastore",
         side_effect=side_effect,
     ):
-        validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
+        validator = WorkflowValidator(consumer_address, data)
         assert validator.validate() is False
         assert validator.resource == f"algorithm"
         assert validator.message == f"not_algo"
@@ -173,7 +173,7 @@ def test_fails_meta_issues(provider_wallet, consumer_address, web3):
     with patch(
         "ocean_provider.validation.algo.get_asset_from_metadatastore", side_effect=[ddo]
     ):
-        validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
+        validator = WorkflowValidator(consumer_address, data)
         assert validator.validate() is False
         assert validator.resource == "algorithm"
         assert validator.message == "meta_oneof_url_rawcode_remote"
@@ -195,7 +195,7 @@ def test_fails_meta_issues(provider_wallet, consumer_address, web3):
     with patch(
         "ocean_provider.validation.algo.get_asset_from_metadatastore", side_effect=[ddo]
     ):
-        validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
+        validator = WorkflowValidator(consumer_address, data)
         assert validator.validate() is False
         assert validator.resource == "algorithm.container"
         assert validator.message == "missing_entrypoint_image_checksum"
@@ -217,7 +217,7 @@ def test_fails_meta_issues(provider_wallet, consumer_address, web3):
     with patch(
         "ocean_provider.validation.algo.get_asset_from_metadatastore", side_effect=[ddo]
     ):
-        validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
+        validator = WorkflowValidator(consumer_address, data)
         assert validator.validate() is False
         assert validator.resource == "algorithm.container"
         assert validator.message == "missing_entrypoint_image_checksum"
@@ -244,7 +244,7 @@ def test_fails_meta_issues(provider_wallet, consumer_address, web3):
     with patch(
         "ocean_provider.validation.algo.get_asset_from_metadatastore", side_effect=[ddo]
     ):
-        validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
+        validator = WorkflowValidator(consumer_address, data)
         assert validator.validate() is False
         assert validator.resource == "algorithm.container"
         assert validator.message == "checksum_prefix"
@@ -288,7 +288,7 @@ def test_additional_datasets(provider_wallet, consumer_address, web3):
         "ocean_provider.validation.algo.get_asset_from_metadatastore",
         side_effect=side_effect,
     ):
-        validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
+        validator = WorkflowValidator(consumer_address, data)
         # basically the same test as test_passes_algo_ddo, additionalDatasets is empty
         assert validator.validate() is True
 
@@ -303,7 +303,7 @@ def test_additional_datasets(provider_wallet, consumer_address, web3):
         "additionalDatasets": "i can not be decoded in json!",
     }
 
-    validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
+    validator = WorkflowValidator(consumer_address, data)
     assert validator.validate() is False
     assert validator.resource == "additional_input"
     assert validator.message == "invalid"
@@ -325,7 +325,7 @@ def test_additional_datasets(provider_wallet, consumer_address, web3):
         "ocean_provider.validation.algo.get_asset_from_metadatastore",
         side_effect=side_effect,
     ):
-        validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
+        validator = WorkflowValidator(consumer_address, data)
         assert validator.validate() is False
         assert validator.resource == "datasets[1].documentId"
         assert validator.message == "missing"
@@ -351,7 +351,7 @@ def test_additional_datasets(provider_wallet, consumer_address, web3):
         "ocean_provider.validation.algo.get_asset_from_metadatastore",
         side_effect=side_effect,
     ):
-        validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
+        validator = WorkflowValidator(consumer_address, data)
         assert validator.validate() is False
         assert validator.resource == "datasets[1].documentId"
         assert validator.message == "did_not_found"
@@ -376,7 +376,7 @@ def test_additional_datasets(provider_wallet, consumer_address, web3):
         "ocean_provider.validation.algo.get_asset_from_metadatastore",
         side_effect=side_effect,
     ):
-        validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
+        validator = WorkflowValidator(consumer_address, data)
         assert validator.validate() is False
         assert validator.resource == "datasets[1].serviceId"
         assert validator.message == "not_found"
@@ -433,7 +433,7 @@ def test_service_not_compute(provider_wallet, consumer_address, web3):
             "ocean_provider.utils.asset.Asset.get_service_by_id",
             side_effect=other_service,
         ):
-            validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
+            validator = WorkflowValidator(consumer_address, data)
             assert validator.validate() is False
             assert validator.resource == "dataset.serviceId"
             assert validator.message == "service_not_access_compute"
@@ -494,7 +494,7 @@ def test_fails_trusted(provider_wallet, consumer_address, web3):
         "ocean_provider.validation.algo.get_asset_from_metadatastore",
         side_effect=side_effect,
     ):
-        validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
+        validator = WorkflowValidator(consumer_address, data)
         assert validator.validate() is False
         assert validator.resource == "datasets[1]"
         assert validator.message == "not_trusted_algo"
@@ -531,7 +531,7 @@ def test_fails_trusted(provider_wallet, consumer_address, web3):
         "ocean_provider.validation.algo.get_asset_from_metadatastore",
         side_effect=side_effect,
     ):
-        validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
+        validator = WorkflowValidator(consumer_address, data)
         assert validator.validate() is False
         assert validator.resource == "datasets[1]"
         assert validator.message == "not_trusted_algo_publisher"
@@ -555,7 +555,7 @@ def test_fails_no_asset_url(provider_wallet, consumer_address, web3):
     with patch(
         "ocean_provider.validation.algo.get_asset_from_metadatastore", side_effect=[ddo]
     ):
-        validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
+        validator = WorkflowValidator(consumer_address, data)
         assert validator.validate() is False
         assert validator.resource == "dataset.serviceId"
         assert validator.message == "compute_services_not_in_same_provider"
@@ -579,7 +579,7 @@ def test_fails_validate_order(provider_wallet, consumer_address, web3):
     with patch(
         "ocean_provider.validation.algo.get_asset_from_metadatastore", side_effect=[ddo]
     ):
-        validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
+        validator = WorkflowValidator(consumer_address, data)
         assert validator.validate() is False
         assert validator.resource == "dataset.serviceId"
         assert validator.message == "order_invalid"
@@ -606,7 +606,7 @@ def test_fails_no_service_id(provider_wallet, consumer_address, web3):
     with patch(
         "ocean_provider.validation.algo.get_asset_from_metadatastore", side_effect=[ddo]
     ):
-        validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
+        validator = WorkflowValidator(consumer_address, data)
         assert validator.validate() is False
         assert validator.resource == "dataset.serviceId"
         assert validator.message == "missing"
@@ -652,7 +652,7 @@ def test_fails_invalid_algorithm_dict(provider_wallet, consumer_address, web3):
         "ocean_provider.validation.algo.get_asset_from_metadatastore",
         side_effect=side_effect,
     ):
-        validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
+        validator = WorkflowValidator(consumer_address, data)
         assert validator.validate() is False
         assert validator.resource == "algorithm"
         assert validator.message == "did_not_found"
@@ -705,7 +705,7 @@ def test_fails_algorithm_in_use(provider_wallet, consumer_address, web3):
             "ocean_provider.validation.algo.record_consume_request",
             side_effect=record_consume_request_side_effect,
         ):
-            validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
+            validator = WorkflowValidator(consumer_address, data)
             assert validator.validate() is False
             assert validator.resource == "algorithm"
             assert validator.message == "in_use_or_not_on_chain"
@@ -762,7 +762,7 @@ def test_fail_wrong_algo_type(provider_wallet, consumer_address, web3):
             "ocean_provider.utils.asset.Asset.get_service_by_id",
             side_effect=other_service,
         ):
-            validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
+            validator = WorkflowValidator(consumer_address, data)
             assert validator.validate() is False
             assert validator.resource == "dataset.serviceId"
             assert validator.message == "main_service_compute"
@@ -813,7 +813,7 @@ def test_fail_allow_raw_false(provider_wallet, consumer_address, web3):
         "ocean_provider.validation.algo.get_asset_from_metadatastore",
         side_effect=side_effect,
     ):
-        validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
+        validator = WorkflowValidator(consumer_address, data)
         assert validator.validate() is False
         assert validator.resource == "dataset"
         assert validator.message == "no_raw_algo_allowed"
@@ -874,7 +874,7 @@ def test_success_multiple_services_types(provider_wallet, consumer_address, web3
             "ocean_provider.validation.algo.get_service_files_list",
             side_effect=another_side_effect,
         ):
-            validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
+            validator = WorkflowValidator(consumer_address, data)
             assert validator.validate() is True
 
 
@@ -918,7 +918,7 @@ def test_fail_missing_algo_meta_documentId(provider_wallet, consumer_address, we
             "ocean_provider.validation.algo.get_service_files_list",
             side_effect=another_side_effect,
         ):
-            validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
+            validator = WorkflowValidator(consumer_address, data)
             assert validator.validate() is False
             assert validator.resource == "algorithm"
             assert validator.message == "missing_meta_documentId"
@@ -963,7 +963,7 @@ def test_fee_amount_not_paid(provider_wallet, consumer_address, web3):
     ):
         with patch("ocean_provider.validation.algo.get_provider_fee_amount") as mock:
             mock.return_value = 10**18
-            validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
+            validator = WorkflowValidator(consumer_address, data)
             assert validator.validate() is False
             assert validator.resource == "order"
             assert validator.message == "fees_not_paid"
@@ -1007,7 +1007,7 @@ def test_algo_ddo_file_broken(provider_wallet, consumer_address, web3):
         "ocean_provider.validation.algo.get_asset_from_metadatastore",
         side_effect=side_effect,
     ):
-        validator = WorkflowValidator(web3, consumer_address, provider_wallet, data)
+        validator = WorkflowValidator(consumer_address, data)
         assert validator.validate() is False
         assert validator.resource == "algorithm"
         assert validator.message == "file_unavailable"

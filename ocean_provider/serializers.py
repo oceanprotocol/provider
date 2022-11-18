@@ -9,14 +9,12 @@ class StageAlgoSerializer:
     def __init__(
         self,
         consumer_address,
-        provider_wallet,
         algo_data,
         algo_service,
         algo_asset=None,
     ):
         """Initialize Serializer."""
         self.consumer_address = consumer_address
-        self.provider_wallet = provider_wallet
         self.algo_data = algo_data
         self.algo_service = algo_service
         self.algo_asset = algo_asset

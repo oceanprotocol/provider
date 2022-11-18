@@ -17,6 +17,7 @@ from ocean_provider.utils.basics import (
     get_config,
     get_metadata_url,
     get_provider_wallet,
+    get_web3,
 )
 from ocean_provider.utils.datatoken import (
     record_consume_request,
@@ -161,7 +162,6 @@ class WorkflowValidator:
             output_def,
             self.service_endpoint,
             self.consumer_address,
-            self.provider_wallet,
         )
 
         return True
@@ -184,7 +184,7 @@ class WorkflowValidator:
 
                 if self.algo_service.type == "compute":
                     asset_urls = get_service_files_list(
-                        self.algo_service, self.provider_wallet, algo
+                        self.algo_service, get_provider_wallet(algo.chain_id), algo
                     )
 
                     if not asset_urls:
@@ -198,7 +198,7 @@ class WorkflowValidator:
                     return False
                 logger.debug("validate_order called for ALGORITHM usage.")
                 _tx, _order_log, _provider_fees_log, start_order_tx_id = validate_order(
-                    self.web3,
+                    get_web3(algo.chain_id),
                     self.consumer_address,
                     algorithm_tx_id,
                     algo,
@@ -231,7 +231,6 @@ class WorkflowValidator:
 
         algorithm_dict = StageAlgoSerializer(
             self.consumer_address,
-            self.provider_wallet,
             algo_data,
             self.algo_service,
             algo,
@@ -291,7 +290,7 @@ class WorkflowValidator:
         try:
             service = algo_ddo.get_service_by_id(algo_data.get("serviceId"))
             self.algo_files_checksum, self.algo_container_checksum = get_algo_checksums(
-                service, self.provider_wallet, algo_ddo
+                service, get_provider_wallet(algo_ddo.chain_id), algo_ddo
             )
         except Exception:
             self.resource = "algorithm"
@@ -517,7 +516,7 @@ class InputItemValidator:
 
         try:
             _tx, _order_log, _provider_fees_log, start_order_tx_id = validate_order(
-                self.web3,
+                get_web3(self.asset.chain_id),
                 self.consumer_address,
                 tx_id,
                 self.asset,
@@ -546,7 +545,7 @@ class InputItemValidator:
         return True
 
 
-def build_stage_output_dict(output_def, service_endpoint, owner, provider_wallet):
+def build_stage_output_dict(output_def, service_endpoint, owner):
     config = get_config()
     if BaseURLs.SERVICES_URL in service_endpoint:
         service_endpoint = service_endpoint.split(BaseURLs.SERVICES_URL)[0]
