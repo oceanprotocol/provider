@@ -6,8 +6,8 @@ from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.provider_fees import get_provider_fees
 from ocean_provider.utils.services import ServiceType
 from ocean_provider.utils.util import msg_hash
-from tests.helpers.ddo_dict_builders import build_metadata_dict_type_algorithm
 from tests.helpers.constants import ARWEAVE_TRANSACTION_ID
+from tests.helpers.ddo_dict_builders import build_metadata_dict_type_algorithm
 from tests.test_helpers import (
     get_first_service_by_type,
     get_registered_asset,
@@ -15,7 +15,6 @@ from tests.test_helpers import (
     mint_100_datatokens,
     start_order,
 )
-
 
 this_is_a_gist = "https://gist.githubusercontent.com/calina-c/5e8c965962bc0240eab516cb7a180670/raw/6e6cd245c039a9aac0a488857c6927d39eaafe4d/sprintf-py-conversions"
 
