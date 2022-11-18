@@ -13,7 +13,7 @@ from ocean_provider.utils.asset import (
     check_asset_consumable,
 )
 from ocean_provider.utils.address import get_provider_fee_token
-from ocean_provider.utils.basics import get_config, get_metadata_url
+from ocean_provider.utils.basics import get_config, get_metadata_url, get_provider_wallet
 from ocean_provider.utils.datatoken import (
     record_consume_request,
     validate_order,
@@ -30,11 +30,9 @@ logger = logging.getLogger(__name__)
 
 
 class WorkflowValidator:
-    def __init__(self, web3, consumer_address, provider_wallet, data):
+    def __init__(self, consumer_address, data):
         """Initializes the validator."""
-        self.web3 = web3
         self.consumer_address = consumer_address
-        self.provider_wallet = provider_wallet
         self.data = data
         self.workflow = dict({"stages": []})
 
@@ -89,9 +87,7 @@ class WorkflowValidator:
         for index, input_item in enumerate(all_data):
             input_item["algorithm"] = algo_data
             input_item_validator = InputItemValidator(
-                self.web3,
                 self.consumer_address,
-                self.provider_wallet,
                 input_item,
                 {"environment": self.data.get("environment")},
                 index,
@@ -354,18 +350,14 @@ def validate_formatted_algorithm_dict(algorithm_dict, algorithm_did):
 class InputItemValidator:
     def __init__(
         self,
-        web3,
         consumer_address,
-        provider_wallet,
         data,
         extra_data,
         index,
         check_usage=True,
     ):
         """Initializes the input item validator."""
-        self.web3 = web3
         self.consumer_address = consumer_address
-        self.provider_wallet = provider_wallet
         self.data = data
         self.extra_data = extra_data
         self.index = index
@@ -422,7 +414,7 @@ class InputItemValidator:
             return False
 
         asset_urls = get_service_files_list(
-            self.service, self.provider_wallet, self.asset
+            self.service, get_provider_wallet(self.asset.chain_id), self.asset
         )
         if self.service.type == "compute" and not asset_urls:
             self.resource += f".serviceId"

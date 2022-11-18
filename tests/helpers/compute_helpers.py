@@ -141,7 +141,7 @@ def build_and_send_ddo_with_compute_service(
         c2d_address,
         alg_service.index,
         get_provider_fees(
-            alg_ddo.did,
+            alg_ddo,
             alg_service,
             consumer_wallet.address,
             valid_until,

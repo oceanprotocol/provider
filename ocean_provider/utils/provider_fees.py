@@ -84,8 +84,6 @@ def get_provider_fees(
 
 
 def comb_for_valid_transfer_and_fees(all_datasets, compute_env):
-    web3 = get_web3()
-
     for i, dataset in enumerate(all_datasets):
         if "transferTxId" not in dataset:
             continue
@@ -94,6 +92,7 @@ def comb_for_valid_transfer_and_fees(all_datasets, compute_env):
             get_metadata_url(), dataset.get("documentId")
         )
         service = asset.get_service_by_id(dataset["serviceId"])
+        web3 = get_web3(asset.chain_id)
 
         try:
             _tx, _order_log, _provider_fees_log, start_order_tx_id = validate_order(
@@ -119,7 +118,7 @@ def get_provider_fees_or_remote(
 ):
     valid_order = None
     if "transferTxId" in dataset:
-        web3 = get_web3()
+        web3 = get_web3(asset.chain_id)
         try:
             _tx, _order_log, _provider_fees_log, start_order_tx_id = validate_order(
                 web3,

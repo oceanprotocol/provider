@@ -127,7 +127,6 @@ def initializeCompute():
     if not check_environment_exists(get_c2d_environments(), compute_env):
         return error_response("Compute environment does not exist", 400, logger)
 
-    web3 = get_web3()
     approve_params = {"datasets": []} if datasets else {}
 
     index_for_provider_fees = comb_for_valid_transfer_and_fees(
@@ -159,11 +158,8 @@ def initializeCompute():
     for i, dataset in enumerate(datasets):
         dataset["algorithm"] = algorithm
         dataset["consumerAddress"] = consumer_address
-        provider_wallet = get_provider_wallet(dataset.chain_id)
         input_item_validator = InputItemValidator(
-            web3,
             consumer_address,
-            provider_wallet,
             dataset,
             {"environment": compute_env},
             i,
