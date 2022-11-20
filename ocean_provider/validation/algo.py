@@ -60,7 +60,7 @@ class WorkflowValidator:
                 "output": self.validated_output_dict,
             }
         if self.data.get("claim"):
-            work_flow_dict['claim'] = self.data.get("claim")
+            work_flow_dict['claim'] = self.validated_claim_dict
 
         self.workflow["stages"].append(work_flow_dict) ##amit
      
@@ -148,9 +148,6 @@ class WorkflowValidator:
             if index == 0:
                 self.service_endpoint = input_item_validator.service.service_endpoint
 
-        if claim_data:
-            self.validated_claim_dict = self._build_and_validate_algo(claim_data)
-       
         if algo_data.get("documentId"):
             valid_until_list.append(self.algo_valid_until)
             provider_fee_amounts.append(self.algo_fee_amount)
@@ -183,6 +180,9 @@ class WorkflowValidator:
 
         if not self.agreement_id:
             self.agreement_id = algo_data["transferTxId"]
+
+        if claim_data:
+            self.validated_claim_dict = self._build_and_validate_claim(claim_data)
 
         return True
 
@@ -286,6 +286,31 @@ class WorkflowValidator:
 
         return algorithm_dict
 
+
+    def _build_and_validate_claim(self, claim_data):
+        """Returns False if invalid, otherwise sets the validated_algo_dict attribute."""
+        claim_did = claim_data.get("documentId")
+        claim = get_asset_from_metadatastore(get_metadata_url(), claim_did)
+        claim_service_id = claim_data.get("serviceId")
+        self.claim_service = claim.get_service_by_id(claim_service_id)
+        claim_dict = StageAlgoSerializer(
+            self.consumer_address,
+            self.provider_wallet,
+            claim_data,
+            self.claim_service ,
+            claim,
+        ).serialize()
+
+        valid, resource, error_msg = validate_formatted_algorithm_dict(
+            claim_dict, claim_did
+        )
+
+        #if not valid:
+        #    self.resource = f"algorithm.{resource}" if resource else "algorithm"
+        #    self.message = error_msg
+        #    return False
+
+        return claim_dict
        
 
     def preliminary_algo_validation(self):
