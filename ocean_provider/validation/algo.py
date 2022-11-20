@@ -59,27 +59,11 @@ class WorkflowValidator:
                 "algorithm": self.validated_algo_dict,
                 "output": self.validated_output_dict,
             }
-        if self.validated_claim_dict is False:
-            work_flow_dict['claim'] = self.data.get("claim")
+        
+        work_flow_dict['claim'] = self.data.get("claim")
 
         self.workflow["stages"].append(work_flow_dict) ##amit
-        #self.workflow["stages"].append(
-
-        #        "index": 0,
-        #        "input": self.validated_inputs,
-        #        "compute": {
-        #            "Instances": 1,
-
-        #"namespace": "ocean-compute",
-        #            "maxtime": 3600,
-        #        },
-        #        "algorithm": self.validated_algo_dict,
-        #        "claim" : self.validated_algo_dict,   ###amit
-        #        "output": self.validated_output_dict,
-        #    }
-        #)
-
-
+     
         return True
 
     #Umesh
@@ -164,7 +148,7 @@ class WorkflowValidator:
             if index == 0:
                 self.service_endpoint = input_item_validator.service.service_endpoint
 
-        self.validated_claim_dict = self._build_and_validate_algo(algo_data)
+        self.validated_claim_dict = self._build_and_validate_algo(claim_data)
        
         if algo_data.get("documentId"):
             valid_until_list.append(self.algo_valid_until)
