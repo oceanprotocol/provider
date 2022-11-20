@@ -113,6 +113,9 @@ def initializeCompute():
 
     datasets = data.get("datasets")
     algorithm = data["algorithm"]
+    claim = data.get("claim")
+    if not claim:
+        claim = algorithm
     compute_env = data["compute"]["env"]
     valid_until = data["compute"]["validUntil"]
     consumer_address = data.get("consumerAddress")
@@ -205,6 +208,11 @@ def initializeCompute():
             (index_for_provider_fees != len(datasets)),
             algorithm,
         )
+
+
+    if claim:
+        approve_params['claim'] = approve_params['algorithm']
+
 
     return jsonify(approve_params), 200
 
