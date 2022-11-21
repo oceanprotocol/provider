@@ -13,10 +13,55 @@ This document reflects couple of the possible errors returned by Provider.
 In order to consume a data service the user is required to send
 one datatoken to the provider, as well as provider fees for the compute job.
 
-#### 400 - Bad Request
+#### 1. 400 - Bad Request
 
-It occurs when the payload is incorrect, either at least one parameter is missing.
+It occurs when the validation part fails.
 The following errors are displayed in JSON format:
+
+##### 1.1 For algorithm validation
+```python
+{
+    "additional_input": "invalid"
+}
+```
+**Reason** The `additional_inputs` key is not a list.
+
+```python
+{
+    "algorithm": "missing_meta_documentId"
+}
+```
+**Reason** Either algorithm metadata, either algorithm DID is missing.
+
+```python
+{
+    "algorithm": "file_unavailable"
+}
+```
+**Reason** One possibility is that the asset could not be retrieved from Aquarius's database.
+Otherwise, there are issues related to `services`, such as:
+- particular `service` is not found;
+- `datatokenAddress`, `nftAddress`, `files` information are missing from the
+decrypted files object.
+
+```python
+{
+    "algorithm": "not_algo"
+}
+```
+**Reason** The `type` from the algorithm's metadata is not specified as `algorithm`.
+
+```python
+{
+    "algorithm.serviceId": "missing"
+}
+```
+**Reason** The `serviceId` key is missing from the algorithm's DDO.
+
+
+
+
+
 
 ```python
 {
@@ -38,7 +83,7 @@ The following errors are displayed in JSON format:
 ```
 **Reason** Either the DID is incorrect typed, either the algorithm timeout expired.
 
-#### 503 - Service Unavailable
+#### 2. 503 - Service Unavailable
 
 It shows up when Provider server is not responding.
 
