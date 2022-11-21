@@ -461,7 +461,7 @@ def computeStart():
         "environment": compute_env,
         "validUntil": validator.valid_until,
         "nonce": nonce,
-        # TODO reinstate "chainId": web3.chain_id,
+        "chainId": validator.chain_id,
     }
 
     response = requests_session.post(

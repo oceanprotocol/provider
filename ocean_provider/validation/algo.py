@@ -133,6 +133,7 @@ class WorkflowValidator:
 
             if required_provider_fee <= input_validator.provider_fee_amount:
                 paid_provider_fees_index = index
+                self.chain_id = input_validator.asset.chain_id
 
         if algo_data.get("documentId"):
             provider_fee_token = get_provider_fee_token(self.algo.chain_id)
@@ -145,6 +146,7 @@ class WorkflowValidator:
             )
             if required_provider_fee <= self.algo_fee_amount:
                 paid_provider_fees_index = len(self.input_validators) + 1
+                self.chain_id = self.algo.chain_id
 
         if paid_provider_fees_index == -1:
             self.resource = "order"
