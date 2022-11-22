@@ -71,6 +71,12 @@ def get_configured_chains():
 
 def get_provider_addresses():
     chain_ids = get_configured_chains()
+    if (not decode_keyed("NETWORK_URL") and decode_keyed("PROVIDER_PRIVATE_KEY")) or (
+        decode_keyed("NETWORK_URL") and not decode_keyed("PROVIDER_PRIVATE_KEY")
+    ):
+        raise Exception(
+            "NETWORK_URL and PROVIDER_PRIVATE_KEY must both be single or both json encoded."
+        )
     if not decode_keyed("NETWORK_URL") and not decode_keyed("PROVIDER_PRIVATE_KEY"):
         wallet = Account.from_key(private_key=os.environ.get("PROVIDER_PRIVATE_KEY"))
         return {chain_ids[0]: wallet.address}

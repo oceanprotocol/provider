@@ -8,6 +8,7 @@ import pytest
 from ocean_provider.utils.basics import (
     decode_keyed,
     get_configured_chains,
+    get_provider_addresses,
     get_value_from_decoded_env,
     get_web3,
     get_web3_connection_provider,
@@ -90,3 +91,36 @@ def test_get_value_from_decoded_env(monkeypatch):
 
     monkeypatch.setenv("SOME_ENV", "simple string")
     assert get_value_from_decoded_env(3, "SOME_ENV") == "simple string"
+
+
+@pytest.mark.unit
+def test_get_provider_addresses(monkeypatch):
+    monkeypatch.setenv("NETWORK_URL", '{"3": "http://127.0.0.1:8545"}')
+    monkeypatch.setenv(
+        "PROVIDER_PRIVATE_KEY",
+        '{"3": "0xfd5c1ccea015b6d663618850824154a3b3fb2882c46cefb05b9a93fea8c3d215"}',
+    )
+    assert 3 in get_provider_addresses()
+
+    monkeypatch.setenv("NETWORK_URL", "http://127.0.0.1:8545")
+    monkeypatch.setenv(
+        "PROVIDER_PRIVATE_KEY",
+        "0xfd5c1ccea015b6d663618850824154a3b3fb2882c46cefb05b9a93fea8c3d215",
+    )
+    assert 8996 in get_provider_addresses()
+
+    monkeypatch.setenv("NETWORK_URL", '{"3": "http://127.0.0.1:8545"}')
+    monkeypatch.setenv(
+        "PROVIDER_PRIVATE_KEY",
+        "0xfd5c1ccea015b6d663618850824154a3b3fb2882c46cefb05b9a93fea8c3d215",
+    )
+    with pytest.raises(Exception, match="must both be single or both json encoded"):
+        get_provider_addresses()
+
+    monkeypatch.setenv(
+        "PROVIDER_PRIVATE_KEY",
+        '{"3": "0xfd5c1ccea015b6d663618850824154a3b3fb2882c46cefb05b9a93fea8c3d215"}',
+    )
+    monkeypatch.setenv("NETWORK_URL", "http://127.0.0.1:8545")
+    with pytest.raises(Exception, match="must both be single or both json encoded"):
+        get_provider_addresses()
