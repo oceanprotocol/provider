@@ -1,5 +1,4 @@
 import os
-from typing import List
 from urllib.parse import urljoin
 
 from ocean_provider.requests_session import get_requests_session
@@ -13,12 +12,12 @@ def get_compute_environments_endpoint():
     return urljoin(get_config().operator_service_url, "api/v1/operator/environments")
 
 
-def get_c2d_environments() -> List:
+def get_c2d_environments(flat=False):
     if not os.getenv("OPERATOR_SERVICE_URL"):
         return []
 
     standard_headers = {"Content-type": "application/json", "Connection": "close"}
-    all_environments = []
+    all_environments = [] if flat else {}
 
     for chain in get_configured_chains():
         params = {"chainId": chain}
@@ -31,7 +30,10 @@ def get_c2d_environments() -> List:
         for env in envs:
             env["feeToken"] = get_provider_fee_token(chain)
 
-        all_environments.extend(envs)
+        if flat:
+            all_environments.extend(envs)
+        else:
+            all_environments[chain] = envs
 
     return all_environments
 

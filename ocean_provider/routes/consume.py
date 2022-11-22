@@ -298,7 +298,7 @@ def download():
 
     if service.type != ServiceType.ACCESS:
         # allow our C2D to download a compute asset
-        c2d_environments = get_c2d_environments()
+        c2d_environments = get_c2d_environments(flat=True)
 
         is_c2d_consumer_address = bool(
             [
