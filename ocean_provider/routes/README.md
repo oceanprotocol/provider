@@ -40,12 +40,22 @@ The following errors are displayed in JSON format:
 ```
 **Reason** One possibility is that the asset could not be retrieved from Aquarius's database.
 Otherwise, there are issues related to `services`, such as:
-- particular `service` is not found;
+- particular `service` is not found
+
+
 - `Key <key> not found in files.` - `datatokenAddress` or `nftAddress` or `files` is missing
-the decrypted files object;
+the decrypted files object
+
+
 - `Mismatch of datatoken.` - mismatch between service datatoken & decrypted files datatoken;
+
+
 - `Mismatch of dataNft.` - mismatch between asset data NFT address & the one from the decrypted files;
+
+
 - `Expected a files list` - `files` is not a list;
+
+
 - `Error decrypting service files` - other errors for decrypting the file.
 
 ```python
@@ -55,13 +65,77 @@ the decrypted files object;
 ```
 **Reason** The `type` from the algorithm's metadata is not specified as `algorithm`.
 
+
 ```python
 {
     "algorithm.serviceId": "missing"
 }
 ```
+or
+
+```python
+{
+    "algorithm.serviceId": "not_found"
+}
+```
+
 **Reason** The `serviceId` key is missing from the algorithm's DDO.
 
+```python
+{
+    "algorithm.documentId": "did_not_found"
+}
+```
+
+**Reason** The asset `DID` could not be retrieved from the metadata store.
+
+```python
+{
+    "error": "Asset malformed"
+}
+```
+**Reason** Data NFT address is not present in the asset object.
+
+```python
+{
+    "error": "Asset is not consumable."
+}
+```
+
+**Reason** Metadata status is not in the range of valid status codes for
+assets.
+
+```python
+{
+    "error": "Error: Access to asset <DID> was denied with code: <code>."
+}
+```
+**Reason** Asset cannot be accessed due to error status code.
+
+```python
+{
+    "algorithm.serviceId": "service_not_access_compute"
+}
+```
+
+**Reason** Service type is neither `access`, nor `compute`.
+
+```python
+{
+    "algorithm.serviceId": "main_service_compute"
+}
+```
+
+**Reason** If the main service is not `compute` for this asset when calling `initialize`
+endpoint.
+
+```python
+{
+    "algorithm.serviceId": "compute_services_not_in_same_provider"
+}
+```
+
+**Reason** Files attached to the compute service are not decrypted by the correct provider.
 
 ```python
 {
