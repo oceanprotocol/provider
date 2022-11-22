@@ -324,22 +324,30 @@ def get_dataset_ddo_with_multiple_files(client, wallet, service_type="access"):
     )
 
 
-def get_dataset_ddo_disabled(client, wallet):
-    asset = get_registered_asset(wallet)
-    did = asset.did
-    datatoken_address = asset.nft["address"]
-
+def set_nft_state(nft_address, nft_state, wallet):
     web3 = get_web3()
-    dt_contract = get_web3().eth.contract(
-        abi=ERC721Template.abi, address=datatoken_address
-    )
+    dt_contract = get_web3().eth.contract(abi=ERC721Template.abi, address=nft_address)
 
     time.sleep(10)
-    txn_hash = dt_contract.functions.setMetaDataState(1).transact(
+    txn_hash = dt_contract.functions.setMetaDataState(nft_state).transact(
         {"from": wallet.address}
     )
     _ = web3.eth.wait_for_transaction_receipt(txn_hash)
 
+
+def get_dataset_ddo_disabled(client, wallet):
+    asset = get_registered_asset(wallet)
+    did = asset.did
+    set_nft_state(asset.nft["address"], 1, wallet)
+    aqua_root = "http://172.15.0.5:5000"
+    time.sleep(5)
+    return asset, wait_for_asset(aqua_root, did)
+
+
+def get_dataset_ddo_unlisted(client, wallet):
+    asset = get_registered_asset(wallet)
+    did = asset.did
+    set_nft_state(asset.nft["address"], 5, wallet)
     aqua_root = "http://172.15.0.5:5000"
     time.sleep(5)
     return asset, wait_for_asset(aqua_root, did)

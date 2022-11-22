@@ -93,8 +93,22 @@ def fileinfo():
 
     if did:
         asset = get_asset_from_metadatastore(get_metadata_url(), did)
+        if not asset:
+            return error_response(
+                "Cannot resolve DID",
+                400,
+                logger,
+            )
         service = asset.get_service_by_id(service_id)
+        if not service:
+            return error_response(
+                "Invalid serviceId.",
+                400,
+                logger,
+            )
         files_list = get_service_files_list(service, provider_wallet, asset)
+        if not files_list:
+            return error_response("Unable to get dataset files", 400, logger)
     else:
         files_list = [data]
 
@@ -156,13 +170,24 @@ def initialize():
     consumer_address = data.get("consumerAddress")
 
     asset = get_asset_from_metadatastore(get_metadata_url(), did)
+    if not asset:
+        return error_response(
+            "Cannot resolve DID",
+            400,
+            logger,
+        )
     consumable, message = check_asset_consumable(asset, consumer_address, logger)
     if not consumable:
         return error_response(message, 400, logger)
 
     service_id = data.get("serviceId")
     service = asset.get_service_by_id(service_id)
-
+    if not service:
+        return error_response(
+            "Invalid serviceId.",
+            400,
+            logger,
+        )
     if service.type == "compute":
         return error_response(
             "Use the initializeCompute endpoint to initialize compute jobs.",
@@ -197,11 +222,10 @@ def initialize():
             return error_response(message, 400, logger)
 
         file_instance = message
-
-        valid, url_details = file_instance.check_details(url_object)
+        valid, url_details = file_instance.check_details(with_checksum=False)
         if not valid or not url_details:
             return error_response(
-                f"Error: Asset URL not found or not available. \n"
+                f"Error: Asset URL not found, not available or invalid. \n"
                 f"Payload was: {data}",
                 400,
                 logger,

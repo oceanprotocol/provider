@@ -2,6 +2,7 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
+import logging
 import pytest
 
 from ocean_provider.constants import BaseURLs
@@ -14,6 +15,8 @@ from tests.test_helpers import (
     get_first_service_by_type,
     get_registered_asset,
 )
+
+logger = logging.getLogger(__name__)
 
 fileinfo_url = BaseURLs.SERVICES_URL + "/fileinfo"
 
@@ -73,6 +76,40 @@ def test_check_url_good(client):
         assert file_info["contentLength"] == "1161"
         assert file_info["contentType"] == "application/json"
         assert file_info["valid"] is True
+
+
+@pytest.mark.unit
+def test_checksums(client):
+    data = {
+        "url": "https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt",
+        "type": "url",
+        "method": "GET",
+        "checksum": True,
+    }
+    response = client.post(fileinfo_url, json=data)
+    result = response.get_json()
+    assert response.status == "200 OK"
+    for file_info in result:
+        assert file_info["valid"] is True
+        assert (
+            file_info["checksum"]
+            == "1f7c17bed455f484f4d5ebc581cde6bc059977ef1e143b52a703f18b89c86a22"
+        )
+        assert file_info["checksumType"] == "sha256"
+
+    # big file, we should not have a checksum
+    data = {
+        "hash": "bafybeif4rpr4tuqfjmpxkavtsgzs6aliafwy7cywlge4756xpozqa5xezy",
+        "type": "ipfs",
+        "checksum": True,
+    }
+    response = client.post(fileinfo_url, json=data)
+    result = response.get_json()
+    assert response.status == "200 OK"
+    for file_info in result:
+        assert file_info["valid"] is True
+        assert "checksum" not in file_info
+        assert "checksumType" not in file_info
 
 
 @pytest.mark.unit

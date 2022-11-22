@@ -77,7 +77,11 @@ Parameters
     flags: the flags of the encrypted document (optional)
     documentHash: the hash of the encrypted document (optional)
     nonce: the nonce of the encrypted document (required)
-    signature: the signature of the encrypted document (required)
+    signature: the signature of the encrypted document (required).
+     The signature is based on hashing the following parameters:
+     transactionId + dataNftAddress + decrypterAddress + chainId + nonce
+      
+     
 ```
 
 Returns:
@@ -179,7 +183,10 @@ Parameters
     fileIndex: integer, the index of the file from the files list in the dataset
     nonce: Nonce
     consumerAddress: String object containing consumer's address
-    signature: String object containg user signature (signed message)
+    signature: String object containg user signature (signed message).
+     The signature is based on hashing the following parameters:
+       documentId + nonce
+    
 ```
 
 Returns:
@@ -216,13 +223,17 @@ Retrieves Content-Type and Content-Length from the given URL or asset.
 
 Parameters
 
+For published assets:
 ```
-    type: String, either "url" or "asset"
+{
     did: String, DID of the dataset
-    hash: String, hash of the file
-    url: String, URL of the file
-    serviceId: String, ID of the service the datatoken is attached to
+    serviceId: String, ID of the service
+}
 ```
+For file objects,see https://docs.oceanprotocol.com/core-concepts/did-ddo#files
+
+If checksum is requests, file size should be lower < MAX_CHECKSUM_LENGTH (see Provider ENVs)
+If file is larger, checksum WILL NOT be computed.
 
 Returns:
 Json document file info object
@@ -297,6 +308,8 @@ Parameters
 
 ```
     signature: String object containg user signature (signed message) (required)
+     The signature is based on hashing the following parameters:
+       consumerAddress + dataset.documentId + nonce
     consumerAddress: String object containing consumer's ethereum address (required)
     nonce: Integer, Nonce (required)
     environment: String representing a compute environment offered by the provider
@@ -362,6 +375,8 @@ Parameters
 
 ```
     signature: String object containg user signature (signed message)
+     The signature is based on hashing the following parameters:
+       consumerAddress + jobId + dataset.documentId + nonce
     documentId: String object containing document did  (optional)
     jobId: String object containing workflowID (optional)
     consumerAddress: String object containing consumer's address (optional)
@@ -426,6 +441,8 @@ Parameters
 
 ```
     signature: String object containg user signature (signed message)
+     The signature is based on hashing the following parameters:
+       consumerAddress + jobId + dataset.documentId + nonce
     documentId: String object containing document did (optional)
     jobId: String object containing workflowID (optional)
     consumerAddress: String object containing consumer's address (optional)
@@ -466,6 +483,8 @@ Parameters
 
 ```
     signature: String object containg user signature (signed message)
+     The signature is based on hashing the following parameters:
+       consumerAddress + jobId + dataset.documentId + nonce
     documentId: String object containing document did (optional)
     jobId: String object containing workflowId (optional)
     consumerAddress: String object containing consumer's address (optional)
@@ -509,6 +528,8 @@ Parameters
     consumerAddress: String object containing consumer's address (optional)
     nonce: Integer, Nonce (required)
     signature: String object containg user signature (signed message)
+     The signature is based on hashing the following parameters:
+       consumerAddress + jobId + dataset.documentId + nonce
 ```
 
 Returns:
@@ -550,16 +571,16 @@ Response:
 ```json
 [
     {
-        "cpuType":"AMD Ryzen 7 5800X 8-Core Processor"
-        "currentJobs":0
-        "desc":"This is a mocked enviroment"
-        "diskGB":2
-        "gpuType":"AMD RX570"
-        "id":"ocean-compute"
-        "maxJobs":10
-        "nCPU":2
-        "nGPU":0
-        "priceMin":2.3
+        "cpuType":"AMD Ryzen 7 5800X 8-Core Processor",
+        "currentJobs":0,
+        "desc":"This is a mocked enviroment",
+        "diskGB":2,
+        "gpuType":"AMD RX570",
+        "id":"ocean-compute",
+        "maxJobs":10,
+        "nCPU":2,
+        "nGPU":0,
+        "priceMin":2.3,
         "ramGB":1
     },
     ...
@@ -586,6 +607,8 @@ Parameters
     address: String object containing consumer's address (optional)
     nonce: Integer, Nonce (required)
     signature: String object containg user signature (signed message)
+     The signature is based on hashing the following parameters:
+       address + nonce
     expiration: valid future UTC timestamp (required)
 ```
 
@@ -614,12 +637,14 @@ Parameters
     address: String object containing consumer's address (optional)
     nonce: Integer, Nonce (required)
     signature: String object containg user signature (signed message)
+      The signature is based on hashing the following parameters:
+      address + nonce
     token: token to be expired
 ```
 
 Returns:
 Success message if token is successfully deleted.
-If the token is not found or alredy expired, returns an error message.
+If the token is not found or already expired, returns an error message.
 
 Example:
 
