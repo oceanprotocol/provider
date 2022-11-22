@@ -3,9 +3,12 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 from datetime import datetime, timedelta
-import pytest
 
+import pytest
 from ocean_provider.utils.basics import (
+    decode_keyed,
+    get_configured_chains,
+    get_value_from_decoded_env,
     get_web3,
     get_web3_connection_provider,
     send_ether,
@@ -49,3 +52,41 @@ def test_validate_timestamp():
 
     timestamp_past = (datetime.utcnow() - timedelta(hours=1)).timestamp()
     assert validate_timestamp(timestamp_past) is False
+
+
+@pytest.mark.unit
+def test_decode_keyed(monkeypatch):
+    monkeypatch.setenv("TEST_ENV", '{"valid": "json"}')
+    assert decode_keyed("TEST_ENV") == {"valid": "json"}
+    monkeypatch.setenv("TEST_ENV", '{"invalid json"}')
+    assert not decode_keyed("TEST_ENV")
+    monkeypatch.setenv("TEST_ENV", "simple string")
+    assert not decode_keyed("TEST_ENV")
+
+
+@pytest.mark.unit
+def test_get_configured_chains(monkeypatch):
+    monkeypatch.setenv("NETWORK_URL", '{"3": "http://127.0.0.1:8545", "15": "fifteen"}')
+    assert get_configured_chains() == [3, 15]
+
+    monkeypatch.setenv("NETWORK_URL", "http://127.0.0.1:8545")
+    assert get_configured_chains() == [8996]
+
+    monkeypatch.delenv("NETWORK_URL")
+    with pytest.raises(Exception, match="No chains configured"):
+        get_configured_chains()
+
+
+@pytest.mark.unit
+def test_get_value_from_decoded_env(monkeypatch):
+    monkeypatch.setenv("SOME_ENV", '{"3": "three", "15": "fifteen"}')
+    assert get_value_from_decoded_env(3, "SOME_ENV") == "three"
+
+    with pytest.raises(Exception, match="Unconfigured chain_id"):
+        get_value_from_decoded_env(7, "SOME_ENV")
+
+    with pytest.raises(Exception, match="Unconfigured chain_id"):
+        get_value_from_decoded_env(None, "SOME_ENV")
+
+    monkeypatch.setenv("SOME_ENV", "simple string")
+    assert get_value_from_decoded_env(3, "SOME_ENV") == "simple string"
