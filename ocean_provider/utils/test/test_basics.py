@@ -9,6 +9,7 @@ from ocean_provider.utils.basics import (
     decode_keyed,
     get_configured_chains,
     get_provider_addresses,
+    get_provider_private_key,
     get_value_from_decoded_env,
     get_web3,
     get_web3_connection_provider,
@@ -124,3 +125,32 @@ def test_get_provider_addresses(monkeypatch):
     monkeypatch.setenv("NETWORK_URL", "http://127.0.0.1:8545")
     with pytest.raises(Exception, match="must both be single or both json encoded"):
         get_provider_addresses()
+
+
+@pytest.mark.unit
+def test_get_provider_private_key(monkeypatch):
+    monkeypatch.delenv("UNIVERSAL_PRIVATE_KEY")
+    monkeypatch.setenv(
+        "PROVIDER_PRIVATE_KEY",
+        '{"3": "0xfd5c1ccea015b6d663618850824154a3b3fb2882c46cefb05b9a93fea8c3d215"}',
+    )
+    assert get_provider_private_key(3).startswith("0xfd5c1")
+
+    with pytest.raises(
+        Exception,
+        match="Must define UNIVERSAL_PRIVATE_KEY or a single PROVIDER_PRIVATE_KEY.",
+    ):
+        get_provider_private_key(None, use_universal_key=True)
+
+    monkeypatch.setenv(
+        "PROVIDER_PRIVATE_KEY",
+        "0xfd5c1ccea015b6d663618850824154a3b3fb2882c46cefb05b9a93fea8c3d215",
+    )
+    assert get_provider_private_key(8996).startswith("0xfd5c1")
+
+    monkeypatch.delenv("PROVIDER_PRIVATE_KEY")
+    monkeypatch.setenv(
+        "UNIVERSAL_PRIVATE_KEY",
+        "0xfd5c1ccea015b6d663618850824154a3b3fb2882c46cefb05b9a93fea8c3d215",
+    )
+    assert get_provider_private_key(None, use_universal_key=True).startswith("0xfd5c1")

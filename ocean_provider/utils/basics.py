@@ -90,10 +90,12 @@ def get_provider_private_key(chain_id: int = None, use_universal_key: bool = Fal
         if universal_key:
             return universal_key
 
-        default_key = os.getenv("PROVIDER_PRIVATE_KEY")
-        default_key = default_key if not decode_keyed(default_key) else None
+        if decode_keyed("PROVIDER_PRIVATE_KEY"):
+            raise Exception(
+                "Must define UNIVERSAL_PRIVATE_KEY or a single PROVIDER_PRIVATE_KEY."
+            )
 
-        return default_key
+        return os.getenv("PROVIDER_PRIVATE_KEY")
 
     return get_value_from_decoded_env(chain_id, "PROVIDER_PRIVATE_KEY")
 
