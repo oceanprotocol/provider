@@ -2,11 +2,8 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
-import copy
 import json
-import time
 from datetime import datetime
-from unittest.mock import patch
 
 import pytest
 from ocean_provider.constants import BaseURLs
@@ -15,7 +12,6 @@ from ocean_provider.utils.address import get_contract_address
 from ocean_provider.utils.basics import get_config
 from ocean_provider.utils.provider_fees import get_provider_fees
 from ocean_provider.utils.services import ServiceType
-from tests.test_auth import create_token
 from tests.test_helpers import (
     get_first_service_by_type,
     get_registered_asset,
@@ -169,6 +165,7 @@ def test_download_smartcontract_asset_with_pure_function(
             "type": "smartcontract",
             "address": dummy_service.datatoken_address,
             "abi": abi,
+            "chainId": 8996,
         }
     ]
     asset = get_registered_asset(
