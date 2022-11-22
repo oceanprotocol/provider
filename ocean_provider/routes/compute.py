@@ -124,7 +124,7 @@ def initializeCompute():
             logger,
         )
 
-    if not check_environment_exists(get_c2d_environments(), compute_env):
+    if not check_environment_exists(get_c2d_environments(flat=True), compute_env):
         return error_response("Compute environment does not exist", 400, logger)
 
     approve_params = {"datasets": []} if datasets else {}
