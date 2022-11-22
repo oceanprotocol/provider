@@ -41,8 +41,12 @@ The following errors are displayed in JSON format:
 **Reason** One possibility is that the asset could not be retrieved from Aquarius's database.
 Otherwise, there are issues related to `services`, such as:
 - particular `service` is not found;
-- `datatokenAddress`, `nftAddress`, `files` information are missing from the
-decrypted files object.
+- `Key <key> not found in files.` - `datatokenAddress` or `nftAddress` or `files` is missing
+the decrypted files object;
+- `Mismatch of datatoken.` - mismatch between service datatoken & decrypted files datatoken;
+- `Mismatch of dataNft.` - mismatch between asset data NFT address & the one from the decrypted files;
+- `Expected a files list` - `files` is not a list;
+- `Error decrypting service files` - other errors for decrypting the file.
 
 ```python
 {
@@ -57,10 +61,6 @@ decrypted files object.
 }
 ```
 **Reason** The `serviceId` key is missing from the algorithm's DDO.
-
-
-
-
 
 
 ```python
