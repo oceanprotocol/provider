@@ -7,6 +7,8 @@ import os
 from pathlib import Path
 from typing import Any, Dict, Union
 
+from jsonsempai import magic  # noqa: F401
+from addresses import address as contract_addresses  # noqa: F401
 from eth_typing.evm import HexAddress
 from ocean_provider.utils.basics import get_value_from_decoded_env
 
@@ -17,6 +19,9 @@ def get_address_json(address_path: Union[str, Path]) -> Dict[str, Any]:
     """Return the json object of all Ocean contract addresses on all chains."""
     if isinstance(address_path, str):
         address_path = Path(address_path)
+    else:
+        address_path = Path(contract_addresses.__file__)
+
     address_file = address_path.expanduser().resolve()
     with open(address_file) as f:
         return json.load(f)
