@@ -197,4 +197,7 @@ def validate_timestamp(value):
 
 
 def bool_value_of_env(env_key):
+    if not os.getenv(env_key):
+        return False
+
     return bool(strtobool(str(os.getenv(env_key))))
