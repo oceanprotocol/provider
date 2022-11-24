@@ -12,7 +12,7 @@ from flask import Response, request
 from flask_sieve import validate
 from ocean_provider.requests_session import get_requests_session
 from ocean_provider.user_nonce import update_nonce
-from ocean_provider.utils.basics import get_config, get_provider_wallet, get_web3
+from ocean_provider.utils.basics import decode_keyed, get_provider_wallet, get_web3
 from ocean_provider.utils.data_nft import (
     MetadataState,
     get_metadata,
@@ -124,7 +124,7 @@ def _decrypt(
         return error_response(f"Unsupported chain ID {chain_id}", 400, logger)
 
     # Check if decrypter is authorized
-    authorized_decrypters = get_config().authorized_decrypters
+    authorized_decrypters = decode_keyed("AUTHORIZED_DECRYPTERS")
     logger.info(f"authorized_decrypters = {authorized_decrypters}")
     if authorized_decrypters and decrypter_address not in authorized_decrypters:
         return error_response("Decrypter not authorized", 403, logger)

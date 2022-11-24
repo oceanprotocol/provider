@@ -6,12 +6,12 @@ import json
 import logging
 import os
 from datetime import datetime
+from distutils.util import strtobool
 from json.decoder import JSONDecodeError
-from typing import Optional, Union
+from typing import Union
 
 from eth_account import Account
 from hexbytes import HexBytes
-from ocean_provider.config import Config
 from ocean_provider.http_provider import CustomHTTPProvider
 from web3 import WebsocketProvider
 from web3.exceptions import ExtraDataLengthError
@@ -19,17 +19,6 @@ from web3.main import Web3
 from web3.middleware import geth_poa_middleware
 
 logger = logging.getLogger(__name__)
-
-
-def get_config(config_file: Optional[str] = None) -> Config:
-    """
-    :return: Config instance
-    """
-    return Config(
-        filename=config_file
-        if config_file is not None
-        else os.getenv("PROVIDER_CONFIG_FILE", "config.ini")
-    )
 
 
 def decode_keyed(env_key):
@@ -101,7 +90,7 @@ def get_provider_private_key(chain_id: int = None, use_universal_key: bool = Fal
 
 
 def get_metadata_url():
-    return get_config().aquarius_url
+    return os.getenv("AQUARIUS_URL")
 
 
 def get_provider_wallet(chain_id=None, use_universal_key=False):
@@ -205,3 +194,7 @@ def validate_timestamp(value):
     except Exception as e:
         logger.error(f"Failed to validate timestamp {value}: {e}\n")
         return False
+
+
+def bool_value_of_env(env_key):
+    return bool(strtobool(str(os.getenv(env_key))))
