@@ -3,11 +3,11 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import logging
-import pytest
+import os
 
+import pytest
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.address import get_contract_address
-from ocean_provider.utils.basics import get_config
 from ocean_provider.utils.services import ServiceType
 from tests.helpers.constants import ARWEAVE_TRANSACTION_ID
 from tests.test_helpers import (
@@ -182,7 +182,7 @@ def test_check_arweave_bad(client, monkeypatch):
 
 @pytest.mark.integration
 def test_check_smartcontract_simple(client, publisher_wallet, consumer_wallet, web3):
-    router_address = get_contract_address(get_config().address_file, "Router", 8996)
+    router_address = get_contract_address(os.getenv("ADDRESS_FILE"), "Router", 8996)
     abi = {
         "inputs": [],
         "name": "getApprovedTokens",

@@ -23,7 +23,6 @@ RUN python3.8 -m pip install setuptools
 RUN python3.8 -m pip install wheel
 RUN python3.8 -m pip install .
 
-# config.ini configuration file variables
 ENV NETWORK_URL='http://127.0.0.1:8545'
 
 ENV PROVIDER_PRIVATE_KEY=''
@@ -50,7 +49,6 @@ ENV AZURE_SHARE_OUTPUT='output'
 
 ENV OCEAN_PROVIDER_URL='http://0.0.0.0:8030'
 
-# docker-entrypoint.sh configuration file variables
 ENV OCEAN_PROVIDER_WORKERS='1'
 ENV OCEAN_PROVIDER_TIMEOUT='9000'
 ENV ALLOW_NON_PUBLIC_IP=False

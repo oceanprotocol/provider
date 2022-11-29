@@ -3,13 +3,13 @@ from urllib.parse import urljoin
 
 from ocean_provider.requests_session import get_requests_session
 from ocean_provider.utils.address import get_provider_fee_token
-from ocean_provider.utils.basics import get_config, get_configured_chains
+from ocean_provider.utils.basics import get_configured_chains
 
 requests_session = get_requests_session()
 
 
 def get_compute_environments_endpoint():
-    return urljoin(get_config().operator_service_url, "api/v1/operator/environments")
+    return urljoin(os.getenv("OPERATOR_SERVICE_URL"), "api/v1/operator/environments")
 
 
 def get_c2d_environments(flat=False):
