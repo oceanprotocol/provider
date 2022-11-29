@@ -38,23 +38,32 @@ class SmartContractCall(FilesType):
         if not self.address:
             return False, "malformed smartcontract type, missing contract address"
         # validate abi
+
         inputs = self.abi.get("inputs")
-        type = self.abi.get("type")
-        if inputs is None or type != "function":
+        t_type = self.abi.get("type")
+        if inputs is None or t_type != "function":
             return False, "invalid abi"
+
         mutability = self.abi.get("stateMutability", None)
         if mutability not in ["view", "pure"]:
             return False, "only view or pure functions are allowed"
+
         if not self.abi.get("name"):
             return False, "missing name"
 
         # check that all inputs have a match in userdata
         if len(inputs) > 0 and self.userdata is None:
             return False, "Missing parameters"
-        for input in inputs:
-            value = self.userdata.get(input.get("name"))
+
+        missing_inputs = []
+        for input_item in inputs:
+            value = self.userdata.get(input_item.get("name"))
             if not value:
-                return False, f"Missing userparam: {input.name}"
+                missing_inputs.append(input_item.name)
+
+        if missing_inputs:
+            return False, "Missing userparams: " + ",".join(missing_inputs)
+
         return True, self
 
     @enforce_types
@@ -68,21 +77,24 @@ class SmartContractCall(FilesType):
         )
         function = contract.functions[self.abi.get("name")]
         args = dict()
-        for input in self.abi.get("inputs"):
-            args[input.get("name")] = self.userdata.get(input.get("name"))
-            if input.get("type") == "address":
-                args[input.get("name")] = web3.toChecksumAddress(
-                    args[input.get("name")]
-                )
+
+        for input_item in self.abi.get("inputs"):
+            name = input_item.get("name")
+            args[name] = self.userdata.get(name)
+            if input_item.get("type") == "address":
+                args[name] = web3.toChecksumAddress(args[name])
+
         result = function(**args).call()
+
         if isinstance(result, object):
             return json.dumps(result), "application/json"
+
         return result, "application/text"
 
     def check_details(self, with_checksum=False):
         try:
-            result, type = self.fetch_smartcontract_call()
-            details = {"contentLength": len(result) or "", "contentType": type}
+            result, t_type = self.fetch_smartcontract_call()
+            details = {"contentLength": len(result) or "", "contentType": t_type}
             return True, details
         except Exception:
             return False, {}
@@ -93,7 +105,7 @@ class SmartContractCall(FilesType):
         validate_url=True,
     ):
         try:
-            result, type = self.fetch_smartcontract_call()
+            result, t_type = self.fetch_smartcontract_call()
             return Response(
                 result,
                 200,
