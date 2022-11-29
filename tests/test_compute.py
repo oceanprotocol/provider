@@ -2,11 +2,12 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
-import time
-from eth_account import Account
-from datetime import datetime
 import os
+import time
+from datetime import datetime
 
+import pytest
+from eth_account import Account
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.currency import to_wei
@@ -22,13 +23,10 @@ from tests.helpers.compute_helpers import (
     get_future_valid_until,
     get_possible_compute_job_status_text,
     get_registered_asset,
-    get_web3,
     mint_100_datatokens,
     post_to_compute,
     start_order,
 )
-
-import pytest
 from tests.helpers.ddo_dict_builders import build_metadata_dict_type_algorithm
 from tests.test_auth import create_token
 from tests.test_helpers import get_first_service_by_type, get_ocean_token_address
@@ -561,7 +559,7 @@ def test_compute_delete_job(
 def test_compute_environments(client):
     compute_envs_endpoint = BaseURLs.SERVICES_URL + "/computeEnvironments"
     response = client.get(compute_envs_endpoint)
-    for env in response.json:
+    for env in response.json["8996"]:
         if env["priceMin"] == 0:
             assert env["id"] == "ocean-compute"
 
@@ -613,7 +611,7 @@ def test_compute_paid_env(
 
     job_info = response.json[0]
     print(f"got response from starting compute job: {job_info}")
-    job_id = job_info.get("jobId", "")
+    _ = job_info.get("jobId", "")
 
 
 @pytest.mark.integration
