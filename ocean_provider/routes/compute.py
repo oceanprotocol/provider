@@ -17,7 +17,6 @@ from ocean_provider.utils.asset import get_asset_from_metadatastore
 from ocean_provider.utils.basics import (
     get_metadata_url,
     get_provider_wallet,
-    get_web3,
     validate_timestamp,
 )
 from ocean_provider.utils.compute import (
@@ -528,7 +527,6 @@ def computeResult():
     nonce, provider_signature = sign_for_compute(
         provider_wallet, consumer_address, job_id
     )
-    web3 = get_web3()
     params = {
         "index": data.get("index"),
         "owner": data.get("consumerAddress"),
@@ -536,7 +534,6 @@ def computeResult():
         "consumerSignature": data.get("signature"),
         "providerSignature": provider_signature,
         "nonce": nonce,
-        "chainId": web3.chain_id,
     }
     req = PreparedRequest()
     req.prepare_url(url, params)
