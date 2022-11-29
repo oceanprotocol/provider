@@ -1,6 +1,7 @@
-from freezegun import freeze_time
-import pytest
+from unittest.mock import patch
 
+import pytest
+from freezegun import freeze_time
 from ocean_provider.utils.currency import to_wei
 from ocean_provider.utils.provider_fees import get_provider_fee_amount
 from tests.helpers.compute_helpers import get_future_valid_until
@@ -10,7 +11,6 @@ from tests.test_helpers import (
     deploy_datatoken,
     get_ocean_token_address,
 )
-from unittest.mock import patch
 
 
 @pytest.mark.unit

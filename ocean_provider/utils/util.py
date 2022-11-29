@@ -6,13 +6,13 @@ import hashlib
 import json
 import logging
 from typing import Tuple
-from ocean_provider.utils.asset import Asset
-import werkzeug
 
+import werkzeug
 from eth_account.signers.local import LocalAccount
 from eth_keys import KeyAPI
 from eth_keys.backends import NativeECCBackend
 from eth_typing.encoding import HexStr
+from ocean_provider.utils.asset import Asset
 from ocean_provider.utils.encryption import do_decrypt
 from ocean_provider.utils.services import Service
 from web3 import Web3

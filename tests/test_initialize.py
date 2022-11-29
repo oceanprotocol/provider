@@ -10,7 +10,7 @@ from unittest.mock import patch
 import pytest
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.currency import to_wei
-from ocean_provider.utils.provider_fees import get_c2d_environments, get_provider_fees
+from ocean_provider.utils.provider_fees import get_provider_fees
 from ocean_provider.utils.services import ServiceType
 from tests.helpers.compute_helpers import (
     build_and_send_ddo_with_compute_service,

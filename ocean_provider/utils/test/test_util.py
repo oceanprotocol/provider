@@ -2,19 +2,16 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
-import ipfshttpclient
 import copy
 import json
 import logging
 import mimetypes
-import pytest
+from copy import deepcopy
 from unittest.mock import Mock, patch
 
+import ipfshttpclient
+import pytest
 from flask import Request
-from web3.main import Web3
-from werkzeug.utils import get_content_type
-
-from copy import deepcopy
 from ocean_provider.file_types.file_types_factory import FilesTypeFactory
 from ocean_provider.utils.asset import Asset
 from ocean_provider.utils.encryption import do_encrypt
@@ -26,6 +23,8 @@ from ocean_provider.utils.util import (
 )
 from tests.ddo.ddo_sample1_v4 import json_dict as ddo_sample1_v4
 from tests.helpers.constants import ARWEAVE_TRANSACTION_ID
+from web3.main import Web3
+from werkzeug.utils import get_content_type
 
 test_logger = logging.getLogger(__name__)
 

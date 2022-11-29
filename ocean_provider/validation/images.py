@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import logging
-import requests
 
 logger = logging.getLogger(__name__)
 

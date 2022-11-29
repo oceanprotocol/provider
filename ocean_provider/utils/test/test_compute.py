@@ -3,8 +3,8 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import logging
-import pytest
 
+import pytest
 from ocean_provider.utils.compute import (
     get_compute_endpoint,
     get_compute_result_endpoint,

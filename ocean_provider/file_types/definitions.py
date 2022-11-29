@@ -11,7 +11,6 @@ from typing import Protocol, Tuple
 import requests
 from enforce_typing import enforce_types
 from flask import Response
-
 from ocean_provider.utils.url import is_safe_url
 
 logger = logging.getLogger(__name__)

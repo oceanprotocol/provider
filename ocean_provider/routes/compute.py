@@ -524,6 +524,7 @@ def computeResult():
     url = get_compute_result_endpoint()
     consumer_address = data.get("consumerAddress")
     job_id = data.get("jobId")
+    provider_wallet = get_provider_wallet(use_universal_key=True)
     nonce, provider_signature = sign_for_compute(
         provider_wallet, consumer_address, job_id
     )

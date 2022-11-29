@@ -2,20 +2,15 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
-import copy
-import time
 import json
 from datetime import datetime
-from unittest.mock import patch
 
 import pytest
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.provider_fees import get_provider_fees
 from ocean_provider.utils.services import ServiceType
-from tests.test_auth import create_token
 from tests.test_helpers import (
-    get_dataset_ddo_with_multiple_files,
     get_first_service_by_type,
     get_registered_asset,
     mint_100_datatokens,

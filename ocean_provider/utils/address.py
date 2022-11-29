@@ -7,9 +7,9 @@ import os
 from pathlib import Path
 from typing import Any, Dict, Union
 
-from jsonsempai import magic  # noqa: F401
 from addresses import address as contract_addresses  # noqa: F401
 from eth_typing.evm import HexAddress
+from jsonsempai import magic  # noqa: F401
 from ocean_provider.utils.basics import get_value_from_decoded_env
 
 BLACK_HOLE_ADDRESS = "0x0000000000000000000000000000000000000000"

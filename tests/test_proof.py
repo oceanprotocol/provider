@@ -7,18 +7,13 @@ from datetime import datetime
 from unittest.mock import Mock, patch
 
 import pytest
-from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.proof import send_proof
 from ocean_provider.utils.provider_fees import get_provider_fees
 from ocean_provider.utils.services import ServiceType
 from requests.models import Response
 from tests.test_helpers import (
-    BLACK_HOLE_ADDRESS,
-    deploy_data_nft,
-    deploy_datatoken,
     get_first_service_by_type,
-    get_ocean_token_address,
     get_registered_asset,
     mint_100_datatokens,
     start_order,

@@ -387,7 +387,7 @@ class InputItemValidator:
                 return False
 
         if not self.data.get("serviceId") and self.data.get("serviceId") != 0:
-            self.resource += f".serviceId"
+            self.resource += ".serviceId"
             self.message = "missing"
             return False
 
@@ -395,14 +395,14 @@ class InputItemValidator:
         self.asset = get_asset_from_metadatastore(get_metadata_url(), self.did)
 
         if not self.asset:
-            self.resource += f".documentId"
+            self.resource += ".documentId"
             self.message = "did_not_found"
             return False
 
         self.service = self.asset.get_service_by_id(self.data["serviceId"])
 
         if not self.service:
-            self.resource += f".serviceId"
+            self.resource += ".serviceId"
             self.message = "not_found"
             return False
 
@@ -415,12 +415,12 @@ class InputItemValidator:
             return False
 
         if self.service.type not in ["access", "compute"]:
-            self.resource += f".serviceId"
+            self.resource += ".serviceId"
             self.message = "service_not_access_compute"
             return False
 
         if self.service.type != "compute" and self.index == 0:
-            self.resource += f".serviceId"
+            self.resource += ".serviceId"
             self.message = "main_service_compute"
             return False
 
@@ -428,7 +428,7 @@ class InputItemValidator:
             self.service, get_provider_wallet(self.asset.chain_id), self.asset
         )
         if self.service.type == "compute" and not asset_urls:
-            self.resource += f".serviceId"
+            self.resource += ".serviceId"
             self.message = "compute_services_not_in_same_provider"
             return False
 

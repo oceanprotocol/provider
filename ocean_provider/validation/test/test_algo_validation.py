@@ -7,7 +7,6 @@ from unittest.mock import Mock, patch
 
 import pytest
 from ocean_provider.utils.asset import Asset
-from ocean_provider.utils.basics import get_web3
 from ocean_provider.utils.services import Service, ServiceType
 from ocean_provider.validation.algo import WorkflowValidator
 from tests.ddo.ddo_sample1_compute import alg_ddo_dict, ddo_dict
@@ -146,8 +145,8 @@ def test_fails_not_an_algo(provider_wallet, consumer_address, web3):
     ):
         validator = WorkflowValidator(consumer_address, data)
         assert validator.validate() is False
-        assert validator.resource == f"algorithm"
-        assert validator.message == f"not_algo"
+        assert validator.resource == "algorithm"
+        assert validator.message == "not_algo"
 
 
 @pytest.mark.unit

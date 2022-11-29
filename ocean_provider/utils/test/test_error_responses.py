@@ -5,8 +5,7 @@
 import logging
 
 import pytest
-from ocean_provider.run import handle_error
-from ocean_provider.run import app
+from ocean_provider.run import app, handle_error
 
 test_logger = logging.getLogger(__name__)
 
