@@ -116,6 +116,7 @@ def fileinfo():
 
     files_info = []
     for i, file in enumerate(files_list):
+        logger.debug(f"Doing check on:{file}")
         file["userdata"] = data.get("userdata")
         valid, message = FilesTypeFactory.validate_and_create(file)
         if not valid:
