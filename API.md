@@ -78,7 +78,7 @@ Parameters
     documentHash: Hex string, the hash of the encrypted document (optional)
     nonce: String object, the nonce of the encrypted document (required)
     signature: the signature of the encrypted document (required).
-     The signature is based on hashing the string concatation consisting of:
+     The signature is based on hashing the string concatenation consisting of:
      transactionId + dataNftAddress + decrypterAddress + chainId + nonce.
       
      
@@ -184,7 +184,7 @@ Parameters
     nonce: Nonce
     consumerAddress: String object containing consumer's address
     signature: String object containg user signature (signed message).
-     The signature is based on hashing the following string concatation consisting of:
+     The signature is based on hashing the following string concatenation consisting of:
        documentId + nonce
     
 ```
@@ -308,7 +308,7 @@ Parameters
 
 ```
     signature: String object containg user signature (signed message) (required)
-     The signature is based on hashing the string concatation consisting of:
+     The signature is based on hashing the string concatenation consisting of:
        consumerAddress + dataset.documentId + nonce
     consumerAddress: String object containing consumer's ethereum checksummed address (required)
     nonce: Integer, Nonce (required)
@@ -375,7 +375,7 @@ Parameters
 
 ```
     signature: String object containg user signature (signed message)
-     The signature is based on hashing the string concatation consisting of:
+     The signature is based on hashing the string concatenation consisting of:
        consumerAddress + jobId + dataset.documentId + nonce
     documentId: String object containing document did  (optional)
     jobId: String object containing workflowID (optional)
@@ -441,7 +441,7 @@ Parameters
 
 ```
     signature: String object containg user signature (signed message)
-     The signature is based on hashing the string concatation consisting of:
+     The signature is based on hashing the string concatenation consisting of:
        consumerAddress + jobId + dataset.documentId + nonce
     documentId: String object containing document did (optional)
     jobId: String object containing workflowID (optional)
@@ -483,7 +483,7 @@ Parameters
 
 ```
     signature: String object containg user signature (signed message)
-     The signature is based on hashing the string concatation consisting of:
+     The signature is based on hashing the string concatenation consisting of:
        consumerAddress + jobId + dataset.documentId + nonce
     documentId: String object containing document did (optional)
     jobId: String object containing workflowId (optional)
@@ -528,7 +528,7 @@ Parameters
     consumerAddress: String object containing consumer's checksummed address (optional)
     nonce: Integer, Nonce (required)
     signature: String object containg user signature (signed message)
-     The signature is based on hashing the string concatation consisting of:
+     The signature is based on hashing the string concatenation consisting of:
        consumerAddress + jobId + dataset.documentId + nonce
 ```
 
@@ -607,7 +607,7 @@ Parameters
     address: String object containing consumer's checksummed address (optional)
     nonce: Integer, Nonce (required)
     signature: String object containg user signature (signed message)
-     The signature is based on hashing the string concatation consisting of:
+     The signature is based on hashing the string concatenation consisting of:
        address + nonce
     expiration: valid future UTC timestamp (required)
 ```
@@ -637,7 +637,7 @@ Parameters
     address: String object containing consumer's checksummed address (optional)
     nonce: Integer, Nonce (required)
     signature: String object containg user signature (signed message)
-      The signature is based on hashing the string concatation consisting of:
+      The signature is based on hashing the string concatenation consisting of:
       address + nonce
     token: token to be expired
 ```
