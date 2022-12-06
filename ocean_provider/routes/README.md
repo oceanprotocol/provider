@@ -63,7 +63,7 @@ the decrypted files object
     "algorithm": "not_algo"
 }
 ```
-**Reason** The `type` from the algorithm's metadata is not specified as `algorithm`.
+**Reason** The `type` from the algorithm's metadata from the algorithm DDO is not specified as `algorithm`.
 
 
 ```python
@@ -71,7 +71,7 @@ the decrypted files object
     "algorithm.serviceId": "missing"
 }
 ```
-or
+**Reason** The `serviceId` key is missing from the algorithm's DDO.
 
 ```python
 {
@@ -79,7 +79,7 @@ or
 }
 ```
 
-**Reason** The `serviceId` key is missing from the algorithm's DDO.
+**Reason** The provided `serviceId` does not exist.
 
 ```python
 {
@@ -87,14 +87,15 @@ or
 }
 ```
 
-**Reason** The asset `DID` could not be retrieved from the metadata store.
+**Reason** The algorithm's `DID` could not be retrieved from the metadata store,
+because the algorithm asset does not exist.
 
 ```python
 {
     "error": "Asset malformed"
 }
 ```
-**Reason** Data NFT address is not present in the asset object.
+**Reason** The asset published on chain is malformed, missing some required keys or not compliant with our schemas.
 
 ```python
 {
@@ -102,8 +103,10 @@ or
 }
 ```
 
-**Reason** Metadata status is not in the range of valid status codes for
-assets.
+**Reason** Asset's metadata status is not in the range of valid status codes for
+assets. The recognized states for the metadata are
+defined on our [docs](https://docs.oceanprotocol.com/core-concepts/did-ddo#state).
+
 
 ```python
 {
@@ -136,6 +139,8 @@ endpoint.
 ```
 
 **Reason** Files attached to the compute service are not decrypted by the correct provider.
+This occurs when both `asset` and `algorithm` are requested by their compute service
+which cannot be decrypted by a single provider as how it is supposed to be.
 
 ```python
 {
@@ -149,13 +154,14 @@ endpoint.
     "error": "Compute environment does not exist."
 }
 ```
-**Reason** If you are trying to initialize a compute service, the compute values need to be provided.
+**Reason** The compute environment provided by the user does not exist, it is not served by our compute-to-data feature.
+The user can use `get_c2d_environments` to check the list of available compute environments.
 ```python
 {
     "error": "DID is not a valid algorithm."
 }
 ```
-**Reason** Either the DID is incorrect typed, either the algorithm timeout expired.
+**Reason** Either the algorithm asset's DID is incorrectly typed, either the algorithm timeout expired.
 
 #### 2. 503 - Service Unavailable
 
