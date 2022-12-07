@@ -533,7 +533,10 @@ decoded properly as a dictionary.
 ```
 **Reason** Provider fees are not paid.
 
-#### 2. 401 - Consumer signature is invalid or failed verification
+#### 2. 401 - Consumer signature is invalid
+
+Consumer signature is invalid or failed verification when the job was submitted to
+operator-service.
 
 #### 3. 503 - Service Unavailable
 
