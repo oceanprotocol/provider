@@ -23,6 +23,7 @@ class MetadataState(IntEnum):
     DEPRECATED = 2
     REVOKED = 3
     TEMPORARILY_DISABLED = 4
+    UNLISTED = 5
 
 
 class Flags(IntFlag):
