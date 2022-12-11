@@ -160,7 +160,11 @@ def _decrypt(
     # Check if DDO metadata state is ACTIVE
     (_, _, metadata_state, _) = get_metadata(web3, data_nft_address)
     logger.info(f"metadata_state = {metadata_state}")
-    if metadata_state in [MetadataState.ACTIVE, MetadataState.TEMPORARILY_DISABLED]:
+    if metadata_state in [
+        MetadataState.ACTIVE,
+        MetadataState.TEMPORARILY_DISABLED,
+        MetadataState.UNLISTED,
+    ]:
         pass
     elif metadata_state == MetadataState.END_OF_LIFE:
         return error_response("Asset end of life", 403, logger)
