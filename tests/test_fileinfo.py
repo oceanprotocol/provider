@@ -91,6 +91,7 @@ def test_checksums(client):
     assert response.status == "200 OK"
     for file_info in result:
         assert file_info["valid"] is True
+        assert file_info["type"] == "url"
         assert (
             file_info["checksum"]
             == "1f7c17bed455f484f4d5ebc581cde6bc059977ef1e143b52a703f18b89c86a22"
@@ -108,6 +109,7 @@ def test_checksums(client):
     assert response.status == "200 OK"
     for file_info in result:
         assert file_info["valid"] is True
+        assert file_info["type"] == "ipfs"
         assert "checksum" not in file_info
         assert "checksumType" not in file_info
 
@@ -153,6 +155,7 @@ def test_check_arweave_good(client):
         assert file_info["contentLength"] == "5311"
         assert file_info["contentType"] == "application/octet-stream"
         assert file_info["valid"] is True
+        assert file_info["type"] == "arweave"
 
 
 @pytest.mark.unit
