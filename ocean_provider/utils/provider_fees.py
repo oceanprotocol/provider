@@ -53,7 +53,7 @@ def get_provider_fees(
         {
             "environment": compute_env,
             "timestamp": datetime.utcnow().timestamp(),
-            "timeout": service.get("timeout"),
+            "timeout": service.timeout,
         },
         separators=(",", ":"),
     )
