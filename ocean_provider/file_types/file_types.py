@@ -118,6 +118,7 @@ class GraphqlQuery(EndUrlType, FilesType):
         userdata=None,
     ) -> None:
         self.url = url
+        self.query = query
         self.userdata = {"query": query}
         if userdata:
             self.userdata["variables"] = (
@@ -132,6 +133,8 @@ class GraphqlQuery(EndUrlType, FilesType):
     def validate_dict(self) -> Tuple[bool, Any]:
         if not self.url:
             return False, "missing graphql endpoint"
+        if not self.query:
+            return False, "missing graphql query"
 
         return True, self
 
