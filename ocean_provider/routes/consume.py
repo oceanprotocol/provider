@@ -124,7 +124,7 @@ def fileinfo():
 
         file_instance = message
         valid, details = file_instance.check_details(with_checksum=with_checksum)
-        info = {"index": i, "valid": valid}
+        info = {"index": i, "valid": valid, "type": file["type"]}
         info.update(details)
         files_info.append(info)
 
