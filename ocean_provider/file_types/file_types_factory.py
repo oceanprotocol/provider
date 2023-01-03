@@ -67,4 +67,5 @@ class FilesTypeFactory:
         status = instance.validate_dict()
         if not status:
             logger.debug(f"validate_dict failed on {file_obj}")
+        logger.debug(f"validate_dict passed on {file_obj}")
         return status
