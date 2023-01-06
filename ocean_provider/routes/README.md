@@ -6,7 +6,7 @@ SPDX-License-Identifier: Apache-2.0
 # Possible errors returned by Provider
 
 This document reflects couple of the possible errors returned by Provider.
-## Compute routes
+## Compute endpoints
 
 ### initializeCompute
 
@@ -578,3 +578,50 @@ Operator Service.
 #### 3. 503 - Service Unavailable
 
 It shows up when Provider or Operator Service server is not responding.
+
+### computeDelete
+These status codes come from Operator service repository which is a microservice
+for Compute-to-Data feature.
+
+#### 1. 400 - Validation errors
+
+One or more of the required attributes are missing or invalid to the payload that is sent
+to the Operator Service.
+
+#### 2. 401 -  Invalid asset data
+
+Consumer signature is invalid or asset's data is not the correct one.
+
+#### 3. 503 - Service Unavailable
+
+It shows up when Provider or Operator Service server is not responding.
+
+
+### computeResult
+These status codes come from Operator service repository which is a microservice
+for Compute-to-Data feature.
+
+#### 1. 400 - Validation errors
+
+One or more of the required attributes are missing or invalid to the payload that is sent
+to the Operator Service.
+
+#### 2. 404 - Result not found
+
+Compute job result could not be found in the Operator Service database.
+
+#### 3. 503 - Service Unavailable
+
+It shows up when Provider or Operator Service server is not responding.
+
+
+### computeEnvironments
+These status codes come from Operator service repository which is a microservice
+for Compute-to-Data feature.
+
+#### 1. 503 - Service Unavailable
+
+It shows up when Provider or Operator Service server is not responding.
+
+
+## Authentication endpoints
