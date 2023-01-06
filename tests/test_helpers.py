@@ -386,14 +386,14 @@ def get_resource_path(dir_name, file_name):
         return pathlib.Path(os.path.join(os.path.sep, *base, file_name))
 
 
-def wait_for_asset(metadata_cache_url, did, timeout=30) -> Optional[Asset]:
+def wait_for_asset(metadata_cache_url, did, timeout=60) -> Optional[Asset]:
     start = time.time()
     ddo = None
     while not ddo:
         ddo = get_asset_from_metadatastore(metadata_cache_url, did)
 
         if not ddo:
-            time.sleep(0.2)
+            time.sleep(3)
 
         if time.time() - start > timeout:
             break
