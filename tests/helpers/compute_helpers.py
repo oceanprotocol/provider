@@ -230,4 +230,4 @@ def get_compute_result(client, endpoint, params, raw_response=False):
 def get_future_valid_until(short=False):
     # return a timestamp for one hour in the future or 30s in the future if short
     time_diff = timedelta(hours=1) if not short else timedelta(seconds=30)
-    return int((datetime.utcnow() + time_diff).timestamp())
+    return int((datetime.now() + time_diff).timestamp())

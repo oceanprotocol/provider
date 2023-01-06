@@ -15,7 +15,7 @@ def create_token(client, consumer_wallet, expiration=None):
     """Helper function to create a token using the API."""
     address = consumer_wallet.address
     if expiration is None:
-        expiration = int((datetime.utcnow() + timedelta(hours=1)).timestamp())
+        expiration = int((datetime.utcnow() + timedelta(hours=2)).timestamp())
 
     payload = {"address": address, "expiration": expiration}
 
