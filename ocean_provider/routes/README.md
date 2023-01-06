@@ -6,6 +6,93 @@ SPDX-License-Identifier: Apache-2.0
 # Possible errors returned by Provider
 
 This document reflects couple of the possible errors returned by Provider.
+## Consume endpoints
+
+### nonce
+Returns last-used nonce value.
+#### 1. 503 - Service Unavailable
+
+It occurs when Provider server is not responding.
+
+### fileinfo
+Retrieves Content-Type and Content-Length from the given URL or asset.
+
+#### 1. 400 - Bad Request
+It occurs when the validation part fails.
+The following errors are displayed in JSON format:
+
+```python
+{
+    "error": "Cannot resolve DID"
+}
+```
+**Reason** The dataset `DID` does not exist in the Metadata store.
+
+```python
+{
+    "error": "Invalid serviceId"
+}
+```
+**Reason** The `serviceId` of that dataset is not correct.
+
+```python
+{
+    "error": "Unable to get dataset files"
+}
+```
+**Reason** The `files` of that dataset could not be decrypted or retrieved
+due to the following issues:
+- `Key <key> not found in files.` - `datatokenAddress` or `nftAddress` or `files` is missing
+the decrypted files object
+
+
+- `Mismatch of datatoken.` - mismatch between service datatoken & decrypted files datatoken;
+
+
+- `Mismatch of dataNft.` - mismatch between asset data NFT address & the one from the decrypted files;
+
+
+- `Expected a files list` - `files` is not a list;
+
+
+- `Error decrypting service files` - other errors for decrypting the file.
+
+```python
+{
+    "error": "cannot decrypt files for this service."
+}
+```
+**Reason** The `files` of that dataset could not be decrypted due to the fact that
+`file object`, which contains the structure and the type of specific file, is missing 
+from the validation part.
+
+
+```python
+{
+    "error": "Unsupported type <type>"
+}
+```
+**Reason** The `file object` type is not supported by Provider besides the known ones:.
+- `url`;
+- `arweave`;
+- `ipfs`;
+- `graphql`;
+- `smartcontract`.
+
+```python
+{
+    "error": "malformed file object."
+}
+```
+**Reason** The `file object` structure is invalid and does not contain the wanted 
+information for the specific file.
+
+##### 1.1 For Url file validation
+
+
+### initialize
+
+
 ## Compute endpoints
 
 ### initializeCompute
