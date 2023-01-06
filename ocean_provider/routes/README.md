@@ -625,3 +625,26 @@ It shows up when Provider or Operator Service server is not responding.
 
 
 ## Authentication endpoints
+
+### createAuthToken
+Creates an AuthToken for the given address, that can replace signature in API calls.
+
+#### 1. 400 - Validation errors
+
+One or more of the required attributes are missing or invalid to the payload.
+
+#### 2. 503 - Service Unavailable
+
+It shows up when Provider server is not responding.
+
+
+### deleteAuthToken
+Revokes a given AuthToken if it is still valid.
+
+#### 1. 400 - Validation errors
+
+One or more of the required attributes are missing or invalid to the payload.
+
+#### 2. 503 - Service Unavailable
+
+It occurs when Provider or Operator Service server is not responding.
