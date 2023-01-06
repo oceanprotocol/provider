@@ -89,6 +89,28 @@ information for the specific file.
 
 ##### 1.1 For Url file validation
 
+```python
+{
+    "error": "malformed service files, missing required keys."
+}
+```
+**Reason** The `url` is missing from `UrlFile` object.
+
+```python
+{
+    "error": f"Unsafe method <method>"
+}
+```
+**Reason** The `method` for that `url` is neither `get`, nor `post`.
+
+##### 1.2 For Arweave file validation
+
+```python
+{
+    "error": "malformed service files, missing transactionId."
+}
+```
+**Reason** The `transactionId` is missing from `ArweaveFile` object.
 
 ### initialize
 
