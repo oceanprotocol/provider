@@ -23,6 +23,7 @@ jobs:
         with:
           repository: "oceanprotocol/barge"
           path: 'barge'
+          ref: 'issue344-ganache'
       - name: Login to Docker Hub
         if: ${{ env.DOCKERHUB_PASSWORD && env.DOCKERHUB_USERNAME }}
         run: |
