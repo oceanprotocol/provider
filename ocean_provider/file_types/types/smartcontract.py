@@ -1,15 +1,13 @@
+import hashlib
 import json
 import logging
-import os
 from typing import Any, Optional, Tuple
 from uuid import uuid4
 
 from enforce_typing import enforce_types
 from flask import Response
-from web3.main import Web3
-
 from ocean_provider.file_types.definitions import FilesType
-from ocean_provider.utils.basics import get_provider_wallet, get_web3
+from ocean_provider.utils.basics import get_web3
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +49,7 @@ class SmartContractCall(FilesType):
 
         # check that all inputs have a match in userdata
         if len(inputs) > 0 and self.userdata is None:
-            return False, f"Missing parameters"
+            return False, "Missing parameters"
         for input in inputs:
             value = self.userdata.get(input.get("name"))
             if not value:
@@ -84,8 +82,13 @@ class SmartContractCall(FilesType):
         try:
             result, type = self.fetch_smartcontract_call()
             details = {"contentLength": len(result) or "", "contentType": type}
+            if with_checksum:
+                sha = hashlib.sha256()
+                sha.update(json.dumps(self.abi, separators=(",", ":")).encode("utf-8"))
+                details["checksumType"] = "sha256"
+                details["checksum"] = sha.hexdigest()
             return True, details
-        except Exception as e:
+        except Exception:
             return False, {}
 
     def build_download_response(
@@ -99,5 +102,5 @@ class SmartContractCall(FilesType):
                 result,
                 200,
             )
-        except Exception as e:
-            raise ValueError(f"Failed to call contract")
+        except Exception:
+            raise ValueError("Failed to call contract")
