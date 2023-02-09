@@ -84,7 +84,7 @@ class SmartContractCall(FilesType):
             details = {"contentLength": len(result) or "", "contentType": type}
             if with_checksum:
                 sha = hashlib.sha256()
-                sha.update(json.dumps(self.abi, separators=(",", ":")).encode("utf-8"))
+                sha.update(result.encode("utf-8"))
                 details["checksumType"] = "sha256"
                 details["checksum"] = sha.hexdigest()
             return True, details
