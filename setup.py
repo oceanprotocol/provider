@@ -32,11 +32,10 @@ install_requirements = [
     "ocean-contracts==1.1.3",
     "coloredlogs==15.0.1",
     "Werkzeug==2.0.3",
-    "requests_testadapter",
-    "eciespy",
+    "eciespy==0.3.11",
     "coincurve>=13,<15",
-    "ipaddress",
-    "dnspython",
+    "ipaddress==1.0.23",
+    "dnspython==2.2.1",
     "flask-sieve==1.3.1",
     "SQLAlchemy==1.3.23",
     "json-sempai==0.4.0",
@@ -50,14 +49,16 @@ install_requirements = [
 setup_requirements = ["pytest-runner"]
 
 test_requirements = [
-    "codacy-coverage",
-    "coverage",
-    "docker",
+    "codacy-coverage==1.3.11",
+    "coverage==6.4.4",
+    "docker==6.0.0",
     "freezegun==1.1.0",
-    "mccabe",
-    "pylint",
-    "pytest",
-    "pytest-watch",
+    "mccabe==0.7.0",
+    "pylint==2.14.5",
+    "pytest==7.1.2",
+    "pytest-watch==4.2.0",
+    "pytest-env==0.6.2",
+    "requests_testadapter==0.3.0",
 ]
 
 # Possibly required by developers of ocean-provider:
@@ -73,7 +74,6 @@ dev_requirements = [
     "click==8.0.4",
     "pre-commit",
     "licenseheaders",
-    "pytest-env",
 ]
 
 setup(
