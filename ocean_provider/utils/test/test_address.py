@@ -26,5 +26,5 @@ def test_get_contract_address():
 def test_get_address_json_missing_var(monkeypatch):
     monkeypatch.delenv("ADDRESS_FILE")
     address_json = get_address_json(os.getenv("ADDRESS_FILE"))
-    assert address_json["rinkeby"]["chainId"] == 4
-    assert address_json["rinkeby"]["Ocean"].startswith("0x")
+    assert address_json["goerli"]["chainId"] == 5
+    assert address_json["goerli"]["Ocean"].startswith("0x")

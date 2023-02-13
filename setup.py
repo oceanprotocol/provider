@@ -53,7 +53,6 @@ test_requirements = [
     "freezegun==1.1.0",
     "mccabe==0.7.0",
     "pytest==7.1.2",
-    "pytest-watch==4.2.0",
     "pytest-env==0.6.2",
     "requests_testadapter==0.3.0",
 ]
