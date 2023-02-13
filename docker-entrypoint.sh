@@ -4,9 +4,6 @@
 ## SPDX-License-Identifier: Apache-2.0
 ##
 
-export PROVIDER_CONFIG_FILE=/ocean-provider/config.ini
-envsubst < /ocean-provider/config.ini.template > /ocean-provider/config.ini
-
 if [ "${DEPLOY_CONTRACTS}" = "true" ]; then
   while [ ! -f "/ocean-contracts/artifacts/ready" ]; do
     sleep 2
