@@ -18,8 +18,7 @@ with open("README.md") as readme_file:
 # Installed by pip install ocean-provider
 # or pip install -e .
 install_requirements = [
-    # Install ocean-utils first
-    # "ocean-contracts==1.0.0a1",
+    "ocean-contracts==1.1.8",
     "web3==5.25.0",
     "Flask==2.1.2",
     "Flask-Cors==3.0.9",
@@ -29,7 +28,6 @@ install_requirements = [
     "flask-swagger-ui==3.25.0",
     "Jinja2>=2.10.1,<3.1",
     "gunicorn==20.0.4",
-    "ocean-contracts==1.1.3",
     "coloredlogs==15.0.1",
     "Werkzeug==2.0.3",
     "eciespy==0.3.11",
@@ -54,7 +52,6 @@ test_requirements = [
     "docker==6.0.0",
     "freezegun==1.1.0",
     "mccabe==0.7.0",
-    "pylint==2.14.5",
     "pytest==7.1.2",
     "pytest-watch==4.2.0",
     "pytest-env==0.6.2",
@@ -63,17 +60,15 @@ test_requirements = [
 
 # Possibly required by developers of ocean-provider:
 dev_requirements = [
-    "bumpversion",
+    "bumpversion==0.6.0",
     "pkginfo",
     "twine",
-    "watchdog",
     "python-dotenv==0.15.0",
-    "flake8",
-    "isort",
+    "flake8==5.0.4",
+    "isort==5.10.1",
     "black==22.6.0",
-    "click==8.0.4",
-    "pre-commit",
-    "licenseheaders",
+    "pre-commit==2.20.0",
+    "licenseheaders==0.8.8",
 ]
 
 setup(

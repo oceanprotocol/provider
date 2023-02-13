@@ -2,21 +2,15 @@
 # Copyright 2021 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
-"""Config data."""
-
-#  Copyright 2018 Ocean Protocol Foundation
-#  SPDX-License-Identifier: Apache-2.0
-
 import configparser
-from distutils.util import strtobool
 import json
 import logging
 import os
+from distutils.util import strtobool
 from pathlib import Path
 
 from jsonsempai import magic
 from addresses import address as contract_addresses
-
 
 NAME_NETWORK_URL = "network"
 NAME_ADDRESS_FILE = "address.file"
