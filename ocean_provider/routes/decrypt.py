@@ -12,11 +12,7 @@ from flask import Response, request
 from flask_sieve import validate
 from ocean_provider.requests_session import get_requests_session
 from ocean_provider.user_nonce import update_nonce
-from ocean_provider.utils.basics import (
-    get_config,
-    get_provider_wallet,
-    get_web3,
-)
+from ocean_provider.utils.basics import get_config, get_provider_wallet, get_web3
 from ocean_provider.utils.data_nft import (
     MetadataState,
     get_metadata,
@@ -43,6 +39,8 @@ def decrypt():
     """Decrypts an encrypted document based on transaction Id or dataNftAddress.
 
     ---
+    tags:
+      - decrypt
     consumes:
       - application/json
     parameters:

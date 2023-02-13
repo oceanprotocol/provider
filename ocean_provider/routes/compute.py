@@ -21,26 +21,24 @@ from ocean_provider.utils.basics import (
     validate_timestamp,
 )
 from ocean_provider.utils.compute import (
+    get_compute_endpoint,
+    get_compute_result_endpoint,
     process_compute_request,
     sign_for_compute,
-    get_compute_result_endpoint,
-    get_compute_endpoint,
 )
 from ocean_provider.utils.compute_environments import (
-    get_c2d_environments,
     check_environment_exists,
+    get_c2d_environments,
 )
 from ocean_provider.utils.error_responses import error_response
 from ocean_provider.utils.provider_fees import (
-    get_provider_fees_or_remote,
     comb_for_valid_transfer_and_fees,
+    get_provider_fees_or_remote,
 )
-from ocean_provider.utils.util import (
-    get_request_data,
-)
+from ocean_provider.utils.util import get_request_data
 from ocean_provider.validation.algo import (
-    WorkflowValidator,
     InputItemValidator,
+    WorkflowValidator,
     get_algo_checksums,
 )
 from ocean_provider.validation.images import validate_container
@@ -217,7 +215,7 @@ def computeDelete():
 
     ---
     tags:
-      - services
+      - compute
     consumes:
       - application/json
     parameters:
@@ -273,7 +271,7 @@ def computeStop():
 
     ---
     tags:
-      - services
+      - compute
     consumes:
       - application/json
     parameters:
@@ -334,7 +332,7 @@ def computeStatus():
 
     ---
     tags:
-      - services
+      - compute
     consumes:
       - application/json
     parameters:
@@ -389,7 +387,7 @@ def computeStart():
 
     ---
     tags:
-      - services
+      - compute
     consumes:
       - application/json
     parameters:
@@ -489,7 +487,7 @@ def computeResult():
 
     ---
     tags:
-      - services
+      - compute
     consumes:
       - application/json
     parameters:
@@ -567,7 +565,7 @@ def computeEnvironments():
 
     ---
     tags:
-      - services
+      - compute
     consumes:
       - application/json
 
@@ -588,6 +586,21 @@ def computeEnvironments():
 
 @services.route("/validateContainer", methods=["POST"])
 def validateContainer():
+    """Validate a c2d container json
+
+    ---
+    tags:
+      - compute
+    consumes:
+      - application/json
+
+    responses:
+      200:
+        description: Container is valid.
+      400:
+        description: Container is invalid.
+    return: error dict if container is invalid
+    """
     container = get_request_data(request)
     valid, messages = validate_container(container)
 
