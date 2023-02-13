@@ -70,14 +70,18 @@ Parameters
 
 ```
     decrypterAddress: String object containing the address of the decrypter (required)
-    chainId: the chain id of the network the document is on (required)
-    transactionId: the transaction id of the encrypted document (optional)
-    dataNftAddress: the address of the data nft (optional)
-    encryptedDocument: the encrypted document (optional)
-    flags: the flags of the encrypted document (optional)
-    documentHash: the hash of the encrypted document (optional)
-    nonce: the nonce of the encrypted document (required)
-    signature: the signature of the encrypted document (required)
+    chainId: Integer, the chain id of the network the document is on (required)
+    transactionId: Hex string, the transaction id of the encrypted document (optional)
+    dataNftAddress: the checksummed address of the data nft (optional)
+    encryptedDocument: Hex string, the encrypted document (optional)
+    flags: Integer, the flags of the encrypted document (optional)
+    documentHash: Hex string, the hash of the encrypted document (optional)
+    nonce: String object, the nonce of the encrypted document (required)
+    signature: the signature of the encrypted document (required).
+     The signature is based on hashing the string concatenation consisting of:
+     transactionId + dataNftAddress + decrypterAddress + chainId + nonce.
+      
+     
 ```
 
 Returns:
@@ -179,7 +183,10 @@ Parameters
     fileIndex: integer, the index of the file from the files list in the dataset
     nonce: Nonce
     consumerAddress: String object containing consumer's address
-    signature: String object containg user signature (signed message)
+    signature: String object containg user signature (signed message).
+     The signature is based on hashing the following string concatenation consisting of:
+       documentId + nonce
+    
 ```
 
 Returns:
@@ -248,9 +255,9 @@ Response:
 ```json
 [
     {
-        "contentLength":"1161"
-        "contentType":"application/json"
-        "index":0
+        "contentLength":"1161",
+        "contentType":"application/json",
+        "index":0,
         "valid": true
     },...
 ]
@@ -301,7 +308,9 @@ Parameters
 
 ```
     signature: String object containg user signature (signed message) (required)
-    consumerAddress: String object containing consumer's ethereum address (required)
+     The signature is based on hashing the string concatenation consisting of:
+       consumerAddress + dataset.documentId + nonce
+    consumerAddress: String object containing consumer's ethereum checksummed address (required)
     nonce: Integer, Nonce (required)
     environment: String representing a compute environment offered by the provider
     dataset: Json object containing dataset information
@@ -366,9 +375,11 @@ Parameters
 
 ```
     signature: String object containg user signature (signed message)
+     The signature is based on hashing the string concatenation consisting of:
+       consumerAddress + jobId + dataset.documentId + nonce
     documentId: String object containing document did  (optional)
     jobId: String object containing workflowID (optional)
-    consumerAddress: String object containing consumer's address (optional)
+    consumerAddress: String object containing consumer's checksummed address (optional)
 
     At least one parameter from documentId, jobId and owner is required (can be any of them)
 ```
@@ -430,9 +441,11 @@ Parameters
 
 ```
     signature: String object containg user signature (signed message)
+     The signature is based on hashing the string concatenation consisting of:
+       consumerAddress + jobId + dataset.documentId + nonce
     documentId: String object containing document did (optional)
     jobId: String object containing workflowID (optional)
-    consumerAddress: String object containing consumer's address (optional)
+    consumerAddress: String object containing consumer's checksummed address (optional)
 
     At least one parameter from documentId,jobId and owner is required (can be any of them)
 ```
@@ -470,9 +483,11 @@ Parameters
 
 ```
     signature: String object containg user signature (signed message)
+     The signature is based on hashing the string concatenation consisting of:
+       consumerAddress + jobId + dataset.documentId + nonce
     documentId: String object containing document did (optional)
     jobId: String object containing workflowId (optional)
-    consumerAddress: String object containing consumer's address (optional)
+    consumerAddress: String object containing consumer's checksummed address (optional)
 
     At least one parameter from documentId, jobId is required (can be any of them)
     in addition to consumerAddress and signature
@@ -510,9 +525,11 @@ Parameters
 ```
     jobId: String object containing workflowId (optional)
     index: Integer, index of the result to download (optional)
-    consumerAddress: String object containing consumer's address (optional)
+    consumerAddress: String object containing consumer's checksummed address (optional)
     nonce: Integer, Nonce (required)
     signature: String object containg user signature (signed message)
+     The signature is based on hashing the string concatenation consisting of:
+       consumerAddress + jobId + dataset.documentId + nonce
 ```
 
 Returns:
@@ -554,16 +571,16 @@ Response:
 ```json
 [
     {
-        "cpuType":"AMD Ryzen 7 5800X 8-Core Processor"
-        "currentJobs":0
-        "desc":"This is a mocked enviroment"
-        "diskGB":2
-        "gpuType":"AMD RX570"
-        "id":"ocean-compute"
-        "maxJobs":10
-        "nCPU":2
-        "nGPU":0
-        "priceMin":2.3
+        "cpuType":"AMD Ryzen 7 5800X 8-Core Processor",
+        "currentJobs":0,
+        "desc":"This is a mocked enviroment",
+        "diskGB":2,
+        "gpuType":"AMD RX570",
+        "id":"ocean-compute",
+        "maxJobs":10,
+        "nCPU":2,
+        "nGPU":0,
+        "priceMin":2.3,
         "ramGB":1
     },
     ...
@@ -587,9 +604,11 @@ Allows the user to create an auth token.
 Parameters
 
 ```
-    address: String object containing consumer's address (optional)
+    address: String object containing consumer's checksummed address (optional)
     nonce: Integer, Nonce (required)
     signature: String object containg user signature (signed message)
+     The signature is based on hashing the string concatenation consisting of:
+       address + nonce
     expiration: valid future UTC timestamp (required)
 ```
 
@@ -615,15 +634,17 @@ Allows the user to delete an existing auth token before it naturally expires.
 Parameters
 
 ```
-    address: String object containing consumer's address (optional)
+    address: String object containing consumer's checksummed address (optional)
     nonce: Integer, Nonce (required)
     signature: String object containg user signature (signed message)
+      The signature is based on hashing the string concatenation consisting of:
+      address + nonce
     token: token to be expired
 ```
 
 Returns:
 Success message if token is successfully deleted.
-If the token is not found or alredy expired, returns an error message.
+If the token is not found or already expired, returns an error message.
 
 Example:
 

@@ -1,3 +1,4 @@
+import hashlib
 import json
 import logging
 from typing import Any, Optional, Tuple
@@ -95,6 +96,13 @@ class SmartContractCall(FilesType):
         try:
             result, t_type = self.fetch_smartcontract_call()
             details = {"contentLength": len(result) or "", "contentType": t_type}
+
+            if with_checksum:
+                sha = hashlib.sha256()
+                sha.update(result.encode("utf-8"))
+                details["checksumType"] = "sha256"
+                details["checksum"] = sha.hexdigest()
+
             return True, details
         except Exception:
             return False, {}

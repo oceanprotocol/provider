@@ -69,7 +69,7 @@ dev_requirements = [
     "python-dotenv==0.15.0",
     "flake8",
     "isort",
-    "black==22.1.0",
+    "black==22.6.0",
     "click==8.0.4",
     "pre-commit",
     "licenseheaders",
@@ -107,7 +107,7 @@ setup(
     url="https://github.com/oceanprotocol/provider-py",
     # fmt: off
     # bumpversion needs single quotes
-    version='1.3.10',
+    version='1.3.12',
     # fmt: on
     zip_safe=False,
 )
