@@ -31,7 +31,7 @@ install_requirements = [
     "gunicorn==20.0.4",
     "ocean-contracts==1.1.3",
     "coloredlogs==15.0.1",
-    "Werkzeug==2.0.3",
+    "Werkzeug==2.2.3",
     "requests_testadapter",
     "eciespy",
     "coincurve>=13,<15",
