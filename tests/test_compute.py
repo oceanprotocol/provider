@@ -3,6 +3,8 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import time
+
+import requests
 from eth_account import Account
 from datetime import datetime
 import os
@@ -561,7 +563,18 @@ def test_compute_delete_job(
 @pytest.mark.unit
 def test_compute_environments(client):
     compute_envs_endpoint = BaseURLs.SERVICES_URL + "/computeEnvironments"
-    response = client.get(compute_envs_endpoint)
+    retries = 2
+    response = None
+    while retries != 0:
+        try:
+            response = client.get(compute_envs_endpoint)
+            break
+        except requests.exceptions.ConnectionError:
+            retries -= 1
+            continue
+
+    assert response, "Compute envs could not be retrieved."
+
     for env in response.json:
         if env["priceMin"] == 0:
             assert env["id"] == "ocean-compute"
