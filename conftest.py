@@ -3,16 +3,17 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
+import logging
 import os
 
 import pytest
 from eth_account import Account
-
 from ocean_provider.run import app
-from ocean_provider.utils.basics import get_config, get_web3, send_ether
+from ocean_provider.utils.basics import get_web3, send_ether
 from ocean_provider.utils.provider_fees import get_c2d_environments
 
 app = app
+logger = logging.getLogger(__name__)
 
 
 @pytest.fixture
@@ -99,11 +100,17 @@ def web3():
 def free_c2d_env():
     environments = get_c2d_environments()
 
-    return next(env for env in environments if float(env["priceMin"]) == float(0))
+    try:
+        return next(env for env in environments if float(env["priceMin"]) == float(0))
+    except StopIteration:
+        logger.debug(environments)
 
 
 @pytest.fixture
 def paid_c2d_env():
     environments = get_c2d_environments()
 
-    return next(env for env in environments if env["id"] == "ocean-compute-env2")
+    try:
+        return next(env for env in environments if env["id"] == "ocean-compute-env2")
+    except StopIteration:
+        logger.debug(environments)
