@@ -49,6 +49,10 @@ jobs:
         with:
           url: "http://172.15.0.5:5000/"
           timeout: 600
+      - name: Sleep 60 sec
+        shell: bash
+        run: |
+          sleep 60
       - name: curl op-service
         shell: bash
         run: |
