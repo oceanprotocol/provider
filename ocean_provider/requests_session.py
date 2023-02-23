@@ -16,13 +16,13 @@ def get_requests_session() -> Session:
     session.mount(
         "http://",
         HTTPAdapter(
-            pool_connections=25, pool_maxsize=25, pool_block=True, max_retries=1
+            pool_connections=100, pool_maxsize=25, pool_block=True, max_retries=5
         ),
     )
     session.mount(
         "https://",
         HTTPAdapter(
-            pool_connections=25, pool_maxsize=25, pool_block=True, max_retries=1
+            pool_connections=100, pool_maxsize=25, pool_block=True, max_retries=5
         ),
     )
     return session
