@@ -40,12 +40,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements_dev.txt
       - name: Wait for contracts deployment and C2D cluster to be ready
-        working-directory: ${{ github.workspace }}/barge
-        run: |
-          for i in $(seq 1 250); do
-            sleep 10
-            [ -f "$HOME/.ocean/ocean-contracts/artifacts/ready" -a -f "$HOME/.ocean/ocean-c2d/ready" ] && break
-            done
+        uses: mydea/action-wait-for-api@v1
+        with:
+          url: "http://172.15.0.13:31000/"
+          timeout: 600
       - name: Test with pytest
         run: |
           coverage run --source ocean_provider -m pytest
