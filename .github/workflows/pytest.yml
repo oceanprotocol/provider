@@ -49,8 +49,10 @@ jobs:
         with:
           url: "http://172.15.0.5:5000/"
           timeout: 600
-      - name: Setup upterm session
-        uses: lhotari/action-upterm@v1
+      - name: curl
+        uses: wei/curl@master
+        with:
+          args: http://172.15.0.13:31000/api/v1/operator/environments?chainId=8996
       - name: Test with pytest
         run: |
           coverage run --source ocean_provider -m pytest
