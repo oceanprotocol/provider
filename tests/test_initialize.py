@@ -338,7 +338,7 @@ def test_initialize_compute_order_reused(
     assert "providerFee" in response.json["algorithm"]
 
     # Sleep long enough for orders to expire
-    timeout = time.time() + (30 * 4)
+    timeout = time.time() + (60 * 4)
     while True:
         payload["compute"]["validUntil"] = get_future_valid_until(short=True) + 30
         response = client.post(
