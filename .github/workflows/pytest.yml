@@ -50,21 +50,21 @@ jobs:
           url: "http://172.15.0.5:5000/"
           timeout: 600
       - name: curl op-service
-        uses: wei/curl@master
-        with:
-          args: "http://172.15.0.13:31000/"
+        shell: bash
+        run: |
+          curl http://172.15.0.13:31000/
       - name: curl aqua
-        uses: wei/curl@master
-        with:
-          args: "http://172.15.0.5:5000"
+        shell: bash
+        run: |
+          curl http://172.15.0.5:5000
       - name: curl kubectl config
-        uses: wei/curl@master
-        with:
-          args: "http://${KIND_IP}:10080/config"
+        shell: bash
+        run: |
+          curl http://172.15.0.13:10080/config
       - name: curl envs
-        uses: wei/curl@master
-        with:
-          args: "http://172.15.0.13:31000/api/v1/operator/environments?chainId=8996"
+        shell: bash
+        run: |
+          curl http://172.15.0.13:31000/api/v1/operator/environments?chainId=8996
       - name: Test with pytest
         run: |
           coverage run --source ocean_provider -m pytest
