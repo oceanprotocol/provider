@@ -604,7 +604,7 @@ def test_compute_paid_env(
         "signature": signature,
         "nonce": nonce,
         "consumerAddress": consumer_wallet.address,
-        "environment": paid_c2d_env["id"]
+        "environment": paid_c2d_env["id"],
     }
 
     # Start compute with valid signature

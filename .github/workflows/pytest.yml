@@ -49,12 +49,9 @@ jobs:
 
       - name: Test with pytest
         run: |
-          pytest tests/test_compute.py::test_compute_paid_env
+          pytest tests/test_compute.py
       - name:  docker logs
         run: docker logs ocean_aquarius_1 && docker logs ocean_provider_1 && docker logs ocean_provider2_1
-        if: ${{ failure() }}
-      - name: docker compute logs
-        run: docker logs ocean_computetodata_1 && docker logs ocean_kindcluster_1
         if: ${{ failure() }}
       - name: Publish code coverage
         uses: paambaati/codeclimate-action@v2.7.5
