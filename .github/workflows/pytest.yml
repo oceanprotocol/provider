@@ -39,10 +39,15 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements_dev.txt
-      - name: Wait for contracts deployment and C2D cluster to be ready
+      - name: Wait for c2d to be ready
         uses: mydea/action-wait-for-api@v1
         with:
           url: "http://172.15.0.13:31000/"
+          timeout: 600
+      - name: Wait for Aquarius to be ready
+        uses: mydea/action-wait-for-api@v1
+        with:
+          url: "http://172.15.0.5:5000/"
           timeout: 600
       - name: Test with pytest
         run: |
