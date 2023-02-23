@@ -52,7 +52,15 @@ jobs:
       - name: curl
         uses: wei/curl@master
         with:
-          args: http://172.15.0.13:31000/api/v1/operator/environments?chainId=8996
+          args: "http://172.15.0.13:31000/"
+      - name: curl
+        uses: wei/curl@master
+        with:
+          args: "http://172.15.0.5:5000"
+      - name: curl
+        uses: wei/curl@master
+        with:
+          args: "http://172.15.0.13:31000/api/v1/operator/environments?chainId=8996"
       - name: Test with pytest
         run: |
           coverage run --source ocean_provider -m pytest
