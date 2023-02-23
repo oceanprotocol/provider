@@ -39,20 +39,19 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements_dev.txt
-      - name: Wait for c2d to be ready
-        uses: mydea/action-wait-for-api@v1
-        with:
-          url: "http://172.15.0.13:31000/"
-          timeout: 600
+      - name: Wait for contracts deployment & C2D to be up
+        working-directory: ${{ github.workspace }}/barge
+        run: |
+          for i in $(seq 1 250); do
+            sleep 5
+            [ -f "$HOME/.ocean/ocean-contracts/artifacts/ready" -a -f "$HOME/.ocean/ocean-c2d/ready" ] && break
+            done
+          sleep 30
       - name: Wait for Aquarius to be ready
         uses: mydea/action-wait-for-api@v1
         with:
           url: "http://172.15.0.5:5000/"
           timeout: 600
-      - name: Sleep 60 sec
-        shell: bash
-        run: |
-          sleep 60
       - name: curl op-service
         shell: bash
         run: |
