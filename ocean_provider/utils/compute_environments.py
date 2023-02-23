@@ -36,6 +36,7 @@ def get_c2d_environments() -> List:
             break
         except requests.exceptions.ConnectionError:
             retries -= 1
+            time.sleep(2)
             continue
 
     assert response, "Response not found after retrying"
