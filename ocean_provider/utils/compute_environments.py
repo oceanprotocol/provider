@@ -26,9 +26,9 @@ def get_c2d_environments() -> List:
     params = {"chainId": web3.eth.chain_id}
     retries = 0
     response = None
-    while retries <= 2:
+    while retries <= 3:
         try:
-            response = requests_session.get(
+            response = requests.get(
                 get_compute_environments_endpoint(),
                 headers=standard_headers,
                 params=params,
@@ -36,10 +36,10 @@ def get_c2d_environments() -> List:
             break
         except requests.exceptions.ConnectionError:
             retries += 1
-            time.sleep(2)
+            time.sleep(3)
             continue
 
-    assert response, "Response not found after retrying"
+    assert response, "C2D environments could not be retrieved after retrying"
     # loop envs and add provider token from config
     envs = response.json()
     for env in envs:
