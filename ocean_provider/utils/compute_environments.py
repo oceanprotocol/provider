@@ -24,9 +24,9 @@ def get_c2d_environments() -> List:
     standard_headers = {"Content-type": "application/json", "Connection": "close"}
     web3 = get_web3()
     params = {"chainId": web3.eth.chain_id}
-    retries = 2
+    retries = 0
     response = None
-    while retries != 0:
+    while retries <= 2:
         try:
             response = requests_session.get(
                 get_compute_environments_endpoint(),
@@ -35,7 +35,7 @@ def get_c2d_environments() -> List:
             )
             break
         except requests.exceptions.ConnectionError:
-            retries -= 1
+            retries += 1
             time.sleep(2)
             continue
 
