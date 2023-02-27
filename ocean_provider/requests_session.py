@@ -2,7 +2,7 @@
 # Copyright 2023 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
-from requests.adapters import HTTPAdapter
+from requests.adapters import HTTPAdapter, Retry
 from requests.sessions import Session
 
 
@@ -13,16 +13,17 @@ def get_requests_session() -> Session:
     :return: requests session
     """
     session = Session()
+    retries = Retry(total=3, backoff_factor=1, status_forcelist=[502, 503, 504])
     session.mount(
         "http://",
         HTTPAdapter(
-            pool_connections=25, pool_maxsize=25, pool_block=True, max_retries=1
+            pool_connections=25, pool_maxsize=25, pool_block=True, max_retries=retries
         ),
     )
     session.mount(
         "https://",
         HTTPAdapter(
-            pool_connections=25, pool_maxsize=25, pool_block=True, max_retries=1
+            pool_connections=25, pool_maxsize=25, pool_block=True, max_retries=retries
         ),
     )
     return session
