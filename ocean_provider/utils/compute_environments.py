@@ -4,13 +4,8 @@ from typing import List
 from urllib.parse import urljoin
 
 import requests
-
-from ocean_provider.requests_session import get_requests_session
 from ocean_provider.utils.address import get_provider_fee_token
 from ocean_provider.utils.basics import get_config, get_web3
-
-
-requests_session = get_requests_session()
 
 
 def get_compute_environments_endpoint():

@@ -8,26 +8,19 @@ import logging
 from flask import jsonify, request
 from flask_sieve import validate
 from ocean_provider.file_types.file_types_factory import FilesTypeFactory
-from ocean_provider.requests_session import get_requests_session
+from ocean_provider.routes import services
 from ocean_provider.user_nonce import get_nonce, update_nonce
 from ocean_provider.utils.asset import (
-    get_asset_from_metadatastore,
     check_asset_consumable,
+    get_asset_from_metadatastore,
 )
-from ocean_provider.utils.basics import (
-    get_provider_wallet,
-    get_web3,
-    get_metadata_url,
-)
+from ocean_provider.utils.basics import get_metadata_url, get_provider_wallet, get_web3
 from ocean_provider.utils.datatoken import validate_order
 from ocean_provider.utils.error_responses import error_response
 from ocean_provider.utils.proof import send_proof
-from ocean_provider.utils.provider_fees import get_provider_fees, get_c2d_environments
+from ocean_provider.utils.provider_fees import get_c2d_environments, get_provider_fees
 from ocean_provider.utils.services import ServiceType
-from ocean_provider.utils.util import (
-    get_request_data,
-    get_service_files_list,
-)
+from ocean_provider.utils.util import get_request_data, get_service_files_list
 from ocean_provider.validation.provider_requests import (
     DownloadRequest,
     FileInfoRequest,
@@ -36,10 +29,7 @@ from ocean_provider.validation.provider_requests import (
 )
 from web3.main import Web3
 
-from ocean_provider.routes import services
-
 provider_wallet = get_provider_wallet()
-requests_session = get_requests_session()
 
 logger = logging.getLogger(__name__)
 

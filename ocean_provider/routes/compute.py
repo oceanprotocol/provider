@@ -8,10 +8,10 @@ import logging
 import os
 
 import flask
+import requests
 from flask import Response, jsonify, request
 from flask_sieve import validate
 from ocean_provider.file_types.file_types_factory import FilesTypeFactory
-from ocean_provider.requests_session import get_requests_session
 from ocean_provider.user_nonce import update_nonce
 from ocean_provider.utils.asset import get_asset_from_metadatastore
 from ocean_provider.utils.basics import (
@@ -21,26 +21,24 @@ from ocean_provider.utils.basics import (
     validate_timestamp,
 )
 from ocean_provider.utils.compute import (
+    get_compute_endpoint,
+    get_compute_result_endpoint,
     process_compute_request,
     sign_for_compute,
-    get_compute_result_endpoint,
-    get_compute_endpoint,
 )
 from ocean_provider.utils.compute_environments import (
-    get_c2d_environments,
     check_environment_exists,
+    get_c2d_environments,
 )
 from ocean_provider.utils.error_responses import error_response
 from ocean_provider.utils.provider_fees import (
-    get_provider_fees_or_remote,
     comb_for_valid_transfer_and_fees,
+    get_provider_fees_or_remote,
 )
-from ocean_provider.utils.util import (
-    get_request_data,
-)
+from ocean_provider.utils.util import get_request_data
 from ocean_provider.validation.algo import (
-    WorkflowValidator,
     InputItemValidator,
+    WorkflowValidator,
     get_algo_checksums,
 )
 from ocean_provider.validation.images import validate_container
@@ -56,7 +54,6 @@ from requests.models import PreparedRequest
 from . import services
 
 provider_wallet = get_provider_wallet()
-requests_session = get_requests_session()
 
 logger = logging.getLogger(__name__)
 
@@ -253,7 +250,7 @@ def computeDelete():
     logger.info(f"computeDelete called. arguments = {data}")
 
     body = process_compute_request(data)
-    response = requests_session.delete(
+    response = requests.delete(
         get_compute_endpoint(), params=body, headers=standard_headers
     )
     update_nonce(body["owner"], data.get("nonce"))
@@ -313,7 +310,7 @@ def computeStop():
     logger.info(f"computeStop called. arguments = {data}")
 
     body = process_compute_request(data)
-    response = requests_session.put(
+    response = requests.put(
         get_compute_endpoint(), params=body, headers=standard_headers
     )
     update_nonce(body["owner"], data.get("nonce"))
@@ -370,7 +367,7 @@ def computeStatus():
 
     body = process_compute_request(data)
 
-    response = requests_session.get(
+    response = requests.get(
         get_compute_endpoint(), params=body, headers=standard_headers
     )
 
@@ -469,7 +466,7 @@ def computeStart():
         "chainId": web3.chain_id,
     }
 
-    response = requests_session.post(
+    response = requests.post(
         get_compute_endpoint(), data=json.dumps(payload), headers=standard_headers
     )
     update_nonce(consumer_address, data.get("nonce"))

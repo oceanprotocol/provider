@@ -1,32 +1,25 @@
 import json
 import logging
-import os
-import requests
 from datetime import datetime
 from typing import Any, Dict
 
+import requests
 from eth_keys import KeyAPI
 from eth_keys.backends import NativeECCBackend
-from ocean_provider.requests_session import get_requests_session
-from ocean_provider.utils.asset import get_asset_from_metadatastore
 from ocean_provider.utils.address import get_provider_fee_token
-from ocean_provider.utils.basics import (
-    get_provider_wallet,
-    get_metadata_url,
-    get_web3,
+from ocean_provider.utils.asset import get_asset_from_metadatastore
+from ocean_provider.utils.basics import get_metadata_url, get_provider_wallet, get_web3
+from ocean_provider.utils.compute_environments import (
+    get_c2d_environments,
+    get_environment,
 )
 from ocean_provider.utils.currency import parse_units
 from ocean_provider.utils.datatoken import get_datatoken_contract, validate_order
 from ocean_provider.utils.services import Service
 from ocean_provider.utils.url import is_this_same_provider
-from ocean_provider.utils.compute_environments import (
-    get_c2d_environments,
-    get_environment,
-)
 
 logger = logging.getLogger(__name__)
 keys = KeyAPI(NativeECCBackend)
-requests_session = get_requests_session()
 
 
 def get_provider_fees(
