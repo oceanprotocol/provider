@@ -55,7 +55,10 @@ def send_proof(
         consumer_signature,
         consumer_address,
     ).buildTransaction(
-        {"from": provider_wallet.address, "gasPrice": int(web3.eth.gas_price * 1.1)}
+        {
+            "from": provider_wallet.address,
+            "maxPriorityFeePerGas": web3.eth.max_priority_fee,
+        }
     )
 
     _, transaction_id = sign_and_send(web3, tx, provider_wallet)
