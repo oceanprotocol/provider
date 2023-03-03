@@ -2,19 +2,18 @@
 # Copyright 2023 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
-import jwt
 import logging
 import os
 
-from flask import request, jsonify
+import jwt
+from flask import jsonify, request
 from flask_sieve import validate
-
-from ocean_provider.utils.util import get_request_data
 from ocean_provider.user_nonce import (
     force_expire_token,
     force_restore_token,
     is_token_valid,
 )
+from ocean_provider.utils.util import get_request_data
 from ocean_provider.validation.provider_requests import (
     CreateTokenRequest,
     DeleteTokenRequest,
@@ -35,7 +34,7 @@ def create_auth_token():
     (expiration date is in the future), the same token is re-enabled.
     ---
     tags:
-      - services
+      - auth
     consumes:
       - application/json
     parameters:
@@ -86,7 +85,7 @@ def delete_auth_token():
     disallowing API calls with that token.
     ---
     tags:
-      - services
+      - auth
     consumes:
       - application/json
     parameters:
