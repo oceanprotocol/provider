@@ -2,7 +2,6 @@
 # Copyright 2023 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
-import configparser
 import logging
 
 from flask import jsonify, request
@@ -15,6 +14,7 @@ from ocean_provider.routes import services
 from ocean_provider.utils.basics import get_provider_wallet, get_web3
 from ocean_provider.utils.error_responses import strip_and_replace_urls
 from ocean_provider.utils.util import get_request_data
+from ocean_provider.version import get_version
 
 config = Config(filename=app.config["PROVIDER_CONFIG_FILE"])
 provider_url = config.get(ConfigSections.RESOURCES, "ocean_provider.url")
@@ -83,12 +83,6 @@ def get_provider_address():
     """Gets the provider wallet address."""
     provider_address = get_provider_wallet().address
     return provider_address
-
-
-def get_version():
-    conf = configparser.ConfigParser()
-    conf.read(".bumpversion.cfg")
-    return conf["bumpversion"]["current_version"]
 
 
 @app.route("/")
