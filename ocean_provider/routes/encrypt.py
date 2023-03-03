@@ -29,7 +29,7 @@ def encrypt():
 
     ---
     tags:
-      - services
+      - decrypt
     consumes:
       - application/octet-stream
     parameters:

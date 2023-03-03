@@ -11,7 +11,6 @@ from typing import Protocol, Tuple
 import requests
 from enforce_typing import enforce_types
 from flask import Response
-
 from ocean_provider.utils.url import is_safe_url
 
 logger = logging.getLogger(__name__)
@@ -111,28 +110,6 @@ class EndUrlType:
         return False, {}
 
     def _get_result_from_url(self, with_checksum=False):
-        lightweight_methods = [] if self.method == "post" else ["head", "options"]
-        # if checksum is not needed, try with head/options, mabye we are lucky
-        if not with_checksum:
-            for method in lightweight_methods:
-                url = self.get_download_url()
-                func = getattr(requests, method)
-                result = func(
-                    url,
-                    timeout=REQUEST_TIMEOUT,
-                    headers=self.headers,
-                    params=self.format_userdata(),
-                )
-                if (
-                    result.status_code == 200
-                    and (
-                        result.headers.get("Content-Type")
-                        or result.headers.get("Content-Range")
-                    )
-                    and result.headers.get("Content-Length")
-                ):
-                    return result, {}
-
         func, func_args = self._get_func_and_args()
 
         # overwrite checksum flag if file is too large
@@ -155,7 +132,6 @@ class EndUrlType:
                     with_checksum = False
 
         if not with_checksum:
-            # fallback on full request, since head and options did not work
             return func(**func_args), {}
 
         sha = hashlib.sha256()
