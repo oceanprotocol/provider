@@ -13,7 +13,7 @@ def get_requests_session() -> Session:
     :return: requests session
     """
     session = Session()
-    retries = Retry(total=8, backoff_factor=1.5, status_forcelist=[502, 503, 504])
+    retries = Retry(total=6, backoff_factor=1.5, status_forcelist=[502, 503, 504])
     session.mount(
         "http://",
         HTTPAdapter(
