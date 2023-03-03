@@ -1,10 +1,8 @@
 #
-# Copyright 2021 Ocean Protocol Foundation
+# Copyright 2023 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
-import configparser
 import logging
-from http.client import responses
 
 from flask import jsonify, request
 from flask_swagger import swagger
@@ -15,6 +13,7 @@ from ocean_provider.routes import services
 from ocean_provider.utils.basics import get_provider_wallet, get_web3
 from ocean_provider.utils.error_responses import strip_and_replace_urls
 from ocean_provider.utils.util import get_request_data
+from ocean_provider.version import get_version
 
 logger = logging.getLogger(__name__)
 
@@ -82,12 +81,6 @@ def get_provider_address():
     return provider_address
 
 
-def get_version():
-    conf = configparser.ConfigParser()
-    conf.read(".bumpversion.cfg")
-    return conf["bumpversion"]["current_version"]
-
-
 @app.route("/")
 def version():
     """
@@ -127,7 +120,7 @@ def spec():
     swag["info"]["description"] = Metadata.DESCRIPTION
     response = jsonify(swag)
     logger.debug(f"spec endpoint response = {response}")
-    return responses
+    return response
 
 
 # Call factory function to create our blueprint

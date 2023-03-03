@@ -1,5 +1,5 @@
 #
-# Copyright 2021 Ocean Protocol Foundation
+# Copyright 2023 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
 import json
@@ -7,9 +7,9 @@ import os
 from pathlib import Path
 from typing import Any, Dict, Union
 
-from jsonsempai import magic  # noqa: F401
 from addresses import address as contract_addresses  # noqa: F401
 from eth_typing.evm import HexAddress
+from jsonsempai import magic  # noqa: F401
 
 BLACK_HOLE_ADDRESS = "0x0000000000000000000000000000000000000000"
 

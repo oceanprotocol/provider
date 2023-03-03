@@ -19,7 +19,7 @@ def get_c2d_environments() -> List:
 
     standard_headers = {"Content-type": "application/json", "Connection": "close"}
     web3 = get_web3()
-    params = {"chainId": web3.chain_id}
+    params = {"chainId": web3.eth.chain_id}
     response = requests_session.get(
         get_compute_environments_endpoint(), headers=standard_headers, params=params
     )
@@ -27,7 +27,7 @@ def get_c2d_environments() -> List:
     # loop envs and add provider token from config
     envs = response.json()
     for env in envs:
-        env["feeToken"] = get_provider_fee_token(web3.chain_id)
+        env["feeToken"] = get_provider_fee_token(web3.eth.chain_id)
 
     return envs
 
