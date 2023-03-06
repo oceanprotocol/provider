@@ -12,7 +12,7 @@ requests_session = get_requests_session()
 
 
 def get_compute_environments_endpoint():
-    return urljoin(get_config().operator_service_url, "api/v1/operator/environments")
+    return urljoin(os.getenv("OPERATOR_SERVICE_URL"), "api/v1/operator/environments")
 
 
 def get_c2d_environments() -> List:
