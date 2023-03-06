@@ -12,10 +12,7 @@ requests_session = get_requests_session()
 
 
 def get_compute_environments_endpoint():
-    print(f"op serv url: {get_config().operator_service_url}")
-    return urljoin(
-        "https://stagev4.c2d.oceanprotocol.com/", "api/v1/operator/environments"
-    )
+    return urljoin(get_config().operator_service_url, "api/v1/operator/environments")
 
 
 def get_c2d_environments() -> List:
