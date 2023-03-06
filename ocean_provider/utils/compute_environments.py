@@ -12,6 +12,7 @@ requests_session = get_requests_session()
 
 
 def get_compute_environments_endpoint():
+    print(f"op serv url: {get_config().operator_service_url}")
     return urljoin(get_config().operator_service_url, "api/v1/operator/environments")
 
 
