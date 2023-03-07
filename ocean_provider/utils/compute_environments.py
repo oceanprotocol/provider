@@ -12,6 +12,10 @@ requests_session = get_requests_session()
 
 
 def get_compute_environments_endpoint():
+    print(
+        f"op serv local: {get_config().operator_service_url}\n,"
+        f"urljoin result: {urljoin(get_config().operator_service_url, 'api/v1/operator/environments')}"
+    )
     return urljoin(get_config().operator_service_url, "api/v1/operator/environments")
 
 
@@ -19,7 +23,7 @@ def get_c2d_environments() -> List:
     if not os.getenv("OPERATOR_SERVICE_URL"):
         return []
 
-    standard_headers = {"Content-type": "application/json", "Connection": "close"}
+    standard_headers = {"Content-type": "application/json"}
     web3 = get_web3()
     params = dict({"chainId": web3.eth.chain_id})
     response = requests_session.get(
