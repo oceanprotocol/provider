@@ -23,6 +23,7 @@ jobs:
         with:
           repository: "oceanprotocol/barge"
           path: 'barge'
+          ref: update-copyright-year
       - name: Login to Docker Hub
         if: ${{ env.DOCKERHUB_PASSWORD && env.DOCKERHUB_USERNAME }}
         run: |
@@ -47,7 +48,6 @@ jobs:
           nc -zv 172.15.0.13 31000
           cat $HOME/.ocean/ocean-contracts/artifacts/address.json
           curl http://172.15.0.13:31000
-          sudo ufw status | grep 31000
       - name: Install dependencies
         working-directory: ${{ github.workspace }}
         run: |
