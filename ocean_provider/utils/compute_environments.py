@@ -12,7 +12,7 @@ requests_session = get_requests_session()
 
 
 def get_compute_environments_endpoint():
-    return urljoin(get_config().operator_service_url, "api/v1/operator/environments")
+    return eval(urljoin(get_config().operator_service_url, "api/v1/operator/environments"))
 
 
 def get_c2d_environments() -> List:
@@ -21,7 +21,7 @@ def get_c2d_environments() -> List:
 
     standard_headers = {"Content-Type": "application/json", "Connection": "close"}
     web3 = get_web3()
-    params = dict({"chainId": web3.eth.chain_id})
+    params = {"chainId": web3.eth.chain_id}
     response = requests_session.get(
         get_compute_environments_endpoint(), headers=standard_headers, params=params
     )
