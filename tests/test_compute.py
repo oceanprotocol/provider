@@ -563,6 +563,7 @@ def test_compute_delete_job(
 @pytest.mark.unit
 def test_compute_environments(client):
     compute_envs_endpoint = BaseURLs.SERVICES_URL + "/computeEnvironments"
+    print(f"compute envs: {compute_envs_endpoint}")
     retries = 2
     response = None
     while retries != 0:
@@ -574,6 +575,7 @@ def test_compute_environments(client):
             continue
 
     assert response, "Compute envs could not be retrieved."
+    print(f"res: {response}")
 
     for env in response.json:
         if env["priceMin"] == 0:
