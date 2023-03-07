@@ -29,7 +29,7 @@ from tests.test_helpers import (
 def test_download_smartcontract_asset(client, publisher_wallet, consumer_wallet, web3):
     # publish asset, that calls Router's swapOceanFee function (does not need params)
     router_address = get_contract_address(
-        get_config().address_file, "Router", web3.chain_id
+        get_config().address_file, "Router", web3.eth.chain_id
     )
     abi = {
         "inputs": [],
@@ -84,7 +84,7 @@ def test_download_smartcontract_asset_with_userdata(
 ):
     # publish asset, that calls Router's getOPCFee for a provided  baseToken userdata
     router_address = get_contract_address(
-        get_config().address_file, "Router", web3.chain_id
+        get_config().address_file, "Router", web3.eth.chain_id
     )
     abi = {
         "inputs": [{"internalType": "address", "name": "baseToken", "type": "address"}],
