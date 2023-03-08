@@ -1,6 +1,5 @@
 import os
 from typing import List
-from urllib.parse import urljoin
 
 
 from ocean_provider.requests_session import get_requests_session
@@ -12,9 +11,7 @@ requests_session = get_requests_session()
 
 
 def get_compute_environments_endpoint():
-    url = get_config().operator_service_url + "api/v1/operator/environments"
-    print(f"url: {url}\n")
-    return url.decode("string_escape")
+    return get_config().operator_service_url + "api/v1/operator/environments"
 
 
 def get_c2d_environments() -> List:

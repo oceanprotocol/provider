@@ -573,7 +573,7 @@ def test_compute_environments(client):
             retries -= 1
             continue
 
-    assert response.status == 200, "Compute envs could not be retrieved."
+    assert response.status == "200 OK", "Compute envs could not be retrieved."
 
     for env in response.json:
         if env["priceMin"] == 0:

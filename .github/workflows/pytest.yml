@@ -23,7 +23,6 @@ jobs:
         with:
           repository: "oceanprotocol/barge"
           path: 'barge'
-          ref: update-copyright-year
       - name: Login to Docker Hub
         if: ${{ env.DOCKERHUB_PASSWORD && env.DOCKERHUB_USERNAME }}
         run: |
@@ -55,7 +54,9 @@ jobs:
           pip install -r requirements_dev.txt
       - name: Test with pytest
         run: |
-          pytest tests/test_compute.py::test_compute_environments
+          coverage run --source ocean_provider -m pytest
+          coverage report
+          coverage xml
       - name:  docker logs
         run: docker logs ocean_aquarius_1 && docker logs ocean_provider_1 && docker logs ocean_provider2_1
         if: ${{ failure() }}
