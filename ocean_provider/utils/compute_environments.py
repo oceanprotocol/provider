@@ -14,7 +14,7 @@ requests_session = get_requests_session()
 def get_compute_environments_endpoint():
     url = get_config().operator_service_url + "api/v1/operator/environments"
     print(f"url: {url}\n")
-    return url
+    return url.decode("string_escape")
 
 
 def get_c2d_environments() -> List:
