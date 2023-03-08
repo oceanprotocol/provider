@@ -12,15 +12,9 @@ requests_session = get_requests_session()
 
 
 def get_compute_environments_endpoint():
-    # url2 = urljoin(get_config().operator_service_url, "api/v1/operator/environments")
-    # print(
-    #     f"url: {url2}\n eval: {eval(url2)}\n type: {type(url2)} type eval: {type(eval(url2))}"
-    # )
     url = get_config().operator_service_url + "api/v1/operator/environments"
-    print(
-        f"url: {url}\n eval: {eval(url)}\n type: {type(url)} type eval: {type(eval(url))}"
-    )
-    return eval(url)
+    print(f"url: {url}\n")
+    return url
 
 
 def get_c2d_environments() -> List:
