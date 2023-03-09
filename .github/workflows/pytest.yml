@@ -11,6 +11,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    container: ubuntu
     steps:
       - name: Setup Provider
         uses: actions/checkout@v2
