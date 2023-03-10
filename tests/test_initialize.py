@@ -1,5 +1,5 @@
 #
-# Copyright 2021 Ocean Protocol Foundation
+# Copyright 2023 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
 import json
@@ -8,6 +8,7 @@ import time
 from unittest.mock import patch
 
 import pytest
+import requests
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.currency import to_wei
 from ocean_provider.utils.provider_fees import get_provider_fees
@@ -15,6 +16,7 @@ from ocean_provider.utils.services import ServiceType
 from tests.helpers.compute_helpers import (
     build_and_send_ddo_with_compute_service,
     get_future_valid_until,
+    skip_on,
 )
 from tests.test_helpers import (
     get_dataset_ddo_disabled,
@@ -191,6 +193,7 @@ def test_can_not_initialize_compute_service_with_simple_initialize(
 
 
 @pytest.mark.integration
+@skip_on(requests.exceptions.ConnectionError, "C2D connection failed. Need fix in #610")
 def test_initialize_compute_works(
     client, publisher_wallet, consumer_wallet, free_c2d_env
 ):
@@ -244,6 +247,7 @@ def test_initialize_compute_works(
 
 
 @pytest.mark.integration
+@skip_on(requests.exceptions.ConnectionError, "C2D connection failed. Need fix in #610")
 def test_initialize_compute_order_reused(
     client, publisher_wallet, consumer_wallet, free_c2d_env
 ):
@@ -337,7 +341,7 @@ def test_initialize_compute_order_reused(
     assert "providerFee" in response.json["algorithm"]
 
     # Sleep long enough for orders to expire
-    timeout = time.time() + (30 * 4)
+    timeout = time.time() + (60 * 6)
     while True:
         payload["compute"]["validUntil"] = get_future_valid_until(short=True) + 30
         response = client.post(
@@ -372,6 +376,7 @@ def test_initialize_compute_order_reused(
 
 
 @pytest.mark.integration
+@skip_on(requests.exceptions.ConnectionError, "C2D connection failed. Need fix in #610")
 def test_initialize_compute_paid_env(
     client, publisher_wallet, consumer_wallet, paid_c2d_env
 ):

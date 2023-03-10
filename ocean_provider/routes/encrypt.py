@@ -1,5 +1,5 @@
 #
-# Copyright 2021 Ocean Protocol Foundation
+# Copyright 2023 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
 import logging
@@ -29,7 +29,7 @@ def encrypt():
 
     ---
     tags:
-      - services
+      - decrypt
     consumes:
       - application/octet-stream
     parameters:

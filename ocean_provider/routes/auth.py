@@ -1,5 +1,5 @@
 #
-# Copyright 2021 Ocean Protocol Foundation
+# Copyright 2023 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
 import logging
@@ -34,7 +34,7 @@ def create_auth_token():
     (expiration date is in the future), the same token is re-enabled.
     ---
     tags:
-      - services
+      - auth
     consumes:
       - application/json
     parameters:
@@ -85,7 +85,7 @@ def delete_auth_token():
     disallowing API calls with that token.
     ---
     tags:
-      - services
+      - auth
     consumes:
       - application/json
     parameters:

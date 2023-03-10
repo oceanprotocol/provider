@@ -1,11 +1,11 @@
 #
-# Copyright 2021 Ocean Protocol Foundation
+# Copyright 2023 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
 import os
 
-from artifacts import ERC721Factory
 from jsonsempai import magic  # noqa: F401
+from artifacts import ERC721Factory
 from ocean_provider.utils.address import get_contract_address
 from web3.contract import Contract
 from web3.main import Web3

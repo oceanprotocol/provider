@@ -1,13 +1,13 @@
 #
-# Copyright 2021 Ocean Protocol Foundation
+# Copyright 2023 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
 import logging
 from enum import IntEnum, IntFlag
 from typing import Iterable, Optional, Tuple
 
-from artifacts import ERC721Template
 from jsonsempai import magic  # noqa: F401
+from artifacts import ERC721Template
 from web3.contract import Contract
 from web3.logs import DISCARD
 from web3.main import Web3

@@ -1,5 +1,5 @@
 #
-# Copyright 2021 Ocean Protocol Foundation
+# Copyright 2023 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
 import logging
@@ -38,6 +38,8 @@ def decrypt():
     """Decrypts an encrypted document based on transaction Id or dataNftAddress.
 
     ---
+    tags:
+      - decrypt
     consumes:
       - application/json
     parameters:
