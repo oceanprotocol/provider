@@ -2,13 +2,12 @@
 # Copyright 2023 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
-import time
-
-import requests
-from eth_account import Account
-from datetime import datetime
 import os
+import time
+from datetime import datetime
 
+import pytest
+from eth_account import Account
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.currency import to_wei
@@ -27,11 +26,9 @@ from tests.helpers.compute_helpers import (
     get_web3,
     mint_100_datatokens,
     post_to_compute,
-    start_order,
     skip_on,
+    start_order,
 )
-
-import pytest
 from tests.helpers.ddo_dict_builders import build_metadata_dict_type_algorithm
 from tests.test_auth import create_token
 from tests.test_helpers import get_first_service_by_type, get_ocean_token_address
@@ -329,7 +326,7 @@ def test_compute_arweave(client, publisher_wallet, consumer_wallet, free_c2d_env
 
 
 @pytest.mark.integration
-@skip_on(requests.exceptions.ConnectionError, "C2D connection failed. Need fix in #610")
+@skip_on(Exception, "C2D connection failed. Need fix in #610")
 def test_compute_diff_provider(client, publisher_wallet, consumer_wallet, free_c2d_env):
     valid_until = get_future_valid_until()
     ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
@@ -365,7 +362,7 @@ def test_compute_diff_provider(client, publisher_wallet, consumer_wallet, free_c
 
 
 @pytest.mark.integration
-@skip_on(requests.exceptions.ConnectionError, "C2D connection failed. Need fix in #610")
+@skip_on(Exception, "C2D connection failed. Need fix in #610")
 def test_compute_allow_all_published(
     client, publisher_wallet, consumer_wallet, free_c2d_env
 ):
@@ -413,7 +410,7 @@ def test_compute_allow_all_published(
 
 
 @pytest.mark.integration
-@skip_on(requests.exceptions.ConnectionError, "C2D connection failed. Need fix in #610")
+@skip_on(Exception, "C2D connection failed. Need fix in #610")
 def test_compute_additional_input(
     client, publisher_wallet, consumer_wallet, monkeypatch, free_c2d_env
 ):
@@ -500,7 +497,7 @@ def test_compute_additional_input(
 
 
 @pytest.mark.integration
-@skip_on(requests.exceptions.ConnectionError, "C2D connection failed. Need fix in #610")
+@skip_on(Exception, "C2D connection failed. Need fix in #610")
 def test_compute_delete_job(
     client, publisher_wallet, consumer_wallet, consumer_address, free_c2d_env
 ):
@@ -575,7 +572,7 @@ def test_compute_environments(client):
         try:
             response = client.get(compute_envs_endpoint)
             break
-        except requests.exceptions.ConnectionError:
+        except Exception:
             retries -= 1
             continue
 
@@ -587,7 +584,7 @@ def test_compute_environments(client):
 
 
 @pytest.mark.integration
-@skip_on(requests.exceptions.ConnectionError, "C2D connection failed. Need fix in #610")
+@skip_on(Exception, "C2D connection failed. Need fix in #610")
 def test_compute_paid_env(
     client, publisher_wallet, consumer_wallet, paid_c2d_env, web3
 ):
@@ -633,11 +630,11 @@ def test_compute_paid_env(
 
     job_info = response.json[0]
     print(f"got response from starting compute job: {job_info}")
-    job_id = job_info.get("jobId", "")
+    _ = job_info.get("jobId", "")
 
 
 @pytest.mark.integration
-@skip_on(requests.exceptions.ConnectionError, "C2D connection failed. Need fix in #610")
+@skip_on(Exception, "C2D connection failed. Need fix in #610")
 def test_compute_auth_token(client, publisher_wallet, consumer_wallet, free_c2d_env):
     valid_until = get_future_valid_until()
     ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(

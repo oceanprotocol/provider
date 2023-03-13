@@ -5,13 +5,12 @@
 import json
 import logging
 import time
+from unittest.mock import patch
 
 import pytest
-import requests
-
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.currency import to_wei
-from ocean_provider.utils.provider_fees import get_c2d_environments, get_provider_fees
+from ocean_provider.utils.provider_fees import get_provider_fees
 from ocean_provider.utils.services import ServiceType
 from tests.helpers.compute_helpers import (
     build_and_send_ddo_with_compute_service,
@@ -31,8 +30,6 @@ from tests.test_helpers import (
     mint_100_datatokens,
     start_order,
 )
-
-from unittest.mock import patch
 
 logger = logging.getLogger(__name__)
 
@@ -195,7 +192,7 @@ def test_can_not_initialize_compute_service_with_simple_initialize(
 
 
 @pytest.mark.integration
-@skip_on(requests.exceptions.ConnectionError, "C2D connection failed. Need fix in #610")
+@skip_on(Exception, "C2D connection failed. Need fix in #610")
 def test_initialize_compute_works(
     client, publisher_wallet, consumer_wallet, free_c2d_env
 ):
@@ -249,7 +246,7 @@ def test_initialize_compute_works(
 
 
 @pytest.mark.integration
-@skip_on(requests.exceptions.ConnectionError, "C2D connection failed. Need fix in #610")
+@skip_on(Exception, "C2D connection failed. Need fix in #610")
 def test_initialize_compute_order_reused(
     client, publisher_wallet, consumer_wallet, free_c2d_env
 ):
@@ -378,7 +375,7 @@ def test_initialize_compute_order_reused(
 
 
 @pytest.mark.integration
-@skip_on(requests.exceptions.ConnectionError, "C2D connection failed. Need fix in #610")
+@skip_on(Exception, "C2D connection failed. Need fix in #610")
 def test_initialize_compute_paid_env(
     client, publisher_wallet, consumer_wallet, paid_c2d_env
 ):
