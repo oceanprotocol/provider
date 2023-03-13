@@ -1,15 +1,14 @@
 import os
-import time
 from typing import List
 from urllib.parse import urljoin
 
 import requests
 from ocean_provider.utils.address import get_provider_fee_token
-from ocean_provider.utils.basics import get_config, get_web3
+from ocean_provider.utils.basics import get_web3
 
 
 def get_compute_environments_endpoint():
-    return urljoin(get_config().operator_service_url, "api/v1/operator/environments")
+    return urljoin(os.getenv("OPERATOR_SERVICE_URL"), "api/v1/operator/environments")
 
 
 def get_c2d_environments() -> List:
@@ -19,22 +18,10 @@ def get_c2d_environments() -> List:
     standard_headers = {"Content-type": "application/json", "Connection": "close"}
     web3 = get_web3()
     params = {"chainId": web3.eth.chain_id}
-    retries = 0
-    response = None
-    while retries <= 3:
-        try:
-            response = requests.get(
-                get_compute_environments_endpoint(),
-                headers=standard_headers,
-                params=params,
-            )
-            break
-        except requests.exceptions.ConnectionError:
-            retries += 1
-            time.sleep(3)
-            continue
+    response = requests.get(
+        get_compute_environments_endpoint(), headers=standard_headers, params=params
+    )
 
-    assert response, "C2D environments could not be retrieved after retrying"
     # loop envs and add provider token from config
     envs = response.json()
     for env in envs:

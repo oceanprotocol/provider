@@ -2,38 +2,26 @@
 # Copyright 2023 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
-from datetime import datetime
 import logging
 import os
+from datetime import datetime
+from distutils.util import strtobool
 from typing import Optional, Union
 
-import requests
 from eth_account import Account
 from hexbytes import HexBytes
-from ocean_provider.config import Config
 from ocean_provider.http_provider import CustomHTTPProvider
-from requests_testadapter import Resp
-from web3.middleware import geth_poa_middleware
+from ocean_provider.version import get_version
 from web3 import WebsocketProvider
 from web3.exceptions import ExtraDataLengthError
 from web3.main import Web3
+from web3.middleware import geth_poa_middleware
 
 logger = logging.getLogger(__name__)
 
 
-def get_config(config_file: Optional[str] = None) -> Config:
-    """
-    :return: Config instance
-    """
-    return Config(
-        filename=config_file
-        if config_file is not None
-        else os.getenv("PROVIDER_CONFIG_FILE", "config.ini")
-    )
-
-
 def get_metadata_url():
-    return get_config().aquarius_url
+    return os.getenv("AQUARIUS_URL")
 
 
 def get_provider_wallet(web3: Optional[Web3] = None):
@@ -71,7 +59,7 @@ def get_web3(network_url: Optional[str] = None, cached=True) -> Web3:
         return app_web3_instance
 
     if network_url is None:
-        network_url = get_config().network_url
+        network_url = os.getenv("NETWORK_URL")
 
     web3 = Web3(provider=get_web3_connection_provider(network_url))
 
@@ -88,8 +76,11 @@ def get_web3(network_url: Optional[str] = None, cached=True) -> Web3:
 def get_web3_connection_provider(
     network_url: str,
 ) -> Union[CustomHTTPProvider, WebsocketProvider]:
+    version = get_version()
+    request_kwargs = {"headers": {"User-Agent": f"OceanProvider/{version}"}}
+
     if network_url.startswith("http"):
-        return CustomHTTPProvider(network_url)
+        return CustomHTTPProvider(network_url, request_kwargs=request_kwargs)
     elif network_url.startswith("ws"):
         return WebsocketProvider(network_url)
     else:
@@ -133,3 +124,10 @@ def validate_timestamp(value):
     except Exception as e:
         logger.error(f"Failed to validate timestamp {value}: {e}\n")
         return False
+
+
+def bool_value_of_env(env_key):
+    if not os.getenv(env_key):
+        return False
+
+    return bool(strtobool(str(os.getenv(env_key))))

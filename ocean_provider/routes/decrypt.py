@@ -4,6 +4,7 @@
 #
 import logging
 import lzma
+import os
 from hashlib import sha256
 from typing import Optional, Tuple
 
@@ -11,7 +12,7 @@ from eth_typing.encoding import HexStr
 from flask import Response, request
 from flask_sieve import validate
 from ocean_provider.user_nonce import update_nonce
-from ocean_provider.utils.basics import get_config, get_provider_wallet, get_web3
+from ocean_provider.utils.basics import get_provider_wallet, get_web3
 from ocean_provider.utils.data_nft import (
     MetadataState,
     get_metadata,
@@ -26,8 +27,6 @@ from web3.main import Web3
 
 from . import services
 
-provider_wallet = get_provider_wallet()
-
 logger = logging.getLogger(__name__)
 
 
@@ -37,6 +36,8 @@ def decrypt():
     """Decrypts an encrypted document based on transaction Id or dataNftAddress.
 
     ---
+    tags:
+      - decrypt
     consumes:
       - application/json
     parameters:
@@ -123,7 +124,7 @@ def _decrypt(
         return error_response(f"Unsupported chain ID {chain_id}", 400, logger)
 
     # Check if decrypter is authorized
-    authorized_decrypters = get_config().authorized_decrypters
+    authorized_decrypters = os.getenv("AUTHORIZED_DECRYPTERS")
     logger.info(f"authorized_decrypters = {authorized_decrypters}")
     if authorized_decrypters and decrypter_address not in authorized_decrypters:
         return error_response("Decrypter not authorized", 403, logger)

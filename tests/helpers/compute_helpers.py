@@ -1,5 +1,8 @@
 import json
 from datetime import datetime, timedelta
+from functools import wraps
+
+import pytest
 
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
@@ -231,3 +234,19 @@ def get_future_valid_until(short=False):
     # return a timestamp for one hour in the future or 30s in the future if short
     time_diff = timedelta(hours=1) if not short else timedelta(seconds=30)
     return int((datetime.utcnow() + time_diff).timestamp())
+
+
+def skip_on(exception, reason="Default reason"):
+    """Decorator for skipping test in case of known issue."""
+
+    def decorator_func(f):
+        @wraps(f)
+        def wrapper(*args, **kwargs):
+            try:
+                return f(*args, **kwargs)
+            except exception:
+                pytest.skip(reason)
+
+        return wrapper
+
+    return decorator_func

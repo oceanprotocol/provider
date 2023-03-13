@@ -39,7 +39,24 @@ standard_headers = {"Content-type": "application/json", "Connection": "close"}
 @services.route("/nonce", methods=["GET"])
 @validate(NonceRequest)
 def nonce():
-    """Returns a decimal `nonce` for the given account address."""
+    """Returns a decimal `nonce` for the given account address.
+
+    ---
+    tags:
+      - consume
+    consumes:
+      - application/json
+    parameters:
+      - name: userAddress
+        description: The address of the account
+        required: true
+        type: string
+    responses:
+      200:
+        description: nonce returned
+
+    return: nonce for user address
+    """
     logger.info("nonce endpoint called")
     data = get_request_data(request)
     address = data.get("userAddress")
@@ -64,7 +81,7 @@ def fileinfo():
 
     ---
     tags:
-      - services
+      - consume
 
     responses:
       200:
@@ -135,6 +152,8 @@ def initialize():
     where the approval is given to the provider's ethereum account for
     the number of tokens required by the service.
 
+    tags:
+      - consume
     responses:
       400:
         description: One or more of the required attributes are missing or invalid.
@@ -250,7 +269,7 @@ def download():
 
     ---
     tags:
-      - services
+      - consume
     consumes:
       - application/json
     parameters:

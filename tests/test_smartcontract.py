@@ -2,21 +2,16 @@
 # Copyright 2023 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
-import copy
 import json
-import time
+import os
 from datetime import datetime
-from unittest.mock import patch
 
 import pytest
-
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.address import get_contract_address
-from ocean_provider.utils.basics import get_config
 from ocean_provider.utils.provider_fees import get_provider_fees
 from ocean_provider.utils.services import ServiceType
-from tests.test_auth import create_token
 from tests.test_helpers import (
     get_first_service_by_type,
     get_registered_asset,
@@ -29,7 +24,7 @@ from tests.test_helpers import (
 def test_download_smartcontract_asset(client, publisher_wallet, consumer_wallet, web3):
     # publish asset, that calls Router's swapOceanFee function (does not need params)
     router_address = get_contract_address(
-        get_config().address_file, "Router", web3.chain_id
+        os.getenv("ADDRESS_FILE"), "Router", web3.chain_id
     )
     abi = {
         "inputs": [],
@@ -84,7 +79,7 @@ def test_download_smartcontract_asset_with_userdata(
 ):
     # publish asset, that calls Router's getOPCFee for a provided  baseToken userdata
     router_address = get_contract_address(
-        get_config().address_file, "Router", web3.chain_id
+        os.getenv("ADDRESS_FILE"), "Router", web3.chain_id
     )
     abi = {
         "inputs": [{"internalType": "address", "name": "baseToken", "type": "address"}],

@@ -214,7 +214,7 @@ def computeDelete():
 
     ---
     tags:
-      - services
+      - compute
     consumes:
       - application/json
     parameters:
@@ -270,7 +270,7 @@ def computeStop():
 
     ---
     tags:
-      - services
+      - compute
     consumes:
       - application/json
     parameters:
@@ -331,7 +331,7 @@ def computeStatus():
 
     ---
     tags:
-      - services
+      - compute
     consumes:
       - application/json
     parameters:
@@ -386,7 +386,7 @@ def computeStart():
 
     ---
     tags:
-      - services
+      - compute
     consumes:
       - application/json
     parameters:
@@ -486,7 +486,7 @@ def computeResult():
 
     ---
     tags:
-      - services
+      - compute
     consumes:
       - application/json
     parameters:
@@ -564,7 +564,7 @@ def computeEnvironments():
 
     ---
     tags:
-      - services
+      - compute
     consumes:
       - application/json
 
@@ -585,6 +585,21 @@ def computeEnvironments():
 
 @services.route("/validateContainer", methods=["POST"])
 def validateContainer():
+    """Validate a c2d container json
+
+    ---
+    tags:
+      - compute
+    consumes:
+      - application/json
+
+    responses:
+      200:
+        description: Container is valid.
+      400:
+        description: Container is invalid.
+    return: error dict if container is invalid
+    """
     container = get_request_data(request)
     valid, messages = validate_container(container)
 
