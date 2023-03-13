@@ -8,22 +8,19 @@ import logging
 from ocean_provider.constants import BaseURLs
 from ocean_provider.file_types.file_types_factory import FilesTypeFactory
 from ocean_provider.serializers import StageAlgoSerializer
-from ocean_provider.utils.asset import (
-    get_asset_from_metadatastore,
-    check_asset_consumable,
-)
 from ocean_provider.utils.address import get_provider_fee_token
-from ocean_provider.utils.basics import get_config, get_metadata_url
+from ocean_provider.utils.asset import (
+    check_asset_consumable,
+    get_asset_from_metadatastore,
+)
+from ocean_provider.utils.basics import get_metadata_url
 from ocean_provider.utils.datatoken import (
     record_consume_request,
     validate_order,
     validate_transfer_not_used_for_other_service,
 )
 from ocean_provider.utils.provider_fees import get_provider_fee_amount
-from ocean_provider.utils.util import (
-    get_service_files_list,
-    msg_hash,
-)
+from ocean_provider.utils.util import get_service_files_list, msg_hash
 from ocean_provider.validation.images import validate_container
 
 logger = logging.getLogger(__name__)
@@ -554,11 +551,10 @@ class InputItemValidator:
 
 
 def build_stage_output_dict(output_def, service_endpoint, owner, provider_wallet):
-    config = get_config()
     if BaseURLs.SERVICES_URL in service_endpoint:
         service_endpoint = service_endpoint.split(BaseURLs.SERVICES_URL)[0]
 
-    return dict({"metadataUri": config.aquarius_url})
+    return dict({"metadataUri": get_metadata_url()})
 
 
 def decode_from_data(data, key, dec_type="list"):

@@ -4,16 +4,6 @@
 #
 
 
-class ConfigSections:
-    """
-    This class stores values for:
-
-    - `RESOURCES`
-    """
-
-    RESOURCES = "resources"
-
-
 class BaseURLs:
     """
     This class stores values for:
