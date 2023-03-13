@@ -18,7 +18,11 @@ def get_c2d_environments() -> List:
     if not os.getenv("OPERATOR_SERVICE_URL"):
         return []
 
-    standard_headers = {"Content-Type": "application/json", "Connection": "close"}
+    standard_headers = {
+        "Content-Type": "application/json",
+        "Connection": "close",
+        "User-Agent": "Definitely-Not-Requests",
+    }
     web3 = get_web3()
     params = {"chainId": web3.eth.chain_id}
     response = requests.get(
