@@ -2,15 +2,16 @@
 # Copyright 2023 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
+import os
 import time
+from datetime import datetime
 
+import pytest
 import requests
 from eth_account import Account
-from datetime import datetime
-import os
-
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
+from ocean_provider.utils.compute_environments import get_c2d_environments
 from ocean_provider.utils.currency import to_wei
 from ocean_provider.utils.datatoken import get_datatoken_contract
 from ocean_provider.utils.provider_fees import get_provider_fees
@@ -29,8 +30,6 @@ from tests.helpers.compute_helpers import (
     post_to_compute,
     start_order,
 )
-
-import pytest
 from tests.helpers.ddo_dict_builders import build_metadata_dict_type_algorithm
 from tests.test_auth import create_token
 from tests.test_helpers import get_first_service_by_type, get_ocean_token_address
@@ -561,21 +560,10 @@ def test_compute_delete_job(
 
 
 @pytest.mark.unit
-def test_compute_environments(client):
-    compute_envs_endpoint = BaseURLs.SERVICES_URL + "/computeEnvironments"
-    retries = 2
-    response = None
-    while retries != 0:
-        try:
-            response = client.get(compute_envs_endpoint)
-            break
-        except requests.exceptions.ConnectionError:
-            retries -= 1
-            continue
+def test_compute_environments():
+    environments = get_c2d_environments()
 
-    assert response.status == "200 OK", "Compute envs could not be retrieved."
-
-    for env in response.json:
+    for env in environments:
         if env["priceMin"] == 0:
             assert env["id"] == "ocean-compute"
 
