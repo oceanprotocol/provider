@@ -48,7 +48,7 @@ def verify_signature(signer_address, signature, original_msg, nonce):
         msg = (
             f"Invalid signature. Please check the nonce or documentId from the original message."
             f" In case of compute endpoints, check also the job ID."
-            f" Got: {old_signature}\n. Expected: {signature}"
+            f" Got: {old_signature}\n."
         )
         logger.error(msg)
         raise InvalidSignatureError(msg)
