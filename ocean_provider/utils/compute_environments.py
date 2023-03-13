@@ -2,6 +2,7 @@ import os
 from typing import List
 from urllib.parse import urljoin
 
+import requests
 from ocean_provider.requests_session import get_requests_session
 from ocean_provider.utils.address import get_provider_fee_token
 from ocean_provider.utils.basics import get_web3
@@ -20,9 +21,22 @@ def get_c2d_environments() -> List:
     standard_headers = {"Content-type": "application/json", "Connection": "close"}
     web3 = get_web3()
     params = {"chainId": web3.eth.chain_id}
-    response = requests_session.get(
-        get_compute_environments_endpoint(), headers=standard_headers, params=params
-    )
+    response = None
+    retries = 2
+
+    while retries != 0:
+        try:
+            response = requests_session.get(
+                get_compute_environments_endpoint(),
+                headers=standard_headers,
+                params=params,
+            )
+            break
+        except requests.exceptions.ConnectionError:
+            retries -= 1
+            continue
+
+    assert response, "Compute envs could not be retrieved."
 
     # loop envs and add provider token from config
     envs = response.json()
