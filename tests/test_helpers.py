@@ -9,16 +9,16 @@ import time
 from hashlib import sha256
 from typing import Dict, Optional, Tuple
 
-from jsonsempai import magic  # noqa: F401
 from artifacts import ERC721Template
 from eth_account.signers.local import LocalAccount
 from eth_typing.encoding import HexStr
 from eth_typing.evm import HexAddress
 from flask.testing import FlaskClient
+from jsonsempai import magic  # noqa: F401
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.address import get_contract_address
 from ocean_provider.utils.asset import Asset, get_asset_from_metadatastore
-from ocean_provider.utils.basics import get_config, get_provider_wallet, get_web3
+from ocean_provider.utils.basics import get_provider_wallet, get_web3
 from ocean_provider.utils.currency import to_wei
 from ocean_provider.utils.data_nft import Flags, MetadataState, get_data_nft_contract
 from ocean_provider.utils.data_nft_factory import get_data_nft_factory_contract
@@ -27,7 +27,6 @@ from ocean_provider.utils.did import compute_did_from_data_nft_address_and_chain
 from ocean_provider.utils.encryption import do_encrypt
 from ocean_provider.utils.services import Service, ServiceType
 from ocean_provider.utils.util import sign_send_and_wait_for_receipt, sign_tx
-
 from tests.helpers.ddo_dict_builders import (
     build_credentials_dict,
     build_ddo_dict,
@@ -75,7 +74,7 @@ def deploy_contract(w3, _json, private_key, *args):
 
 
 def get_ocean_token_address(web3: Web3) -> HexAddress:
-    return get_contract_address(get_config().address_file, "Ocean", 8996)
+    return get_contract_address(os.getenv("ADDRESS_FILE"), "Ocean", 8996)
 
 
 def deploy_data_nft(
