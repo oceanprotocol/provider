@@ -21,20 +21,14 @@ def get_c2d_environments() -> List:
     standard_headers = {"Content-type": "application/json", "Connection": "close"}
     web3 = get_web3()
     params = {"chainId": web3.eth.chain_id}
-    response = None
-    retries = 2
-
-    while retries != 0:
-        try:
-            response = requests_session.get(
-                get_compute_environments_endpoint(),
-                headers=standard_headers,
-                params=params,
-            )
-            break
-        except requests.exceptions.ConnectionError:
-            retries -= 1
-            continue
+    try:
+        response = requests_session.get(
+            get_compute_environments_endpoint(),
+            headers=standard_headers,
+            params=params,
+        )
+    except requests.exceptions.ConnectionError:
+        response = None
 
     assert response, "Compute envs could not be retrieved."
 
