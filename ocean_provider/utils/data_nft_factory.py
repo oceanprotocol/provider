@@ -1,19 +1,19 @@
 #
-# Copyright 2021 Ocean Protocol Foundation
+# Copyright 2023 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
+import os
+
+from artifacts import ERC721Factory  # noqa: F401
 from jsonsempai import magic  # noqa: F401
+from ocean_provider.utils.address import get_contract_address
 from web3.contract import Contract
 from web3.main import Web3
-
-from artifacts import ERC721Factory
-from ocean_provider.utils.address import get_contract_address
-from ocean_provider.utils.basics import get_config
 
 
 def get_data_nft_factory_address(web3: Web3) -> str:
     return get_contract_address(
-        get_config().address_file, "ERC721Factory", web3.chain_id
+        os.getenv("ADDRESS_FILE"), "ERC721Factory", web3.chain_id
     )
 
 

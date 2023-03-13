@@ -1,5 +1,5 @@
 ##
-## Copyright 2021 Ocean Protocol Foundation
+## Copyright 2023 Ocean Protocol Foundation
 ## SPDX-License-Identifier: Apache-2.0
 ##
 name: Provider tests
@@ -46,13 +46,14 @@ jobs:
             sleep 10
             [ -f "$HOME/.ocean/ocean-contracts/artifacts/ready" -a -f "$HOME/.ocean/ocean-c2d/ready" ] && break
             done
+
       - name: Test with pytest
         run: |
           coverage run --source ocean_provider -m pytest
           coverage report
           coverage xml
       - name:  docker logs
-        run: docker logs ocean_aquarius_1 && docker logs ocean_provider_1 && docker logs ocean_provider2_1 && docker logs ocean_computetodata_1
+        run: docker logs ocean_aquarius_1 && docker logs ocean_provider_1 && docker logs ocean_provider2_1
         if: ${{ failure() }}
       - name: Publish code coverage
         uses: paambaati/codeclimate-action@v2.7.5

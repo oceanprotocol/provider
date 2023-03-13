@@ -1,5 +1,5 @@
 <!--
-Copyright 2022 Ocean Protocol Foundation
+Copyright 2023 Ocean Protocol Foundation
 SPDX-License-Identifier: Apache-2.0
 -->
 [![banner](https://raw.githubusercontent.com/oceanprotocol/art/master/github/repo-banner%402x.png)](https://oceanprotocol.com)
@@ -93,7 +93,6 @@ Add the corresponding environment variables in your `.env` file. Here is an exam
 
 ```
 FLASK_APP=ocean_provider/run.py
-PROVIDER_CONFIG_FILE=config.ini
 PROVIDER_ADDRESS=your ethereum address goes here
 PROVIDER_PRIVATE_KEY=the private key
 PROVIDER_FEE_TOKEN = address of ERC20 token used to get fees

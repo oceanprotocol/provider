@@ -1,5 +1,5 @@
 #
-# Copyright 2021 Ocean Protocol Foundation
+# Copyright 2023 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
 import logging
@@ -23,6 +23,7 @@ class MetadataState(IntEnum):
     DEPRECATED = 2
     REVOKED = 3
     TEMPORARILY_DISABLED = 4
+    UNLISTED = 5
 
 
 class Flags(IntFlag):

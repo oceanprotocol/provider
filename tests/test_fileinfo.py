@@ -1,13 +1,13 @@
 #
-# Copyright 2021 Ocean Protocol Foundation
+# Copyright 2023 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
 import logging
-import pytest
+import os
 
+import pytest
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.address import get_contract_address
-from ocean_provider.utils.basics import get_config
 from ocean_provider.utils.services import ServiceType
 from tests.helpers.constants import ARWEAVE_TRANSACTION_ID
 from tests.test_helpers import (
@@ -91,6 +91,7 @@ def test_checksums(client):
     assert response.status == "200 OK"
     for file_info in result:
         assert file_info["valid"] is True
+        assert file_info["type"] == "url"
         assert (
             file_info["checksum"]
             == "1f7c17bed455f484f4d5ebc581cde6bc059977ef1e143b52a703f18b89c86a22"
@@ -108,6 +109,7 @@ def test_checksums(client):
     assert response.status == "200 OK"
     for file_info in result:
         assert file_info["valid"] is True
+        assert file_info["type"] == "ipfs"
         assert "checksum" not in file_info
         assert "checksumType" not in file_info
 
@@ -153,6 +155,7 @@ def test_check_arweave_good(client):
         assert file_info["contentLength"] == "5311"
         assert file_info["contentType"] == "application/octet-stream"
         assert file_info["valid"] is True
+        assert file_info["type"] == "arweave"
 
 
 @pytest.mark.unit
@@ -177,13 +180,13 @@ def test_check_arweave_bad(client, monkeypatch):
     response = client.post(fileinfo_url, json=payload)
     result = response.get_json()
     assert response.status == "200 OK"
-    assert result[0]["valid"] == False
+    assert result[0]["valid"] is False
 
 
 @pytest.mark.integration
 def test_check_smartcontract_simple(client, publisher_wallet, consumer_wallet, web3):
     router_address = get_contract_address(
-        get_config().address_file, "Router", web3.chain_id
+        os.getenv("ADDRESS_FILE"), "Router", web3.chain_id
     )
     abi = {
         "inputs": [],

@@ -1,14 +1,14 @@
 #
-# Copyright 2021 Ocean Protocol Foundation
+# Copyright 2023 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
 import ipaddress
 import logging
-from urllib.parse import urlparse, urljoin
+from urllib.parse import urljoin, urlparse
 
 import dns.resolver
 import requests
-from ocean_provider.utils.basics import get_config, get_provider_wallet
+from ocean_provider.utils.basics import bool_value_of_env, get_provider_wallet
 
 logger = logging.getLogger(__name__)
 
@@ -23,13 +23,13 @@ def get_redirect(url, redirect_count=0):
         return None
     try:
         result = requests.head(url, allow_redirects=False)
-    except Exception as e:
+    except Exception:
         return None
     if result.status_code == 405:
         # HEAD not allowed, so defaulting to get
         try:
             result = requests.get(url, allow_redirects=False)
-        except Exception as e:
+        except Exception:
             return None
 
     if result.is_redirect:
@@ -118,7 +118,7 @@ def validate_dns_records(domain, records, record_type):
 
 def validate_dns_record(record, domain, record_type):
     value = record if isinstance(record, str) else record.to_text().strip()
-    allow_non_public_ip = get_config().allow_non_public_ip
+    allow_non_public_ip = bool_value_of_env("ALLOW_NON_PUBLIC_IP")
 
     try:
         ip = ipaddress.ip_address(value)
