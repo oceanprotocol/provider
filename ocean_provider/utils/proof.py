@@ -1,5 +1,7 @@
 import os
 import requests
+from web3.gas_strategies.time_based import fast_gas_price_strategy
+
 from ocean_provider.utils.basics import get_provider_wallet
 from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.datatoken import get_datatoken_contract
@@ -47,6 +49,14 @@ def send_proof(
 
     consumer_message = Web3.toBytes(text=consumer_data)
 
+    tx_dict = {
+        "from": provider_wallet.address,
+    }
+    if web3.eth.chain_id == 8996:
+        tx_dict["gasPrice"] = web3.eth.generate_gas_price()
+    else:
+        tx_dict["maxPriorityFeePerGas"] = web3.eth.max_priority_fee
+
     tx = datatoken_contract.functions.orderExecuted(
         order_tx_id,
         Web3.toBytes(text=provider_data),
@@ -54,12 +64,7 @@ def send_proof(
         consumer_message,
         consumer_signature,
         consumer_address,
-    ).buildTransaction(
-        {
-            "from": provider_wallet.address,
-            "maxPriorityFeePerGas": web3.eth.max_priority_fee,
-        }
-    )
+    ).buildTransaction(tx_dict)
 
     _, transaction_id = sign_and_send(web3, tx, provider_wallet)
 
