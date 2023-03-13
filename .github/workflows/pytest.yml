@@ -43,6 +43,7 @@ jobs:
             done
       - name: Verify deployments
         run: |
+          service firewalld stop
           netstat -lnpt
           nc -zv 172.15.0.13 31000
           cat $HOME/.ocean/ocean-contracts/artifacts/address.json
