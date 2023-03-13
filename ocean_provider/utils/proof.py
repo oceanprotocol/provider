@@ -53,7 +53,7 @@ def send_proof(
         "from": provider_wallet.address,
     }
     if web3.eth.chain_id == 8996:
-        tx_dict["gasPrice"] = web3.eth.gas_price()
+        tx_dict["gasPrice"] = web3.eth.gas_price
     else:
         tx_dict["maxPriorityFeePerGas"] = web3.eth.max_priority_fee
 
