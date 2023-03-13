@@ -1,17 +1,17 @@
 import os
 from typing import List
 
+import requests
 
 from ocean_provider.requests_session import get_requests_session
 from ocean_provider.utils.address import get_provider_fee_token
-from ocean_provider.utils.basics import get_config, get_web3
-
+from ocean_provider.utils.basics import get_web3
 
 requests_session = get_requests_session()
 
 
 def get_compute_environments_endpoint():
-    return get_config().operator_service_url + "api/v1/operator/environments"
+    return os.getenv("OPERATOR_SERVICE_URL") + "api/v1/operator/environments"
 
 
 def get_c2d_environments() -> List:
@@ -21,7 +21,7 @@ def get_c2d_environments() -> List:
     standard_headers = {"Content-Type": "application/json", "Connection": "close"}
     web3 = get_web3()
     params = {"chainId": web3.eth.chain_id}
-    response = requests_session.get(
+    response = requests.get(
         get_compute_environments_endpoint(), headers=standard_headers, params=params
     )
 

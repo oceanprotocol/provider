@@ -3,24 +3,25 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import logging
-from urllib.parse import urljoin
+import os
 from datetime import datetime
+from urllib.parse import urljoin
 
 from eth_keys import KeyAPI
 from eth_keys.backends import NativeECCBackend
 from ocean_provider.utils.accounts import sign_message
-from ocean_provider.utils.basics import get_config, get_provider_wallet, get_web3
+from ocean_provider.utils.basics import get_provider_wallet, get_web3
 
 logger = logging.getLogger(__name__)
 keys = KeyAPI(NativeECCBackend)
 
 
 def get_compute_endpoint():
-    return urljoin(get_config().operator_service_url, "api/v1/operator/compute")
+    return urljoin(os.getenv("OPERATOR_SERVICE_URL"), "api/v1/operator/compute")
 
 
 def get_compute_result_endpoint():
-    return urljoin(get_config().operator_service_url, "api/v1/operator/getResult")
+    return urljoin(os.getenv("OPERATOR_SERVICE_URL"), "api/v1/operator/getResult")
 
 
 def process_compute_request(data):
