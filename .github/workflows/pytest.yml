@@ -48,7 +48,6 @@ jobs:
           cat $HOME/.ocean/ocean-contracts/artifacts/address.json
           curl http://172.15.0.13:31000
           docker ps
-          traceroute 172.15.0.13 -p 31000
       - name: Install dependencies
         working-directory: ${{ github.workspace }}
         run: |
