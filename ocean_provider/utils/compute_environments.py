@@ -1,6 +1,7 @@
 import os
 from urllib.parse import urljoin
 
+import requests
 from ocean_provider.requests_session import get_requests_session
 from ocean_provider.utils.address import get_provider_fee_token
 from ocean_provider.utils.basics import get_configured_chains
@@ -21,9 +22,19 @@ def get_c2d_environments(flat=False):
 
     for chain in get_configured_chains():
         params = {"chainId": chain}
-        response = requests_session.get(
-            get_compute_environments_endpoint(), headers=standard_headers, params=params
-        )
+
+        try:
+            response = requests_session.get(
+                get_compute_environments_endpoint(),
+                headers=standard_headers,
+                params=params,
+            )
+        except requests.exceptions.ConnectionError:
+            response = None
+
+        assert (
+            response
+        ), f"Compute envs could not be retrieved for chainId {chain}, check configuration."
 
         # add provider token from config
         envs = response.json()

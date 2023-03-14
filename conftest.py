@@ -97,12 +97,19 @@ def web3():
 @pytest.fixture
 def free_c2d_env():
     environments = get_c2d_environments(flat=True)
+    try:
+        environments = get_c2d_environments(flat=True)
+    except AssertionError:
+        pytest.skip("C2D connection failed. Need fix in #610")
 
     return next(env for env in environments if float(env["priceMin"]) == float(0))
 
 
 @pytest.fixture
 def paid_c2d_env():
-    environments = get_c2d_environments(flat=True)
+    try:
+        environments = get_c2d_environments(flat=True)
+    except AssertionError:
+        pytest.skip("C2D connection failed. Need fix in #610")
 
     return next(env for env in environments if env["id"] == "ocean-compute-env2")

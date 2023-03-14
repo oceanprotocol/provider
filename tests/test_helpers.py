@@ -13,8 +13,6 @@ from eth_account.signers.local import LocalAccount
 from eth_typing.encoding import HexStr
 from eth_typing.evm import HexAddress
 from flask.testing import FlaskClient
-from jsonsempai import magic  # noqa: F401
-from artifacts import ERC721Template
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.address import get_contract_address
 from ocean_provider.utils.asset import Asset, get_asset_from_metadatastore
@@ -325,7 +323,7 @@ def get_dataset_ddo_with_multiple_files(client, wallet, service_type="access"):
 
 def set_nft_state(nft_address, nft_state, wallet):
     web3 = get_web3(8996)
-    dt_contract = web3.eth.contract(abi=ERC721Template.abi, address=nft_address)
+    dt_contract = get_data_nft_contract(web3, nft_address)
 
     time.sleep(10)
     txn_hash = dt_contract.functions.setMetaDataState(nft_state).transact(
