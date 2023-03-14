@@ -4,14 +4,13 @@
 #
 import copy
 import logging
-import requests
 from typing import Optional
 
-from jsonsempai import magic  # noqa: F401
-from artifacts import ERC721Template
+import requests
 from ocean_provider.utils.basics import get_web3
 from ocean_provider.utils.consumable import ConsumableCodes
 from ocean_provider.utils.credentials import AddressCredential
+from ocean_provider.utils.data_nft import get_data_nft_contract
 from ocean_provider.utils.services import Service
 
 logger = logging.getLogger(__name__)
@@ -102,9 +101,7 @@ def check_asset_consumable(asset, consumer_address, logger, custom_url=None):
     if not asset.nft or "address" not in asset.nft:
         return False, "Asset malformed"
     web3 = get_web3()
-    nft_contract = web3.eth.contract(
-        abi=ERC721Template.abi, address=web3.toChecksumAddress(asset.nft["address"])
-    )
+    nft_contract = get_data_nft_contract(web3, asset.nft["address"])
 
     if nft_contract.caller.getMetaData()[2] not in [0, 5]:
         return False, "Asset is not consumable."

@@ -4,9 +4,7 @@
 #
 import os
 
-from artifacts import ERC721Factory  # noqa: F401
-from jsonsempai import magic  # noqa: F401
-from ocean_provider.utils.address import get_contract_address
+from ocean_provider.utils.address import get_contract_address, get_contract_definition
 from web3.contract import Contract
 from web3.main import Web3
 
@@ -18,7 +16,7 @@ def get_data_nft_factory_address(web3: Web3) -> str:
 
 
 def get_data_nft_factory_contract(web3: Web3) -> Contract:
-    abi = ERC721Factory.abi
+    abi = get_contract_definition("ERC721Factory")["abi"]
     data_nft_factory_address = get_data_nft_factory_address(web3)
     return web3.eth.contract(
         address=web3.toChecksumAddress(data_nft_factory_address), abi=abi

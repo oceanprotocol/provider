@@ -3,13 +3,12 @@ import logging
 from datetime import datetime
 from typing import Optional
 
-from jsonsempai import magic  # noqa: F401
-from artifacts import ERC20Template
 from eth_keys import KeyAPI
 from eth_keys.backends import NativeECCBackend
 from eth_typing.encoding import HexStr
 from eth_typing.evm import HexAddress
 from hexbytes import HexBytes
+from ocean_provider.utils.address import get_contract_definition
 from ocean_provider.utils.basics import get_provider_wallet
 from ocean_provider.utils.currency import to_wei
 from ocean_provider.utils.data_nft import get_data_nft_contract
@@ -31,9 +30,8 @@ def get_datatoken_contract(web3: Web3, address: Optional[str] = None) -> Contrac
     `ERC721Factory` provides all the functionality needed by Provider,
     especially the `getMetaData` contract method.
     """
-    return web3.eth.contract(
-        address=web3.toChecksumAddress(address), abi=ERC20Template.abi
-    )
+    abi = get_contract_definition("ERC20Template")["abi"]
+    return web3.eth.contract(address=web3.toChecksumAddress(address), abi=abi)
 
 
 def _get_tx_receipt(web3, tx_hash):
