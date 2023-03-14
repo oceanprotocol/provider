@@ -69,9 +69,12 @@ def verify_order_tx(
         tx_receipt, errors=DISCARD
     )
 
-    provider_fee_order_log = (
-        provider_fee_event_logs[0] if provider_fee_event_logs else None
-    )
+    provider_fee_order_log = None
+    for log in provider_fee_event_logs:
+        if log.event == "ProviderFee":
+            provider_fee_order_log = log
+            break
+
     if not provider_fee_order_log:
         raise AssertionError(
             f"Cannot find the event for the provider fee in tx id {tx_id}."
@@ -152,7 +155,13 @@ def verify_order_tx(
         logger.error(e)
     logger.debug(f"Got events log when searching for ReuseOrder : {event_logs}")
     log_timestamp = None
-    order_log = event_logs[0] if event_logs else None
+
+    order_log = None
+    for log in event_logs:
+        if log.event == "OrderReused":
+            order_log = log
+            break
+
     if order_log and order_log.args.orderTxId:
         log_timestamp = order_log.args.timestamp
         try:
@@ -176,7 +185,12 @@ def verify_order_tx(
     except Exception as e:
         logger.error(e)
     logger.debug(f"Got events log when searching for OrderStarted : {event_logs}")
-    order_log = event_logs[0] if event_logs else None
+
+    order_log = None
+    for log in event_logs:
+        if log.event == "OrderStarted":
+            order_log = log
+            break
 
     if not order_log:
         raise AssertionError(
