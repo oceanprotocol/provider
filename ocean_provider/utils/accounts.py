@@ -31,6 +31,7 @@ def verify_signature(signer_address, signature, original_msg, nonce):
     :return: True if signature is valid, throws InvalidSignatureError otherwise
     """
     verify_nonce(signer_address, nonce)
+    old_signature = signature
 
     message = f"{original_msg}{str(nonce)}"
     signature_bytes = Web3.toBytes(hexstr=signature)
@@ -42,6 +43,16 @@ def verify_signature(signer_address, signature, original_msg, nonce):
         new_signature = signature_bytes
 
     signature = keys.Signature(signature_bytes=new_signature)
+
+    if old_signature != str(signature):
+        msg = (
+            f"Invalid signature. Please check the nonce or documentId from the original message."
+            f" In case of compute endpoints, check also the job ID."
+            f" Got: {old_signature}\n."
+        )
+        logger.error(msg)
+        raise InvalidSignatureError(msg)
+
     message_hash = Web3.solidityKeccak(
         ["bytes"],
         [Web3.toBytes(text=message)],
