@@ -96,7 +96,6 @@ def web3():
 
 @pytest.fixture
 def free_c2d_env():
-    environments = get_c2d_environments(flat=True)
     try:
         environments = get_c2d_environments(flat=True)
     except AssertionError:
