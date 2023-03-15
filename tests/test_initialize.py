@@ -193,10 +193,7 @@ def test_can_not_initialize_compute_service_with_simple_initialize(
 
 
 @pytest.mark.integration
-@skip_on(
-    (requests.exceptions.ConnectionError, AssertionError),
-    "C2D connection failed. Need fix in #610",
-)
+@skip_on(requests.exceptions.ConnectionError, "C2D connection failed. Need fix in #610")
 def test_initialize_compute_works(
     client, publisher_wallet, consumer_wallet, free_c2d_env
 ):
@@ -250,10 +247,7 @@ def test_initialize_compute_works(
 
 
 @pytest.mark.integration
-@skip_on(
-    (requests.exceptions.ConnectionError, AssertionError),
-    "C2D connection failed. Need fix in #610",
-)
+@skip_on(requests.exceptions.ConnectionError, "C2D connection failed. Need fix in #610")
 def test_initialize_compute_order_reused(
     client, publisher_wallet, consumer_wallet, free_c2d_env
 ):
@@ -382,10 +376,7 @@ def test_initialize_compute_order_reused(
 
 
 @pytest.mark.integration
-@skip_on(
-    (requests.exceptions.ConnectionError, AssertionError),
-    "C2D connection failed. Need fix in #610",
-)
+@skip_on(requests.exceptions.ConnectionError, "C2D connection failed. Need fix in #610")
 def test_initialize_compute_paid_env(
     client, publisher_wallet, consumer_wallet, paid_c2d_env
 ):
