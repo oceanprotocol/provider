@@ -13,7 +13,7 @@ from ocean_provider.utils.asset import (
     check_asset_consumable,
     get_asset_from_metadatastore,
 )
-from ocean_provider.utils.basics import get_metadata_url
+from ocean_provider.utils.basics import get_metadata_url, get_provider_wallet, get_web3
 from ocean_provider.utils.datatoken import (
     record_consume_request,
     validate_order,
@@ -27,11 +27,9 @@ logger = logging.getLogger(__name__)
 
 
 class WorkflowValidator:
-    def __init__(self, web3, consumer_address, provider_wallet, data):
+    def __init__(self, consumer_address, data):
         """Initializes the validator."""
-        self.web3 = web3
         self.consumer_address = consumer_address
-        self.provider_wallet = provider_wallet
         self.data = data
         self.workflow = dict({"stages": []})
 
@@ -76,8 +74,8 @@ class WorkflowValidator:
         algo_data = self.data["algorithm"]
 
         self.validated_inputs = []
+        self.input_validators = []
         valid_until_list = []
-        provider_fee_amounts = []
 
         status = self.preliminary_algo_validation()
         if not status:
@@ -86,9 +84,7 @@ class WorkflowValidator:
         for index, input_item in enumerate(all_data):
             input_item["algorithm"] = algo_data
             input_item_validator = InputItemValidator(
-                self.web3,
                 self.consumer_address,
-                self.provider_wallet,
                 input_item,
                 {"environment": self.data.get("environment")},
                 index,
@@ -103,8 +99,8 @@ class WorkflowValidator:
                 return False
 
             self.validated_inputs.append(input_item_validator.validated_inputs)
+            self.input_validators.append(input_item_validator)
             valid_until_list.append(input_item_validator.valid_until)
-            provider_fee_amounts.append(input_item_validator.provider_fee_amount)
 
             if index == 0:
                 self.service_endpoint = input_item_validator.service.service_endpoint
@@ -115,23 +111,37 @@ class WorkflowValidator:
 
         if algo_data.get("documentId"):
             valid_until_list.append(self.algo_valid_until)
-            provider_fee_amounts.append(self.algo_fee_amount)
 
         self.valid_until = max(valid_until_list)
 
-        provider_fee_token = get_provider_fee_token(self.web3.chain_id)
-
-        required_provider_fee = get_provider_fee_amount(
-            self.valid_until,
-            self.data.get("environment"),
-            self.web3,
-            provider_fee_token,
-        )
-
         paid_provider_fees_index = -1
-        for fee in provider_fee_amounts:
-            if required_provider_fee <= fee:
-                paid_provider_fees_index = provider_fee_amounts.index(fee)
+
+        for index, input_validator in enumerate(self.input_validators):
+            provider_fee_token = get_provider_fee_token(input_validator.asset.chain_id)
+
+            required_provider_fee = get_provider_fee_amount(
+                self.valid_until,
+                self.data.get("environment"),
+                get_web3(input_validator.asset.chain_id),
+                provider_fee_token,
+            )
+
+            if required_provider_fee <= input_validator.provider_fee_amount:
+                paid_provider_fees_index = index
+                self.chain_id = input_validator.asset.chain_id
+
+        if algo_data.get("documentId"):
+            provider_fee_token = get_provider_fee_token(self.algo.chain_id)
+
+            required_provider_fee = get_provider_fee_amount(
+                self.valid_until,
+                self.data.get("environment"),
+                get_web3(self.algo.chain_id),
+                provider_fee_token,
+            )
+            if required_provider_fee <= self.algo_fee_amount:
+                paid_provider_fees_index = len(self.input_validators) + 1
+                self.chain_id = self.algo.chain_id
 
         if paid_provider_fees_index == -1:
             self.resource = "order"
@@ -161,7 +171,6 @@ class WorkflowValidator:
             output_def,
             self.service_endpoint,
             self.consumer_address,
-            self.provider_wallet,
         )
 
         return True
@@ -170,21 +179,23 @@ class WorkflowValidator:
         """Returns False if invalid, otherwise sets the validated_algo_dict attribute."""
         algorithm_did = algo_data.get("documentId")
         self.algo_service = None
-        algo = None
+        self.algo = None
 
         if algorithm_did and not algo_data.get("meta"):
             algorithm_tx_id = algo_data.get("transferTxId")
             algorithm_service_id = algo_data.get("serviceId")
 
-            algo = get_asset_from_metadatastore(get_metadata_url(), algorithm_did)
+            self.algo = get_asset_from_metadatastore(get_metadata_url(), algorithm_did)
 
             try:
-                self.algo_service = algo.get_service_by_id(algorithm_service_id)
+                self.algo_service = self.algo.get_service_by_id(algorithm_service_id)
                 algorithm_token_address = self.algo_service.datatoken_address
 
                 if self.algo_service.type == "compute":
                     asset_urls = get_service_files_list(
-                        self.algo_service, self.provider_wallet, algo
+                        self.algo_service,
+                        get_provider_wallet(self.algo.chain_id),
+                        self.algo,
                     )
 
                     if not asset_urls:
@@ -198,10 +209,10 @@ class WorkflowValidator:
                     return False
                 logger.debug("validate_order called for ALGORITHM usage.")
                 _tx, _order_log, _provider_fees_log, start_order_tx_id = validate_order(
-                    self.web3,
+                    get_web3(self.algo.chain_id),
                     self.consumer_address,
                     algorithm_tx_id,
-                    algo,
+                    self.algo,
                     self.algo_service,
                 )
                 self.algo_valid_until = _provider_fees_log.args.validUntil
@@ -231,10 +242,9 @@ class WorkflowValidator:
 
         algorithm_dict = StageAlgoSerializer(
             self.consumer_address,
-            self.provider_wallet,
             algo_data,
             self.algo_service,
-            algo,
+            self.algo,
         ).serialize()
 
         valid, resource, error_msg = validate_formatted_algorithm_dict(
@@ -291,7 +301,7 @@ class WorkflowValidator:
         try:
             service = algo_ddo.get_service_by_id(algo_data.get("serviceId"))
             self.algo_files_checksum, self.algo_container_checksum = get_algo_checksums(
-                service, self.provider_wallet, algo_ddo
+                service, get_provider_wallet(algo_ddo.chain_id), algo_ddo
             )
         except Exception:
             self.resource = "algorithm"
@@ -351,18 +361,14 @@ def validate_formatted_algorithm_dict(algorithm_dict, algorithm_did):
 class InputItemValidator:
     def __init__(
         self,
-        web3,
         consumer_address,
-        provider_wallet,
         data,
         extra_data,
         index,
         check_usage=True,
     ):
         """Initializes the input item validator."""
-        self.web3 = web3
         self.consumer_address = consumer_address
-        self.provider_wallet = provider_wallet
         self.data = data
         self.extra_data = extra_data
         self.index = index
@@ -381,7 +387,7 @@ class InputItemValidator:
                 return False
 
         if not self.data.get("serviceId") and self.data.get("serviceId") != 0:
-            self.resource += f".serviceId"
+            self.resource += ".serviceId"
             self.message = "missing"
             return False
 
@@ -389,14 +395,14 @@ class InputItemValidator:
         self.asset = get_asset_from_metadatastore(get_metadata_url(), self.did)
 
         if not self.asset:
-            self.resource += f".documentId"
+            self.resource += ".documentId"
             self.message = "did_not_found"
             return False
 
         self.service = self.asset.get_service_by_id(self.data["serviceId"])
 
         if not self.service:
-            self.resource += f".serviceId"
+            self.resource += ".serviceId"
             self.message = "not_found"
             return False
 
@@ -409,20 +415,20 @@ class InputItemValidator:
             return False
 
         if self.service.type not in ["access", "compute"]:
-            self.resource += f".serviceId"
+            self.resource += ".serviceId"
             self.message = "service_not_access_compute"
             return False
 
         if self.service.type != "compute" and self.index == 0:
-            self.resource += f".serviceId"
+            self.resource += ".serviceId"
             self.message = "main_service_compute"
             return False
 
         asset_urls = get_service_files_list(
-            self.service, self.provider_wallet, self.asset
+            self.service, get_provider_wallet(self.asset.chain_id), self.asset
         )
         if self.service.type == "compute" and not asset_urls:
-            self.resource += f".serviceId"
+            self.resource += ".serviceId"
             self.message = "compute_services_not_in_same_provider"
             return False
 
@@ -521,7 +527,7 @@ class InputItemValidator:
 
         try:
             _tx, _order_log, _provider_fees_log, start_order_tx_id = validate_order(
-                self.web3,
+                get_web3(self.asset.chain_id),
                 self.consumer_address,
                 tx_id,
                 self.asset,
@@ -550,7 +556,7 @@ class InputItemValidator:
         return True
 
 
-def build_stage_output_dict(output_def, service_endpoint, owner, provider_wallet):
+def build_stage_output_dict(output_def, service_endpoint, owner):
     if BaseURLs.SERVICES_URL in service_endpoint:
         service_endpoint = service_endpoint.split(BaseURLs.SERVICES_URL)[0]
 

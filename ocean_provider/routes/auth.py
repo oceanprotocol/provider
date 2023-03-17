@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import logging
-import os
 
 import jwt
 from flask import jsonify, request
@@ -13,6 +12,7 @@ from ocean_provider.user_nonce import (
     force_restore_token,
     is_token_valid,
 )
+from ocean_provider.utils.basics import get_provider_private_key
 from ocean_provider.utils.util import get_request_data
 from ocean_provider.validation.provider_requests import (
     CreateTokenRequest,
@@ -63,7 +63,7 @@ def create_auth_token():
     address = data.get("address")
     expiration = int(data.get("expiration"))
 
-    pk = os.environ.get("PROVIDER_PRIVATE_KEY")
+    pk = get_provider_private_key(use_universal_key=True)
     token = jwt.encode({"exp": expiration, "address": address}, pk, algorithm="HS256")
     token = token.decode("utf-8") if isinstance(token, bytes) else token
 

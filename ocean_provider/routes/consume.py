@@ -30,7 +30,6 @@ from ocean_provider.validation.provider_requests import (
 )
 from web3.main import Web3
 
-provider_wallet = get_provider_wallet()
 requests_session = get_requests_session()
 
 logger = logging.getLogger(__name__)
@@ -115,6 +114,7 @@ def fileinfo():
                 400,
                 logger,
             )
+        provider_wallet = get_provider_wallet(asset.chain_id)
         files_list = get_service_files_list(service, provider_wallet, asset)
         if not files_list:
             return error_response("Unable to get dataset files", 400, logger)
@@ -210,7 +210,7 @@ def initialize():
     if "transferTxId" in data:
         try:
             _tx, _order_log, _, _ = validate_order(
-                get_web3(),
+                get_web3(asset.chain_id),
                 consumer_address,
                 data["transferTxId"],
                 asset,
@@ -226,6 +226,7 @@ def initialize():
     file_index = int(data.get("fileIndex", "-1"))
     # we check if the file is valid only if we have fileIndex
     if file_index > -1:
+        provider_wallet = get_provider_wallet(asset.chain_id)
         url_object = get_service_files_list(service, provider_wallet, asset)[file_index]
         url_object["userdata"] = data.get("userdata")
         valid, message = FilesTypeFactory.validate_and_create(url_object)
@@ -246,7 +247,7 @@ def initialize():
     # of tokens required for this service
     # The consumer must sign and execute this transaction in order to be
     # able to consume the service
-    provider_fee = get_provider_fees(did, service, consumer_address, 0)
+    provider_fee = get_provider_fees(asset, service, consumer_address, 0)
     if provider_fee:
         provider_fee["providerFeeAmount"] = str(provider_fee["providerFeeAmount"])
     approve_params = {
@@ -316,7 +317,7 @@ def download():
 
     if service.type != ServiceType.ACCESS:
         # allow our C2D to download a compute asset
-        c2d_environments = get_c2d_environments()
+        c2d_environments = get_c2d_environments(flat=True)
 
         is_c2d_consumer_address = bool(
             [
@@ -338,7 +339,7 @@ def download():
 
     try:
         _tx, _order_log, _, _ = validate_order(
-            get_web3(), consumer_address, tx_id, asset, service
+            get_web3(asset.chain_id), consumer_address, tx_id, asset, service
         )
     except Exception as e:
         return error_response(
@@ -348,6 +349,7 @@ def download():
         )
 
     file_index = int(data.get("fileIndex"))
+    provider_wallet = get_provider_wallet(asset.chain_id)
     files_list = get_service_files_list(service, provider_wallet, asset)
     if file_index > len(files_list):
         return error_response(f"No such fileIndex {file_index}", 400, logger)
@@ -386,7 +388,7 @@ def download():
     consumer_data = f'{did}{data.get("nonce")}'
 
     send_proof(
-        web3=get_web3(),
+        asset.chain_id,
         order_tx_id=_tx.hash,
         provider_data=provider_proof_data,
         consumer_data=consumer_data,

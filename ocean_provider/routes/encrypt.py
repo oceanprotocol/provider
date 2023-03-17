@@ -12,7 +12,7 @@ from ocean_provider.utils.error_responses import error_response
 
 from . import services
 
-provider_wallet = get_provider_wallet()
+# provider_wallet = get_provider_wallet()
 requests_session = get_requests_session()
 
 logger = logging.getLogger(__name__)
@@ -33,6 +33,10 @@ def encrypt():
     consumes:
       - application/octet-stream
     parameters:
+      - in: chainId
+        name: chainId
+        required: true
+        description: chainId to be used for encryption, given as query parameter
       - in: body
         name: body
         required: true
@@ -54,14 +58,23 @@ def encrypt():
             logger,
         )
 
+    chain_id = request.args.get("chainId")
+    if not chain_id:
+        return error_response(
+            "Missing chainId query parameter.",
+            400,
+            logger,
+        )
+
     data = request.get_data()
     logger.debug(f"encrypt called. arguments = {data}")
 
-    return _encrypt(data)
+    return _encrypt(data, chain_id)
 
 
-def _encrypt(data: bytes) -> Response:
+def _encrypt(data: bytes, chain_id) -> Response:
     try:
+        provider_wallet = get_provider_wallet(chain_id)
         encrypted_data = do_encrypt(data, provider_wallet)
         logger.info(f"encrypted_data = {encrypted_data}")
     except Exception:

@@ -10,7 +10,7 @@ from urllib.parse import urljoin
 from eth_keys import KeyAPI
 from eth_keys.backends import NativeECCBackend
 from ocean_provider.utils.accounts import sign_message
-from ocean_provider.utils.basics import get_provider_wallet, get_web3
+from ocean_provider.utils.basics import get_provider_wallet
 
 logger = logging.getLogger(__name__)
 keys = KeyAPI(NativeECCBackend)
@@ -25,7 +25,7 @@ def get_compute_result_endpoint():
 
 
 def process_compute_request(data):
-    provider_wallet = get_provider_wallet()
+    provider_wallet = get_provider_wallet(use_universal_key=True)
     did = data.get("documentId")
     owner = data.get("consumerAddress")
     job_id = data.get("jobId")
@@ -41,8 +41,6 @@ def process_compute_request(data):
     nonce, provider_signature = sign_for_compute(provider_wallet, owner, job_id)
     body["providerSignature"] = provider_signature
     body["nonce"] = nonce
-    web3 = get_web3()
-    body["chainId"] = web3.chain_id
 
     return body
 

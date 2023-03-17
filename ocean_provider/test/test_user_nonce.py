@@ -2,19 +2,19 @@
 # Copyright 2023 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
-from datetime import datetime
-from flask_caching import Cache
 import os
+from datetime import datetime
 from unittest.mock import patch
 
 import pytest
 import sqlalchemy
+from flask_caching import Cache
 from ocean_provider import models, user_nonce
 from ocean_provider.myapp import app
 from ocean_provider.user_nonce import (
     get_nonce,
-    update_nonce,
     get_or_create_user_nonce_object,
+    update_nonce,
 )
 
 cache = Cache(
