@@ -82,8 +82,9 @@ def verify_order_tx(
         )
 
     provider_initialize_timestamp = 0
+    provider_data = json.loads(provider_fee_order_log.args.providerData)
+    provider_timeout = provider_data.get("timeout")
     if extra_data:
-        provider_data = json.loads(provider_fee_order_log.args.providerData)
         if extra_data["environment"] != provider_data["environment"]:
             raise AssertionError(
                 "Mismatch between ordered c2d environment and selected one."
@@ -148,6 +149,16 @@ def verify_order_tx(
         event_logs = datatoken_contract.events.OrderReused().processReceipt(
             tx_receipt, errors=DISCARD
         )
+        # get the original provider fee event, to get the timeout
+        provider_fee_event_logs = (
+            datatoken_contract.events.ProviderFee().processReceipt(
+                tx_receipt, errors=DISCARD
+            )
+        )
+        if provider_fee_event_logs:
+            provider_data = json.loads(provider_fee_event_logs[0].args.providerData)
+            provider_timeout = provider_data.get("timeout")
+
     except Exception as e:
         logger.error(e)
     logger.debug(f"Got events log when searching for ReuseOrder : {event_logs}")
@@ -212,15 +223,26 @@ def verify_order_tx(
     logger.debug(
         f"verify_order_tx: service timeout = {service.timeout}, timestamp delta = {timestamp_delta}"
     )
-    if service.timeout != 0:
-        if timestamp_delta > service.timeout:
+    if provider_timeout:
+        if timestamp_delta > provider_timeout:
             raise ValueError(
                 f"The order has expired. \n"
                 f"current timestamp={timestamp_now}\n"
                 f"order timestamp={log_timestamp}\n"
                 f"timestamp delta={timestamp_delta}\n"
-                f"service timeout={service.timeout}"
+                f"provider service timeout={provider_timeout}"
             )
+    else:
+        # check ddo if there is no timeout in providerData
+        if service.timeout != 0:
+            if timestamp_delta > service.timeout:
+                raise ValueError(
+                    f"The order has expired. \n"
+                    f"current timestamp={timestamp_now}\n"
+                    f"order timestamp={log_timestamp}\n"
+                    f"timestamp delta={timestamp_delta}\n"
+                    f"service timeout={service.timeout}"
+                )
 
     if web3.toChecksumAddress(sender) not in [
         web3.toChecksumAddress(order_log.args.consumer),
