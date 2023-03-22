@@ -32,17 +32,31 @@ def verify_signature(signer_address, signature, original_msg, nonce):
     """
     verify_nonce(signer_address, nonce)
     # old_signature = signature
+    logger.debug(
+        f"received signature: {signature}\n received signer address: {signer_address}"
+    )
 
     message = f"{original_msg}{str(nonce)}"
     signature_bytes = Web3.toBytes(hexstr=signature)
+    logger.debug(f"signature bytes before condition: {signature_bytes}")
     if signature_bytes[64] == 27:
         new_signature = b"".join([signature_bytes[0:64], b"\x00"])
+        logger.debug(
+            f"first if: {signature_bytes[64]}\n new signature: {new_signature}"
+        )
     elif signature_bytes[64] == 28:
         new_signature = b"".join([signature_bytes[0:64], b"\x01"])
+        logger.debug(
+            f"second if: {signature_bytes[64]}\n new signature: {new_signature}"
+        )
     else:
         new_signature = signature_bytes
+        logger.debug(f"new signature: {new_signature} on else branch")
 
     signature = keys.Signature(signature_bytes=new_signature)
+    logger.debug(
+        f"refactored signature #1: {str(signature)}\n received signer address: {signer_address}"
+    )
 
     # TODO: restore this check
     # if old_signature != str(signature):
@@ -63,6 +77,10 @@ def verify_signature(signer_address, signature, original_msg, nonce):
         ["bytes", "bytes"], [Web3.toBytes(text=prefix), Web3.toBytes(message_hash)]
     )
     vkey = keys.ecdsa_recover(signable_hash, signature)
+    logger.debug(
+        f"received checksumed signer address: {Web3.toChecksumAddress(signer_address)}\n signer address after recover: "
+        f"{Web3.toChecksumAddress(vkey.to_address())}"
+    )
 
     if Web3.toChecksumAddress(signer_address) != Web3.toChecksumAddress(
         vkey.to_address()
@@ -70,7 +88,7 @@ def verify_signature(signer_address, signature, original_msg, nonce):
         msg = (
             f"Invalid signature {signature} for "
             f"ethereum address {signer_address}, message {original_msg} "
-            f"and nonce {nonce}. Got {vkey.to_address()}"
+            f"and nonce {nonce}. Expected {vkey.to_address()}"
         )
         logger.error(msg)
         raise InvalidSignatureError(msg)
