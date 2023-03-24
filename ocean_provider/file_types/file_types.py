@@ -31,7 +31,7 @@ class UrlFile(EndUrlType, FilesType):
         if not self.url:
             return False, "malformed service files, missing required keys."
 
-        if self.method not in ["get", "post"]:
+        if self.method not in ["get"]:
             return False, f"Unsafe method {self.method}."
 
         return True, self
