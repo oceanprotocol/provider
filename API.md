@@ -303,7 +303,8 @@ Status description (`statusText`): (see Operator-Service for full status list)
 
 ### POST /api/services/initializeCompute
 
-Somewhat similar to the compute endpoint, except datasets are all in the same key, no differentiation between a "main" dataset and additional ones.
+This endpoint retrieves provider fees for a compute service.
+The payload is somewhat similar to the compute endpoint, except datasets are all in the same key, no differentiation between a "main" dataset and additional ones.
 
 Parameters
 
