@@ -36,7 +36,7 @@ install_requirements = [
     "dnspython==2.2.1",
     "flask-sieve==1.3.1",
     "SQLAlchemy==1.3.23",
-    "redis==4.0.2",
+    "redis==4.5.3",
     "enforce-typing==1.0.0.post1",
     "pyjwt==2.4.0",
     "pysha3==1.0.2",
