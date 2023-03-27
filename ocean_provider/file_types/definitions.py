@@ -153,7 +153,7 @@ class EndUrlType:
             "url": url,
             "stream": True,
             "headers": self.headers,
-            "timeout": int(os.getenv("REQUEST_TIMEOUT")),
+            "timeout": int(os.getenv("REQUEST_TIMEOUT", 10)),
         }
 
         if self.userdata:
