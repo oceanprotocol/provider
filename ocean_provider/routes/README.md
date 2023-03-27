@@ -134,6 +134,36 @@ Other possible values for the error key in this case are:
 - "Use the initializeCompute endpoint to initialize compute jobs." when you incorrectly request the initialize endpoint for a "compute" service.
 - "Error: Access to asset `<did>` was denied with code: `<code>`." when the access to the asset is denied with various reasons. Consult the ConsumableCodes class for a list of codes.
 
+### download
+
+#### 1. 400 - Bad Request
+
+Ocurrs when parts of the payload are missing or invalid. I.e. for documentId missing:
+
+```python
+{'errors': {'documentId': ['The documentId field is required.']}, 'message': 'Validation error', 'success': False}
+```
+
+Or, in case of invalid signature:
+```python
+{'errors': {'download_signature': ['Invalid signature provided.']}, 'message': 'Validation error', 'success': False}
+```
+
+Other validations check the actual behaviour of the data provided in the payload:
+
+```python
+{"error": "Service with index=`<serviceId>` is not an access service."}
+```
+
+Some possible values for the "error" key are as follows:
+- "Order with tx_id `<tx_id>` could not be validated due to error: `<error message>`", when on-chain validation fails
+- "No such fileIndex `<file index>`", when the file index in the payload does not exist on the asset
+- various file errors and checksum mismatches, see above under `/fileinfo` endpoint
+- direct errors pertaining to downloads e.g. connection errors:
+    - "Error preparing file download response: `<exception message>`"
+    - "Unsafe url `<url>`"
+
+
 ## Compute endpoints
 
 ### initializeCompute
