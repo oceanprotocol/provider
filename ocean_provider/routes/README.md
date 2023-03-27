@@ -63,7 +63,7 @@ the decrypted files object
 }
 ```
 **Reason** The `files` of that dataset could not be decrypted due to the fact that
-`file object`, which contains the structure and the type of specific file, is missing 
+`file object`, which contains the structure and the type of specific file, is missing
 from the validation part.
 
 
@@ -84,7 +84,7 @@ from the validation part.
     "error": "malformed file object."
 }
 ```
-**Reason** The `file object` structure is invalid and does not contain the wanted 
+**Reason** The `file object` structure is invalid and does not contain the wanted
 information for the specific file.
 
 ##### 1.1 For Url file validation
@@ -114,6 +114,25 @@ information for the specific file.
 
 ### initialize
 
+#### 1. 400 - Bad Request
+
+Ocurrs when parts of the payload are missing or invalid. I.e. for documentId missing:
+
+```python
+{'errors': {'documentId': ['The documentId field is required.']}, 'message': 'Validation error', 'success': False}
+```
+
+It is possible the published asset itself is broken on-chain, or its url is broken. Then you will get:
+
+```python
+{"error": "Error: Asset URL not found, not available or invalid. Payload was: ..."}
+```
+
+Other possible values for the error key in this case are:
+- "Cannot resolve DID" when asset is not available in the metadata cache
+- "Invalid serviceId" when the serviceId provided is not found on the asset
+- "Use the initializeCompute endpoint to initialize compute jobs." when you incorrectly request the initialize endpoint for a "compute" service.
+- "Error: Access to asset `<did>` was denied with code: `<code>`." when the access to the asset is denied with various reasons. Consult the ConsumableCodes class for a list of codes.
 
 ## Compute endpoints
 
