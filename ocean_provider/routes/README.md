@@ -290,73 +290,64 @@ none required
 #### Breaking validation
 same as for computeStatus.
 
-TODO
 ## Authentication endpoints
 
 ### createAuthToken
 Creates an AuthToken for the given address, that can replace signature in API calls.
 
-#### 1. 400 - Validation errors
+#### Basic validation
+Requires `address`, `expiration`, `nonce` and signature.
+The expiration must be an integer and the signature is formed using the address and nonce.
 
-One or more of the required attributes are missing or invalid to the payload.
+#### Breaking validation
+Returns
 
-#### 2. 503 - Service Unavailable
+```python
+{"error": "Token is invalid"}
+```
 
-It shows up when Provider server is not responding.
-
+if any problems with the input are detected.
+If the token already exists and has been deleted, it will restore that token resulting in a 200 success code and the expected response.
 
 ### deleteAuthToken
 Revokes a given AuthToken if it is still valid.
 
-#### 1. 400 - Validation errors
+#### Basic validation
+Requires `address`, `token`, `nonce` and signature.
+The expiration must be an integer and the signature is formed using the address and nonce.
 
-One or more of the required attributes are missing or invalid to the payload.
+#### Breaking validation
+Returns either
 
-#### 2. 503 - Service Unavailable
+```python
+{"error": "<message>"}
+```
 
-It occurs when Provider or Operator Service server is not responding.
+where the message can be either "Token is invalid." or "Token is expired.", in which case it can not be deleted.
 
 ### File structure errors
-
 These errors are common to all endpoints that accept a file type structure or handle checking of an already-published asset.
-- "Unsupported type <type>"
-**Reason** The `file object` type is not supported by Provider besides the known ones:.
-- `url`;
-- `arweave`;
-- `ipfs`;
-- `graphql`;
-- `smartcontract`.
 
-```python
-{
-    "error": "malformed file object."
-}
-```
-**Reason** The `file object` structure is invalid and does not contain the wanted
-information for the specific file.
+Generic errors:
+- "Unsupported type <type>": The `file object` type is not supported by Provider. Accepted file types are:
+    - `url`;
+    - `arweave`;
+    - `ipfs`;
+    - `graphql`;
+    - `smartcontract`
+- "malformed file object": The `file object` structure is invalid and does not contain the wanted information for the specific file.
 
-##### 1.1 For Url file validation
+The following table shows the keys inside a file structure:
 
-```python
-{
-    "error": "malformed service files, missing required keys."
-}
-```
-**Reason** The `url` is missing from `UrlFile` object.
+| key | required | applicable to type | error message | comments |
+| --- | --- | --- | --- | ---
+| url | YES | `url` | malformed service files, missing required keys. | |
+| method | NO | `url` | Unsafe method `<method>`. | must be "get" or "post", default to "get" if empty |
+| hash | YES | `ipfs` | malformed service files, missing required keys. | |
+| transactionId | YES | `arwave` | malformed service files, missing transactionId | |
+| url | YES | `graphql` | missing graphql endpoint | |
 
-```python
-{
-    "error": f"Unsafe method <method>"
-}
-```
-**Reason** The `method` for that `url` is neither `get`, nor `post`.
 
-##### 1.2 For Arweave file validation
-
-```python
-{
-    "error": "malformed service files, missing transactionId."
-}
-```
-**Reason** The `transactionId` is missing from `ArweaveFile` object.
+If no ARWEAVE_GATEWAY is defined in Provider, downloads of arweave files will fail with a 503 status code.
+Similar for IPFS_GATEWAY and ipfs file types.
 
