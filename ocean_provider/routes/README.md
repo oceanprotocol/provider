@@ -227,7 +227,7 @@ Optional parameters:
 
 
 #### Breaking validation
-The errors are the same as for initializeCompute, with one principal difference: the error keys are not offset based on the `datasets` list, but on `dataset` and `additional_input[index]`.
+The errors are the same as for [initializeCompute](#initializecompute), with one principal difference: the error keys are not offset based on the `datasets` list, but on `dataset` and `additional_input[index]`.
 i.e. instead of `{"datasets": "invalid" }`, `{"additional_input": "invalid" }` if the additional input is not a valid list.
 
 The errors for the main dataset will have the `dataset` key, NOT `datasets[0]`.
@@ -263,15 +263,15 @@ This endpoint requires `consumerAddress`, `nonce` and signature.
 The nonce must be numeric and the signature must match the expected consume signature based on consumerAddress, documentId, jobId and nonce.
 
 #### Breaking validation
-same as for computeStatus.
+same as for [computeStatus](#computeStatus).
 
 ### computeDelete
 
 #### Basic validation
-same requirements as for computeStop
+same requirements as for [computeStop](#computestop).
 
 #### Breaking validation
-same as for computeStatus.
+same as for [computeStatus](#computeStatus).
 
 ### computeResult
 
@@ -280,7 +280,7 @@ Requires `jobId`, `index`, `consumerAddress`, `nonce`.
 The nonce must be numeric and the signature must match the expected consume signature based on consumerAddress, index, jobId and nonce.
 
 #### Breaking validation
-same as for computeStatus.
+same as for [computeStatus](#computeStatus).
 
 ### computeEnvironments
 
@@ -288,7 +288,7 @@ same as for computeStatus.
 none required
 
 #### Breaking validation
-same as for computeStatus.
+same as for [computeStatus](#computeStatus).
 
 ## Authentication endpoints
 
