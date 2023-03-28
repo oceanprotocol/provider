@@ -15,7 +15,6 @@ from ocean_provider.utils.url import is_safe_url
 
 logger = logging.getLogger(__name__)
 
-REQUEST_TIMEOUT = 3
 CHUNK_SIZE = 8192
 
 
@@ -154,7 +153,7 @@ class EndUrlType:
             "url": url,
             "stream": True,
             "headers": self.headers,
-            "timeout": REQUEST_TIMEOUT,
+            "timeout": int(os.getenv("REQUEST_TIMEOUT", 10)),
         }
 
         if self.userdata:
