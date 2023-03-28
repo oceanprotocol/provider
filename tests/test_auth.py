@@ -109,9 +109,9 @@ def test_delete_auth_token_redis(client, consumer_wallet):
 def test_expiration(client, consumer_wallet):
     """Tests token expiration."""
     address = consumer_wallet.address
-    expiration = int((datetime.utcnow() + timedelta(seconds=1)).timestamp())
+    expiration = int((datetime.utcnow() + timedelta(seconds=5)).timestamp())
     token = create_token(client, consumer_wallet, expiration)
-    time.sleep(2)
+    time.sleep(6)
     valid, message = is_token_valid(token, address)
     assert not valid
     assert message == "Token is expired."

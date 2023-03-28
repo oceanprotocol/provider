@@ -68,8 +68,11 @@ def create_auth_token():
     token = token.decode("utf-8") if isinstance(token, bytes) else token
 
     valid, message = is_token_valid(token, address)
-    if not valid and message == "Token is deleted.":
-        force_restore_token(token)
+    if not valid:
+        if message == "Token is deleted.":
+            force_restore_token(token)
+        else:
+            return jsonify(error=message), 400
 
     return jsonify(token=token)
 
