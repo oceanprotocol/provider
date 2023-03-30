@@ -12,6 +12,7 @@ from ocean_provider.utils.address import get_contract_definition
 from ocean_provider.utils.basics import get_provider_wallet
 from ocean_provider.utils.currency import to_wei
 from ocean_provider.utils.data_nft import get_data_nft_contract
+from ocean_provider.utils.event_log_decoder import EventLogDecoder
 from ocean_provider.utils.services import Service
 from web3.contract import Contract
 from web3.logs import DISCARD
@@ -68,6 +69,10 @@ def verify_order_tx(
     provider_fee_event_logs = datatoken_contract.events.ProviderFee().processReceipt(
         tx_receipt, errors=DISCARD
     )
+
+    eld = EventLogDecoder(datatoken_contract, tx_receipt)
+    result = eld.decode_logs()
+    # TODO
 
     provider_fee_order_log = (
         provider_fee_event_logs[0] if provider_fee_event_logs else None
