@@ -2,13 +2,13 @@
 # Copyright 2023 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
-from datetime import datetime, timedelta
 import time
+from datetime import datetime, timedelta
 
 import pytest
 from ocean_provider.constants import BaseURLs
-from ocean_provider.utils.accounts import sign_message
 from ocean_provider.user_nonce import is_token_valid
+from ocean_provider.utils.accounts import sign_message
 
 
 def create_token(client, consumer_wallet, expiration=None):
@@ -109,9 +109,9 @@ def test_delete_auth_token_redis(client, consumer_wallet):
 def test_expiration(client, consumer_wallet):
     """Tests token expiration."""
     address = consumer_wallet.address
-    expiration = int((datetime.utcnow() + timedelta(seconds=1)).timestamp())
+    expiration = int((datetime.utcnow() + timedelta(seconds=5)).timestamp())
     token = create_token(client, consumer_wallet, expiration)
-    time.sleep(2)
+    time.sleep(6)
     valid, message = is_token_valid(token, address)
     assert not valid
     assert message == "Token is expired."

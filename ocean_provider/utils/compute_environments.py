@@ -1,10 +1,11 @@
 import os
-from typing import List
 from urllib.parse import urljoin
+
+import requests
 
 from ocean_provider.requests_session import get_requests_session
 from ocean_provider.utils.address import get_provider_fee_token
-from ocean_provider.utils.basics import get_web3
+from ocean_provider.utils.basics import get_configured_chains
 
 requests_session = get_requests_session()
 
@@ -13,30 +14,40 @@ def get_compute_environments_endpoint():
     return urljoin(os.getenv("OPERATOR_SERVICE_URL"), "api/v1/operator/environments")
 
 
-def get_c2d_environments() -> List:
+def get_c2d_environments(flat=False):
     if not os.getenv("OPERATOR_SERVICE_URL"):
         return []
 
-    standard_headers = {
-        "Content-Type": "application/json",
-        "Connection": "close",
-    }
-    web3 = get_web3()
-    params = {"chainId": web3.eth.chain_id}
-    response = requests_session.get(
-        get_compute_environments_endpoint(),
-        headers=standard_headers,
-        params=params,
-    )
+    standard_headers = {"Content-Type": "application/json", "Connection": "close"}
+    all_environments = [] if flat else {}
 
-    assert response, "Compute envs could not be retrieved."
+    for chain in get_configured_chains():
+        params = {"chainId": chain}
 
-    # loop envs and add provider token from config
-    envs = response.json()
-    for env in envs:
-        env["feeToken"] = get_provider_fee_token(web3.eth.chain_id)
+        try:
+            response = requests_session.get(
+                get_compute_environments_endpoint(),
+                headers=standard_headers,
+                params=params,
+            )
+        except requests.exceptions.ConnectionError:
+            response = None
 
-    return envs
+        assert (
+            response
+        ), f"Compute envs could not be retrieved for chainId {chain}, check configuration."
+
+        # add provider token from config
+        envs = response.json()
+        for env in envs:
+            env["feeToken"] = get_provider_fee_token(chain)
+
+        if flat:
+            all_environments.extend(envs)
+        else:
+            all_environments[chain] = envs
+
+    return all_environments
 
 
 def check_environment_exists(envs, env_id):

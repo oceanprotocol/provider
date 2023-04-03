@@ -3,9 +3,8 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import pytest
-from web3.main import Web3
-
 from ocean_provider.utils.encryption import do_decrypt, do_encrypt
+from web3.main import Web3
 
 
 @pytest.mark.unit

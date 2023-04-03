@@ -5,9 +5,7 @@
 
 """
 This module creates an instance of flask `app`, creates `user_nonce` table if not exists, and sets the environment configuration.
-If `PROVIDER_CONFIG_FILE` is not found in environment variables, default `config.ini` file is used.
 """
-
 from flask import Flask, _app_ctx_stack
 from flask_cors import CORS
 from flask_sieve import Sieve

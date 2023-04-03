@@ -25,7 +25,6 @@ from tests.helpers.compute_helpers import (
     get_future_valid_until,
     get_possible_compute_job_status_text,
     get_registered_asset,
-    get_web3,
     mint_100_datatokens,
     post_to_compute,
     start_order,
@@ -81,7 +80,7 @@ def test_compute_raw_algo(
         free_c2d_env["consumerAddress"],
         sa.index,
         get_provider_fees(
-            dataset_ddo_w_compute_service.did,
+            dataset_ddo_w_compute_service,
             sa,
             consumer_wallet.address,
             valid_until,
@@ -410,7 +409,7 @@ def test_compute_allow_all_published(
 
 @pytest.mark.integration
 def test_compute_additional_input(
-    client, publisher_wallet, consumer_wallet, monkeypatch, free_c2d_env
+    client, publisher_wallet, consumer_wallet, monkeypatch, free_c2d_env, web3
 ):
     valid_until = get_future_valid_until()
     ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
@@ -433,7 +432,6 @@ def test_compute_additional_input(
         custom_services_args=ddo.services[0].compute_dict["publisherTrustedAlgorithms"],
     )
 
-    web3 = get_web3()
     sa2 = get_first_service_by_type(ddo2, ServiceType.COMPUTE)
     mint_100_datatokens(
         web3, sa2.datatoken_address, consumer_wallet.address, publisher_wallet
@@ -445,7 +443,7 @@ def test_compute_additional_input(
         free_c2d_env["consumerAddress"],
         sa2.index,
         get_provider_fees(
-            ddo2.did,
+            ddo2,
             sa2,
             consumer_wallet.address,
             valid_until,
@@ -563,7 +561,7 @@ def test_compute_delete_job(
 def test_compute_environments():
     environments = get_c2d_environments()
 
-    for env in environments:
+    for env in environments[8996]:
         if env["priceMin"] == 0:
             assert env["id"] == "ocean-compute"
 
@@ -614,7 +612,7 @@ def test_compute_paid_env(
 
     job_info = response.json[0]
     print(f"got response from starting compute job: {job_info}")
-    job_id = job_info.get("jobId", "")
+    _ = job_info.get("jobId", "")
 
 
 @pytest.mark.integration

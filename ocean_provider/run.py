@@ -10,7 +10,7 @@ from flask_swagger_ui import get_swaggerui_blueprint
 from ocean_provider.constants import BaseURLs, Metadata
 from ocean_provider.myapp import app
 from ocean_provider.routes import services
-from ocean_provider.utils.basics import get_provider_wallet, get_web3
+from ocean_provider.utils.basics import get_configured_chains, get_provider_addresses
 from ocean_provider.utils.error_responses import strip_and_replace_urls
 from ocean_provider.utils.util import get_request_data
 from ocean_provider.version import get_version
@@ -75,12 +75,6 @@ def get_services_endpoints():
     return services_endpoints
 
 
-def get_provider_address():
-    """Gets the provider wallet address."""
-    provider_address = get_provider_wallet().address
-    return provider_address
-
-
 @app.route("/")
 def version():
     """
@@ -96,15 +90,8 @@ def version():
     info = dict()
     info["software"] = Metadata.TITLE
     info["version"] = get_version()
-
-    chain_id = app.config.get("chain_id")
-    if not chain_id:
-        logger.debug("get chain_id from node")
-        chain_id = get_web3().chain_id
-        app.config["chain_id"] = chain_id
-
-    info["chainId"] = chain_id
-    info["providerAddress"] = get_provider_address()
+    info["providerAddresses"] = get_provider_addresses()
+    info["chainIds"] = get_configured_chains()
     info["serviceEndpoints"] = get_services_endpoints()
     response = jsonify(info)
     logger.info(f"root endpoint response = {response}")

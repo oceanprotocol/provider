@@ -10,6 +10,7 @@ from typing import Any, Dict, Union
 import addresses
 import artifacts
 from eth_typing.evm import HexAddress
+from ocean_provider.utils.basics import get_value_from_decoded_env
 
 BLACK_HOLE_ADDRESS = "0x0000000000000000000000000000000000000000"
 
@@ -20,6 +21,7 @@ def get_address_json(address_path: Union[str, Path]) -> Dict[str, Any]:
         address_path = Path(address_path)
     else:
         address_path = Path(os.path.join(addresses.__file__, "..", "address.json"))
+
     address_file = address_path.expanduser().resolve()
     with open(address_file) as f:
         return json.load(f)
@@ -50,7 +52,11 @@ def get_contract_definition(contract_name: str) -> Dict[str, Any]:
 
 
 def get_provider_fee_token(chain_id):
-    fee_token = os.environ.get("PROVIDER_FEE_TOKEN", get_ocean_address(chain_id))
+    fee_token = get_value_from_decoded_env(chain_id, "PROVIDER_FEE_TOKEN")
+
+    if not fee_token:
+        fee_token = get_ocean_address(chain_id)
+
     return fee_token if fee_token else BLACK_HOLE_ADDRESS
 
 

@@ -5,12 +5,12 @@
 import json
 import logging
 import time
+from unittest.mock import patch
 
 import pytest
-
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.currency import to_wei
-from ocean_provider.utils.provider_fees import get_c2d_environments, get_provider_fees
+from ocean_provider.utils.provider_fees import get_provider_fees
 from ocean_provider.utils.services import ServiceType
 from tests.helpers.compute_helpers import (
     build_and_send_ddo_with_compute_service,
@@ -29,8 +29,6 @@ from tests.test_helpers import (
     mint_100_datatokens,
     start_order,
 )
-
-from unittest.mock import patch
 
 logger = logging.getLogger(__name__)
 
@@ -79,7 +77,7 @@ def test_initialize_on_disabled_asset(client, publisher_wallet, consumer_wallet,
         client, asset.did, service, consumer_wallet, raw_response=True
     )
     assert "error" in response.json
-    assert response.json["error"] == "Asset is not consumable."
+    assert response.json["error"] == "Asset malformed or disabled."
 
 
 @pytest.mark.integration
@@ -138,7 +136,7 @@ def test_initialize_reuse(client, publisher_wallet, consumer_wallet, web3):
         service.datatoken_address,
         consumer_wallet.address,
         service.index,
-        get_provider_fees(asset.did, service, consumer_wallet.address, 0),
+        get_provider_fees(asset, service, consumer_wallet.address, 0),
         consumer_wallet,
     )
 

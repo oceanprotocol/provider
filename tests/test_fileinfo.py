@@ -76,6 +76,7 @@ def test_check_url_good(client):
         assert file_info["contentLength"] == "1161"
         assert file_info["contentType"] == "application/json"
         assert file_info["valid"] is True
+        assert file_info["type"] == "url"
 
 
 @pytest.mark.unit
@@ -180,14 +181,12 @@ def test_check_arweave_bad(client, monkeypatch):
     response = client.post(fileinfo_url, json=payload)
     result = response.get_json()
     assert response.status == "200 OK"
-    assert result[0]["valid"] is False
+    assert not result[0]["valid"]
 
 
 @pytest.mark.integration
-def test_check_smartcontract_simple(client, publisher_wallet, consumer_wallet, web3):
-    router_address = get_contract_address(
-        os.getenv("ADDRESS_FILE"), "Router", web3.chain_id
-    )
+def test_check_smartcontract_simple(client, publisher_wallet, consumer_wallet):
+    router_address = get_contract_address(os.getenv("ADDRESS_FILE"), "Router", 8996)
     abi = {
         "inputs": [],
         "name": "getApprovedTokens",

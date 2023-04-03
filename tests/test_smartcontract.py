@@ -23,9 +23,7 @@ from tests.test_helpers import (
 @pytest.mark.integration
 def test_download_smartcontract_asset(client, publisher_wallet, consumer_wallet, web3):
     # publish asset, that calls Router's swapOceanFee function (does not need params)
-    router_address = get_contract_address(
-        os.getenv("ADDRESS_FILE"), "Router", web3.eth.chain_id
-    )
+    router_address = get_contract_address(os.getenv("ADDRESS_FILE"), "Router", 8996)
     abi = {
         "inputs": [],
         "name": "swapOceanFee",
@@ -34,7 +32,12 @@ def test_download_smartcontract_asset(client, publisher_wallet, consumer_wallet,
         "type": "function",
     }
     unencrypted_files_list = [
-        {"type": "smartcontract", "address": router_address, "abi": abi}
+        {
+            "type": "smartcontract",
+            "address": router_address,
+            "abi": abi,
+            "chainId": 8996,
+        }
     ]
     asset = get_registered_asset(
         publisher_wallet, unencrypted_files_list=unencrypted_files_list
@@ -48,7 +51,7 @@ def test_download_smartcontract_asset(client, publisher_wallet, consumer_wallet,
         service.datatoken_address,
         consumer_wallet.address,
         service.index,
-        get_provider_fees(asset.did, service, consumer_wallet.address, 0),
+        get_provider_fees(asset, service, consumer_wallet.address, 0),
         consumer_wallet,
     )
 
@@ -78,9 +81,7 @@ def test_download_smartcontract_asset_with_userdata(
     client, publisher_wallet, consumer_wallet, web3
 ):
     # publish asset, that calls Router's getOPCFee for a provided  baseToken userdata
-    router_address = get_contract_address(
-        os.getenv("ADDRESS_FILE"), "Router", web3.eth.chain_id
-    )
+    router_address = get_contract_address(os.getenv("ADDRESS_FILE"), "Router", 8996)
     abi = {
         "inputs": [{"internalType": "address", "name": "baseToken", "type": "address"}],
         "name": "getOPCFee",
@@ -89,7 +90,12 @@ def test_download_smartcontract_asset_with_userdata(
         "type": "function",
     }
     unencrypted_files_list = [
-        {"type": "smartcontract", "address": router_address, "abi": abi}
+        {
+            "type": "smartcontract",
+            "address": router_address,
+            "abi": abi,
+            "chainId": 8996,
+        }
     ]
     asset = get_registered_asset(
         publisher_wallet,
@@ -113,7 +119,7 @@ def test_download_smartcontract_asset_with_userdata(
         service.datatoken_address,
         consumer_wallet.address,
         service.index,
-        get_provider_fees(asset.did, service, consumer_wallet.address, 0),
+        get_provider_fees(asset, service, consumer_wallet.address, 0),
         consumer_wallet,
     )
 
@@ -159,6 +165,7 @@ def test_download_smartcontract_asset_with_pure_function(
             "type": "smartcontract",
             "address": dummy_service.datatoken_address,
             "abi": abi,
+            "chainId": 8996,
         }
     ]
     asset = get_registered_asset(
@@ -173,7 +180,7 @@ def test_download_smartcontract_asset_with_pure_function(
         service.datatoken_address,
         consumer_wallet.address,
         service.index,
-        get_provider_fees(asset.did, service, consumer_wallet.address, 0),
+        get_provider_fees(asset, service, consumer_wallet.address, 0),
         consumer_wallet,
     )
 

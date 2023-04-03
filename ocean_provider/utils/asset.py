@@ -98,9 +98,9 @@ def get_asset_from_metadatastore(metadata_url, document_id) -> Optional[Asset]:
 
 
 def check_asset_consumable(asset, consumer_address, logger, custom_url=None):
-    if not asset.nft or "address" not in asset.nft:
-        return False, "Asset malformed"
-    web3 = get_web3()
+    if not asset.nft or "address" not in asset.nft or not asset.chain_id:
+        return False, "Asset malformed or disabled."
+    web3 = get_web3(asset.chain_id)
     nft_contract = get_data_nft_contract(web3, asset.nft["address"])
 
     if nft_contract.caller.getMetaData()[2] not in [0, 5]:
