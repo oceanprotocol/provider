@@ -10,16 +10,19 @@ from unittest.mock import patch
 import pytest
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
+from ocean_provider.utils.data_nft_factory import get_data_nft_factory_address
 from ocean_provider.utils.provider_fees import get_provider_fees
 from ocean_provider.utils.services import ServiceType
 from tests.helpers.constants import ARWEAVE_TRANSACTION_ID
 from tests.test_auth import create_token
 from tests.test_helpers import (
+    approve_tokens,
     get_dataset_ddo_with_multiple_files,
     get_first_service_by_type,
     get_registered_asset,
     mint_100_datatokens,
     start_order,
+    start_multiple_order
 )
 
 
@@ -94,6 +97,79 @@ def test_download_service(
         payload["transferTxId"] = "0x123"  # some dummy
         response = client.get(download_endpoint, query_string=payload)
         assert response.status_code == 400, f"{response.data}"
+
+@pytest.mark.integration
+@pytest.mark.parametrize(
+    "userdata,erc20_enterprise",
+    [(False, False), ("valid", False), ("invalid", False), (False, True)],
+)
+def test_download_multiple_orders(
+    client, publisher_wallet, consumer_wallet, web3, userdata, erc20_enterprise
+):
+    nft_factory_address = get_data_nft_factory_address(web3)
+    asset1 = get_registered_asset(publisher_wallet, erc20_enterprise=erc20_enterprise)
+    service1 = get_first_service_by_type(asset1, ServiceType.ACCESS)
+    mint_100_datatokens(
+        web3, service1.datatoken_address, consumer_wallet.address, publisher_wallet
+    )
+    approve_tokens(web3,service1.datatoken_address,nft_factory_address,1,consumer_wallet)
+    asset2 = get_registered_asset(publisher_wallet, erc20_enterprise=erc20_enterprise)
+    service2 = get_first_service_by_type(asset2, ServiceType.ACCESS)
+    mint_100_datatokens(
+        web3, service2.datatoken_address, consumer_wallet.address, publisher_wallet
+    )
+    approve_tokens(web3,service2.datatoken_address,nft_factory_address,1,consumer_wallet)
+    tx_id, _ = start_multiple_order(
+        web3,[
+        (
+            service1.datatoken_address,
+            consumer_wallet.address,
+            service1.index,
+            get_provider_fees(asset1, service1, consumer_wallet.address, 0),
+            (
+                "0x0000000000000000000000000000000000000000",
+                "0x0000000000000000000000000000000000000000",
+                0,
+            ),
+        ),
+        (
+            service2.datatoken_address,
+            consumer_wallet.address,
+            service2.index,
+            get_provider_fees(asset2, service2, consumer_wallet.address, 0),
+            (
+                "0x0000000000000000000000000000000000000000",
+                "0x0000000000000000000000000000000000000000",
+                0,
+            ),
+        ),
+        ]
+        ,
+        consumer_wallet,
+    )
+
+    payload = {
+        "documentId": asset1.did,
+        "serviceId": service1.id,
+        "consumerAddress": consumer_wallet.address,
+        "transferTxId": tx_id,
+        "fileIndex": 0,
+    }
+
+    if userdata:
+        payload["userdata"] = (
+            '{"surname":"XXX", "age":12}' if userdata == "valid" else "cannotdecode"
+        )
+
+    download_endpoint = BaseURLs.SERVICES_URL + "/download"
+    nonce = str(datetime.utcnow().timestamp())
+    _msg = f"{asset1.did}{nonce}"
+    payload["signature"] = sign_message(_msg, consumer_wallet)
+    payload["nonce"] = nonce
+    response = client.get(
+        service1.service_endpoint + download_endpoint, query_string=payload
+    )
+    assert response.status_code == 200, f"{response.data}"
 
 
 @pytest.mark.integration

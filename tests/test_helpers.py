@@ -155,6 +155,18 @@ def mint_100_datatokens(
     sign_send_and_wait_for_receipt(web3, mint_datatoken_tx, from_wallet)
     return datatoken_contract.caller.totalSupply()
 
+def approve_tokens(
+    web3: Web3,
+    datatoken_address: HexAddress,
+    receiver_address: HexAddress,
+    amount: int,
+    from_wallet: LocalAccount
+):
+    datatoken_contract = get_datatoken_contract(web3, datatoken_address)
+    approve_tx = datatoken_contract.functions.approve(
+        receiver_address, to_wei(amount)
+    ).buildTransaction({"from": from_wallet.address, "gasPrice": get_gas_price(web3)})
+    sign_send_and_wait_for_receipt(web3, approve_tx, from_wallet)
 
 def get_registered_asset(
     from_wallet,
@@ -467,6 +479,18 @@ def start_order(
     # if needed, we can log the tx here
     return (txid, receipt)
 
+def start_multiple_order(
+    web3: Web3,
+    tokenOrders,
+    from_wallet: LocalAccount,
+) -> Tuple[HexStr, TxReceipt]:
+    nft_factory_contract = get_data_nft_factory_contract(web3)
+    order_tx = nft_factory_contract.functions.startMultipleTokenOrder(
+        tokenOrders,
+    ).buildTransaction({"from": from_wallet.address, "gasPrice": get_gas_price(web3)})
+    txid, receipt = sign_send_and_wait_for_receipt(web3, order_tx, from_wallet)
+    # if needed, we can log the tx here
+    return (txid, receipt)
 
 def build_custom_services(
     services_type,
