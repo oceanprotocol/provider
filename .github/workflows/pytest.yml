@@ -54,7 +54,7 @@ jobs:
           pip install -r requirements_dev.txt
       - name: Test with pytest
         run: |
-          pytest tests/test_graphql.py
+          pytest tests/test_initialize.py
       - name:  docker logs
         run: docker logs ocean_aquarius_1 && docker logs ocean_provider_1 && docker logs ocean_provider2_1
         if: ${{ failure() }}
