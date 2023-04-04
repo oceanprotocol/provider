@@ -25,9 +25,11 @@ from tests.test_helpers import (
     mint_100_datatokens,
     start_order,
     start_multiple_order,
-    try_download
+    try_download,
 )
+
 logger = logging.getLogger(__name__)
+
 
 @pytest.mark.integration
 @pytest.mark.parametrize(
@@ -101,6 +103,7 @@ def test_download_service(
         response = client.get(download_endpoint, query_string=payload)
         assert response.status_code == 400, f"{response.data}"
 
+
 @pytest.mark.integration
 @pytest.mark.parametrize(
     "userdata,erc20_enterprise",
@@ -115,63 +118,72 @@ def test_download_multiple_orders(
     mint_100_datatokens(
         web3, service1.datatoken_address, consumer_wallet.address, publisher_wallet
     )
-    approve_tokens(web3,service1.datatoken_address,nft_factory_address,1,consumer_wallet)
+    approve_tokens(
+        web3, service1.datatoken_address, nft_factory_address, 1, consumer_wallet
+    )
     # create an asset with two services
-    asset2 = get_registered_asset(publisher_wallet, erc20_enterprise=erc20_enterprise,no_of_services=2)
+    asset2 = get_registered_asset(
+        publisher_wallet, erc20_enterprise=erc20_enterprise, no_of_services=2
+    )
     service2 = get_first_service_by_type(asset2, ServiceType.ACCESS)
     mint_100_datatokens(
         web3, service2.datatoken_address, consumer_wallet.address, publisher_wallet
     )
-    approve_tokens(web3,service2.datatoken_address,nft_factory_address,1,consumer_wallet)
+    approve_tokens(
+        web3, service2.datatoken_address, nft_factory_address, 1, consumer_wallet
+    )
     # get the 2nd service
-    service3 = get_service_by_index(asset2,1)
+    service3 = get_service_by_index(asset2, 1)
     mint_100_datatokens(
         web3, service3.datatoken_address, consumer_wallet.address, publisher_wallet
     )
-    approve_tokens(web3,service3.datatoken_address,nft_factory_address,1,consumer_wallet)
+    approve_tokens(
+        web3, service3.datatoken_address, nft_factory_address, 1, consumer_wallet
+    )
     tx_id, _ = start_multiple_order(
-        web3,[
-        (
-            service1.datatoken_address,
-            consumer_wallet.address,
-            service1.index,
-            get_provider_fees(asset1, service1, consumer_wallet.address, 0),
+        web3,
+        [
             (
-                "0x0000000000000000000000000000000000000000",
-                "0x0000000000000000000000000000000000000000",
-                0,
+                service1.datatoken_address,
+                consumer_wallet.address,
+                service1.index,
+                get_provider_fees(asset1, service1, consumer_wallet.address, 0),
+                (
+                    "0x0000000000000000000000000000000000000000",
+                    "0x0000000000000000000000000000000000000000",
+                    0,
+                ),
             ),
-        ),
-        (
-            service2.datatoken_address,
-            consumer_wallet.address,
-            service2.index,
-            get_provider_fees(asset2, service2, consumer_wallet.address, 0),
             (
-                "0x0000000000000000000000000000000000000000",
-                "0x0000000000000000000000000000000000000000",
-                0,
+                service2.datatoken_address,
+                consumer_wallet.address,
+                service2.index,
+                get_provider_fees(asset2, service2, consumer_wallet.address, 0),
+                (
+                    "0x0000000000000000000000000000000000000000",
+                    "0x0000000000000000000000000000000000000000",
+                    0,
+                ),
             ),
-        ),
-        (
-            service3.datatoken_address,
-            consumer_wallet.address,
-            service3.index,
-            get_provider_fees(asset2, service3, consumer_wallet.address, 0),
             (
-                "0x0000000000000000000000000000000000000000",
-                "0x0000000000000000000000000000000000000000",
-                0,
+                service3.datatoken_address,
+                consumer_wallet.address,
+                service3.index,
+                get_provider_fees(asset2, service3, consumer_wallet.address, 0),
+                (
+                    "0x0000000000000000000000000000000000000000",
+                    "0x0000000000000000000000000000000000000000",
+                    0,
+                ),
             ),
-        ),
-        ]
-        ,
+        ],
         consumer_wallet,
     )
     # check to see if we can get all 3 files
-    try_download(client,asset1,service1,consumer_wallet,tx_id,userdata)
-    try_download(client,asset2,service2,consumer_wallet,tx_id,userdata)
-    try_download(client,asset2,service3,consumer_wallet,tx_id,userdata)
+    try_download(client, asset1, service1, consumer_wallet, tx_id, userdata)
+    try_download(client, asset2, service2, consumer_wallet, tx_id, userdata)
+    try_download(client, asset2, service3, consumer_wallet, tx_id, userdata)
+
 
 @pytest.mark.integration
 @pytest.mark.parametrize("timeout", [0, 1, 3600])
