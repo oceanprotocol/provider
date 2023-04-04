@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import copy
+import logging
 import time
 from datetime import datetime
 from unittest.mock import patch
@@ -20,11 +21,13 @@ from tests.test_helpers import (
     get_dataset_ddo_with_multiple_files,
     get_first_service_by_type,
     get_registered_asset,
+    get_service_by_index,
     mint_100_datatokens,
     start_order,
-    start_multiple_order
+    start_multiple_order,
+    try_download
 )
-
+logger = logging.getLogger(__name__)
 
 @pytest.mark.integration
 @pytest.mark.parametrize(
@@ -113,12 +116,19 @@ def test_download_multiple_orders(
         web3, service1.datatoken_address, consumer_wallet.address, publisher_wallet
     )
     approve_tokens(web3,service1.datatoken_address,nft_factory_address,1,consumer_wallet)
-    asset2 = get_registered_asset(publisher_wallet, erc20_enterprise=erc20_enterprise)
+    # create an asset with two services
+    asset2 = get_registered_asset(publisher_wallet, erc20_enterprise=erc20_enterprise,no_of_services=2)
     service2 = get_first_service_by_type(asset2, ServiceType.ACCESS)
     mint_100_datatokens(
         web3, service2.datatoken_address, consumer_wallet.address, publisher_wallet
     )
     approve_tokens(web3,service2.datatoken_address,nft_factory_address,1,consumer_wallet)
+    # get the 2nd service
+    service3 = get_service_by_index(asset2,1)
+    mint_100_datatokens(
+        web3, service3.datatoken_address, consumer_wallet.address, publisher_wallet
+    )
+    approve_tokens(web3,service3.datatoken_address,nft_factory_address,1,consumer_wallet)
     tx_id, _ = start_multiple_order(
         web3,[
         (
@@ -143,34 +153,25 @@ def test_download_multiple_orders(
                 0,
             ),
         ),
+        (
+            service3.datatoken_address,
+            consumer_wallet.address,
+            service3.index,
+            get_provider_fees(asset2, service3, consumer_wallet.address, 0),
+            (
+                "0x0000000000000000000000000000000000000000",
+                "0x0000000000000000000000000000000000000000",
+                0,
+            ),
+        ),
         ]
         ,
         consumer_wallet,
     )
-
-    payload = {
-        "documentId": asset1.did,
-        "serviceId": service1.id,
-        "consumerAddress": consumer_wallet.address,
-        "transferTxId": tx_id,
-        "fileIndex": 0,
-    }
-
-    if userdata:
-        payload["userdata"] = (
-            '{"surname":"XXX", "age":12}' if userdata == "valid" else "cannotdecode"
-        )
-
-    download_endpoint = BaseURLs.SERVICES_URL + "/download"
-    nonce = str(datetime.utcnow().timestamp())
-    _msg = f"{asset1.did}{nonce}"
-    payload["signature"] = sign_message(_msg, consumer_wallet)
-    payload["nonce"] = nonce
-    response = client.get(
-        service1.service_endpoint + download_endpoint, query_string=payload
-    )
-    assert response.status_code == 200, f"{response.data}"
-
+    # check to see if we can get all 3 files
+    try_download(client,asset1,service1,consumer_wallet,tx_id,userdata)
+    try_download(client,asset2,service2,consumer_wallet,tx_id,userdata)
+    try_download(client,asset2,service3,consumer_wallet,tx_id,userdata)
 
 @pytest.mark.integration
 @pytest.mark.parametrize("timeout", [0, 1, 3600])

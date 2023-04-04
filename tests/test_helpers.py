@@ -6,6 +6,7 @@ import logging
 import os
 import pathlib
 import time
+from datetime import datetime
 from hashlib import sha256
 from typing import Dict, Optional, Tuple
 
@@ -14,6 +15,7 @@ from eth_typing.encoding import HexStr
 from eth_typing.evm import HexAddress
 from flask.testing import FlaskClient
 from ocean_provider.constants import BaseURLs
+from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.address import get_contract_address
 from ocean_provider.utils.asset import Asset, get_asset_from_metadatastore
 from ocean_provider.utils.basics import get_provider_wallet, get_web3
@@ -155,18 +157,20 @@ def mint_100_datatokens(
     sign_send_and_wait_for_receipt(web3, mint_datatoken_tx, from_wallet)
     return datatoken_contract.caller.totalSupply()
 
+
 def approve_tokens(
     web3: Web3,
     datatoken_address: HexAddress,
     receiver_address: HexAddress,
     amount: int,
-    from_wallet: LocalAccount
+    from_wallet: LocalAccount,
 ):
     datatoken_contract = get_datatoken_contract(web3, datatoken_address)
     approve_tx = datatoken_contract.functions.approve(
         receiver_address, to_wei(amount)
     ).buildTransaction({"from": from_wallet.address, "gasPrice": get_gas_price(web3)})
     sign_send_and_wait_for_receipt(web3, approve_tx, from_wallet)
+
 
 def get_registered_asset(
     from_wallet,
@@ -180,6 +184,7 @@ def get_registered_asset(
     service_type="access",
     timeout=3600,
     custom_userdata=None,
+    no_of_services=1,
 ) -> Optional[Asset]:
     web3 = get_web3(8996)
     data_nft_address = deploy_data_nft(
@@ -194,57 +199,45 @@ def get_registered_asset(
     )
 
     template_index = 1 if not erc20_enterprise else 2
-    datatoken_address = deploy_datatoken(
-        web3=web3,
-        data_nft_address=data_nft_address,
-        template_index=template_index,
-        name="Datatoken 1",
-        symbol="DT1",
-        minter=from_wallet.address,
-        fee_manager=from_wallet.address,
-        publishing_market=BLACK_HOLE_ADDRESS,
-        publishing_market_fee_token=get_ocean_token_address(web3),
-        cap=to_wei(1000),
-        publishing_market_fee_amount=0,
-        from_wallet=from_wallet,
-    )
-
-    if not unencrypted_files_list:
-        unencrypted_files_list = [
-            {
-                "url": "https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt",
-                "type": "url",
-                "method": "GET",
-            }
-        ]
-
-    unencrypted_files_list = {
-        "datatokenAddress": datatoken_address,
-        "nftAddress": data_nft_address,
-        "files": unencrypted_files_list,
-    }
-    encrypted_files_str = json.dumps(unencrypted_files_list, separators=(",", ":"))
-    encrypted_files = do_encrypt(
-        Web3.toHex(text=encrypted_files_str), get_provider_wallet(8996)
-    )
-
-    credentials = (
-        build_credentials_dict() if not custom_credentials else custom_credentials
-    )
-
-    chain_id = 8996
-    did = compute_did_from_data_nft_address_and_chain_id(data_nft_address, chain_id)
-    metadata = (
-        build_metadata_dict_type_dataset() if not custom_metadata else custom_metadata
-    )
-    service_endpoint = (
-        "http://172.15.0.4:8030"
-        if not custom_service_endpoint
-        else custom_service_endpoint
-    )
-
-    services = (
-        [
+    services = []
+    for i in range(no_of_services):
+        datatoken_address = deploy_datatoken(
+            web3=web3,
+            data_nft_address=data_nft_address,
+            template_index=template_index,
+            name="Datatoken 1",
+            symbol="DT1",
+            minter=from_wallet.address,
+            fee_manager=from_wallet.address,
+            publishing_market=BLACK_HOLE_ADDRESS,
+            publishing_market_fee_token=get_ocean_token_address(web3),
+            cap=to_wei(1000),
+            publishing_market_fee_amount=0,
+            from_wallet=from_wallet,
+        )
+        if not unencrypted_files_list:
+            unencrypted_files_list = [
+                {
+                    "url": "https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt",
+                    "type": "url",
+                    "method": "GET",
+                }
+            ]
+        unencrypted_files_list = {
+            "datatokenAddress": datatoken_address,
+            "nftAddress": data_nft_address,
+            "files": unencrypted_files_list,
+        }
+        encrypted_files_str = json.dumps(unencrypted_files_list, separators=(",", ":"))
+        encrypted_files = do_encrypt(
+            Web3.toHex(text=encrypted_files_str), get_provider_wallet(8996)
+        )
+        service_endpoint = (
+            "http://172.15.0.4:8030"
+            if not custom_service_endpoint
+            else custom_service_endpoint
+        )
+        service = (
             build_service_dict_type_access(
                 datatoken_address=datatoken_address,
                 service_endpoint=service_endpoint,
@@ -252,16 +245,26 @@ def get_registered_asset(
                 timeout=timeout,
                 userdata=custom_userdata,
             )
-        ]
-        if not custom_services
-        else build_custom_services(
-            custom_services,
-            from_wallet,
-            data_nft_address,
-            datatoken_address,
-            custom_services_args,
-            timeout,
+            if not custom_services
+            else build_custom_services(
+                custom_services,
+                from_wallet,
+                data_nft_address,
+                datatoken_address,
+                custom_services_args,
+                timeout,
+            )
         )
+        services.append(service)
+
+    services = tuple(services)
+    chain_id = 8996
+    did = compute_did_from_data_nft_address_and_chain_id(data_nft_address, chain_id)
+    metadata = (
+        build_metadata_dict_type_dataset() if not custom_metadata else custom_metadata
+    )
+    credentials = (
+        build_credentials_dict() if not custom_credentials else custom_credentials
     )
 
     ddo = build_ddo_dict(
@@ -479,6 +482,7 @@ def start_order(
     # if needed, we can log the tx here
     return (txid, receipt)
 
+
 def start_multiple_order(
     web3: Web3,
     tokenOrders,
@@ -491,6 +495,7 @@ def start_multiple_order(
     txid, receipt = sign_send_and_wait_for_receipt(web3, order_tx, from_wallet)
     # if needed, we can log the tx here
     return (txid, receipt)
+
 
 def build_custom_services(
     services_type,
@@ -524,3 +529,37 @@ def build_custom_services(
 def get_first_service_by_type(asset, service_type: ServiceType) -> Service:
     """Return the first Service with the given ServiceType."""
     return next((service for service in asset.services if service.type == service_type))
+
+
+def get_service_by_index(asset, index: int) -> Service:
+    """Return the first Service with the given ServiceType."""
+    i = 0
+    for service in asset.services:
+        if i == index:
+            return service
+        i = i + 1
+
+
+def try_download(client, asset, service, consumer_wallet, tx_id, userdata):
+    payload = {
+        "documentId": asset.did,
+        "serviceId": service.id,
+        "consumerAddress": consumer_wallet.address,
+        "transferTxId": tx_id,
+        "fileIndex": 0,
+    }
+
+    if userdata:
+        payload["userdata"] = (
+            '{"surname":"XXX", "age":12}' if userdata == "valid" else "cannotdecode"
+        )
+
+    download_endpoint = BaseURLs.SERVICES_URL + "/download"
+    nonce = str(datetime.utcnow().timestamp())
+    _msg = f"{asset.did}{nonce}"
+    payload["signature"] = sign_message(_msg, consumer_wallet)
+    payload["nonce"] = nonce
+    response = client.get(
+        service.service_endpoint + download_endpoint, query_string=payload
+    )
+    assert response.status_code == 200, f"{response.data}"
