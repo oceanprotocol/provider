@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import copy
+import logging
 import time
 from datetime import datetime
 from unittest.mock import patch
@@ -10,17 +11,25 @@ from unittest.mock import patch
 import pytest
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
+from ocean_provider.utils.data_nft_factory import get_data_nft_factory_address
 from ocean_provider.utils.provider_fees import get_provider_fees
 from ocean_provider.utils.services import ServiceType
 from tests.helpers.constants import ARWEAVE_TRANSACTION_ID
 from tests.test_auth import create_token
 from tests.test_helpers import (
+    approve_multiple_tokens,
     get_dataset_ddo_with_multiple_files,
     get_first_service_by_type,
     get_registered_asset,
+    get_service_by_index,
     mint_100_datatokens,
+    mint_multiple_tokens,
     start_order,
+    start_multiple_order,
+    try_download,
 )
+
+logger = logging.getLogger(__name__)
 
 
 @pytest.mark.integration
@@ -94,6 +103,86 @@ def test_download_service(
         payload["transferTxId"] = "0x123"  # some dummy
         response = client.get(download_endpoint, query_string=payload)
         assert response.status_code == 400, f"{response.data}"
+
+
+@pytest.mark.integration
+def test_download_multiple_orders(client, publisher_wallet, consumer_wallet, web3):
+    nft_factory_address = get_data_nft_factory_address(web3)
+    # create an asset with one services using standard template
+    asset1 = get_registered_asset(publisher_wallet, erc20_enterprise=False)
+    service1 = get_first_service_by_type(asset1, ServiceType.ACCESS)
+
+    # create an asset with two services using enterprise
+    asset2 = get_registered_asset(
+        publisher_wallet, erc20_enterprise=True, no_of_services=2
+    )
+    service2 = get_first_service_by_type(asset2, ServiceType.ACCESS)
+    service3 = get_service_by_index(asset2, 1)
+
+    mint_multiple_tokens(
+        web3,
+        [
+            service1.datatoken_address,
+            service2.datatoken_address,
+            service3.datatoken_address,
+        ],
+        consumer_wallet.address,
+        publisher_wallet,
+    )
+    approve_multiple_tokens(
+        web3,
+        [
+            service1.datatoken_address,
+            service2.datatoken_address,
+            service3.datatoken_address,
+        ],
+        nft_factory_address,
+        1,
+        consumer_wallet,
+    )
+    tx_id, _ = start_multiple_order(
+        web3,
+        [
+            (
+                service1.datatoken_address,
+                consumer_wallet.address,
+                service1.index,
+                get_provider_fees(asset1, service1, consumer_wallet.address, 0),
+                (
+                    "0x0000000000000000000000000000000000000000",
+                    "0x0000000000000000000000000000000000000000",
+                    0,
+                ),
+            ),
+            (
+                service2.datatoken_address,
+                consumer_wallet.address,
+                service2.index,
+                get_provider_fees(asset2, service2, consumer_wallet.address, 0),
+                (
+                    "0x0000000000000000000000000000000000000000",
+                    "0x0000000000000000000000000000000000000000",
+                    0,
+                ),
+            ),
+            (
+                service3.datatoken_address,
+                consumer_wallet.address,
+                service3.index,
+                get_provider_fees(asset2, service3, consumer_wallet.address, 0),
+                (
+                    "0x0000000000000000000000000000000000000000",
+                    "0x0000000000000000000000000000000000000000",
+                    0,
+                ),
+            ),
+        ],
+        consumer_wallet,
+    )
+    # check to see if we can get all 3 files
+    try_download(client, asset1, service1, consumer_wallet, tx_id, False)
+    try_download(client, asset2, service2, consumer_wallet, tx_id, False)
+    try_download(client, asset2, service3, consumer_wallet, tx_id, False)
 
 
 @pytest.mark.integration
