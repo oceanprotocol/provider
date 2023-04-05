@@ -533,13 +533,10 @@ def get_first_service_by_type(asset, service_type: ServiceType) -> Service:
     return next((service for service in asset.services if service.type == service_type))
 
 
-def get_service_by_index(asset, index: int) -> Service:
-    """Return the first Service with the given ServiceType."""
-    i = 0
-    for service in asset.services:
-        if i == index:
-            return service
-        i = i + 1
+def get_service_by_index(self, service_index: int) -> Service:
+    """Return Service with the given index.
+    Return None if service with the given index not found."""
+    return self.services[service_index] if service_index < len(self.services) else None
 
 
 def try_download(client, asset, service, consumer_wallet, tx_id, userdata):
