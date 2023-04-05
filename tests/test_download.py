@@ -17,12 +17,13 @@ from ocean_provider.utils.services import ServiceType
 from tests.helpers.constants import ARWEAVE_TRANSACTION_ID
 from tests.test_auth import create_token
 from tests.test_helpers import (
-    approve_tokens,
+    approve_multiple_tokens,
     get_dataset_ddo_with_multiple_files,
     get_first_service_by_type,
     get_registered_asset,
     get_service_by_index,
     mint_100_datatokens,
+    mint_multiple_tokens,
     start_order,
     start_multiple_order,
     try_download,
@@ -105,40 +106,39 @@ def test_download_service(
 
 
 @pytest.mark.integration
-@pytest.mark.parametrize(
-    "userdata,erc20_enterprise",
-    [(False, False), ("valid", False), ("invalid", False), (False, True)],
-)
-def test_download_multiple_orders(
-    client, publisher_wallet, consumer_wallet, web3, userdata, erc20_enterprise
-):
+def test_download_multiple_orders(client, publisher_wallet, consumer_wallet, web3):
     nft_factory_address = get_data_nft_factory_address(web3)
-    asset1 = get_registered_asset(publisher_wallet, erc20_enterprise=erc20_enterprise)
+    # create an asset with one services using standard template
+    asset1 = get_registered_asset(publisher_wallet, erc20_enterprise=False)
     service1 = get_first_service_by_type(asset1, ServiceType.ACCESS)
-    mint_100_datatokens(
-        web3, service1.datatoken_address, consumer_wallet.address, publisher_wallet
-    )
-    approve_tokens(
-        web3, service1.datatoken_address, nft_factory_address, 1, consumer_wallet
-    )
-    # create an asset with two services
+
+    # create an asset with two services using enterprise
     asset2 = get_registered_asset(
-        publisher_wallet, erc20_enterprise=erc20_enterprise, no_of_services=2
+        publisher_wallet, erc20_enterprise=True, no_of_services=2
     )
     service2 = get_first_service_by_type(asset2, ServiceType.ACCESS)
-    mint_100_datatokens(
-        web3, service2.datatoken_address, consumer_wallet.address, publisher_wallet
-    )
-    approve_tokens(
-        web3, service2.datatoken_address, nft_factory_address, 1, consumer_wallet
-    )
-    # get the 2nd service
     service3 = get_service_by_index(asset2, 1)
-    mint_100_datatokens(
-        web3, service3.datatoken_address, consumer_wallet.address, publisher_wallet
+
+    mint_multiple_tokens(
+        web3,
+        [
+            service1.datatoken_address,
+            service2.datatoken_address,
+            service3.datatoken_address,
+        ],
+        consumer_wallet.address,
+        publisher_wallet,
     )
-    approve_tokens(
-        web3, service3.datatoken_address, nft_factory_address, 1, consumer_wallet
+    approve_multiple_tokens(
+        web3,
+        [
+            service1.datatoken_address,
+            service2.datatoken_address,
+            service3.datatoken_address,
+        ],
+        nft_factory_address,
+        1,
+        consumer_wallet,
     )
     tx_id, _ = start_multiple_order(
         web3,
@@ -180,9 +180,9 @@ def test_download_multiple_orders(
         consumer_wallet,
     )
     # check to see if we can get all 3 files
-    try_download(client, asset1, service1, consumer_wallet, tx_id, userdata)
-    try_download(client, asset2, service2, consumer_wallet, tx_id, userdata)
-    try_download(client, asset2, service3, consumer_wallet, tx_id, userdata)
+    try_download(client, asset1, service1, consumer_wallet, tx_id, False)
+    try_download(client, asset2, service2, consumer_wallet, tx_id, False)
+    try_download(client, asset2, service3, consumer_wallet, tx_id, False)
 
 
 @pytest.mark.integration

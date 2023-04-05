@@ -158,6 +158,16 @@ def mint_100_datatokens(
     return datatoken_contract.caller.totalSupply()
 
 
+def mint_multiple_tokens(
+    web3: Web3,
+    datatoken_address: list,
+    receiver_address: HexAddress,
+    from_wallet: LocalAccount,
+):
+    for dt in datatoken_address:
+        mint_100_datatokens(web3, dt, receiver_address, from_wallet)
+
+
 def approve_tokens(
     web3: Web3,
     datatoken_address: HexAddress,
@@ -170,6 +180,17 @@ def approve_tokens(
         receiver_address, to_wei(amount)
     ).buildTransaction({"from": from_wallet.address, "gasPrice": get_gas_price(web3)})
     sign_send_and_wait_for_receipt(web3, approve_tx, from_wallet)
+
+
+def approve_multiple_tokens(
+    web3: Web3,
+    datatoken_address: list,
+    receiver_address: HexAddress,
+    amount: int,
+    from_wallet: LocalAccount,
+):
+    for dt in datatoken_address:
+        approve_tokens(web3, dt, receiver_address, amount, from_wallet)
 
 
 def get_registered_asset(
