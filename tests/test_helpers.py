@@ -239,14 +239,16 @@ def get_registered_asset(
             if not custom_service_endpoint
             else custom_service_endpoint
         )
-        service = (
-            build_service_dict_type_access(
-                datatoken_address=datatoken_address,
-                service_endpoint=service_endpoint,
-                encrypted_files=encrypted_files,
-                timeout=timeout,
-                userdata=custom_userdata,
-            )
+        service_list = (
+            [
+                build_service_dict_type_access(
+                    datatoken_address=datatoken_address,
+                    service_endpoint=service_endpoint,
+                    encrypted_files=encrypted_files,
+                    timeout=timeout,
+                    userdata=custom_userdata,
+                )
+            ]
             if not custom_services
             else build_custom_services(
                 custom_services,
@@ -257,7 +259,9 @@ def get_registered_asset(
                 timeout,
             )
         )
-        services.append(service)
+        # we might have one or more services. let's add them one by one
+        for service in service_list:
+            services.append(service)
 
     services = tuple(services)
     chain_id = 8996
@@ -277,7 +281,6 @@ def get_registered_asset(
         services=services,
         credentials=credentials,
     )
-
     ddo_string = json.dumps(ddo)
     ddo_bytes = ddo_string.encode("utf-8")
     encrypted_ddo = ddo_bytes
