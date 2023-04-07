@@ -346,6 +346,7 @@ The following table shows the keys inside a file structure:
 | hash | YES | `ipfs` | malformed service files, missing required keys. | |
 | transactionId | YES | `arwave` | malformed service files, missing transactionId | |
 | url | YES | `graphql` | missing graphql endpoint | |
+| query | YES | `graphql` | missing graphql query | |
 
 
 If no ARWEAVE_GATEWAY is defined in Provider, downloads of arweave files will fail with a 503 status code.
