@@ -6,6 +6,7 @@ from typing import Any, Dict
 
 import lru
 import requests
+from ocean_provider.version import get_version
 from requests.adapters import HTTPAdapter
 from requests.sessions import Session
 from web3 import HTTPProvider
@@ -42,6 +43,15 @@ class CustomHTTPProvider(HTTPProvider):
 
 def make_post_request(endpoint_uri: str, data: bytes, *args, **kwargs) -> bytes:
     kwargs.setdefault("timeout", 10)
+
+    version = get_version()
+    version_header = {"User-Agent": f"OceanProvider/{version}"}
+
+    if "headers" in kwargs:
+        kwargs["headers"].update(version_header)
+    else:
+        kwargs["headers"] = version_header
+
     session = _get_session(endpoint_uri)
     response = session.post(endpoint_uri, data=data, *args, **kwargs)
     response.raise_for_status()

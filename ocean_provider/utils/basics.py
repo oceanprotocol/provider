@@ -11,7 +11,6 @@ from eth_account import Account
 from hexbytes import HexBytes
 from ocean_provider.config import Config
 from ocean_provider.http_provider import CustomHTTPProvider
-from ocean_provider.version import get_version
 from web3 import WebsocketProvider
 from web3.exceptions import ExtraDataLengthError
 from web3.main import Web3
@@ -87,11 +86,8 @@ def get_web3(network_url: Optional[str] = None, cached=True) -> Web3:
 def get_web3_connection_provider(
     network_url: str,
 ) -> Union[CustomHTTPProvider, WebsocketProvider]:
-    version = get_version()
-    request_kwargs = {"headers": {"User-Agent": f"OceanProvider/{version}"}}
-
     if network_url.startswith("http"):
-        return CustomHTTPProvider(network_url, request_kwargs=request_kwargs)
+        return CustomHTTPProvider(network_url)
     elif network_url.startswith("ws"):
         return WebsocketProvider(network_url)
     else:
