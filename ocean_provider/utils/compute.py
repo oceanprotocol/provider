@@ -1,30 +1,31 @@
 #
-# Copyright 2021 Ocean Protocol Foundation
+# Copyright 2023 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
 import logging
-from urllib.parse import urljoin
+import os
 from datetime import datetime
+from urllib.parse import urljoin
 
 from eth_keys import KeyAPI
 from eth_keys.backends import NativeECCBackend
 from ocean_provider.utils.accounts import sign_message
-from ocean_provider.utils.basics import get_config, get_provider_wallet, get_web3
+from ocean_provider.utils.basics import get_provider_wallet
 
 logger = logging.getLogger(__name__)
 keys = KeyAPI(NativeECCBackend)
 
 
 def get_compute_endpoint():
-    return urljoin(get_config().operator_service_url, "api/v1/operator/compute")
+    return urljoin(os.getenv("OPERATOR_SERVICE_URL"), "api/v1/operator/compute")
 
 
 def get_compute_result_endpoint():
-    return urljoin(get_config().operator_service_url, "api/v1/operator/getResult")
+    return urljoin(os.getenv("OPERATOR_SERVICE_URL"), "api/v1/operator/getResult")
 
 
 def process_compute_request(data):
-    provider_wallet = get_provider_wallet()
+    provider_wallet = get_provider_wallet(use_universal_key=True)
     did = data.get("documentId")
     owner = data.get("consumerAddress")
     job_id = data.get("jobId")
@@ -40,8 +41,6 @@ def process_compute_request(data):
     nonce, provider_signature = sign_for_compute(provider_wallet, owner, job_id)
     body["providerSignature"] = provider_signature
     body["nonce"] = nonce
-    web3 = get_web3()
-    body["chainId"] = web3.chain_id
 
     return body
 

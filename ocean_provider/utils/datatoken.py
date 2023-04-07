@@ -3,13 +3,12 @@ import logging
 from datetime import datetime
 from typing import Optional
 
-from jsonsempai import magic  # noqa: F401
-from artifacts import ERC20Template
 from eth_keys import KeyAPI
 from eth_keys.backends import NativeECCBackend
 from eth_typing.encoding import HexStr
 from eth_typing.evm import HexAddress
 from hexbytes import HexBytes
+from ocean_provider.utils.address import get_contract_definition
 from ocean_provider.utils.basics import get_provider_wallet
 from ocean_provider.utils.currency import to_wei
 from ocean_provider.utils.data_nft import get_data_nft_contract
@@ -31,9 +30,8 @@ def get_datatoken_contract(web3: Web3, address: Optional[str] = None) -> Contrac
     `ERC721Factory` provides all the functionality needed by Provider,
     especially the `getMetaData` contract method.
     """
-    return web3.eth.contract(
-        address=web3.toChecksumAddress(address), abi=ERC20Template.abi
-    )
+    abi = get_contract_definition("ERC20Template")["abi"]
+    return web3.eth.contract(address=web3.toChecksumAddress(address), abi=abi)
 
 
 def _get_tx_receipt(web3, tx_hash):
@@ -51,7 +49,7 @@ def verify_order_tx(
     allow_expired_provider_fees=False,
 ):
     """Check order tx and provider fees validity on-chain for the given parameters."""
-    provider_wallet = get_provider_wallet()
+    provider_wallet = get_provider_wallet(web3.chain_id)
     try:
         tx_receipt = _get_tx_receipt(web3, tx_id)
     except ConnectionClosed:
@@ -67,20 +65,28 @@ def verify_order_tx(
 
     # check provider fees
     datatoken_contract = get_datatoken_contract(web3, datatoken_address)
+    provider_fee_order_log = None
     provider_fee_event_logs = datatoken_contract.events.ProviderFee().processReceipt(
         tx_receipt, errors=DISCARD
     )
+    # search in all provider_fee events until we have a match. if not, we don't have a valid event
+    # also, make sure that somebody is not spoofing provider fee event from another datatoken
+    for provider_fees_logs in provider_fee_event_logs:
+        try:
+            provider_data = json.loads(provider_fees_logs.args.providerData)
+            if (
+                provider_data["dt"].lower() == datatoken_address.lower()
+                and provider_data["id"].lower() == service.id.lower()
+            ):
+                provider_fee_order_log = provider_fees_logs
 
-    provider_fee_order_log = (
-        provider_fee_event_logs[0] if provider_fee_event_logs else None
-    )
+        except:
+            # silent pass, means json formatting errors
+            pass
+
     if not provider_fee_order_log:
         raise AssertionError(
             f"Cannot find the event for the provider fee in tx id {tx_id}."
-        )
-    if len(provider_fee_event_logs) > 1:
-        raise AssertionError(
-            f"Multiple order events in the same transaction !!! {provider_fee_order_log}"
         )
 
     provider_initialize_timestamp = 0
@@ -178,15 +184,15 @@ def verify_order_tx(
     except Exception as e:
         logger.error(e)
     logger.debug(f"Got events log when searching for OrderStarted : {event_logs}")
-    order_log = event_logs[0] if event_logs else None
+    order_log = None
+    # search in all startOrder events until we have a match. if not, we don't have a valid event
+    for log in event_logs:
+        if log.args.serviceIndex == service.index:
+            order_log = log
 
     if not order_log:
         raise AssertionError(
             f"Cannot find the event for the order transaction with tx id {tx_id}."
-        )
-    if len(event_logs) > 1:
-        raise AssertionError(
-            f"Multiple order events in the same transaction !!! {event_logs}"
         )
 
     if order_log.args.serviceIndex != service.index:

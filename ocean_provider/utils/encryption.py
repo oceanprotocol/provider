@@ -1,5 +1,5 @@
 #
-# Copyright 2021 Ocean Protocol Foundation
+# Copyright 2023 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
 from typing import Union
@@ -8,9 +8,8 @@ import ecies
 from eth_account.account import LocalAccount
 from eth_typing.encoding import HexStr
 from eth_utils.hexadecimal import is_0x_prefixed
-from web3 import Web3
-
 from ocean_provider.utils.accounts import get_private_key
+from web3 import Web3
 
 
 def do_encrypt(

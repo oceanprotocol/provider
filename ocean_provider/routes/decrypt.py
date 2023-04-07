@@ -1,5 +1,5 @@
 #
-# Copyright 2021 Ocean Protocol Foundation
+# Copyright 2023 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
 import logging
@@ -12,11 +12,7 @@ from flask import Response, request
 from flask_sieve import validate
 from ocean_provider.requests_session import get_requests_session
 from ocean_provider.user_nonce import update_nonce
-from ocean_provider.utils.basics import (
-    get_config,
-    get_provider_wallet,
-    get_web3,
-)
+from ocean_provider.utils.basics import decode_keyed, get_provider_wallet, get_web3
 from ocean_provider.utils.data_nft import (
     MetadataState,
     get_metadata,
@@ -31,7 +27,6 @@ from web3.main import Web3
 
 from . import services
 
-provider_wallet = get_provider_wallet()
 requests_session = get_requests_session()
 
 logger = logging.getLogger(__name__)
@@ -43,6 +38,8 @@ def decrypt():
     """Decrypts an encrypted document based on transaction Id or dataNftAddress.
 
     ---
+    tags:
+      - decrypt
     consumes:
       - application/json
     parameters:
@@ -124,12 +121,12 @@ def _decrypt(
     update_nonce(decrypter_address, nonce)
 
     # Check if given chain_id matches Provider's chain_id
-    web3 = get_web3()
-    if web3.chain_id != chain_id:
+    web3 = get_web3(chain_id)
+    if not web3:
         return error_response(f"Unsupported chain ID {chain_id}", 400, logger)
 
     # Check if decrypter is authorized
-    authorized_decrypters = get_config().authorized_decrypters
+    authorized_decrypters = decode_keyed("AUTHORIZED_DECRYPTERS")
     logger.info(f"authorized_decrypters = {authorized_decrypters}")
     if authorized_decrypters and decrypter_address not in authorized_decrypters:
         return error_response("Decrypter not authorized", 403, logger)
@@ -185,7 +182,9 @@ def _decrypt(
     # bit 2:  check if DDO is ecies encrypted
     if flags[0] & 2:
         try:
-            working_document = do_decrypt(working_document, get_provider_wallet())
+            working_document = do_decrypt(
+                working_document, get_provider_wallet(chain_id)
+            )
             logger.info("Successfully decrypted document.")
         except Exception:
             return error_response("Failed to decrypt.", 400, logger)

@@ -1,11 +1,11 @@
 #
-# Copyright 2021 Ocean Protocol Foundation
+# Copyright 2023 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
 ddo_dict = {
     "id": "did:op:e16a777d1f146dba369cf98d212f34c17d9de516fcda5c9546076cf043ba6e37",
     "version": "4.1.0",
-    "chain_id": 8996,
+    "chainId": 8996,
     "metadata": {
         "created": "2021-12-29T13:34:27",
         "updated": "2021-12-29T13:34:27",
@@ -89,7 +89,7 @@ ddo_dict = {
 alg_ddo_dict = {
     "id": "did:op:706d7452b1a25b183051fe02f2ad902d54fc45a43fdcee26b20f21684b5dee72",
     "version": "4.1.0",
-    "chain_id": 8996,
+    "chainId": 8996,
     "metadata": {
         "created": "2021-12-29T13:34:18",
         "updated": "2021-12-29T13:34:18",

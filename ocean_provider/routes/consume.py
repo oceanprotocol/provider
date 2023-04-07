@@ -1,5 +1,5 @@
 #
-# Copyright 2021 Ocean Protocol Foundation
+# Copyright 2023 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
 import json
@@ -9,25 +9,19 @@ from flask import jsonify, request
 from flask_sieve import validate
 from ocean_provider.file_types.file_types_factory import FilesTypeFactory
 from ocean_provider.requests_session import get_requests_session
+from ocean_provider.routes import services
 from ocean_provider.user_nonce import get_nonce, update_nonce
 from ocean_provider.utils.asset import (
-    get_asset_from_metadatastore,
     check_asset_consumable,
+    get_asset_from_metadatastore,
 )
-from ocean_provider.utils.basics import (
-    get_provider_wallet,
-    get_web3,
-    get_metadata_url,
-)
+from ocean_provider.utils.basics import get_metadata_url, get_provider_wallet, get_web3
 from ocean_provider.utils.datatoken import validate_order
 from ocean_provider.utils.error_responses import error_response
 from ocean_provider.utils.proof import send_proof
-from ocean_provider.utils.provider_fees import get_provider_fees, get_c2d_environments
+from ocean_provider.utils.provider_fees import get_c2d_environments, get_provider_fees
 from ocean_provider.utils.services import ServiceType
-from ocean_provider.utils.util import (
-    get_request_data,
-    get_service_files_list,
-)
+from ocean_provider.utils.util import get_request_data, get_service_files_list
 from ocean_provider.validation.provider_requests import (
     DownloadRequest,
     FileInfoRequest,
@@ -36,9 +30,6 @@ from ocean_provider.validation.provider_requests import (
 )
 from web3.main import Web3
 
-from ocean_provider.routes import services
-
-provider_wallet = get_provider_wallet()
 requests_session = get_requests_session()
 
 logger = logging.getLogger(__name__)
@@ -49,7 +40,24 @@ standard_headers = {"Content-type": "application/json", "Connection": "close"}
 @services.route("/nonce", methods=["GET"])
 @validate(NonceRequest)
 def nonce():
-    """Returns a decimal `nonce` for the given account address."""
+    """Returns a decimal `nonce` for the given account address.
+
+    ---
+    tags:
+      - consume
+    consumes:
+      - application/json
+    parameters:
+      - name: userAddress
+        description: The address of the account
+        required: true
+        type: string
+    responses:
+      200:
+        description: nonce returned
+
+    return: nonce for user address
+    """
     logger.info("nonce endpoint called")
     data = get_request_data(request)
     address = data.get("userAddress")
@@ -74,7 +82,7 @@ def fileinfo():
 
     ---
     tags:
-      - services
+      - consume
 
     responses:
       200:
@@ -106,6 +114,7 @@ def fileinfo():
                 400,
                 logger,
             )
+        provider_wallet = get_provider_wallet(asset.chain_id)
         files_list = get_service_files_list(service, provider_wallet, asset)
         if not files_list:
             return error_response("Unable to get dataset files", 400, logger)
@@ -146,6 +155,8 @@ def initialize():
     where the approval is given to the provider's ethereum account for
     the number of tokens required by the service.
 
+    tags:
+      - consume
     responses:
       400:
         description: One or more of the required attributes are missing or invalid.
@@ -200,7 +211,7 @@ def initialize():
     if "transferTxId" in data:
         try:
             _tx, _order_log, _, _ = validate_order(
-                get_web3(),
+                get_web3(asset.chain_id),
                 consumer_address,
                 data["transferTxId"],
                 asset,
@@ -216,6 +227,7 @@ def initialize():
     file_index = int(data.get("fileIndex", "-1"))
     # we check if the file is valid only if we have fileIndex
     if file_index > -1:
+        provider_wallet = get_provider_wallet(asset.chain_id)
         url_object = get_service_files_list(service, provider_wallet, asset)[file_index]
         url_object["userdata"] = data.get("userdata")
         valid, message = FilesTypeFactory.validate_and_create(url_object)
@@ -236,7 +248,7 @@ def initialize():
     # of tokens required for this service
     # The consumer must sign and execute this transaction in order to be
     # able to consume the service
-    provider_fee = get_provider_fees(did, service, consumer_address, 0)
+    provider_fee = get_provider_fees(asset, service, consumer_address, 0)
     if provider_fee:
         provider_fee["providerFeeAmount"] = str(provider_fee["providerFeeAmount"])
     approve_params = {
@@ -261,7 +273,7 @@ def download():
 
     ---
     tags:
-      - services
+      - consume
     consumes:
       - application/json
     parameters:
@@ -306,7 +318,7 @@ def download():
 
     if service.type != ServiceType.ACCESS:
         # allow our C2D to download a compute asset
-        c2d_environments = get_c2d_environments()
+        c2d_environments = get_c2d_environments(flat=True)
 
         is_c2d_consumer_address = bool(
             [
@@ -328,7 +340,7 @@ def download():
 
     try:
         _tx, _order_log, _, _ = validate_order(
-            get_web3(), consumer_address, tx_id, asset, service
+            get_web3(asset.chain_id), consumer_address, tx_id, asset, service
         )
     except Exception as e:
         return error_response(
@@ -338,6 +350,7 @@ def download():
         )
 
     file_index = int(data.get("fileIndex"))
+    provider_wallet = get_provider_wallet(asset.chain_id)
     files_list = get_service_files_list(service, provider_wallet, asset)
     if file_index > len(files_list):
         return error_response(f"No such fileIndex {file_index}", 400, logger)
@@ -376,7 +389,7 @@ def download():
     consumer_data = f'{did}{data.get("nonce")}'
 
     send_proof(
-        web3=get_web3(),
+        asset.chain_id,
         order_tx_id=_tx.hash,
         provider_data=provider_proof_data,
         consumer_data=consumer_data,

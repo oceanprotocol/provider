@@ -1,17 +1,16 @@
 #
-# Copyright 2021 Ocean Protocol Foundation
+# Copyright 2023 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
 import copy
 import logging
-import requests
 from typing import Optional
 
-from jsonsempai import magic  # noqa: F401
-from artifacts import ERC721Template
+import requests
 from ocean_provider.utils.basics import get_web3
 from ocean_provider.utils.consumable import ConsumableCodes
 from ocean_provider.utils.credentials import AddressCredential
+from ocean_provider.utils.data_nft import get_data_nft_contract
 from ocean_provider.utils.services import Service
 
 logger = logging.getLogger(__name__)
@@ -99,12 +98,10 @@ def get_asset_from_metadatastore(metadata_url, document_id) -> Optional[Asset]:
 
 
 def check_asset_consumable(asset, consumer_address, logger, custom_url=None):
-    if not asset.nft or "address" not in asset.nft:
-        return False, "Asset malformed"
-    web3 = get_web3()
-    nft_contract = web3.eth.contract(
-        abi=ERC721Template.abi, address=web3.toChecksumAddress(asset.nft["address"])
-    )
+    if not asset.nft or "address" not in asset.nft or not asset.chain_id:
+        return False, "Asset malformed or disabled."
+    web3 = get_web3(asset.chain_id)
+    nft_contract = get_data_nft_contract(web3, asset.nft["address"])
 
     if nft_contract.caller.getMetaData()[2] not in [0, 5]:
         return False, "Asset is not consumable."

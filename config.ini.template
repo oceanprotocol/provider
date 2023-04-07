@@ -1,7 +1,0 @@
-[eth-network]
-network = ${NETWORK_URL}
-
-[resources]
-ocean_provider.url = ${OCEAN_PROVIDER_URL}
-operator_service.url = ${OPERATOR_SERVICE_URL}
-storage.path = ${STORAGE_PATH}

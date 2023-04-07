@@ -1,5 +1,5 @@
 #
-# Copyright 2021 Ocean Protocol Foundation
+# Copyright 2023 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
 import json
@@ -172,7 +172,7 @@ def get_compute_service(
 
     encrypted_files_str = json.dumps(unencrypted_files_list, separators=(",", ":"))
     encrypted_files = do_encrypt(
-        Web3.toHex(text=encrypted_files_str), get_provider_wallet()
+        Web3.toHex(text=encrypted_files_str), get_provider_wallet(8996)
     )
 
     return {
@@ -213,7 +213,7 @@ def get_compute_service_no_rawalgo(
 
     encrypted_files_str = json.dumps(unencrypted_files_list, separators=(",", ":"))
     encrypted_files = do_encrypt(
-        Web3.toHex(text=encrypted_files_str), get_provider_wallet()
+        Web3.toHex(text=encrypted_files_str), get_provider_wallet(8996)
     )
 
     return {

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright 2021 Ocean Protocol Foundation
+# Copyright 2023 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
 
@@ -18,8 +18,7 @@ with open("README.md") as readme_file:
 # Installed by pip install ocean-provider
 # or pip install -e .
 install_requirements = [
-    # Install ocean-utils first
-    # "ocean-contracts==1.0.0a1",
+    "ocean-contracts==1.1.8",
     "web3==5.25.0",
     "Flask==2.1.2",
     "Flask-Cors==3.0.9",
@@ -29,18 +28,15 @@ install_requirements = [
     "flask-swagger-ui==3.25.0",
     "Jinja2>=2.10.1,<3.1",
     "gunicorn==20.0.4",
-    "ocean-contracts==1.1.3",
     "coloredlogs==15.0.1",
     "Werkzeug==2.0.3",
-    "requests_testadapter",
-    "eciespy",
+    "eciespy==0.3.11",
     "coincurve>=13,<15",
-    "ipaddress",
-    "dnspython",
+    "ipaddress==1.0.23",
+    "dnspython==2.2.1",
     "flask-sieve==1.3.1",
     "SQLAlchemy==1.3.23",
-    "json-sempai==0.4.0",
-    "redis==4.0.2",
+    "redis==4.5.4",
     "enforce-typing==1.0.0.post1",
     "pyjwt==2.4.0",
     "pysha3==1.0.2",
@@ -50,30 +46,27 @@ install_requirements = [
 setup_requirements = ["pytest-runner"]
 
 test_requirements = [
-    "codacy-coverage",
-    "coverage",
-    "docker",
+    "codacy-coverage==1.3.11",
+    "coverage==6.4.4",
+    "docker==6.0.0",
     "freezegun==1.1.0",
-    "mccabe",
-    "pylint",
-    "pytest",
-    "pytest-watch",
+    "mccabe==0.7.0",
+    "pytest==7.1.2",
+    "pytest-env==0.6.2",
+    "requests_testadapter==0.3.0",
 ]
 
 # Possibly required by developers of ocean-provider:
 dev_requirements = [
-    "bumpversion",
+    "bumpversion==0.6.0",
     "pkginfo",
     "twine",
-    "watchdog",
     "python-dotenv==0.15.0",
-    "flake8",
-    "isort",
-    "black==22.1.0",
-    "click==8.0.4",
-    "pre-commit",
-    "licenseheaders",
-    "pytest-env",
+    "flake8==5.0.4",
+    "isort==5.10.1",
+    "black==22.6.0",
+    "pre-commit==2.20.0",
+    "licenseheaders==0.8.8",
 ]
 
 setup(
@@ -107,7 +100,7 @@ setup(
     url="https://github.com/oceanprotocol/provider-py",
     # fmt: off
     # bumpversion needs single quotes
-    version='1.3.12',
+    version='2.0.2',
     # fmt: on
     zip_safe=False,
 )

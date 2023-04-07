@@ -1,5 +1,5 @@
 <!--
-Copyright 2021 Ocean Protocol Foundation
+Copyright 2023 Ocean Protocol Foundation
 SPDX-License-Identifier: Apache-2.0
 -->
 
@@ -19,8 +19,8 @@ Parameters
 ```
 
 Returns:
-Json object containing the last-used nonce value. 
-The nonce endpoint is just informative, use the current UTC timestamp as a nonce, 
+Json object containing the last-used nonce value.
+The nonce endpoint is just informative, use the current UTC timestamp as a nonce,
 where required in other endpoints.
 
 Example:
@@ -80,8 +80,8 @@ Parameters
     signature: the signature of the encrypted document (required).
      The signature is based on hashing the string concatenation consisting of:
      transactionId + dataNftAddress + decrypterAddress + chainId + nonce.
-      
-     
+
+
 ```
 
 Returns:
@@ -186,7 +186,7 @@ Parameters
     signature: String object containg user signature (signed message).
      The signature is based on hashing the following string concatenation consisting of:
        documentId + nonce
-    
+
 ```
 
 Returns:
@@ -297,6 +297,86 @@ Status description (`statusText`): (see Operator-Service for full status list)
 | 50     | Filtering results             |
 | 60     | Publishing results            |
 | 70     | Job completed                 |
+
+
+## Initialise a compute service
+
+### POST /api/services/initializeCompute
+
+This endpoint retrieves provider fees for a compute service.
+The payload is somewhat similar to the compute endpoint, except datasets are all in the same key, no differentiation between a "main" dataset and additional ones.
+
+Parameters
+
+```
+    datasets: Json object containing a list of dataset objects
+        dataset.documentId: String, object containing document id (e.g. a DID) (required)
+        dataset.serviceId: String, ID of the service the datatoken is attached to (required)
+        dataset.userdata: Json, user-defined parameters passed to the dataset service (optional)
+    algorithm: Json object, containing algorithm information
+        algorithm.documentId: Hex string, the did of the algorithm to be executed (optional)
+        algorithm.meta: Json object, defines the algorithm attributes and url or raw code (optional)
+        algorithm.serviceId: String, ID of the service to use to process the algorithm (optional)
+        algorithm.transferTxId: Hex string, the id of on-chain transaction of the order to use the algorithm (optional)
+        algorithm.userdata: Json, user-defined parameters passed to the algorithm running service (optional)
+        algorithm.algocustomdata: Json object, algorithm custom parameters (optional)
+    compute: Json object containing requested compute parameters
+        compute.env: String representing a compute environment offered by the provider
+        compute.validUntil: Integer representing a timestamp in the future, up until this compute service is requested.
+    consumerAddress: String object containing consumer's ethereum checksummed address (required)
+```
+
+Returns:
+Json document with a quote for amount of tokens to transfer to the provider account.
+
+Example:
+
+```
+GET /api/services/initializeCompute
+payload:
+{
+    "datasets": [
+        {
+            "documentId": "0x1111",
+            "serviceId": 0,
+        },
+        {
+            "documentId": "0x2222",
+            "serviceId": 0,
+        },
+    ],
+    "algorithm": {"documentId": "0x3333"}
+    "consumerAddress":"0x990922334",
+}
+payload (with optional parameters):
+{
+    "documentId":"0x1111",
+    "serviceId": 0,
+    "consumerAddress":"0x990922334",
+    "validUntil": 1578004800,
+    "fileIndex": 1
+}
+```
+
+Response:
+
+```json
+{
+    "datatoken": "0x21fa3ea32892091...",
+    "nonce": 23,
+    "providerFee": {
+        "providerFeeAddress": "0xabc123...",
+        "providerFeeToken": "0xabc123...",
+        "providerFeeAmount": "200",
+        "providerData": "0xabc123...",
+        "v": 27,
+        "r": "0xabc123...",
+        "s": "0xabc123...",
+        "validUntil": 123456,
+    }
+    "computeAddress": "0x8123jdf8sdsa..."
+}
+```
 
 ## Create new job or restart an existing stopped job
 

@@ -1,20 +1,19 @@
 #
-# Copyright 2021 Ocean Protocol Foundation
+# Copyright 2023 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
-import jwt
 import logging
-import os
 
-from flask import request, jsonify
+import jwt
+from flask import jsonify, request
 from flask_sieve import validate
-
-from ocean_provider.utils.util import get_request_data
 from ocean_provider.user_nonce import (
     force_expire_token,
     force_restore_token,
     is_token_valid,
 )
+from ocean_provider.utils.basics import get_provider_private_key
+from ocean_provider.utils.util import get_request_data
 from ocean_provider.validation.provider_requests import (
     CreateTokenRequest,
     DeleteTokenRequest,
@@ -35,7 +34,7 @@ def create_auth_token():
     (expiration date is in the future), the same token is re-enabled.
     ---
     tags:
-      - services
+      - auth
     consumes:
       - application/json
     parameters:
@@ -64,13 +63,16 @@ def create_auth_token():
     address = data.get("address")
     expiration = int(data.get("expiration"))
 
-    pk = os.environ.get("PROVIDER_PRIVATE_KEY")
+    pk = get_provider_private_key(use_universal_key=True)
     token = jwt.encode({"exp": expiration, "address": address}, pk, algorithm="HS256")
     token = token.decode("utf-8") if isinstance(token, bytes) else token
 
     valid, message = is_token_valid(token, address)
-    if not valid and message == "Token is deleted.":
-        force_restore_token(token)
+    if not valid:
+        if message == "Token is deleted.":
+            force_restore_token(token)
+        else:
+            return jsonify(error=message), 400
 
     return jsonify(token=token)
 
@@ -86,7 +88,7 @@ def delete_auth_token():
     disallowing API calls with that token.
     ---
     tags:
-      - services
+      - auth
     consumes:
       - application/json
     parameters:

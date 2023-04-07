@@ -1,13 +1,15 @@
 import json
 from datetime import datetime, timedelta
+from functools import wraps
 
+import pytest
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.provider_fees import get_provider_fees
 from ocean_provider.utils.services import ServiceType
 from ocean_provider.utils.util import msg_hash
-from tests.helpers.ddo_dict_builders import build_metadata_dict_type_algorithm
 from tests.helpers.constants import ARWEAVE_TRANSACTION_ID
+from tests.helpers.ddo_dict_builders import build_metadata_dict_type_algorithm
 from tests.test_helpers import (
     get_first_service_by_type,
     get_registered_asset,
@@ -15,7 +17,6 @@ from tests.test_helpers import (
     mint_100_datatokens,
     start_order,
 )
-
 
 this_is_a_gist = "https://gist.githubusercontent.com/calina-c/5e8c965962bc0240eab516cb7a180670/raw/6e6cd245c039a9aac0a488857c6927d39eaafe4d/sprintf-py-conversions"
 
@@ -33,7 +34,7 @@ def build_and_send_ddo_with_compute_service(
     c2d_environment="ocean-compute",
     fee_token_args=None,
 ):
-    web3 = get_web3()
+    web3 = get_web3(8996)
     if valid_until is None:
         valid_until = get_future_valid_until(short=True)
     algo_metadata = build_metadata_dict_type_algorithm()
@@ -124,7 +125,7 @@ def build_and_send_ddo_with_compute_service(
         c2d_address,
         service.index,
         get_provider_fees(
-            dataset_ddo_w_compute_service.did,
+            dataset_ddo_w_compute_service,
             service,
             consumer_wallet.address,
             valid_until,
@@ -141,7 +142,7 @@ def build_and_send_ddo_with_compute_service(
         c2d_address,
         alg_service.index,
         get_provider_fees(
-            alg_ddo.did,
+            alg_ddo,
             alg_service,
             consumer_wallet.address,
             valid_until,
@@ -231,3 +232,19 @@ def get_future_valid_until(short=False):
     # return a timestamp for one hour in the future or 30s in the future if short
     time_diff = timedelta(hours=1) if not short else timedelta(seconds=30)
     return int((datetime.utcnow() + time_diff).timestamp())
+
+
+def skip_on(exception, reason="Default reason"):
+    """Decorator for skipping test in case of known issue."""
+
+    def decorator_func(f):
+        @wraps(f)
+        def wrapper(*args, **kwargs):
+            try:
+                return f(*args, **kwargs)
+            except exception:
+                pytest.skip(reason)
+
+        return wrapper
+
+    return decorator_func

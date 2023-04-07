@@ -1,19 +1,18 @@
 #
-# Copyright 2021 Ocean Protocol Foundation
+# Copyright 2023 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
 import logging
-from requests.models import Response
+from unittest.mock import Mock, patch
 
+import pytest
 from ocean_provider.utils.url import (
+    get_redirect,
     is_safe_url,
     is_this_same_provider,
     is_url,
-    get_redirect,
 )
-
-import pytest
-from unittest.mock import patch, Mock
+from requests.models import Response
 
 test_logger = logging.getLogger(__name__)
 
@@ -41,7 +40,7 @@ def test_is_safe_url():
 
 @pytest.mark.unit
 def test_is_same_provider():
-    assert is_this_same_provider("http://localhost:8030")
+    assert is_this_same_provider("http://localhost:8030", 8996)
 
 
 @pytest.mark.unit

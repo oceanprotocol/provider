@@ -1,5 +1,5 @@
 #
-# Copyright 2021 Ocean Protocol Foundation
+# Copyright 2023 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
 import json
@@ -7,22 +7,10 @@ from datetime import datetime
 
 import pytest
 from ocean_provider.constants import BaseURLs
-from ocean_provider.run import get_provider_address, get_services_endpoints
+from ocean_provider.run import get_services_endpoints
 from ocean_provider.user_nonce import get_nonce, update_nonce
 from ocean_provider.utils.accounts import sign_message
-from ocean_provider.utils.basics import get_provider_wallet
 from tests.test_helpers import get_registered_asset
-
-
-@pytest.mark.unit
-def test_get_provider_address(client):
-    get_response = client.get("/")
-    result = get_response.get_json()
-    provider_address = get_provider_address()
-    assert "providerAddress" in result
-    assert provider_address == get_provider_wallet().address
-    assert result["providerAddress"] == get_provider_wallet().address
-    assert get_response.status == "200 OK"
 
 
 @pytest.mark.unit
@@ -33,8 +21,8 @@ def test_expose_endpoints(client):
     assert "serviceEndpoints" in result
     assert "software" in result
     assert "version" in result
-    assert "chainId" in result
-    assert "providerAddress" in result
+    assert "chainIds" in result
+    assert "providerAddresses" in result
     assert get_response.status == "200 OK"
     assert len(result["serviceEndpoints"]) == len(services_endpoints)
 
@@ -80,7 +68,7 @@ def test_encrypt_endpoint(client, provider_wallet, publisher_wallet):
         "document": files_list_str,
         "publisherAddress": provider_wallet.address,
     }
-    encrypt_endpoint = BaseURLs.SERVICES_URL + "/encrypt"
+    encrypt_endpoint = BaseURLs.SERVICES_URL + "/encrypt?chainId=8996"
     response = client.post(
         encrypt_endpoint, json=payload, content_type="application/octet-stream"
     )

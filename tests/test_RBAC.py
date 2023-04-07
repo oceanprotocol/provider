@@ -1,5 +1,5 @@
 #
-# Copyright 2021 Ocean Protocol Foundation
+# Copyright 2023 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
 import copy
@@ -7,19 +7,17 @@ import json
 from datetime import datetime
 
 import pytest
-
 from ocean_provider.constants import BaseURLs
 from ocean_provider.exceptions import RequestNotFound
 from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.asset import Asset
 from ocean_provider.utils.services import Service, ServiceType
 from ocean_provider.validation.provider_requests import RBACValidator
-from tests.ddo.ddo_sa_sample_with_credentials_v4 import json_dict
 from tests.ddo.ddo_sample1_v4 import json_dict as ddo_sample1_v4
 from tests.ddo.ddo_sample_algorithm_v4 import algorithm_ddo_sample
-from tests.helpers.ddo_dict_builders import get_compute_service
 from tests.helpers.compute_helpers import get_compute_signature
-from tests.test_helpers import get_first_service_by_type, get_resource_path
+from tests.helpers.ddo_dict_builders import get_compute_service
+from tests.test_helpers import get_first_service_by_type
 
 
 @pytest.mark.unit

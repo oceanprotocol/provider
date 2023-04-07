@@ -1,17 +1,7 @@
 #
-# Copyright 2021 Ocean Protocol Foundation
+# Copyright 2023 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
-
-
-class ConfigSections:
-    """
-    This class stores values for:
-
-    - `RESOURCES`
-    """
-
-    RESOURCES = "resources"
 
 
 class BaseURLs:

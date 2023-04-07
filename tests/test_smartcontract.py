@@ -1,22 +1,17 @@
 #
-# Copyright 2021 Ocean Protocol Foundation
+# Copyright 2023 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
-import copy
 import json
-import time
+import os
 from datetime import datetime
-from unittest.mock import patch
 
 import pytest
-
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.address import get_contract_address
-from ocean_provider.utils.basics import get_config
 from ocean_provider.utils.provider_fees import get_provider_fees
 from ocean_provider.utils.services import ServiceType
-from tests.test_auth import create_token
 from tests.test_helpers import (
     get_first_service_by_type,
     get_registered_asset,
@@ -28,9 +23,7 @@ from tests.test_helpers import (
 @pytest.mark.integration
 def test_download_smartcontract_asset(client, publisher_wallet, consumer_wallet, web3):
     # publish asset, that calls Router's swapOceanFee function (does not need params)
-    router_address = get_contract_address(
-        get_config().address_file, "Router", web3.chain_id
-    )
+    router_address = get_contract_address(os.getenv("ADDRESS_FILE"), "Router", 8996)
     abi = {
         "inputs": [],
         "name": "swapOceanFee",
@@ -39,7 +32,12 @@ def test_download_smartcontract_asset(client, publisher_wallet, consumer_wallet,
         "type": "function",
     }
     unencrypted_files_list = [
-        {"type": "smartcontract", "address": router_address, "abi": abi}
+        {
+            "type": "smartcontract",
+            "address": router_address,
+            "abi": abi,
+            "chainId": 8996,
+        }
     ]
     asset = get_registered_asset(
         publisher_wallet, unencrypted_files_list=unencrypted_files_list
@@ -53,7 +51,7 @@ def test_download_smartcontract_asset(client, publisher_wallet, consumer_wallet,
         service.datatoken_address,
         consumer_wallet.address,
         service.index,
-        get_provider_fees(asset.did, service, consumer_wallet.address, 0),
+        get_provider_fees(asset, service, consumer_wallet.address, 0),
         consumer_wallet,
     )
 
@@ -83,9 +81,7 @@ def test_download_smartcontract_asset_with_userdata(
     client, publisher_wallet, consumer_wallet, web3
 ):
     # publish asset, that calls Router's getOPCFee for a provided  baseToken userdata
-    router_address = get_contract_address(
-        get_config().address_file, "Router", web3.chain_id
-    )
+    router_address = get_contract_address(os.getenv("ADDRESS_FILE"), "Router", 8996)
     abi = {
         "inputs": [{"internalType": "address", "name": "baseToken", "type": "address"}],
         "name": "getOPCFee",
@@ -94,7 +90,12 @@ def test_download_smartcontract_asset_with_userdata(
         "type": "function",
     }
     unencrypted_files_list = [
-        {"type": "smartcontract", "address": router_address, "abi": abi}
+        {
+            "type": "smartcontract",
+            "address": router_address,
+            "abi": abi,
+            "chainId": 8996,
+        }
     ]
     asset = get_registered_asset(
         publisher_wallet,
@@ -118,7 +119,7 @@ def test_download_smartcontract_asset_with_userdata(
         service.datatoken_address,
         consumer_wallet.address,
         service.index,
-        get_provider_fees(asset.did, service, consumer_wallet.address, 0),
+        get_provider_fees(asset, service, consumer_wallet.address, 0),
         consumer_wallet,
     )
 
@@ -164,6 +165,7 @@ def test_download_smartcontract_asset_with_pure_function(
             "type": "smartcontract",
             "address": dummy_service.datatoken_address,
             "abi": abi,
+            "chainId": 8996,
         }
     ]
     asset = get_registered_asset(
@@ -178,7 +180,7 @@ def test_download_smartcontract_asset_with_pure_function(
         service.datatoken_address,
         consumer_wallet.address,
         service.index,
-        get_provider_fees(asset.did, service, consumer_wallet.address, 0),
+        get_provider_fees(asset, service, consumer_wallet.address, 0),
         consumer_wallet,
     )
 

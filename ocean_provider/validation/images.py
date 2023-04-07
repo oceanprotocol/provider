@@ -1,9 +1,8 @@
 #
-# Copyright 2021 Ocean Protocol Foundation
+# Copyright 2023 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
 import logging
-import requests
 
 logger = logging.getLogger(__name__)
 

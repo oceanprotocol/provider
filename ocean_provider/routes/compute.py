@@ -1,5 +1,5 @@
 #
-# Copyright 2021 Ocean Protocol Foundation
+# Copyright 2023 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
 import functools
@@ -17,30 +17,27 @@ from ocean_provider.utils.asset import get_asset_from_metadatastore
 from ocean_provider.utils.basics import (
     get_metadata_url,
     get_provider_wallet,
-    get_web3,
     validate_timestamp,
 )
 from ocean_provider.utils.compute import (
+    get_compute_endpoint,
+    get_compute_result_endpoint,
     process_compute_request,
     sign_for_compute,
-    get_compute_result_endpoint,
-    get_compute_endpoint,
 )
 from ocean_provider.utils.compute_environments import (
-    get_c2d_environments,
     check_environment_exists,
+    get_c2d_environments,
 )
 from ocean_provider.utils.error_responses import error_response
 from ocean_provider.utils.provider_fees import (
-    get_provider_fees_or_remote,
     comb_for_valid_transfer_and_fees,
+    get_provider_fees_or_remote,
 )
-from ocean_provider.utils.util import (
-    get_request_data,
-)
+from ocean_provider.utils.util import get_request_data
 from ocean_provider.validation.algo import (
-    WorkflowValidator,
     InputItemValidator,
+    WorkflowValidator,
     get_algo_checksums,
 )
 from ocean_provider.validation.images import validate_container
@@ -55,7 +52,6 @@ from requests.models import PreparedRequest
 
 from . import services
 
-provider_wallet = get_provider_wallet()
 requests_session = get_requests_session()
 
 logger = logging.getLogger(__name__)
@@ -127,10 +123,9 @@ def initializeCompute():
             logger,
         )
 
-    if not check_environment_exists(get_c2d_environments(), compute_env):
+    if not check_environment_exists(get_c2d_environments(flat=True), compute_env):
         return error_response("Compute environment does not exist", 400, logger)
 
-    web3 = get_web3()
     approve_params = {"datasets": []} if datasets else {}
 
     index_for_provider_fees = comb_for_valid_transfer_and_fees(
@@ -154,6 +149,7 @@ def initializeCompute():
             return error_response("DID is not a valid algorithm", 400, logger)
 
         algo_service = algo_ddo.get_service_by_id(algorithm.get("serviceId"))
+        provider_wallet = get_provider_wallet(algo_ddo.chain_id)
         algo_files_checksum, algo_container_checksum = get_algo_checksums(
             algo_service, provider_wallet, algo_ddo
         )
@@ -162,9 +158,7 @@ def initializeCompute():
         dataset["algorithm"] = algorithm
         dataset["consumerAddress"] = consumer_address
         input_item_validator = InputItemValidator(
-            web3,
             consumer_address,
-            provider_wallet,
             dataset,
             {"environment": compute_env},
             i,
@@ -217,7 +211,7 @@ def computeDelete():
 
     ---
     tags:
-      - services
+      - compute
     consumes:
       - application/json
     parameters:
@@ -273,7 +267,7 @@ def computeStop():
 
     ---
     tags:
-      - services
+      - compute
     consumes:
       - application/json
     parameters:
@@ -334,7 +328,7 @@ def computeStatus():
 
     ---
     tags:
-      - services
+      - compute
     consumes:
       - application/json
     parameters:
@@ -389,7 +383,7 @@ def computeStart():
 
     ---
     tags:
-      - services
+      - compute
     consumes:
       - application/json
     parameters:
@@ -443,7 +437,7 @@ def computeStart():
     logger.info(f"computeStart called. arguments = {data}")
 
     consumer_address = data.get("consumerAddress")
-    validator = WorkflowValidator(get_web3(), consumer_address, provider_wallet, data)
+    validator = WorkflowValidator(consumer_address, data)
 
     status = validator.validate()
     if not status:
@@ -455,8 +449,8 @@ def computeStart():
 
     compute_env = data.get("environment")
 
+    provider_wallet = get_provider_wallet(use_universal_key=True)
     nonce, provider_signature = sign_for_compute(provider_wallet, consumer_address)
-    web3 = get_web3()
     payload = {
         "workflow": workflow,
         "providerSignature": provider_signature,
@@ -466,7 +460,7 @@ def computeStart():
         "environment": compute_env,
         "validUntil": validator.valid_until,
         "nonce": nonce,
-        "chainId": web3.chain_id,
+        "chainId": validator.chain_id,
     }
 
     response = requests_session.post(
@@ -489,7 +483,7 @@ def computeResult():
 
     ---
     tags:
-      - services
+      - compute
     consumes:
       - application/json
     parameters:
@@ -529,10 +523,10 @@ def computeResult():
     url = get_compute_result_endpoint()
     consumer_address = data.get("consumerAddress")
     job_id = data.get("jobId")
+    provider_wallet = get_provider_wallet(use_universal_key=True)
     nonce, provider_signature = sign_for_compute(
         provider_wallet, consumer_address, job_id
     )
-    web3 = get_web3()
     params = {
         "index": data.get("index"),
         "owner": data.get("consumerAddress"),
@@ -540,7 +534,6 @@ def computeResult():
         "consumerSignature": data.get("signature"),
         "providerSignature": provider_signature,
         "nonce": nonce,
-        "chainId": web3.chain_id,
     }
     req = PreparedRequest()
     req.prepare_url(url, params)
@@ -567,7 +560,7 @@ def computeEnvironments():
 
     ---
     tags:
-      - services
+      - compute
     consumes:
       - application/json
 
@@ -588,6 +581,21 @@ def computeEnvironments():
 
 @services.route("/validateContainer", methods=["POST"])
 def validateContainer():
+    """Validate a c2d container json
+
+    ---
+    tags:
+      - compute
+    consumes:
+      - application/json
+
+    responses:
+      200:
+        description: Container is valid.
+      400:
+        description: Container is invalid.
+    return: error dict if container is invalid
+    """
     container = get_request_data(request)
     valid, messages = validate_container(container)
 

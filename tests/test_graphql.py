@@ -1,21 +1,16 @@
 #
-# Copyright 2021 Ocean Protocol Foundation
+# Copyright 2023 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
-import copy
-import time
 import json
 from datetime import datetime
-from unittest.mock import patch
 
 import pytest
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.provider_fees import get_provider_fees
 from ocean_provider.utils.services import ServiceType
-from tests.test_auth import create_token
 from tests.test_helpers import (
-    get_dataset_ddo_with_multiple_files,
     get_first_service_by_type,
     get_registered_asset,
     mint_100_datatokens,
@@ -52,7 +47,7 @@ def test_download_graphql_asset(client, publisher_wallet, consumer_wallet, web3)
         service.datatoken_address,
         consumer_wallet.address,
         service.index,
-        get_provider_fees(asset.did, service, consumer_wallet.address, 0),
+        get_provider_fees(asset, service, consumer_wallet.address, 0),
         consumer_wallet,
     )
 
@@ -118,7 +113,7 @@ def test_download_graphql_asset_with_userdata(
         service.datatoken_address,
         consumer_wallet.address,
         service.index,
-        get_provider_fees(asset.did, service, consumer_wallet.address, 0),
+        get_provider_fees(asset, service, consumer_wallet.address, 0),
         consumer_wallet,
     )
 
