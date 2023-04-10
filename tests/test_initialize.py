@@ -61,9 +61,9 @@ def test_initialize_on_ipfs_url(client, publisher_wallet, consumer_wallet, web3)
     logger.info(f"test2_start_timestamp: {test2_start_timestamp}")
     asset = get_dataset_with_ipfs_url_ddo(client, publisher_wallet)
     service = get_first_service_by_type(asset, ServiceType.ACCESS)
-    mint_100_datatokens(
-        web3, service.datatoken_address, consumer_wallet.address, publisher_wallet
-    )
+    # mint_100_datatokens(
+    #     web3, service.datatoken_address, consumer_wallet.address, publisher_wallet
+    # )
     datatoken, nonce, computeAddress, providerFees = initialize_service(
         client, asset.did, service, consumer_wallet
     )
@@ -82,9 +82,9 @@ def test_initialize_on_disabled_asset(client, publisher_wallet, consumer_wallet,
     assert real_asset
     service = get_first_service_by_type(asset, ServiceType.ACCESS)
 
-    mint_100_datatokens(
-        web3, service.datatoken_address, consumer_wallet.address, publisher_wallet
-    )
+    # mint_100_datatokens(
+    #     web3, service.datatoken_address, consumer_wallet.address, publisher_wallet
+    # )
 
     response = initialize_service(
         client, asset.did, service, consumer_wallet, raw_response=True
@@ -104,9 +104,9 @@ def test_initialize_on_unlisted_asset(client, publisher_wallet, consumer_wallet,
     assert real_asset
     service = get_first_service_by_type(asset, ServiceType.ACCESS)
 
-    mint_100_datatokens(
-        web3, service.datatoken_address, consumer_wallet.address, publisher_wallet
-    )
+    # mint_100_datatokens(
+    #     web3, service.datatoken_address, consumer_wallet.address, publisher_wallet
+    # )
 
     datatoken, nonce, computeAddress, providerFees = initialize_service(
         client, asset.did, service, consumer_wallet
@@ -130,9 +130,9 @@ def test_initialize_on_asset_with_custom_credentials(
 
     service = get_first_service_by_type(asset, ServiceType.ACCESS)
 
-    mint_100_datatokens(
-        web3, service.datatoken_address, consumer_wallet.address, publisher_wallet
-    )
+    # mint_100_datatokens(
+    #     web3, service.datatoken_address, consumer_wallet.address, publisher_wallet
+    # )
 
     response = initialize_service(
         client, asset.did, service, consumer_wallet, raw_response=True
@@ -155,9 +155,9 @@ def test_initialize_reuse(client, publisher_wallet, consumer_wallet, web3):
 
     service = get_first_service_by_type(asset, ServiceType.ACCESS)
 
-    mint_100_datatokens(
-        web3, service.datatoken_address, consumer_wallet.address, publisher_wallet
-    )
+    # mint_100_datatokens(
+    #     web3, service.datatoken_address, consumer_wallet.address, publisher_wallet
+    # )
 
     tx_id, _ = start_order(
         web3,
@@ -209,9 +209,9 @@ def test_can_not_initialize_compute_service_with_simple_initialize(
         publisher_wallet, custom_services="vanilla_compute", custom_services_args=[]
     )
     service = get_first_service_by_type(asset_w_compute_service, ServiceType.COMPUTE)
-    mint_100_datatokens(
-        web3, service.datatoken_address, consumer_wallet.address, publisher_wallet
-    )
+    # mint_100_datatokens(
+    #     web3, service.datatoken_address, consumer_wallet.address, publisher_wallet
+    # )
 
     response = initialize_service(
         client, asset_w_compute_service.did, service, consumer_wallet, raw_response=True
