@@ -366,15 +366,6 @@ def get_dataset_with_invalid_url_ddo(client, wallet):
     )
 
 
-def get_dataset_with_ipfs_url_ddo(client, wallet):
-    return get_registered_asset(
-        wallet,
-        unencrypted_files_list=[
-            {"type": "ipfs", "hash": "QmXtkGkWCG47tVpiBr8f5FdHuCMPq8h2jhck4jgjSXKiWZ"}
-        ],
-    )
-
-
 def get_resource_path(dir_name, file_name):
     base = os.path.realpath(__file__).split(os.path.sep)[1:-1]
     if dir_name:
