@@ -71,6 +71,7 @@ def test_initialize_on_ipfs_url(client, publisher_wallet, consumer_wallet, web3)
 
     assert datatoken == service.datatoken_address
 
+
 @pytest.mark.integration
 def test_initialize_on_disabled_asset(client, publisher_wallet, consumer_wallet, web3):
     test3_start_timestamp = datetime.now()
