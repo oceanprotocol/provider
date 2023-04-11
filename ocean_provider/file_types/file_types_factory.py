@@ -59,8 +59,13 @@ class FilesTypeFactory:
                     userdata=file_obj.get("userdata"),
                 )
             else:
+                logger.debug(f"Unsupported type {file_obj}")
                 return False, f'Unsupported type {file_obj["type"]}'
         except TypeError:
+            logger.debug(f"malformed file object {file_obj}")
             return False, "malformed file object."
-
-        return instance.validate_dict()
+        status = instance.validate_dict()
+        if not status:
+            logger.debug(f"validate_dict failed on {file_obj}")
+        logger.debug(f"validate_dict passed on {file_obj}")
+        return status
