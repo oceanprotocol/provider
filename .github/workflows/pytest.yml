@@ -47,7 +47,7 @@ jobs:
           nc -zv 172.15.0.13 31000
           cat $HOME/.ocean/ocean-contracts/artifacts/address.json
           curl http://172.15.0.13:31000
-          nc -zv 172.15.0.16 5001
+          nc -zv 172.15.0.16 8080
       - name: Install dependencies
         working-directory: ${{ github.workspace }}
         run: |

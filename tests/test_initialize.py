@@ -8,6 +8,7 @@ import time
 from datetime import datetime
 from unittest.mock import patch
 
+import ipfshttpclient
 import pytest
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.currency import to_wei
@@ -59,7 +60,14 @@ def test_initialize_on_bad_url(client, publisher_wallet, consumer_wallet, web3):
 def test_initialize_on_ipfs_url(client, publisher_wallet, consumer_wallet, web3):
     test2_start_timestamp = datetime.now()
     print(f"test2_start_timestamp: {test2_start_timestamp}")
-    asset = get_dataset_with_ipfs_url_ddo(client, publisher_wallet)
+    client = ipfshttpclient.connect("/dns/172.15.0.16/tcp/5001/http")
+    cid = client.add("./resources/ddo_sample_file.txt")["Hash"]
+    url_object = {"type": "ipfs", "hash": cid}
+    asset = get_registered_asset(
+        publisher_wallet,
+        unencrypted_files_list=[url_object],
+    )
+    # get_dataset_with_ipfs_url_ddo(client, publisher_wallet)
     service = get_first_service_by_type(asset, ServiceType.ACCESS)
     # mint_100_datatokens(
     #     web3, service.datatoken_address, consumer_wallet.address, publisher_wallet
