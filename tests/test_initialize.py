@@ -24,7 +24,6 @@ from tests.test_helpers import (
     get_dataset_ddo_with_denied_consumer,
     get_dataset_ddo_with_multiple_files,
     get_dataset_with_invalid_url_ddo,
-    get_dataset_with_ipfs_url_ddo,
     get_first_service_by_type,
     get_registered_asset,
     initialize_service,
@@ -58,29 +57,19 @@ def test_initialize_on_bad_url(client, publisher_wallet, consumer_wallet, web3):
 
 @pytest.mark.integration
 def test_initialize_on_ipfs_url(client, publisher_wallet, consumer_wallet, web3):
-    test2_start_timestamp = datetime.now()
-    print(f"test2_start_timestamp: {test2_start_timestamp}")
-    client = ipfshttpclient.connect("/dns/172.15.0.16/tcp/5001/http")
-    cid = client.add("./resources/ddo_sample_file.txt")["Hash"]
+    ipfs_client = ipfshttpclient.connect("/dns/172.15.0.16/tcp/5001/http")
+    cid = ipfs_client.add("./tests/resources/ddo_sample_file.txt")["Hash"]
     url_object = {"type": "ipfs", "hash": cid}
     asset = get_registered_asset(
         publisher_wallet,
         unencrypted_files_list=[url_object],
     )
-    # get_dataset_with_ipfs_url_ddo(client, publisher_wallet)
     service = get_first_service_by_type(asset, ServiceType.ACCESS)
-    # mint_100_datatokens(
-    #     web3, service.datatoken_address, consumer_wallet.address, publisher_wallet
-    # )
     datatoken, nonce, computeAddress, providerFees = initialize_service(
         client, asset.did, service, consumer_wallet
     )
 
     assert datatoken == service.datatoken_address
-    test2_end_timestamp = datetime.now()
-    print(f"test2_end_timestamp: {test2_end_timestamp}")
-    print(f"test2 duration: {test2_end_timestamp - test2_start_timestamp}")
-
 
 @pytest.mark.integration
 def test_initialize_on_disabled_asset(client, publisher_wallet, consumer_wallet, web3):
@@ -89,10 +78,6 @@ def test_initialize_on_disabled_asset(client, publisher_wallet, consumer_wallet,
     asset, real_asset = get_dataset_ddo_disabled(client, publisher_wallet)
     assert real_asset
     service = get_first_service_by_type(asset, ServiceType.ACCESS)
-
-    # mint_100_datatokens(
-    #     web3, service.datatoken_address, consumer_wallet.address, publisher_wallet
-    # )
 
     response = initialize_service(
         client, asset.did, service, consumer_wallet, raw_response=True
@@ -111,10 +96,6 @@ def test_initialize_on_unlisted_asset(client, publisher_wallet, consumer_wallet,
     asset, real_asset = get_dataset_ddo_unlisted(client, publisher_wallet)
     assert real_asset
     service = get_first_service_by_type(asset, ServiceType.ACCESS)
-
-    # mint_100_datatokens(
-    #     web3, service.datatoken_address, consumer_wallet.address, publisher_wallet
-    # )
 
     datatoken, nonce, computeAddress, providerFees = initialize_service(
         client, asset.did, service, consumer_wallet
@@ -138,10 +119,6 @@ def test_initialize_on_asset_with_custom_credentials(
 
     service = get_first_service_by_type(asset, ServiceType.ACCESS)
 
-    # mint_100_datatokens(
-    #     web3, service.datatoken_address, consumer_wallet.address, publisher_wallet
-    # )
-
     response = initialize_service(
         client, asset.did, service, consumer_wallet, raw_response=True
     )
@@ -162,10 +139,6 @@ def test_initialize_reuse(client, publisher_wallet, consumer_wallet, web3):
     asset = get_dataset_ddo_with_multiple_files(client, publisher_wallet)
 
     service = get_first_service_by_type(asset, ServiceType.ACCESS)
-
-    # mint_100_datatokens(
-    #     web3, service.datatoken_address, consumer_wallet.address, publisher_wallet
-    # )
 
     tx_id, _ = start_order(
         web3,
@@ -217,9 +190,6 @@ def test_can_not_initialize_compute_service_with_simple_initialize(
         publisher_wallet, custom_services="vanilla_compute", custom_services_args=[]
     )
     service = get_first_service_by_type(asset_w_compute_service, ServiceType.COMPUTE)
-    # mint_100_datatokens(
-    #     web3, service.datatoken_address, consumer_wallet.address, publisher_wallet
-    # )
 
     response = initialize_service(
         client, asset_w_compute_service.did, service, consumer_wallet, raw_response=True
