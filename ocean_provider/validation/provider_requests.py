@@ -54,20 +54,27 @@ class CustomJsonRequest(JsonRequest):
     def validate(self):
         for validator in self._validators:
             if validator.fails():
-                messages = validator.messages()
-                for overwritable_key in [
-                    "signature",
-                    "download_signature",
-                    "decrypt_signature",
-                ]:
-                    if overwritable_key in messages and hasattr(
-                        validator._processor, "signature_error_message"
-                    ):
-                        messages[
-                            overwritable_key
-                        ] = validator._processor.signature_error_message
+                messages = self.overwrite_messages(validator)
                 raise ValidationException(messages)
         return True
+
+    def overwrite_messages(self, validator):
+        messages = validator.messages()
+
+        if not hasattr(validator._processor, "signature_error_message"):
+            return messages
+
+        for overwritable_key in [
+            "signature",
+            "download_signature",
+            "decrypt_signature",
+        ]:
+            if overwritable_key in messages:
+                messages[
+                    overwritable_key
+                ] = validator._processor.signature_error_message
+
+        return messages
 
 
 class CustomValidator(Validator):
