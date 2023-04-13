@@ -23,16 +23,16 @@ def test_download_graphql_asset(client, publisher_wallet, consumer_wallet, web3)
     unencrypted_files_list = [
         {
             "type": "graphql",
-            "url": "http://172.15.0.15:8000/subgraphs/name/oceanprotocol/ocean-subgraph",
+            "url": "http://172.15.0.15:8030/graphql",
             "query": """
-                    query{
-                        nfts(orderBy: createdTimestamp,orderDirection:desc){
-                            id
-                            symbol
-                            createdTimestamp
+                        query {
+                            indexingStatuses {
+                              subgraph
+                              chains
+                              node
+                            }
                         }
-                    }
-                    """,
+                        """,
         }
     ]
     asset = get_registered_asset(
@@ -79,13 +79,13 @@ def test_download_graphql_asset_with_userdata(
     unencrypted_files_list = [
         {
             "type": "graphql",
-            "url": "http://172.15.0.15:8000/subgraphs/name/oceanprotocol/ocean-subgraph",
+            "url": "http://172.15.0.15:8030/graphql",
             "query": """
-                    query nfts($nftAddress: String){
-                        nfts(where: {id:$nftAddress},orderBy: createdTimestamp,orderDirection:desc){
-                            id
-                            symbol
-                            createdTimestamp
+                    query {
+                        indexingStatuses {
+                          subgraph
+                          chains
+                          node
                         }
                     }
                     """,
@@ -137,10 +137,5 @@ def test_download_graphql_asset_with_userdata(
     )
     assert response.status_code == 200, f"{response.data}"
     reply = json.loads(response.data)
-    assert len(reply["errors"]) == 1
-    # Make sure the subgraph is deployed. Response has 200 OK status code from subgraph
-    # Due to lack of CI resources, assert the specific error
-    assert (
-        reply["errors"][0]["message"]
-        == "deployment `oceanprotocol/ocean-subgraph` does not exist"
-    )
+    assert len(reply["data"]) == 1
+    assert "indexingStatuses" in reply["data"].keys()
