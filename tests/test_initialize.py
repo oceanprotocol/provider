@@ -5,10 +5,11 @@
 import json
 import logging
 import time
+from datetime import datetime
 from unittest.mock import patch
 
+import ipfshttpclient
 import pytest
-import requests
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.currency import to_wei
 from ocean_provider.utils.provider_fees import get_provider_fees
@@ -16,7 +17,6 @@ from ocean_provider.utils.services import ServiceType
 from tests.helpers.compute_helpers import (
     build_and_send_ddo_with_compute_service,
     get_future_valid_until,
-    skip_on,
 )
 from tests.test_helpers import (
     get_dataset_ddo_disabled,
@@ -24,7 +24,6 @@ from tests.test_helpers import (
     get_dataset_ddo_with_denied_consumer,
     get_dataset_ddo_with_multiple_files,
     get_dataset_with_invalid_url_ddo,
-    get_dataset_with_ipfs_url_ddo,
     get_first_service_by_type,
     get_registered_asset,
     initialize_service,
@@ -53,11 +52,14 @@ def test_initialize_on_bad_url(client, publisher_wallet, consumer_wallet, web3):
 
 @pytest.mark.integration
 def test_initialize_on_ipfs_url(client, publisher_wallet, consumer_wallet, web3):
-    asset = get_dataset_with_ipfs_url_ddo(client, publisher_wallet)
-    service = get_first_service_by_type(asset, ServiceType.ACCESS)
-    mint_100_datatokens(
-        web3, service.datatoken_address, consumer_wallet.address, publisher_wallet
+    ipfs_client = ipfshttpclient.connect("/dns/172.15.0.16/tcp/5001/http")
+    cid = ipfs_client.add("./tests/resources/ddo_sample_file.txt")["Hash"]
+    url_object = {"type": "ipfs", "hash": cid}
+    asset = get_registered_asset(
+        publisher_wallet,
+        unencrypted_files_list=[url_object],
     )
+    service = get_first_service_by_type(asset, ServiceType.ACCESS)
     datatoken, nonce, computeAddress, providerFees = initialize_service(
         client, asset.did, service, consumer_wallet
     )
@@ -71,10 +73,6 @@ def test_initialize_on_disabled_asset(client, publisher_wallet, consumer_wallet,
     assert real_asset
     service = get_first_service_by_type(asset, ServiceType.ACCESS)
 
-    mint_100_datatokens(
-        web3, service.datatoken_address, consumer_wallet.address, publisher_wallet
-    )
-
     response = initialize_service(
         client, asset.did, service, consumer_wallet, raw_response=True
     )
@@ -87,10 +85,6 @@ def test_initialize_on_unlisted_asset(client, publisher_wallet, consumer_wallet,
     asset, real_asset = get_dataset_ddo_unlisted(client, publisher_wallet)
     assert real_asset
     service = get_first_service_by_type(asset, ServiceType.ACCESS)
-
-    mint_100_datatokens(
-        web3, service.datatoken_address, consumer_wallet.address, publisher_wallet
-    )
 
     datatoken, nonce, computeAddress, providerFees = initialize_service(
         client, asset.did, service, consumer_wallet
@@ -109,10 +103,6 @@ def test_initialize_on_asset_with_custom_credentials(
 
     service = get_first_service_by_type(asset, ServiceType.ACCESS)
 
-    mint_100_datatokens(
-        web3, service.datatoken_address, consumer_wallet.address, publisher_wallet
-    )
-
     response = initialize_service(
         client, asset.did, service, consumer_wallet, raw_response=True
     )
@@ -128,7 +118,6 @@ def test_initialize_reuse(client, publisher_wallet, consumer_wallet, web3):
     asset = get_dataset_ddo_with_multiple_files(client, publisher_wallet)
 
     service = get_first_service_by_type(asset, ServiceType.ACCESS)
-
     mint_100_datatokens(
         web3, service.datatoken_address, consumer_wallet.address, publisher_wallet
     )
@@ -178,9 +167,6 @@ def test_can_not_initialize_compute_service_with_simple_initialize(
         publisher_wallet, custom_services="vanilla_compute", custom_services_args=[]
     )
     service = get_first_service_by_type(asset_w_compute_service, ServiceType.COMPUTE)
-    mint_100_datatokens(
-        web3, service.datatoken_address, consumer_wallet.address, publisher_wallet
-    )
 
     response = initialize_service(
         client, asset_w_compute_service.did, service, consumer_wallet, raw_response=True
@@ -193,7 +179,6 @@ def test_can_not_initialize_compute_service_with_simple_initialize(
 
 
 @pytest.mark.integration
-@skip_on(requests.exceptions.ConnectionError, "C2D connection failed. Need fix in #610")
 def test_initialize_compute_works(
     client, publisher_wallet, consumer_wallet, free_c2d_env
 ):
@@ -247,7 +232,6 @@ def test_initialize_compute_works(
 
 
 @pytest.mark.integration
-@skip_on(requests.exceptions.ConnectionError, "C2D connection failed. Need fix in #610")
 def test_initialize_compute_order_reused(
     client, publisher_wallet, consumer_wallet, free_c2d_env
 ):
@@ -341,7 +325,7 @@ def test_initialize_compute_order_reused(
     assert "providerFee" in response.json["algorithm"]
 
     # Sleep long enough for orders to expire
-    timeout = time.time() + (60 * 6)
+    timeout = time.time() + (30 * 3)
     while True:
         payload["compute"]["validUntil"] = get_future_valid_until(short=True) + 30
         response = client.post(
@@ -376,7 +360,6 @@ def test_initialize_compute_order_reused(
 
 
 @pytest.mark.integration
-@skip_on(requests.exceptions.ConnectionError, "C2D connection failed. Need fix in #610")
 def test_initialize_compute_paid_env(
     client, publisher_wallet, consumer_wallet, paid_c2d_env
 ):

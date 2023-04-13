@@ -53,7 +53,7 @@ def get_configured_chains():
 
     if not decoded:
         web3 = get_web3(os.environ.get("NETWORK_URL"))
-        return [web3.chain_id]
+        return [web3.eth.chain_id]
 
     return [int(key) for key in decoded.keys()]
 

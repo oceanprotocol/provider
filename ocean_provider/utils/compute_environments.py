@@ -2,6 +2,7 @@ import os
 from urllib.parse import urljoin
 
 import requests
+
 from ocean_provider.requests_session import get_requests_session
 from ocean_provider.utils.address import get_provider_fee_token
 from ocean_provider.utils.basics import get_configured_chains
@@ -17,7 +18,7 @@ def get_c2d_environments(flat=False):
     if not os.getenv("OPERATOR_SERVICE_URL"):
         return []
 
-    standard_headers = {"Content-type": "application/json", "Connection": "close"}
+    standard_headers = {"Content-Type": "application/json", "Connection": "close"}
     all_environments = [] if flat else {}
 
     for chain in get_configured_chains():
