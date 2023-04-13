@@ -5,7 +5,7 @@ PARITY_KEYFILE1=/ocean-provider/tests/resources/consumer_key_file.json
 PROVIDER_ADDRESS=068ed00cf0441e4829d9784fcbe7b9e26d4bd8d0
 
 NETWORK_URL=wss://rinkeby.infura.io/ws/v3/357f2fe737db4304bd2f7285c5602d0d
-AQUARIUS_URL=https://v4.aquarius.oceanprotocol.com
+AQUARIUS_URL=https://aquarius.marketplace.dev-ocean.com
 OCEAN_PROVIDER_URL=http://0.0.0.0:8030
 OPERATOR_SERVICE_URL=https://stagev4.c2d.oceanprotocol.com
 

@@ -81,13 +81,13 @@ def test_download_graphql_asset_with_userdata(
             "type": "graphql",
             "url": "http://172.15.0.15:8030/graphql",
             "query": """
-                    query {
-                        indexingStatuses {
-                          subgraph
-                          chains
-                          node
+                    query GetSubgraph($name: [String!]){
+                          indexingStatuses(subgraphs: $name) {
+                            subgraph
+                            chains
+                            node
+                          }
                         }
-                    }
                     """,
         }
     ]
@@ -96,11 +96,12 @@ def test_download_graphql_asset_with_userdata(
         unencrypted_files_list=unencrypted_files_list,
         custom_userdata=[
             {
-                "name": "nftAddress",
+                "name": "name",
                 "type": "text",
-                "label": "nftAddress",
+                "label": "name",
                 "required": True,
-                "description": "Nft to search for",
+                "description": "Subgraph indexing status",
+                "default": ["subgraph"],
             }
         ],
     )
@@ -123,7 +124,7 @@ def test_download_graphql_asset_with_userdata(
         "consumerAddress": consumer_wallet.address,
         "transferTxId": tx_id,
         "fileIndex": 0,
-        "userdata": json.dumps({"nftAddress": asset.nftAddress.lower()}),
+        "userdata": json.dumps({"name": ["subgraph"]}),
     }
 
     download_endpoint = BaseURLs.SERVICES_URL + "/download"
