@@ -54,8 +54,27 @@ class CustomJsonRequest(JsonRequest):
     def validate(self):
         for validator in self._validators:
             if validator.fails():
-                raise ValidationException(validator.messages())
+                messages = self.overwrite_messages(validator)
+                raise ValidationException(messages)
         return True
+
+    def overwrite_messages(self, validator):
+        messages = validator.messages()
+
+        if not hasattr(validator._processor, "signature_error_message"):
+            return messages
+
+        for overwritable_key in [
+            "signature",
+            "download_signature",
+            "decrypt_signature",
+        ]:
+            if overwritable_key in messages:
+                messages[
+                    overwritable_key
+                ] = validator._processor.signature_error_message
+
+        return messages
 
 
 class CustomValidator(Validator):
@@ -145,7 +164,8 @@ class CustomRulesProcessor(RulesProcessor):
         try:
             verify_signature(owner, value, original_msg, nonce)
             return True
-        except InvalidSignatureError:
+        except InvalidSignatureError as e:
+            self.signature_error_message = str(e)
             pass
 
         return False
@@ -176,7 +196,8 @@ class CustomRulesProcessor(RulesProcessor):
         try:
             verify_signature(owner, value, original_msg, nonce)
             return True
-        except InvalidSignatureError:
+        except InvalidSignatureError as e:
+            self.signature_error_message = str(e)
             pass
 
         return False
@@ -222,7 +243,8 @@ class CustomRulesProcessor(RulesProcessor):
             verify_signature(decrypter_address, value, original_msg, nonce)
             logger.info("Correct signature.")
             return True
-        except InvalidSignatureError:
+        except InvalidSignatureError as e:
+            self.signature_error_message = str(e)
             pass
 
         return False
