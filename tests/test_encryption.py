@@ -1,7 +1,6 @@
 import hashlib
 import json
 import lzma
-from datetime import datetime
 
 import pytest
 from eth_account.signers.local import LocalAccount
@@ -12,6 +11,7 @@ from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.data_nft import Flags, MetadataState
 from tests.ddo.ddo_sample1_v4 import json_dict as ddo_sample1_v4
+from tests.helpers.nonce import build_nonce
 from tests.test_helpers import BLACK_HOLE_ADDRESS, deploy_data_nft, set_metadata
 from web3.main import Web3
 
@@ -333,7 +333,7 @@ def decrypt_ddo_using_transaction_id(
     data_nft_address: HexStr,
     chain_id: int,
 ):
-    nonce = str(datetime.utcnow().timestamp())
+    nonce = build_nonce()
     message_to_be_signed = (
         f"{set_metadata_tx_id}{decrypter_wallet.address}{chain_id}{nonce}"
     )
@@ -360,7 +360,7 @@ def decrypt_ddo_using_decrypt_args(
     flags: int,
     ddo_hash_hexstr: HexStr,
 ):
-    nonce = str(datetime.utcnow().timestamp())
+    nonce = build_nonce()
     message_to_be_signed = (
         f"{data_nft_address}{decrypter_wallet.address}{chain_id}{nonce}"
     )

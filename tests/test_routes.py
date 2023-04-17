@@ -3,13 +3,13 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import json
-from datetime import datetime
 
 import pytest
 from ocean_provider.constants import BaseURLs
 from ocean_provider.run import get_services_endpoints
 from ocean_provider.user_nonce import get_nonce, update_nonce
 from ocean_provider.utils.accounts import sign_message
+from tests.helpers.nonce import build_nonce
 from tests.test_helpers import get_registered_asset
 
 
@@ -58,7 +58,7 @@ def test_encrypt_endpoint(client, provider_wallet, publisher_wallet):
     asset = get_registered_asset(publisher_wallet)
     files_list_str = '["https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt"]'
 
-    nonce = datetime.utcnow().timestamp()
+    nonce = build_nonce()
     msg = f"{asset.did}{nonce}"
     signature = sign_message(msg, provider_wallet)
 
@@ -81,7 +81,7 @@ def test_encrypt_endpoint(client, provider_wallet, publisher_wallet):
 def test_get_nonce(client, publisher_wallet):
     address = publisher_wallet.address
     # Ensure address exists in database
-    update_nonce(address, datetime.utcnow().timestamp())
+    update_nonce(address, build_nonce())
 
     endpoint = BaseURLs.SERVICES_URL + "/nonce"
     response = client.get(

@@ -1,6 +1,6 @@
 import json
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 from eth_keys import KeyAPI
@@ -135,7 +135,7 @@ def verify_order_tx(
             "Provider was not able to check the signed message in ProviderFees event\n"
         )
 
-    timestamp_now = datetime.utcnow().timestamp()
+    timestamp_now = datetime.now(timezone.utc).timestamp()
     # check validUntil
     if provider_fee_order_log.args.validUntil > 0 and not allow_expired_provider_fees:
         if timestamp_now >= provider_fee_order_log.args.validUntil:

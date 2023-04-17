@@ -1,6 +1,6 @@
 import json
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict
 
 import requests
@@ -49,7 +49,7 @@ def get_provider_fees(
     provider_data = json.dumps(
         {
             "environment": compute_env,
-            "timestamp": datetime.utcnow().timestamp(),
+            "timestamp": datetime.now(timezone.utc).timestamp(),
             "dt": service.datatoken_address,
             "id": service.id,
         },
@@ -170,7 +170,9 @@ def get_provider_fees_or_remote(
 
 
 def get_provider_fee_amount(valid_until, compute_env, web3, provider_fee_token):
-    seconds = (datetime.fromtimestamp(valid_until) - datetime.utcnow()).seconds
+    seconds = (
+        datetime.fromtimestamp(valid_until, timezone.utc) - datetime.now(timezone.utc)
+    ).seconds
     env = get_environment(get_c2d_environments(flat=True), compute_env)
 
     if provider_fee_token == "0x0000000000000000000000000000000000000000":

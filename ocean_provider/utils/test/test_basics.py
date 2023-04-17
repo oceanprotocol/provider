@@ -2,7 +2,7 @@
 # Copyright 2023 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import pytest
 from ocean_provider.utils.basics import (
@@ -47,12 +47,14 @@ def test_send_ether(publisher_wallet, consumer_address):
 
 @pytest.mark.unit
 def test_validate_timestamp():
-    timestamp_future = int((datetime.utcnow() + timedelta(hours=1)).timestamp())
+    timestamp_future = int(
+        (datetime.now(timezone.utc) + timedelta(hours=1)).timestamp()
+    )
     assert validate_timestamp(timestamp_future)
     assert validate_timestamp(1644831664000) is False
     assert validate_timestamp(str(timestamp_future))
 
-    timestamp_past = (datetime.utcnow() - timedelta(hours=1)).timestamp()
+    timestamp_past = (datetime.now(timezone.utc) - timedelta(hours=1)).timestamp()
     assert validate_timestamp(timestamp_past) is False
 
 

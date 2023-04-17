@@ -4,7 +4,6 @@
 #
 import copy
 import json
-from datetime import datetime
 
 import pytest
 from ocean_provider.constants import BaseURLs
@@ -17,6 +16,7 @@ from tests.ddo.ddo_sample1_v4 import json_dict as ddo_sample1_v4
 from tests.ddo.ddo_sample_algorithm_v4 import algorithm_ddo_sample
 from tests.helpers.compute_helpers import get_compute_signature
 from tests.helpers.ddo_dict_builders import get_compute_service
+from tests.helpers.nonce import build_nonce
 from tests.test_helpers import get_first_service_by_type
 
 
@@ -116,7 +116,7 @@ def test_access_request_payload(
         "fileIndex": 0,
     }
 
-    nonce = str(datetime.utcnow().timestamp())
+    nonce = build_nonce()
     _msg = f"{asset.did}{nonce}"
     req["signature"] = sign_message(_msg, consumer_wallet)
     req["nonce"] = nonce

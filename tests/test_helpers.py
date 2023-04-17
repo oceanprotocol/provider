@@ -6,7 +6,6 @@ import logging
 import os
 import pathlib
 import time
-from datetime import datetime
 from hashlib import sha256
 from typing import Dict, Optional, Tuple
 
@@ -35,6 +34,7 @@ from tests.helpers.ddo_dict_builders import (
     get_compute_service,
     get_compute_service_no_rawalgo,
 )
+from tests.helpers.nonce import build_nonce
 from web3.logs import DISCARD
 from web3.main import Web3
 from web3.types import TxReceipt
@@ -569,7 +569,7 @@ def try_download(client, asset, service, consumer_wallet, tx_id, userdata):
         )
 
     download_endpoint = BaseURLs.SERVICES_URL + "/download"
-    nonce = str(datetime.utcnow().timestamp())
+    nonce = build_nonce()
     _msg = f"{asset.did}{nonce}"
     payload["signature"] = sign_message(_msg, consumer_wallet)
     payload["nonce"] = nonce

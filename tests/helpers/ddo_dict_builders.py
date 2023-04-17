@@ -4,7 +4,7 @@
 #
 import json
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict
 
 from eth_typing.encoding import HexStr
@@ -40,7 +40,7 @@ def build_ddo_dict(
 
 
 def get_current_iso_timestamp() -> str:
-    return datetime.utcnow().replace(microsecond=0).isoformat()
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
 
 
 def _build_service_dict_untyped(
