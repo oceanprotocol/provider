@@ -23,6 +23,7 @@ jobs:
         with:
           repository: "oceanprotocol/barge"
           path: 'barge'
+          ref: 'issue-367-remove-sudo'
       - name: Login to Docker Hub
         if: ${{ env.DOCKERHUB_PASSWORD && env.DOCKERHUB_USERNAME }}
         run: |
