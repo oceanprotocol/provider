@@ -26,7 +26,7 @@ install_requirements = [
     "Flask-RESTful==0.3.8",
     "flask-swagger==0.2.14",
     "flask-swagger-ui==3.25.0",
-    "Jinja2>=2.10.1,<3.1",
+    "Jinja2>=2.10.1,<3.1.3",
     "gunicorn==20.0.4",
     "coloredlogs==15.0.1",
     "Werkzeug>=2.0.3",
