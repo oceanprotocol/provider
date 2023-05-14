@@ -35,7 +35,7 @@ install_requirements = [
     "ipaddress==1.0.23",
     "dnspython==2.2.1",
     "flask-sieve==1.3.1",
-    "SQLAlchemy==1.3.23",
+    "SQLAlchemy>=1.3.23,<3.0.4",
     "redis==4.5.4",
     "enforce-typing==1.0.0.post1",
     "pyjwt==2.4.0",
