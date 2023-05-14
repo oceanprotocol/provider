@@ -6,7 +6,11 @@
 """
 This module creates an instance of flask `app`, creates `user_nonce` table if not exists, and sets the environment configuration.
 """
-from flask import Flask, _app_ctx_stack
+try:
+    from greenlet import getcurrent as _get_ident  # type: ignore
+except ImportError:
+    from threading import get_ident as _get_ident  # type: ignore
+from flask import Flask
 from flask_cors import CORS
 from flask_sieve import Sieve
 from ocean_provider.log import setup_logging
@@ -44,5 +48,5 @@ with engine.connect() as con:
 app = Flask(__name__)
 CORS(app)
 Sieve(app)
-app.session = scoped_session(SessionLocal, scopefunc=_app_ctx_stack.__ident_func__)
+app.session = scoped_session(SessionLocal, scopefunc=_get_ident)
 Base.query = app.session.query_property()
