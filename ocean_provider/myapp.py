@@ -11,6 +11,7 @@ from flask_cors import CORS
 from flask_sieve import Sieve
 from ocean_provider.log import setup_logging
 from sqlalchemy.orm import scoped_session
+from sqlalchemy import text
 
 from .database import Base, SessionLocal, engine
 
@@ -18,22 +19,26 @@ setup_logging()
 
 with engine.connect() as con:
     rs = con.execute(
-        """
+        text(
+            """
         CREATE TABLE IF NOT EXISTS user_nonce (
           address VARCHAR(255) NOT NULL,
           nonce VARCHAR(255) NOT NULL,
           PRIMARY KEY (address)
         )
         """
+        )
     )
 
     rs = con.execute(
-        """
+        text(
+            """
         CREATE TABLE IF NOT EXISTS revoked_tokens (
           token VARCHAR(255) NOT NULL,
           PRIMARY KEY (token)
         )
         """
+        )
     )
 
 app = Flask(__name__)
