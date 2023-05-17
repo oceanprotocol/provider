@@ -1,8 +1,6 @@
 import json
-from datetime import datetime, timedelta
-from functools import wraps
+from datetime import datetime, timedelta, timezone
 
-import pytest
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.provider_fees import get_provider_fees
@@ -10,6 +8,7 @@ from ocean_provider.utils.services import ServiceType
 from ocean_provider.utils.util import msg_hash
 from tests.helpers.constants import ARWEAVE_TRANSACTION_ID
 from tests.helpers.ddo_dict_builders import build_metadata_dict_type_algorithm
+from tests.helpers.nonce import build_nonce
 from tests.test_helpers import (
     get_first_service_by_type,
     get_registered_asset,
@@ -156,7 +155,7 @@ def build_and_send_ddo_with_compute_service(
 
 
 def get_compute_signature(client, consumer_wallet, did, job_id=None):
-    nonce = datetime.utcnow().timestamp()
+    nonce = build_nonce()
 
     # prepare consumer signature on did
     if job_id:
@@ -231,20 +230,4 @@ def get_compute_result(client, endpoint, params, raw_response=False):
 def get_future_valid_until(short=False):
     # return a timestamp for one hour in the future or 30s in the future if short
     time_diff = timedelta(hours=1) if not short else timedelta(seconds=30)
-    return int((datetime.utcnow() + time_diff).timestamp())
-
-
-def skip_on(exception, reason="Default reason"):
-    """Decorator for skipping test in case of known issue."""
-
-    def decorator_func(f):
-        @wraps(f)
-        def wrapper(*args, **kwargs):
-            try:
-                return f(*args, **kwargs)
-            except exception:
-                pytest.skip(reason)
-
-        return wrapper
-
-    return decorator_func
+    return int((datetime.now(timezone.utc) + time_diff).timestamp())

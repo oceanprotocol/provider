@@ -4,7 +4,7 @@
 #
 import logging
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 
 from flask import request as flask_request
 from flask_sieve import JsonRequest, ValidationException
@@ -251,8 +251,8 @@ class CustomRulesProcessor(RulesProcessor):
 
     def validate_timestamp(self, value, **kwargs):
         try:
-            datetime.fromtimestamp(int(value))
-            timestamp_now = int(datetime.utcnow().timestamp())
+            datetime.fromtimestamp(int(value), timezone.utc)
+            timestamp_now = int(datetime.now(timezone.utc).timestamp())
 
             return int(value) > timestamp_now
         except Exception:

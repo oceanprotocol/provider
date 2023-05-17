@@ -5,7 +5,7 @@
 import json
 import logging
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from distutils.util import strtobool
 from json.decoder import JSONDecodeError
 from typing import Union
@@ -187,8 +187,8 @@ def send_ether(web3, from_wallet: Account, to_address: str, amount: int):
 def validate_timestamp(value):
     """Checks whether a timestamp is valid (correctly formed and in the future)."""
     try:
-        valid_until = datetime.fromtimestamp(int(value))
-        now = datetime.utcnow()
+        valid_until = datetime.fromtimestamp(int(value), timezone.utc)
+        now = datetime.now(timezone.utc)
 
         return valid_until > now
     except Exception as e:

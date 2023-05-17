@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import os
-from datetime import datetime
 from unittest.mock import patch
 
 import pytest
@@ -16,6 +15,7 @@ from ocean_provider.user_nonce import (
     get_or_create_user_nonce_object,
     update_nonce,
 )
+from tests.helpers.nonce import build_nonce
 
 cache = Cache(
     app,
@@ -35,13 +35,13 @@ def test_get_and_update_nonce(monkeypatch, publisher_address, consumer_address):
     # get_nonce can be used on addresses that are not in the user_nonce table
     assert get_nonce("0x0000000000000000000000000000000000000000") is None
     assert get_or_create_user_nonce_object(
-        "0x0000000000000000000000000000000000000000", datetime.utcnow().timestamp()
+        "0x0000000000000000000000000000000000000000", build_nonce()
     )
 
     # update two times because, if we just pruned, we start from None
-    update_nonce(publisher_address, datetime.utcnow().timestamp())
+    update_nonce(publisher_address, build_nonce())
     publisher_nonce = get_nonce(publisher_address)
-    update_nonce(publisher_address, datetime.utcnow().timestamp())
+    update_nonce(publisher_address, build_nonce())
     new_publisher_nonce = get_nonce(publisher_address)
 
     assert new_publisher_nonce >= publisher_nonce
@@ -57,13 +57,13 @@ def test_get_and_update_nonce_redis(publisher_address, consumer_address):
     cache.delete("0x0000000000000000000000000000000000000000")
     assert get_nonce("0x0000000000000000000000000000000000000000") is None
     assert get_or_create_user_nonce_object(
-        "0x0000000000000000000000000000000000000000", datetime.utcnow().timestamp()
+        "0x0000000000000000000000000000000000000000", build_nonce()
     )
 
     # update two times because, if we just pruned, we start from None
-    update_nonce(publisher_address, datetime.utcnow().timestamp())
+    update_nonce(publisher_address, build_nonce())
     publisher_nonce = get_nonce(publisher_address)
-    update_nonce(publisher_address, datetime.utcnow().timestamp())
+    update_nonce(publisher_address, build_nonce())
     new_publisher_nonce = get_nonce(publisher_address)
 
     assert new_publisher_nonce >= publisher_nonce
@@ -79,7 +79,7 @@ def test_update_nonce_exception(monkeypatch, publisher_address):
     monkeypatch.delenv("REDIS_CONNECTION")
 
     # Ensure address exists in database
-    update_nonce(publisher_address, datetime.utcnow().timestamp())
+    update_nonce(publisher_address, build_nonce())
 
     # Create duplicate nonce_object
     with patch.object(
@@ -88,7 +88,7 @@ def test_update_nonce_exception(monkeypatch, publisher_address):
         return_value=models.UserNonce(address=publisher_address, nonce="0"),
     ):
         with pytest.raises(sqlalchemy.exc.IntegrityError):
-            update_nonce(publisher_address, datetime.utcnow().timestamp())
+            update_nonce(publisher_address, build_nonce())
 
     publisher_nonce = get_nonce(publisher_address)
     update_nonce(publisher_address, None)

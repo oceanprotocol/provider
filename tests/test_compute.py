@@ -4,10 +4,8 @@
 #
 import os
 import time
-from datetime import datetime
 
 import pytest
-import requests
 from eth_account import Account
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
@@ -30,6 +28,7 @@ from tests.helpers.compute_helpers import (
     start_order,
 )
 from tests.helpers.ddo_dict_builders import build_metadata_dict_type_algorithm
+from tests.helpers.nonce import build_nonce
 from tests.test_auth import create_token
 from tests.test_helpers import get_first_service_by_type, get_ocean_token_address
 
@@ -269,7 +268,7 @@ def test_compute(client, publisher_wallet, consumer_wallet, free_c2d_env):
         "jobId": job_id,
     }
 
-    payload["nonce"] = str(datetime.utcnow().timestamp())
+    payload["nonce"] = build_nonce()
     result_without_signature = get_compute_result(
         client, BaseURLs.SERVICES_URL + "/computeResult", payload, raw_response=True
     )

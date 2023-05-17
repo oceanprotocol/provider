@@ -5,7 +5,6 @@
 import copy
 import logging
 import time
-from datetime import datetime
 from unittest.mock import patch
 
 import pytest
@@ -15,6 +14,7 @@ from ocean_provider.utils.data_nft_factory import get_data_nft_factory_address
 from ocean_provider.utils.provider_fees import get_provider_fees
 from ocean_provider.utils.services import ServiceType
 from tests.helpers.constants import ARWEAVE_TRANSACTION_ID
+from tests.helpers.nonce import build_nonce
 from tests.test_auth import create_token
 from tests.test_helpers import (
     approve_multiple_tokens,
@@ -24,8 +24,8 @@ from tests.test_helpers import (
     get_service_by_index,
     mint_100_datatokens,
     mint_multiple_tokens,
-    start_order,
     start_multiple_order,
+    start_order,
     try_download,
 )
 
@@ -77,7 +77,7 @@ def test_download_service(
 
     # Consume using auth token
     token = create_token(client, consumer_wallet)
-    nonce = str(datetime.utcnow().timestamp())
+    nonce = build_nonce()
     payload["nonce"] = nonce
     payload.pop("signature")
     response = client.get(
@@ -86,7 +86,7 @@ def test_download_service(
     assert response.status == "200 OK"
 
     # Consume using url index and signature (with nonce)
-    nonce = str(datetime.utcnow().timestamp())
+    nonce = build_nonce()
     _msg = f"{asset.did}{nonce}"
     payload["signature"] = sign_message(_msg, consumer_wallet)
     payload["nonce"] = nonce
@@ -96,7 +96,7 @@ def test_download_service(
     assert response.status_code == 200, f"{response.data}"
 
     if not userdata and not erc20_enterprise:
-        nonce = str(datetime.utcnow().timestamp())
+        nonce = build_nonce()
         _msg = f"{asset.did}{nonce}"
         payload["signature"] = sign_message(_msg, consumer_wallet)
         payload["nonce"] = nonce
@@ -220,7 +220,7 @@ def test_download_timeout(client, publisher_wallet, consumer_wallet, web3, timeo
     download_endpoint = BaseURLs.SERVICES_URL + "/download"
 
     # Consume using url index and signature (with nonce)
-    nonce = str(datetime.utcnow().timestamp())
+    nonce = build_nonce()
     _msg = f"{asset.did}{nonce}"
     payload["signature"] = sign_message(_msg, consumer_wallet)
     payload["nonce"] = nonce
@@ -261,7 +261,7 @@ def test_download_multiple_files(client, publisher_wallet, consumer_wallet, web3
         consumer_wallet,
     )
 
-    nonce = str(datetime.utcnow().timestamp())
+    nonce = build_nonce()
     _msg = f"{asset.did}{nonce}"
 
     # Consume using url index and auth token
@@ -279,7 +279,7 @@ def test_download_multiple_files(client, publisher_wallet, consumer_wallet, web3
     response = client.get(download_endpoint, query_string=payload)
     assert response.status_code == 200, f"{response.data}"
 
-    nonce = str(datetime.utcnow().timestamp())
+    nonce = build_nonce()
     _msg = f"{asset.did}{nonce}"
     payload["signature"] = sign_message(_msg, consumer_wallet)
     payload["fileIndex"] = 1
@@ -288,7 +288,7 @@ def test_download_multiple_files(client, publisher_wallet, consumer_wallet, web3
     response = client.get(download_endpoint, query_string=payload)
     assert response.status_code == 200, f"{response.data}"
 
-    nonce = str(datetime.utcnow().timestamp())
+    nonce = build_nonce()
     _msg = f"{asset.did}{nonce}"
     payload["signature"] = sign_message(_msg, consumer_wallet)
     payload["fileIndex"] = 2
@@ -318,7 +318,7 @@ def test_download_compute_asset_by_c2d(client, publisher_wallet, consumer_wallet
         consumer_wallet,
     )
 
-    nonce = str(datetime.utcnow().timestamp())
+    nonce = build_nonce()
     _msg = f"{asset.did}{nonce}"
 
     payload = {
@@ -367,7 +367,7 @@ def test_download_compute_asset_by_user_fails(
         consumer_wallet,
     )
 
-    nonce = str(datetime.utcnow().timestamp())
+    nonce = build_nonce()
     _msg = f"{asset.did}{nonce}"
 
     payload = {
@@ -436,7 +436,7 @@ def test_download_arweave(client, publisher_wallet, consumer_wallet, web3):
     download_endpoint = BaseURLs.SERVICES_URL + "/download"
 
     # Consume using index and signature (with nonce)
-    nonce = str(datetime.utcnow().timestamp())
+    nonce = build_nonce()
     _msg = f"{asset.did}{nonce}"
     payload["signature"] = sign_message(_msg, consumer_wallet)
     payload["nonce"] = nonce

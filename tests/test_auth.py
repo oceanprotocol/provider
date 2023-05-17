@@ -3,24 +3,25 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import pytest
 from ocean_provider.constants import BaseURLs
 from ocean_provider.user_nonce import is_token_valid
 from ocean_provider.utils.accounts import sign_message
+from tests.helpers.nonce import build_nonce
 
 
 def create_token(client, consumer_wallet, expiration=None):
     """Helper function to create a token using the API."""
     address = consumer_wallet.address
     if expiration is None:
-        expiration = int((datetime.utcnow() + timedelta(hours=1)).timestamp())
+        expiration = int((datetime.now(timezone.utc) + timedelta(hours=1)).timestamp())
 
     payload = {"address": address, "expiration": expiration}
 
     endpoint = BaseURLs.SERVICES_URL + "/createAuthToken"
-    nonce = str(datetime.utcnow().timestamp())
+    nonce = build_nonce()
     _msg = f"{address}{nonce}"
     payload["signature"] = sign_message(_msg, consumer_wallet)
     payload["nonce"] = nonce
@@ -45,7 +46,7 @@ def test_create_auth_token(client, consumer_wallet, provider_wallet):
 def test_delete_auth_token_sqlite(client, consumer_wallet, monkeypatch):
     """Tests token deletion and recreation with the sqlite backend."""
     monkeypatch.delenv("REDIS_CONNECTION")
-    expiration = int((datetime.utcnow() + timedelta(hours=1)).timestamp())
+    expiration = int((datetime.now(timezone.utc) + timedelta(hours=1)).timestamp())
     address = consumer_wallet.address
     token = create_token(client, consumer_wallet, expiration)
     assert is_token_valid(token, address)[0]
@@ -53,7 +54,7 @@ def test_delete_auth_token_sqlite(client, consumer_wallet, monkeypatch):
     payload = {"address": address, "token": token}
 
     endpoint = BaseURLs.SERVICES_URL + "/deleteAuthToken"
-    nonce = str(datetime.utcnow().timestamp())
+    nonce = build_nonce()
     _msg = f"{address}{nonce}"
     payload["signature"] = sign_message(_msg, consumer_wallet)
     payload["nonce"] = nonce
@@ -72,14 +73,14 @@ def test_delete_auth_token_sqlite(client, consumer_wallet, monkeypatch):
 def test_delete_auth_token_redis(client, consumer_wallet):
     """Tests token deletion and recreation with the redis backend."""
     address = consumer_wallet.address
-    expiration = int((datetime.utcnow() + timedelta(hours=1)).timestamp())
+    expiration = int((datetime.now(timezone.utc) + timedelta(hours=1)).timestamp())
     token = create_token(client, consumer_wallet, expiration)
     assert is_token_valid(token, address)[0]
 
     payload = {"address": address, "token": token}
 
     endpoint = BaseURLs.SERVICES_URL + "/deleteAuthToken"
-    nonce = str(datetime.utcnow().timestamp())
+    nonce = build_nonce()
     _msg = f"{address}{nonce}"
     payload["signature"] = sign_message(_msg, consumer_wallet)
     payload["nonce"] = nonce
@@ -91,7 +92,7 @@ def test_delete_auth_token_redis(client, consumer_wallet):
     assert is_token_valid(token, address)[1] == "Token is deleted."
 
     # can not delete again
-    nonce = str(datetime.utcnow().timestamp())
+    nonce = build_nonce()
     _msg = f"{address}{nonce}"
     payload["signature"] = sign_message(_msg, consumer_wallet)
     payload["nonce"] = nonce
@@ -109,7 +110,7 @@ def test_delete_auth_token_redis(client, consumer_wallet):
 def test_expiration(client, consumer_wallet):
     """Tests token expiration."""
     address = consumer_wallet.address
-    expiration = int((datetime.utcnow() + timedelta(seconds=5)).timestamp())
+    expiration = int((datetime.now(timezone.utc) + timedelta(seconds=5)).timestamp())
     token = create_token(client, consumer_wallet, expiration)
     time.sleep(6)
     valid, message = is_token_valid(token, address)

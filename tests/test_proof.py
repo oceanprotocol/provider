@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import json
-from datetime import datetime
 from unittest.mock import Mock, patch
 
 import pytest
@@ -12,6 +11,7 @@ from ocean_provider.utils.proof import send_proof
 from ocean_provider.utils.provider_fees import get_provider_fees
 from ocean_provider.utils.services import ServiceType
 from requests.models import Response
+from tests.helpers.nonce import build_nonce
 from tests.test_helpers import (
     get_first_service_by_type,
     get_registered_asset,
@@ -67,7 +67,7 @@ def test_chain_proof(client, monkeypatch, web3, publisher_wallet, consumer_walle
         consumer_wallet,
     )
 
-    nonce = str(datetime.utcnow().timestamp())
+    nonce = build_nonce()
 
     consumer_data = _msg = f"{asset.did}{nonce}"
     signature = sign_message(_msg, consumer_wallet)

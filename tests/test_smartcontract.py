@@ -4,7 +4,6 @@
 #
 import json
 import os
-from datetime import datetime
 
 import pytest
 from ocean_provider.constants import BaseURLs
@@ -12,6 +11,7 @@ from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.address import get_contract_address
 from ocean_provider.utils.provider_fees import get_provider_fees
 from ocean_provider.utils.services import ServiceType
+from tests.helpers.nonce import build_nonce
 from tests.test_helpers import (
     get_first_service_by_type,
     get_registered_asset,
@@ -66,7 +66,7 @@ def test_download_smartcontract_asset(client, publisher_wallet, consumer_wallet,
     download_endpoint = BaseURLs.SERVICES_URL + "/download"
 
     # Consume using url index and signature (with nonce)
-    nonce = str(datetime.utcnow().timestamp())
+    nonce = build_nonce()
     _msg = f"{asset.did}{nonce}"
     payload["signature"] = sign_message(_msg, consumer_wallet)
     payload["nonce"] = nonce
@@ -134,7 +134,7 @@ def test_download_smartcontract_asset_with_userdata(
 
     download_endpoint = BaseURLs.SERVICES_URL + "/download"
     # Consume using url index and signature (with nonce)
-    nonce = str(datetime.utcnow().timestamp())
+    nonce = build_nonce()
     _msg = f"{asset.did}{nonce}"
     payload["signature"] = sign_message(_msg, consumer_wallet)
     payload["nonce"] = nonce
@@ -195,7 +195,7 @@ def test_download_smartcontract_asset_with_pure_function(
     download_endpoint = BaseURLs.SERVICES_URL + "/download"
 
     # Consume using url index and signature (with nonce)
-    nonce = str(datetime.utcnow().timestamp())
+    nonce = build_nonce()
     _msg = f"{asset.did}{nonce}"
     payload["signature"] = sign_message(_msg, consumer_wallet)
     payload["nonce"] = nonce
