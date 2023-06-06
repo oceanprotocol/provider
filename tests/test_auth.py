@@ -15,6 +15,7 @@ from tests.helpers.nonce import build_nonce
 def create_token(client, consumer_wallet, expiration=None):
     """Helper function to create a token using the API."""
     address = consumer_wallet.address
+
     if expiration is None:
         expiration = int((datetime.now(timezone.utc) + timedelta(hours=1)).timestamp())
 
