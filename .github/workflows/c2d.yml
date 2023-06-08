@@ -2,7 +2,7 @@
 ## Copyright 2023 Ocean Protocol Foundation
 ## SPDX-License-Identifier: Apache-2.0
 ##
-name: Provider tests
+name: Provider tests for C2D
 
 on:
   - push
@@ -33,7 +33,7 @@ jobs:
       - name: Run Barge
         working-directory: ${{ github.workspace }}/barge
         run: |
-          bash -x start_ocean.sh --no-dashboard 2>&1 --with-rbac --with-provider2 --with-thegraph --skip-subgraph-deploy > start_ocean.log &
+          bash -x start_ocean.sh --no-dashboard 2>&1 --with-provider2 --with-c2d > start_ocean.log &
       - name: Wait for contracts deployment and C2D cluster to be ready
         working-directory: ${{ github.workspace }}/barge
         run: |
@@ -55,9 +55,7 @@ jobs:
           pip install -r requirements_dev.txt
       - name: Test with pytest
         run: |
-          coverage run --source ocean_provider --omit=tests/test_compute.py -m pytest
-          coverage report
-          coverage xml
+          pytest tests/test_compute.py
       - name:  docker logs
         run: docker logs ocean_aquarius_1 && docker logs ocean_provider_1 && docker logs ocean_provider2_1 && docker logs ocean_ipfs_1
         if: ${{ failure() }}
