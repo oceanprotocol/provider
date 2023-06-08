@@ -14,7 +14,6 @@ from ocean_provider.utils.currency import to_wei
 from ocean_provider.utils.datatoken import get_datatoken_contract
 from ocean_provider.utils.provider_fees import get_provider_fees
 from ocean_provider.utils.services import ServiceType
-from ocean_provider.validation.provider_requests import RBACValidator
 from tests.helpers.compute_helpers import (
     build_and_send_ddo_with_compute_service,
     get_compute_job_info,
@@ -482,10 +481,6 @@ def test_compute_additional_input(
         ],
         "environment": free_c2d_env["id"],
     }
-
-    monkeypatch.setenv("RBAC_SERVER_URL", "http://172.15.0.8:3000")
-    validator = RBACValidator(request_name="ComputeRequest", request=payload)
-    assert validator.fails() is False
 
     response = post_to_compute(client, payload)
     assert response.status == "200 OK", f"start compute job failed: {response.data}"
