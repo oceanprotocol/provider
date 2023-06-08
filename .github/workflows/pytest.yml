@@ -39,8 +39,9 @@ jobs:
         run: |
           for i in $(seq 1 250); do
             sleep 10
-            [ -f "$HOME/.ocean/ocean-contracts/artifacts/ready" -a] && break
+            [ -f "$HOME/.ocean/ocean-contracts/artifacts/ready" ] && break
             done
+          ls -la "$HOME/.ocean/ocean-contracts/artifacts/"
       - name: Verify deployments
         run: |
           cat $HOME/.ocean/ocean-contracts/artifacts/address.json
