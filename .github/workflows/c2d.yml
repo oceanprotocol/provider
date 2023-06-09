@@ -6,7 +6,6 @@ name: Provider tests for C2D
 
 on:
   - push
-  - pull_request
 
 jobs:
   build:
