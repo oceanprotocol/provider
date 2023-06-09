@@ -52,7 +52,7 @@ jobs:
           pip install -r requirements_dev.txt
       - name: Test with pytest
         run: |
-          coverage run --source ocean_provider -m pytest --ignore=tests/test_compute.py --ignore=ocean_provider/utils/test/test_compute.py --ignore=ocean_provider/utils/test/test_provider_fees.py --ignore=ocean_provider/validation/test/test_algo_validation.py
+          coverage run --source ocean_provider --omit="tests/test_compute.py","ocean_provider/utils/test/test_compute.py","ocean_provider/utils/test/test_provider_fees.py","ocean_provider/validation/test/test_algo_validation.py" -m pytest
           coverage report
           coverage xml
       - name:  docker logs
