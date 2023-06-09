@@ -2,6 +2,7 @@
 # Copyright 2023 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
+import json
 import os
 import time
 
@@ -29,7 +30,11 @@ from tests.helpers.compute_helpers import (
 from tests.helpers.ddo_dict_builders import build_metadata_dict_type_algorithm
 from tests.helpers.nonce import build_nonce
 from tests.test_auth import create_token
-from tests.test_helpers import get_first_service_by_type, get_ocean_token_address
+from tests.test_helpers import (
+    get_first_service_by_type,
+    get_ocean_token_address,
+    initialize_service,
+)
 
 
 @pytest.mark.unit
@@ -37,6 +42,251 @@ def test_compute_rejected(client, monkeypatch):
     monkeypatch.delenv("OPERATOR_SERVICE_URL")
     response = post_to_compute(client, {})
     assert response.status_code == 404
+
+
+@pytest.mark.integration
+def test_can_not_initialize_compute_service_with_simple_initialize(
+    client, publisher_wallet, consumer_wallet, web3
+):
+    asset_w_compute_service = get_registered_asset(
+        publisher_wallet, custom_services="vanilla_compute", custom_services_args=[]
+    )
+    service = get_first_service_by_type(asset_w_compute_service, ServiceType.COMPUTE)
+
+    response = initialize_service(
+        client, asset_w_compute_service.did, service, consumer_wallet, raw_response=True
+    )
+    assert "error" in response.json
+    assert (
+        response.json["error"]
+        == "Use the initializeCompute endpoint to initialize compute jobs."
+    )
+
+
+@pytest.mark.integration
+def test_initialize_compute_works(
+    client, publisher_wallet, consumer_wallet, free_c2d_env
+):
+    """Call `initializeCompute` when there are NO reusable orders
+    Assert response contains `datatoken` and `providerFee` and does not contain
+    `validOrder` for both dataset and algorithm.
+    """
+    ddo, alg_ddo = build_and_send_ddo_with_compute_service(
+        client,
+        publisher_wallet,
+        consumer_wallet,
+        True,
+        None,
+        free_c2d_env["consumerAddress"],
+        do_send=False,
+        timeout=3600,
+    )
+    service = get_first_service_by_type(ddo, ServiceType.COMPUTE)
+    sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
+
+    response = client.post(
+        BaseURLs.SERVICES_URL + "/initializeCompute",
+        data=json.dumps(
+            {
+                "datasets": [
+                    {
+                        "documentId": ddo.did,
+                        "serviceId": service.id,
+                        "userdata": '{"dummy_userdata":"XXX", "age":12}',
+                    }
+                ],
+                "algorithm": {"documentId": alg_ddo.did, "serviceId": sa_compute.id},
+                "consumerAddress": consumer_wallet.address,
+                "compute": {
+                    "env": free_c2d_env["id"],
+                    "validUntil": get_future_valid_until(),
+                },
+            }
+        ),
+        content_type="application/json",
+    )
+
+    assert response.status_code == 200, f"{response.data}"
+    assert response.json["datasets"][0]["providerFee"]["providerFeeAmount"] == "0"
+    assert "datatoken" in response.json["datasets"][0]
+    assert "providerFee" in response.json["datasets"][0]
+    assert "validOrder" not in response.json["datasets"][0]
+    assert "datatoken" in response.json["algorithm"]
+    assert "providerFee" in response.json["algorithm"]
+    assert "validOrder" not in response.json["algorithm"]
+
+
+@pytest.mark.integration
+def test_initialize_compute_order_reused(
+    client, publisher_wallet, consumer_wallet, free_c2d_env
+):
+    """Call `initializeCompute` when there ARE reusable orders
+
+    Enumerate all cases:
+
+    Case 1:
+        valid orders
+        valid provider fees
+
+    Case 2:
+        valid orders
+        expired provider fees
+
+    Case 3:
+        expired orders
+        expired provider fees
+
+    Case 4:
+        wrong tx id for dataset order
+    """
+    # Order asset, valid for 30 seconds
+    valid_until = get_future_valid_until(short=True)
+    ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
+        client,
+        publisher_wallet,
+        consumer_wallet,
+        True,
+        None,
+        free_c2d_env["consumerAddress"],
+        valid_until,
+        timeout=60,
+        c2d_environment=free_c2d_env["id"],
+    )
+    service = get_first_service_by_type(ddo, ServiceType.COMPUTE)
+    sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
+
+    payload = {
+        "datasets": [
+            {
+                "documentId": ddo.did,
+                "serviceId": service.id,
+                "transferTxId": tx_id,
+                "userdata": '{"dummy_userdata":"XXX", "age":12}',
+            }
+        ],
+        "algorithm": {
+            "documentId": alg_ddo.did,
+            "serviceId": sa_compute.id,
+            "transferTxId": alg_tx_id,
+        },
+        "consumerAddress": consumer_wallet.address,
+        "compute": {
+            "env": free_c2d_env["id"],
+            "validUntil": valid_until,
+        },
+    }
+
+    response = client.post(
+        BaseURLs.SERVICES_URL + "/initializeCompute",
+        data=json.dumps(payload),
+        content_type="application/json",
+    )
+
+    # Case 1: valid orders, valid provider fees
+    assert response.status_code == 200
+    assert response.json["algorithm"] == {"validOrder": alg_tx_id}
+    assert response.json["datasets"] == [{"validOrder": tx_id}]
+    assert "providerFee" not in response.json["datasets"][0]
+    assert "providerFee" not in response.json["algorithm"]
+
+    # Sleep long enough for provider fees to expire
+    timeout = time.time() + (30 * 5)
+    while True:
+        payload["compute"]["validUntil"] = get_future_valid_until(short=True) + 30
+        response = client.post(
+            BaseURLs.SERVICES_URL + "/initializeCompute",
+            data=json.dumps(payload),
+            content_type="application/json",
+        )
+        if "providerFee" in response.json["algorithm"] or time.time() > timeout:
+            break
+        time.sleep(1)
+
+    # Case 2: valid orders, expired provider fees
+    assert response.status_code == 200
+    assert response.json["algorithm"]["validOrder"] == alg_tx_id
+    assert response.json["datasets"][0]["validOrder"] == tx_id
+    assert "providerFee" in response.json["datasets"][0]
+    assert "providerFee" in response.json["algorithm"]
+
+    # Sleep long enough for orders to expire
+    timeout = time.time() + (30 * 3)
+    while True:
+        payload["compute"]["validUntil"] = get_future_valid_until(short=True) + 30
+        response = client.post(
+            BaseURLs.SERVICES_URL + "/initializeCompute",
+            data=json.dumps(payload),
+            content_type="application/json",
+        )
+        if "validOrder" not in response.json["algorithm"] or time.time() > timeout:
+            break
+        time.sleep(1)
+
+    # Case 3: expired orders, expired provider fees
+    assert response.status_code == 200
+    assert "datatoken" in response.json["datasets"][0]
+    assert "providerFee" in response.json["datasets"][0]
+    assert "validOrder" not in response.json["datasets"][0]
+    assert "datatoken" in response.json["algorithm"]
+    assert "providerFee" in response.json["algorithm"]
+    assert "validOrder" not in response.json["algorithm"]
+
+    # Case 4: wrong tx id for dataset order
+    payload["datasets"][0]["transferTxId"] = "wrong_tx_id"
+    response = client.post(
+        BaseURLs.SERVICES_URL + "/initializeCompute",
+        data=json.dumps(payload),
+        content_type="application/json",
+    )
+
+    assert response.status_code == 200
+    assert "datatoken" in response.json["datasets"][0].keys()
+    assert "providerFee" in response.json["datasets"][0].keys()
+
+
+@pytest.mark.integration
+def test_initialize_compute_paid_env(
+    client, publisher_wallet, consumer_wallet, paid_c2d_env
+):
+    ddo, alg_ddo = build_and_send_ddo_with_compute_service(
+        client,
+        publisher_wallet,
+        consumer_wallet,
+        True,
+        None,
+        paid_c2d_env,
+        do_send=False,
+        timeout=3600,
+    )
+    service = get_first_service_by_type(ddo, ServiceType.COMPUTE)
+    sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
+
+    response = client.post(
+        BaseURLs.SERVICES_URL + "/initializeCompute",
+        data=json.dumps(
+            {
+                "datasets": [
+                    {
+                        "documentId": ddo.did,
+                        "serviceId": service.id,
+                        "userdata": '{"dummy_userdata":"XXX", "age":12}',
+                    }
+                ],
+                "algorithm": {"documentId": alg_ddo.did, "serviceId": sa_compute.id},
+                "consumerAddress": consumer_wallet.address,
+                "compute": {
+                    "env": paid_c2d_env["id"],
+                    "validUntil": get_future_valid_until(),
+                },
+            }
+        ),
+        content_type="application/json",
+    )
+
+    assert response.status_code == 200, f"{response.data}"
+    assert int(
+        response.json["datasets"][0]["providerFee"]["providerFeeAmount"]
+    ) >= to_wei(7)
 
 
 @pytest.mark.integration
