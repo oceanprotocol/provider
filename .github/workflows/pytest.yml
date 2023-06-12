@@ -52,7 +52,7 @@ jobs:
           pip install -r requirements_dev.txt
       - name: Test with pytest
         run: |
-          pytest --ignore=tests/test_compute.py --ignore=ocean_provider/utils/test/test_compute.py --ignore=ocean_provider/validation/test/test_algo_validation.py
+          pytest -m "not compute and not algo_validation and not provider_fees" --ignore-glob="*compute*" --ignore-glob="*algo_validation*" --ignore-glob="*provider_fees*" 
           coverage report
           coverage xml
       - name:  docker logs

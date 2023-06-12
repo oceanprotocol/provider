@@ -13,6 +13,7 @@ from ocean_provider.utils.compute import (
 test_logger = logging.getLogger(__name__)
 
 
+@pytest.mark.compute
 @pytest.mark.unit
 def test_get_compute_endpoint(monkeypatch):
     monkeypatch.setenv("OPERATOR_SERVICE_URL", "http://with-slash.com/")

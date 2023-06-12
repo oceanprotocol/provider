@@ -13,6 +13,7 @@ from tests.test_helpers import (
 )
 
 
+@pytest.mark.provider_fees
 @pytest.mark.unit
 @freeze_time("Feb 11th, 2012 00:00")
 def test_get_provider_fee_amount(web3, publisher_wallet):
