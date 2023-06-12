@@ -5,6 +5,8 @@
 import logging
 import os
 
+import ipfshttpclient
+import requests
 import pytest
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.address import get_contract_address
@@ -100,10 +102,19 @@ def test_checksums(client):
         assert file_info["checksumType"] == "sha256"
 
     # big file, we should not have a checksum
+    response = requests.get(
+        "https://raw.githubusercontent.com/t-davidson/hate-speech-and-offensive-language/master/data/labeled_data.csv"
+    )
+    if response.status_code == 200:
+        with open("./tests/resources/labeled_data.csv", "wb") as file:
+            file.write(response.content)
+
+    ipfs_client = ipfshttpclient.connect("/dns/172.15.0.16/tcp/5001/http")
+    cid = ipfs_client.add("./tests/resources/labeled_data.csv")["Hash"]
     data = {
-        "hash": "bafybeif4rpr4tuqfjmpxkavtsgzs6aliafwy7cywlge4756xpozqa5xezy",
+        "hash": cid,
         "type": "ipfs",
-        "checksum": True,
+        "checksum": False,
     }
     response = client.post(fileinfo_url, json=data)
     result = response.get_json()

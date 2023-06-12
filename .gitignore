@@ -3,6 +3,8 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+tests/resources/labeled_data.csv
+
 # C extensions
 *.so
 
