@@ -231,7 +231,7 @@ Jun 14 09:41:53 testvm systemd[1]: Finished provider service with docker compose
 
 
 
-confirm provider service is accessible on `localhost` port 8030/tcp:
+confirm that provider service is accessible on `localhost` port 8030/tcp:
 
 ```shell
 $ curl localhost:8030
