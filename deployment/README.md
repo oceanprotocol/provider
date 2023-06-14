@@ -143,7 +143,7 @@ services:
       backend:
     environment:
       ARTIFACTS_PATH: "/ocean-contracts/artifacts"
-      NETWORK_URL: '{"5":"https://goerli.infura.io/v3/<your INFURA project id","80001":"https://polygon-mumbai.infura.io/v3/<your INFURA project id"}'
+      NETWORK_URL: '{"5":"https://goerli.infura.io/v3/<your INFURA project id>","80001":"https://polygon-mumbai.infura.io/v3/<your INFURA project id>"}'
       PROVIDER_PRIVATE_KEY: '{"5":"<your private key>","80001":"<your private key"}'
       LOG_LEVEL: DEBUG
       OCEAN_PROVIDER_URL: 'http://0.0.0.0:8030'
