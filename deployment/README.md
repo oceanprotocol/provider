@@ -6,7 +6,6 @@
 
 [Provider](https://github.com/oceanprotocol/provider) has the following dependencies:
 
-- [Aquarius](https://github.com/oceanprotocol/aquarius)
 - Blockchain network(s) RPC access
 
 which means these components must be available before the deployment.
