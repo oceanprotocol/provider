@@ -55,7 +55,7 @@ spec:
           value: /ocean-provider/artifacts
         - name: NETWORK_URL
           value: |
-            {"5":"https://goerli.infura.io/v3/<your INFURA project id","80001":"https://polygon-mumbai.infura.io/v3/<your INFURA project id"}
+            {"5":"https://goerli.infura.io/v3/<your INFURA project id>","80001":"https://polygon-mumbai.infura.io/v3/<your INFURA project id>"}
         - name: PROVIDER_PRIVATE_KEY
           value: |
             {"5":"<your private key>","80001":"<your private key>"}
