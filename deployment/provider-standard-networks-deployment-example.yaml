@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: provider
+  name: provider
+spec:
+  progressDeadlineSeconds: 2147483647
+  replicas: 1
+  revisionHistoryLimit: 2147483647
+  selector:
+    matchLabels:
+      app: provider
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: provider
+    spec:
+      containers:
+      - env:
+        - name: ARTIFACTS_PATH
+          value: /ocean-provider/artifacts
+        - name: NETWORK_URL
+          value: |
+            {"5":"https://goerli.infura.io/v3/<your INFURA project id>","80001":"https://polygon-mumbai.infura.io/v3/<your INFURA project id>"}
+        - name: PROVIDER_PRIVATE_KEY
+          value: |
+            {"5":"<your private key>","80001":"<your private key>"}
+        - name: LOG_LEVEL
+          value: DEBUG
+        - name: OCEAN_PROVIDER_URL
+          value: http://0.0.0.0:8030
+        - name: OCEAN_PROVIDER_WORKERS
+          value: "4"
+        - name: IPFS_GATEWAY
+          value: < your IPFS gateway >
+        - name: OCEAN_PROVIDER_TIMEOUT
+          value: "9000"
+        - name: OPERATOR_SERVICE_URL
+          value: < Operator service URL>
+        - name: AQUARIUS_URL
+          value: < Aquarius URL >
+        - name: ARWEAVE_GATEWAY
+          value: https://arweave.net/
+        - name: UNIVERSAL_PRIVATE_KEY
+          value: <your universal private key>
+        - name: REQUEST_TIMEOUT
+          value: "10"
+        image: oceanprotocol/provider-py:latest
+        imagePullPolicy: Always
+        name: provider
+        ports:
+        - containerPort: 8030
+          protocol: TCP
+        resources:
+          limits:
+            cpu: 500m
+            memory: 700Mi
+          requests:
+            cpu: 500m
+            memory: 700Mi
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      terminationGracePeriodSeconds: 30
