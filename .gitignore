@@ -3,7 +3,7 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-tests/resources/labeled_data.csv
+tests/resources/branin.arff
 
 # C extensions
 *.so

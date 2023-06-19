@@ -103,14 +103,14 @@ def test_checksums(client):
 
     # big file, we should not have a checksum
     response = requests.get(
-        "https://raw.githubusercontent.com/t-davidson/hate-speech-and-offensive-language/master/data/labeled_data.csv"
+        "https://raw.githubusercontent.com/oceanprotocol/c2d-examples/main/branin_and_gpr/branin.arff"
     )
     if response.status_code == 200:
-        with open("./tests/resources/labeled_data.csv", "wb") as file:
+        with open("./tests/resources/branin.arff", "wb") as file:
             file.write(response.content)
 
     ipfs_client = ipfshttpclient.connect("/dns/172.15.0.16/tcp/5001/http")
-    cid = ipfs_client.add("./tests/resources/labeled_data.csv")["Hash"]
+    cid = ipfs_client.add("./tests/resources/branin.arff")["Hash"]
     data = {
         "hash": cid,
         "type": "ipfs",
