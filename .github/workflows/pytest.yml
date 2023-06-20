@@ -64,16 +64,6 @@ jobs:
         uses: paambaati/codeclimate-action@v2.7.5
         env:
           CC_TEST_REPORTER_ID: b0d75c25d5176c59e8ea665bf74396d9ee1bdf2c97f11ccc6869f9e91d80a6c7
-  dispatch:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Trigger C2D Workflow
-        uses: peter-evans/repository-dispatch@v1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          repository: ${{ github.repository }}
-          event-type: workflow-c2d-start
 
   dockerbuild:
     runs-on: ubuntu-latest

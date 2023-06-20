@@ -6,10 +6,6 @@ name: Provider tests for C2D
 
 on:
   - push
-  - workflow_run:
-      workflows: [ "Provider tests" ]
-      types:
-        - completed
 
 jobs:
   build:
