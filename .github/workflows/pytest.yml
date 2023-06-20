@@ -5,6 +5,9 @@
 name: Provider tests
 
 on:
+  - repository_dispatch:
+      types:
+        - trigger-pytest-workflow
   - push
   - pull_request
 
