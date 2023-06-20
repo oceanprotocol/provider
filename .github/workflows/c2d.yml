@@ -54,10 +54,7 @@ jobs:
           pip install -r requirements_dev.txt
       - name: Test with pytest
         run: |
-          pytest tests/test_compute.py
-          pytest ocean_provider/utils/test/test_compute.py
-          pytest ocean_provider/utils/test/test_provider_fees.py
-          pytest ocean_provider/validation/test/test_algo_validation.py
+          pytest --cov=ocean_provider --cov-report xml -m "compute and algo_validation and provider_fees"
       - name:  docker logs
         run: docker logs ocean_aquarius_1 && docker logs ocean_provider_1 && docker logs ocean_provider2_1 && docker logs ocean_ipfs_1
         if: ${{ failure() }}
