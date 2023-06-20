@@ -11,18 +11,18 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v2
-        with:
-          name: cc-report
-          path: $HOME/cc-reporter/cc-test-reporter
       - name: Check files in artifacts
         working-directory: ${{ github.workspace }}
         run: |
-          for i in $(seq 1 250); do
+          for i in $(seq 1 500); do
             sleep 10
             [ -f "$HOME/cc-reporter/cc-test-reporter/coverage.json" -a -f "$HOME/cc-reporter/cc-test-reporter/c2d-coverage.json"] && break
             done
           ls -la "$HOME/cc/artifacts/"
+      - uses: actions/download-artifact@v2
+        with:
+          name: cc-report
+          path: $HOME/cc-reporter/cc-test-reporter
 
       - name: Calculate coverage
         working-directory: ${{ github.workspace }}
