@@ -1,0 +1,31 @@
+##
+## Copyright 2023 Ocean Protocol Foundation
+## SPDX-License-Identifier: Apache-2.0
+##
+name: Provider tests for C2D
+
+on:
+  - push
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v2
+        with:
+          name: cc-report
+          path: $HOME/cc-reporter/cc-test-reporter
+      - name: Check files in artifacts
+        working-directory: ${{ github.workspace }}
+        run: |
+          for i in $(seq 1 250); do
+            sleep 10
+            [ -f "$HOME/cc-reporter/cc-test-reporter/coverage.json" -a -f "$HOME/cc-reporter/cc-test-reporter/c2d-coverage.json"] && break
+            done
+          ls -la "$HOME/cc/artifacts/"
+
+      - name: Calculate coverage
+        working-directory: ${{ github.workspace }}
+        run: |
+          FILES_COUNT=`ls -1 coverage/final | wc -l | tr -d ' '`
+          ./cc-reporter/cc-test-reporter sum-coverage --output - --parts $FILES_COUNT coverage/final/codeclimate.*.json | ./cc-reporter/cc-test-reporter upload-coverage --input -
