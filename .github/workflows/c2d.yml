@@ -63,11 +63,11 @@ jobs:
           mv coverage.json c2d-coverage.json
           mv c2d-coverage.json $HOME/cc-reporter/cc-test-reporter
           ls -l $HOME/cc-reporter/cc-test-reporter
+      - name: Upload artifact
         uses: actions/upload-artifact@v2
         with:
           name: cc-report
           path: $HOME/cc-reporter/cc-test-reporter/c2d-coverage.json
-        if: ${{ success() }}
       - name: Publish code coverage
         uses: paambaati/codeclimate-action@v2.7.5
         env:

@@ -5,7 +5,10 @@
 name: Merge CC reports
 
 on:
-  - push
+  workflow_run:
+    workflows: [ "Provider tests", "Provider tests for C2D" ]
+    types:
+      - completed
 
 jobs:
   build:
