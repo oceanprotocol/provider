@@ -54,7 +54,7 @@ jobs:
       - name: Test with pytest
         run: |
           pytest --cov=ocean_provider --cov-report json -m "not compute and not algo_validation and not provider_fees" --ignore-glob="*compute*" --ignore-glob="*algo_validation*" --ignore-glob="*provider_fees*"
-          cat $HOME/coverage.json
+          cat coverage.json
       - name:  docker logs
         run: docker logs ocean_aquarius_1 && docker logs ocean_provider_1 && docker logs ocean_provider2_1 && docker logs ocean_ipfs_1
         if: ${{ failure() }}
@@ -67,12 +67,13 @@ jobs:
       - uses: actions/checkout@v2
       - run: |
           mkdir -p $HOME/cc-reporter/cc-test-reporter
-          mv $HOME/coverage.json $HOME/cc-reporter/cc-test-reporter
+          mv coverage.json main-coverage.json
+          mv main-coverage.json $HOME/cc-reporter/cc-test-reporter
           ls -l $HOME/cc-reporter/cc-test-reporter
       - uses: actions/upload-artifact@v2
         with:
           name: cc-report
-          path: $HOME/cc-reporter/cc-test-reporter/coverage.json
+          path: $HOME/cc-reporter/cc-test-reporter/main-coverage.json
       - name: Publish code coverage
         uses: paambaati/codeclimate-action@v2.7.5
         env:

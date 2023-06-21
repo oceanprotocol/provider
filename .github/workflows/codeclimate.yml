@@ -16,7 +16,7 @@ jobs:
         run: |
           for i in $(seq 1 500); do
             sleep 10
-            [ -f "$HOME/cc-reporter/cc-test-reporter/coverage.json" -a -f "$HOME/cc-reporter/cc-test-reporter/c2d-coverage.json"] && break
+            [ -f "$HOME/cc-reporter/cc-test-reporter/main-coverage.json" -a -f "$HOME/cc-reporter/cc-test-reporter/c2d-coverage.json"] && break
             done
           ls -la "$HOME/cc/artifacts/"
       - uses: actions/download-artifact@v2
@@ -27,5 +27,5 @@ jobs:
       - name: Calculate coverage
         working-directory: ${{ github.workspace }}
         run: |
-          FILES_COUNT=`ls -1 coverage/final | wc -l | tr -d ' '`
-          ./cc-reporter/cc-test-reporter sum-coverage --output - --parts $FILES_COUNT coverage/final/codeclimate.*.json | ./cc-reporter/cc-test-reporter upload-coverage --input -
+          FILES_COUNT=`ls -1 $HOME/cc-reporter/cc-test-reporter | wc -l | tr -d ' '`
+          ./cc-reporter/cc-test-reporter sum-coverage --output - --parts $FILES_COUNT $HOME/cc-reporter/cc-test-reporter/*.json | ./cc-reporter/cc-test-reporter upload-coverage --input -
