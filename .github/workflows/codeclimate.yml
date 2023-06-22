@@ -32,3 +32,7 @@ jobs:
         run: |
           FILES_COUNT=`ls -1 $HOME/cc-reporter/cc-test-reporter | wc -l | tr -d ' '`
           ./cc-reporter/cc-test-reporter sum-coverage --output - --parts $FILES_COUNT $HOME/cc-reporter/cc-test-reporter/*.json | ./cc-reporter/cc-test-reporter upload-coverage --input -
+      - name: Publish code coverage
+        uses: paambaati/codeclimate-action@v2.7.5
+        env:
+          CC_TEST_REPORTER_ID: b0d75c25d5176c59e8ea665bf74396d9ee1bdf2c97f11ccc6869f9e91d80a6c7

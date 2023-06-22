@@ -69,10 +69,6 @@ jobs:
         with:
           name: cc-report
           path: $HOME/cc-reporter/cc-test-reporter/c2d-coverage.json
-      - name: Publish code coverage
-        uses: paambaati/codeclimate-action@v2.7.5
-        env:
-          CC_TEST_REPORTER_ID: b0d75c25d5176c59e8ea665bf74396d9ee1bdf2c97f11ccc6869f9e91d80a6c7
       - name:  docker logs
         run: docker logs ocean_aquarius_1 && docker logs ocean_provider_1 && docker logs ocean_provider2_1 && docker logs ocean_ipfs_1
         if: ${{ failure() }}
