@@ -52,23 +52,14 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements_dev.txt
-          pip install pytest-cov
       - name: Test with pytest
         run: |
           coverage run --source ocean_provider -m pytest -m "compute or algo_validation or provider_fees"
-          coverage report
-          coverage json
-      - name: Upload coverage report
-        run: |
-          mkdir -p $HOME/cc-reporter/cc-test-reporter
-          mv coverage.json c2d-coverage.json
-          mv c2d-coverage.json $HOME/cc-reporter/cc-test-reporter
-          ls -l $HOME/cc-reporter/cc-test-reporter
       - name: Upload artifact
         uses: actions/upload-artifact@v2
         with:
-          name: cc-report
-          path: $HOME/cc-reporter/cc-test-reporter/c2d-coverage.json
+          name: coverage-reports
+          path: .coverage
       - name:  docker logs
         run: docker logs ocean_aquarius_1 && docker logs ocean_provider_1 && docker logs ocean_provider2_1 && docker logs ocean_ipfs_1
         if: ${{ failure() }}

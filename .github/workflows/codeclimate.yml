@@ -14,24 +14,24 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Check files in artifacts
-        working-directory: ${{ github.workspace }}
-        run: |
-          for i in $(seq 1 500); do
-            sleep 10
-            [ -f "$HOME/cc-reporter/cc-test-reporter/main-coverage.json" -a -f "$HOME/cc-reporter/cc-test-reporter/c2d-coverage.json"] && break
-            done
-          ls -la "$HOME/cc/artifacts/"
-      - uses: actions/download-artifact@v2
+      - name: Retrieve and merge coverage reports
+        uses: actions/download-artifact@v2
         with:
-          name: cc-report
-          path: $HOME/cc-reporter/cc-test-reporter
-
-      - name: Calculate coverage
-        working-directory: ${{ github.workspace }}
+          name: coverage-reports
+          path: merged-coverage
+      - name: Merge coverage reports
         run: |
-          FILES_COUNT=`ls -1 $HOME/cc-reporter/cc-test-reporter | wc -l | tr -d ' '`
-          ./cc-reporter/cc-test-reporter sum-coverage --output - --parts $FILES_COUNT $HOME/cc-reporter/cc-test-reporter/*.json | ./cc-reporter/cc-test-reporter upload-coverage --input -
+          coverage combine merged-coverage
+      - name: Calculate total coverage
+        run: |
+          coverage report -m --include=ocean_provider/*
+
+      - name: Get coverage percentage
+        id: coverage
+        run: |
+          total_coverage=$(coverage report --include=ocean_provider/* --fail-under=80 -m | grep TOTAL | awk '{print $NF}')
+          echo "Coverage: $total_coverage"
+          echo "::set-output name=coverage::$total_coverage"
       - name: Publish code coverage
         uses: paambaati/codeclimate-action@v2.7.5
         env:
