@@ -55,7 +55,7 @@ jobs:
           pip install pytest-cov
       - name: Test with pytest
         run: |
-          coverage run --source ocean_provider -m $(pytest -m "compute or algo_validation or provider_fees")
+          coverage run --source ocean_provider -m pytest -m "compute or algo_validation or provider_fees"
           coverage report
           coverage json
       - name: Upload coverage report

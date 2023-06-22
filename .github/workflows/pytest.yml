@@ -53,7 +53,7 @@ jobs:
           pip install pytest-cov
       - name: Test with pytest
         run: |
-          coverage run --source ocean_provider -m $(pytest -m "not compute and not algo_validation and not provider_fees" --ignore-glob="*compute*" --ignore-glob="*algo_validation*" --ignore-glob="*provider_fees*")
+          coverage run --source ocean_provider -m pytest -m "not compute and not algo_validation and not provider_fees" --ignore-glob="*compute*" --ignore-glob="*algo_validation*" --ignore-glob="*provider_fees*"
           coverage report
           coverage json
       - name: Upload coverage report
