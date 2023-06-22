@@ -55,8 +55,9 @@ jobs:
           pip install pytest-cov
       - name: Test with pytest
         run: |
-          pytest --cov=ocean_provider --cov-report json -m "compute or algo_validation or provider_fees"
-          cat coverage.json
+          coverage run --source ocean_provider -m $(pytest -m "compute or algo_validation or provider_fees")
+          coverage report
+          coverage json
       - name: Upload coverage report
         run: |
           mkdir -p $HOME/cc-reporter/cc-test-reporter
