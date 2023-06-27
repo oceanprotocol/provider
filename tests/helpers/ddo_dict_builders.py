@@ -153,7 +153,7 @@ def get_compute_service(
     compute_service_attributes = {
         "namespace": "test",
         "allowRawAlgorithm": True,
-        "allowNetworkAccess": False,
+        "allowNetworkAccess": True,
         "publisherTrustedAlgorithmPublishers": trusted_publishers,
         "publisherTrustedAlgorithms": trusted_algos,
     }
@@ -194,7 +194,7 @@ def get_compute_service_no_rawalgo(
     compute_service_attributes = {
         "namespace": "test",
         "allowRawAlgorithm": False,
-        "allowNetworkAccess": False,
+        "allowNetworkAccess": True,
         "publisherTrustedAlgorithmPublishers": [],
         "publisherTrustedAlgorithms": [],
     }

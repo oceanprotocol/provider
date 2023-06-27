@@ -35,7 +35,7 @@ ddo_dict = {
             "compute": {
                 "namespace": "test",
                 "allowRawAlgorithm": True,
-                "allowNetworkAccess": False,
+                "allowNetworkAccess": True,
                 "publisherTrustedAlgorithmPublishers": [],
                 "publisherTrustedAlgorithms": [
                     {

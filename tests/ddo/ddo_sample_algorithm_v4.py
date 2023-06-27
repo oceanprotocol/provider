@@ -53,8 +53,8 @@ algorithm_ddo_sample = {
             "timeout": 3600,
             "compute": {
                 "namespace": "test",
-                "allowRawAlgorithm": False,
-                "allowNetworkAccess": False,
+                "allowRawAlgorithm": True,
+                "allowNetworkAccess": True,
                 "publisherTrustedAlgorithms": [],
                 "publisherTrustedAlgorithmPublishers": [],
             },

@@ -782,7 +782,7 @@ def test_fail_allow_raw_false(provider_wallet, consumer_address, web3):
     alg_ddo = Asset(alg_ddo_dict)
     sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
     sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
-    ddo.services[0].compute_dict["allowRawAlgorithm"] = False
+    ddo.services[0].compute_dict["allowRawAlgorithm"] = True
     data = {
         "dataset": {"documentId": ddo.did, "transferTxId": "tx_id", "serviceId": sa.id},
         "algorithm": {

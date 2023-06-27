@@ -40,8 +40,8 @@ ddo_event_sample_v4 = {
             "files": "encrypted files",
             "compute": {
                 "namespace": "dataAssetComputingService",
-                "allowRawAlgorithm": False,
-                "allowNetworkAccess": False,
+                "allowRawAlgorithm": True,
+                "allowNetworkAccess": True,
                 "publisherTrustedAlgorithms": [],
                 "publisherTrustedAlgorithmPublishers": [],
             },

@@ -512,7 +512,7 @@ class InputItemValidator:
                 privacy_options.get("publisherTrustedAlgorithmPublishers", []),
             )
 
-        allow_raw_algo = privacy_options.get("allowRawAlgorithm", False)
+        allow_raw_algo = privacy_options.get("allowRawAlgorithm", True)
         if allow_raw_algo is False:
             self.message = "no_raw_algo_allowed"
             return False
