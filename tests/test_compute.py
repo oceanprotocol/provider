@@ -26,7 +26,6 @@ from tests.helpers.compute_helpers import (
     mint_100_datatokens,
     post_to_compute,
     start_order,
-    skip_on,
 )
 from tests.helpers.ddo_dict_builders import build_metadata_dict_type_algorithm
 from tests.helpers.nonce import build_nonce
