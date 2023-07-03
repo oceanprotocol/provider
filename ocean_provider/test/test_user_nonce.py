@@ -12,7 +12,6 @@ from ocean_provider import models, user_nonce
 from ocean_provider.myapp import app
 from ocean_provider.user_nonce import (
     get_nonce,
-    get_or_create_user_nonce_object,
     update_nonce,
 )
 from tests.helpers.nonce import build_nonce
@@ -34,9 +33,6 @@ def test_get_and_update_nonce(monkeypatch, publisher_address, consumer_address):
 
     # get_nonce can be used on addresses that are not in the user_nonce table
     assert get_nonce("0x0000000000000000000000000000000000000000") is None
-    assert get_or_create_user_nonce_object(
-        "0x0000000000000000000000000000000000000000", build_nonce()
-    )
 
     # update two times because, if we just pruned, we start from None
     update_nonce(publisher_address, build_nonce())
@@ -56,9 +52,6 @@ def test_get_and_update_nonce_redis(publisher_address, consumer_address):
     # get_nonce can be used on addresses that are not in the user_nonce table
     cache.delete("0x0000000000000000000000000000000000000000")
     assert get_nonce("0x0000000000000000000000000000000000000000") is None
-    assert get_or_create_user_nonce_object(
-        "0x0000000000000000000000000000000000000000", build_nonce()
-    )
 
     # update two times because, if we just pruned, we start from None
     update_nonce(publisher_address, build_nonce())

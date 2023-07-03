@@ -48,13 +48,15 @@ def update_nonce(address, nonce_value):
         return
 
     if os.getenv("REDIS_CONNECTION"):
-        nonce = get_or_create_user_nonce_object(address, nonce_value)
-        cache.set(address, nonce)
+        cache.set(address, nonce_value)
 
         return
 
-    nonce_object = get_or_create_user_nonce_object(address, nonce_value)
-    nonce_object.nonce = nonce_value
+    nonce_object = models.UserNonce.query.filter_by(address=address).first()
+    if nonce_object is None:
+        nonce_object = models.UserNonce(address=address, nonce=nonce_value)
+    else:
+        nonce_object.nonce = nonce_value
 
     logger.debug(f"update_nonce: {address}, new nonce {nonce_object.nonce}")
 
