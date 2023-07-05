@@ -3,12 +3,10 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import os
-from unittest.mock import patch
+import sqlite3
 
 import pytest
-import sqlalchemy
 from flask_caching import Cache
-from ocean_provider import models, user_nonce
 from ocean_provider.myapp import app
 from ocean_provider.user_nonce import (
     get_nonce,
@@ -74,14 +72,11 @@ def test_update_nonce_exception(monkeypatch, publisher_address):
     # Ensure address exists in database
     update_nonce(publisher_address, build_nonce())
 
+    nonce_object = get_nonce(publisher_address)
+
     # Create duplicate nonce_object
-    with patch.object(
-        user_nonce,
-        "get_or_create_user_nonce_object",
-        return_value=models.UserNonce(address=publisher_address, nonce="0"),
-    ):
-        with pytest.raises(sqlalchemy.exc.IntegrityError):
-            update_nonce(publisher_address, build_nonce())
+    with pytest.raises(sqlite3.IntegrityError):
+        update_nonce(publisher_address, nonce_object)
 
     publisher_nonce = get_nonce(publisher_address)
     update_nonce(publisher_address, None)
