@@ -41,7 +41,7 @@ def test_verify_signature(consumer_wallet, publisher_wallet):
 
     assert f"Invalid signature {signature} for ethereum address" in e_info.value.args[0]
 
-    nonce = (datetime.now(timezone.utc) - timedelta(days=7)).timestamp()
+    nonce = 1
     did = "did:op:test"
     msg = f"{consumer_wallet.address}{did}{nonce}"
     msg_w_nonce = f"{consumer_wallet.address}{did}"

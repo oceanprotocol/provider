@@ -67,8 +67,8 @@ def nonce():
     if not nonce:
         new_nonce = 1
         update_nonce(address, new_nonce)
-        nonce = int(get_nonce(address))
-        assert nonce == new_nonce, "New nonce could not be stored correctly."
+        nonce = get_nonce(address)
+        assert int(nonce) == new_nonce, "New nonce could not be stored correctly."
 
     logger.info(f"nonce for user {address} is {nonce}")
 

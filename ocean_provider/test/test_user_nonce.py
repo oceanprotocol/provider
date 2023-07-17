@@ -33,10 +33,8 @@ def test_get_and_update_nonce(monkeypatch, publisher_address, consumer_address):
     assert get_nonce("0x0000000000000000000000000000000000000000") is None
 
     # update two times because, if we just pruned, we start from None
-    build_nonce(publisher_address)
-    publisher_nonce = get_nonce(publisher_address)
-    build_nonce(publisher_address)
-    new_publisher_nonce = get_nonce(publisher_address)
+    publisher_nonce = build_nonce(publisher_address)
+    new_publisher_nonce = build_nonce(publisher_address)
 
     assert new_publisher_nonce >= publisher_nonce
 
@@ -52,9 +50,9 @@ def test_get_and_update_nonce_redis(publisher_address, consumer_address):
     assert get_nonce("0x0000000000000000000000000000000000000000") is None
 
     # update two times because, if we just pruned, we start from None
-    build_nonce(publisher_address)
+    update_nonce(publisher_address, build_nonce(publisher_address))
     publisher_nonce = get_nonce(publisher_address)
-    build_nonce(publisher_address)
+    update_nonce(publisher_address, build_nonce(publisher_address))
     new_publisher_nonce = get_nonce(publisher_address)
 
     assert new_publisher_nonce >= publisher_nonce

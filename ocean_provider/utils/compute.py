@@ -2,13 +2,15 @@
 # Copyright 2023 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
+import json
 import logging
 import os
-from datetime import datetime, timezone
+import requests
 from urllib.parse import urljoin
 
 from eth_keys import KeyAPI
 from eth_keys.backends import NativeECCBackend
+from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.basics import get_provider_wallet
 
@@ -46,10 +48,20 @@ def process_compute_request(data):
 
 
 def sign_for_compute(wallet, owner, job_id=None):
-    nonce = datetime.now(timezone.utc).timestamp()
+    nonce = _compute_nonce(wallet.address)
 
     # prepare consumer signature on did
     msg = f"{owner}{job_id}{nonce}" if job_id else f"{owner}{nonce}"
     signature = sign_message(msg, wallet)
 
     return nonce, signature
+
+
+def _compute_nonce(address):
+    endpoint = BaseURLs.SERVICES_URL + "/nonce"
+    response = requests.get(
+        endpoint + "?" + f"&userAddress={address}", content_type="application/json"
+    )
+    value = response.json if response.json else json.loads(response.data)
+
+    return value["nonce"]
