@@ -4,6 +4,7 @@
 #
 import json
 import logging
+from datetime import datetime, timezone
 
 from flask import jsonify, request
 from flask_sieve import validate
@@ -62,6 +63,12 @@ def nonce():
     data = get_request_data(request)
     address = data.get("userAddress")
     nonce = get_nonce(address)
+    if not nonce:
+        new_nonce = str(datetime.now(timezone.utc).timestamp() * 1000)
+        update_nonce(address, new_nonce)
+        nonce = get_nonce(address)
+        assert nonce == new_nonce, "New nonce could not be stored correctly."
+
     logger.info(f"nonce for user {address} is {nonce}")
 
     response = jsonify(nonce=nonce), 200

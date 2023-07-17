@@ -80,8 +80,6 @@ def test_encrypt_endpoint(client, provider_wallet, publisher_wallet):
 @pytest.mark.unit
 def test_get_nonce(client, publisher_wallet):
     address = publisher_wallet.address
-    # Ensure address exists in database
-    update_nonce(address, build_nonce())
 
     endpoint = BaseURLs.SERVICES_URL + "/nonce"
     response = client.get(
