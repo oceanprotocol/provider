@@ -21,7 +21,7 @@ def create_token(client, consumer_wallet, expiration=None):
     payload = {"address": address, "expiration": expiration}
 
     endpoint = BaseURLs.SERVICES_URL + "/createAuthToken"
-    nonce = build_nonce()
+    nonce = build_nonce(address)
     _msg = f"{address}{nonce}"
     payload["signature"] = sign_message(_msg, consumer_wallet)
     payload["nonce"] = nonce
@@ -54,7 +54,7 @@ def test_delete_auth_token_sqlite(client, consumer_wallet, monkeypatch):
     payload = {"address": address, "token": token}
 
     endpoint = BaseURLs.SERVICES_URL + "/deleteAuthToken"
-    nonce = build_nonce()
+    nonce = build_nonce(address)
     _msg = f"{address}{nonce}"
     payload["signature"] = sign_message(_msg, consumer_wallet)
     payload["nonce"] = nonce
@@ -80,7 +80,7 @@ def test_delete_auth_token_redis(client, consumer_wallet):
     payload = {"address": address, "token": token}
 
     endpoint = BaseURLs.SERVICES_URL + "/deleteAuthToken"
-    nonce = build_nonce()
+    nonce = build_nonce(address)
     _msg = f"{address}{nonce}"
     payload["signature"] = sign_message(_msg, consumer_wallet)
     payload["nonce"] = nonce
@@ -92,7 +92,7 @@ def test_delete_auth_token_redis(client, consumer_wallet):
     assert is_token_valid(token, address)[1] == "Token is deleted."
 
     # can not delete again
-    nonce = build_nonce()
+    nonce = build_nonce(address)
     _msg = f"{address}{nonce}"
     payload["signature"] = sign_message(_msg, consumer_wallet)
     payload["nonce"] = nonce

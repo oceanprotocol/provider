@@ -58,7 +58,7 @@ def test_encrypt_endpoint(client, provider_wallet, publisher_wallet):
     asset = get_registered_asset(publisher_wallet)
     files_list_str = '["https://raw.githubusercontent.com/tbertinmahieux/MSongsDB/master/Tasks_Demos/CoverSongs/shs_dataset_test.txt"]'
 
-    nonce = build_nonce()
+    nonce = build_nonce(provider_wallet.address)
     msg = f"{asset.did}{nonce}"
     signature = sign_message(msg, provider_wallet)
 

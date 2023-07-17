@@ -569,7 +569,7 @@ def try_download(client, asset, service, consumer_wallet, tx_id, userdata):
         )
 
     download_endpoint = BaseURLs.SERVICES_URL + "/download"
-    nonce = build_nonce()
+    nonce = build_nonce(consumer_wallet.address)
     _msg = f"{asset.did}{nonce}"
     payload["signature"] = sign_message(_msg, consumer_wallet)
     payload["nonce"] = nonce

@@ -333,7 +333,7 @@ def decrypt_ddo_using_transaction_id(
     data_nft_address: HexStr,
     chain_id: int,
 ):
-    nonce = build_nonce()
+    nonce = build_nonce(decrypter_wallet.address)
     message_to_be_signed = (
         f"{set_metadata_tx_id}{decrypter_wallet.address}{chain_id}{nonce}"
     )
@@ -360,7 +360,7 @@ def decrypt_ddo_using_decrypt_args(
     flags: int,
     ddo_hash_hexstr: HexStr,
 ):
-    nonce = build_nonce()
+    nonce = build_nonce(decrypter_wallet.address)
     message_to_be_signed = (
         f"{data_nft_address}{decrypter_wallet.address}{chain_id}{nonce}"
     )

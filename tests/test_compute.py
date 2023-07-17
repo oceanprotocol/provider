@@ -272,7 +272,7 @@ def test_compute(client, publisher_wallet, consumer_wallet, free_c2d_env):
         "jobId": job_id,
     }
 
-    payload["nonce"] = build_nonce()
+    payload["nonce"] = build_nonce(consumer_wallet.address)
     result_without_signature = get_compute_result(
         client, BaseURLs.SERVICES_URL + "/computeResult", payload, raw_response=True
     )

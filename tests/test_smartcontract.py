@@ -66,7 +66,7 @@ def test_download_smartcontract_asset(client, publisher_wallet, consumer_wallet,
     download_endpoint = BaseURLs.SERVICES_URL + "/download"
 
     # Consume using url index and signature (with nonce)
-    nonce = build_nonce()
+    nonce = build_nonce(consumer_wallet.address)
     _msg = f"{asset.did}{nonce}"
     payload["signature"] = sign_message(_msg, consumer_wallet)
     payload["nonce"] = nonce
@@ -134,7 +134,7 @@ def test_download_smartcontract_asset_with_userdata(
 
     download_endpoint = BaseURLs.SERVICES_URL + "/download"
     # Consume using url index and signature (with nonce)
-    nonce = build_nonce()
+    nonce = build_nonce(consumer_wallet.address)
     _msg = f"{asset.did}{nonce}"
     payload["signature"] = sign_message(_msg, consumer_wallet)
     payload["nonce"] = nonce
@@ -195,7 +195,7 @@ def test_download_smartcontract_asset_with_pure_function(
     download_endpoint = BaseURLs.SERVICES_URL + "/download"
 
     # Consume using url index and signature (with nonce)
-    nonce = build_nonce()
+    nonce = build_nonce(consumer_wallet.address)
     _msg = f"{asset.did}{nonce}"
     payload["signature"] = sign_message(_msg, consumer_wallet)
     payload["nonce"] = nonce

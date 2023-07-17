@@ -62,7 +62,7 @@ def test_download_graphql_asset(client, publisher_wallet, consumer_wallet, web3)
     download_endpoint = BaseURLs.SERVICES_URL + "/download"
 
     # Consume using url index and signature (with nonce)
-    nonce = build_nonce()
+    nonce = build_nonce(consumer_wallet.address)
     _msg = f"{asset.did}{nonce}"
     payload["signature"] = sign_message(_msg, consumer_wallet)
     payload["nonce"] = nonce
@@ -129,7 +129,7 @@ def test_download_graphql_asset_with_userdata(
 
     download_endpoint = BaseURLs.SERVICES_URL + "/download"
     # Consume using url index and signature (with nonce)
-    nonce = build_nonce()
+    nonce = build_nonce(consumer_wallet.address)
     _msg = f"{asset.did}{nonce}"
     payload["signature"] = sign_message(_msg, consumer_wallet)
     payload["nonce"] = nonce
