@@ -6,7 +6,6 @@ import functools
 import json
 import logging
 import os
-from threading import Lock
 
 import flask
 from flask import Response, jsonify, request
@@ -247,13 +246,11 @@ def computeDelete():
     data = get_request_data(request)
     logger.info(f"computeDelete called. arguments = {data}")
 
-    lock = Lock()
-    with lock:
-        body = process_compute_request(data)
-        response = requests_session.delete(
-            get_compute_endpoint(), params=body, headers=standard_headers
-        )
-        update_nonce(body["owner"], data.get("nonce"))
+    body = process_compute_request(data)
+    response = requests_session.delete(
+        get_compute_endpoint(), params=body, headers=standard_headers
+    )
+    update_nonce(body["owner"], data.get("nonce"))
 
     response = Response(
         response.content, response.status_code, headers=standard_headers
@@ -309,13 +306,11 @@ def computeStop():
     data = get_request_data(request)
     logger.info(f"computeStop called. arguments = {data}")
 
-    lock = Lock()
-    with lock:
-        body = process_compute_request(data)
-        response = requests_session.put(
-            get_compute_endpoint(), params=body, headers=standard_headers
-        )
-        update_nonce(body["owner"], data.get("nonce"))
+    body = process_compute_request(data)
+    response = requests_session.put(
+        get_compute_endpoint(), params=body, headers=standard_headers
+    )
+    update_nonce(body["owner"], data.get("nonce"))
 
     response = Response(
         response.content, response.status_code, headers=standard_headers
@@ -455,25 +450,23 @@ def computeStart():
     compute_env = data.get("environment")
 
     provider_wallet = get_provider_wallet(use_universal_key=True)
-    lock = Lock()
-    with lock:
-        nonce, provider_signature = sign_for_compute(provider_wallet, consumer_address)
-        payload = {
-            "workflow": workflow,
-            "providerSignature": provider_signature,
-            "agreementId": validator.agreement_id,
-            "owner": consumer_address,
-            "providerAddress": provider_wallet.address,
-            "environment": compute_env,
-            "validUntil": validator.valid_until,
-            "nonce": nonce,
-            "chainId": validator.chain_id,
-        }
+    nonce, provider_signature = sign_for_compute(provider_wallet, consumer_address)
+    payload = {
+        "workflow": workflow,
+        "providerSignature": provider_signature,
+        "agreementId": validator.agreement_id,
+        "owner": consumer_address,
+        "providerAddress": provider_wallet.address,
+        "environment": compute_env,
+        "validUntil": validator.valid_until,
+        "nonce": nonce,
+        "chainId": validator.chain_id,
+    }
 
-        response = requests_session.post(
-            get_compute_endpoint(), data=json.dumps(payload), headers=standard_headers
-        )
-        update_nonce(consumer_address, data.get("nonce"))
+    response = requests_session.post(
+        get_compute_endpoint(), data=json.dumps(payload), headers=standard_headers
+    )
+    update_nonce(consumer_address, data.get("nonce"))
 
     response = Response(
         response.content, response.status_code, headers=standard_headers
@@ -542,13 +535,11 @@ def computeResult():
         "providerSignature": provider_signature,
         "nonce": nonce,
     }
-    lock = Lock()
-    with lock:
-        req = PreparedRequest()
-        req.prepare_url(url, params)
-        result_url = req.url
-        logger.debug(f"Done processing computeResult, url: {result_url}")
-        update_nonce(data.get("consumerAddress"), data.get("nonce"))
+    req = PreparedRequest()
+    req.prepare_url(url, params)
+    result_url = req.url
+    logger.debug(f"Done processing computeResult, url: {result_url}")
+    update_nonce(data.get("consumerAddress"), data.get("nonce"))
 
     _, instance = FilesTypeFactory.validate_and_create(
         {"url": result_url, "type": "url"},
