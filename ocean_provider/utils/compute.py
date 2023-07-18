@@ -46,7 +46,7 @@ def process_compute_request(data):
 
 
 def sign_for_compute(wallet, owner, job_id=None):
-    nonce = _compute_nonce(wallet.address)
+    nonce = _compute_nonce(owner)
 
     # prepare consumer signature on did
     msg = f"{owner}{job_id}{nonce}" if job_id else f"{owner}{nonce}"
@@ -58,7 +58,7 @@ def sign_for_compute(wallet, owner, job_id=None):
 def _compute_nonce(address):
     nonce = get_nonce(address)
     if nonce:
-        nonce = int(float(nonce)) + 1
-        return nonce
+        new_nonce = int(float(nonce)) + 1
+        return int(new_nonce)
 
     return 1
