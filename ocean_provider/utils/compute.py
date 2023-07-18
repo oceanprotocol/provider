@@ -4,6 +4,7 @@
 #
 import logging
 import os
+from datetime import datetime, timezone
 from urllib.parse import urljoin
 
 from eth_keys import KeyAPI
@@ -46,19 +47,10 @@ def process_compute_request(data):
 
 
 def sign_for_compute(wallet, owner, job_id=None):
-    nonce = _compute_nonce(owner)
+    nonce = datetime.now(timezone.utc).timestamp() * 1000
 
     # prepare consumer signature on did
     msg = f"{owner}{job_id}{nonce}" if job_id else f"{owner}{nonce}"
     signature = sign_message(msg, wallet)
 
     return nonce, signature
-
-
-def _compute_nonce(address):
-    nonce = get_nonce(address)
-    if nonce:
-        new_nonce = int(float(nonce)) + 1
-        return int(new_nonce)
-
-    return 1
