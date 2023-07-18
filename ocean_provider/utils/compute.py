@@ -59,9 +59,8 @@ def sign_for_compute(wallet, owner, job_id=None):
 
 def _compute_nonce(address):
     endpoint = BaseURLs.SERVICES_URL + "/nonce"
-    response = requests.get(
-        endpoint + "?" + f"&userAddress={address}", content_type="application/json"
-    )
-    value = response.json if response.json else json.loads(response.data)
+    headers = {"Content-type": "application/json"}
+    response = requests.get(endpoint + "?" + f"&userAddress={address}", headers=headers)
+    value = response.json if response.json else json.loads(response.text)
 
     return value["nonce"]
