@@ -61,6 +61,6 @@ def _compute_nonce(address):
     endpoint = BaseURLs.SERVICES_URL + "/nonce"
     headers = {"Content-type": "application/json"}
     response = requests.get(endpoint + "?" + f"&userAddress={address}", headers=headers)
-    value = response.json if response.json else json.loads(response.text)
+    value = response.json if response.json else json.loads(response.content)
 
     return value["nonce"]
