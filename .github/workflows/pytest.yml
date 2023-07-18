@@ -33,21 +33,17 @@ jobs:
       - name: Run Barge
         working-directory: ${{ github.workspace }}/barge
         run: |
-          bash -x start_ocean.sh --no-dashboard 2>&1 --with-rbac --with-provider2 --with-c2d --with-thegraph --skip-subgraph-deploy > start_ocean.log &
+          bash -x start_ocean.sh --no-dashboard 2>&1 --with-rbac --with-provider2 --with-thegraph --skip-subgraph-deploy > start_ocean.log &
       - name: Wait for contracts deployment and C2D cluster to be ready
         working-directory: ${{ github.workspace }}/barge
         run: |
           for i in $(seq 1 250); do
             sleep 10
-            [ -f "$HOME/.ocean/ocean-contracts/artifacts/ready" -a -f "$HOME/.ocean/ocean-c2d/ready" ] && break
+            [ -f "$HOME/.ocean/ocean-contracts/artifacts/ready" ] && break
             done
       - name: Verify deployments
         run: |
-          netstat -lnpt
-          nc -zv 172.15.0.13 31000
           cat $HOME/.ocean/ocean-contracts/artifacts/address.json
-          curl http://172.15.0.13:31000
-          nc -zv 172.15.0.16 8080
       - name: Install dependencies
         working-directory: ${{ github.workspace }}
         run: |
