@@ -2,15 +2,13 @@
 # Copyright 2023 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
-import json
 import logging
 import os
-import requests
 from urllib.parse import urljoin
 
 from eth_keys import KeyAPI
 from eth_keys.backends import NativeECCBackend
-from ocean_provider.constants import BaseURLs
+from ocean_provider.user_nonce import get_nonce
 from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.basics import get_provider_wallet
 
@@ -58,9 +56,9 @@ def sign_for_compute(wallet, owner, job_id=None):
 
 
 def _compute_nonce(address):
-    endpoint = BaseURLs.SERVICES_URL + "/nonce"
-    headers = {"Content-type": "application/json"}
-    response = requests.get(endpoint + "?" + f"&userAddress={address}", headers=headers)
-    value = response.json if response.json else json.loads(response.content)
+    nonce = get_nonce(address)
+    if nonce:
+        nonce = int(float(nonce)) + 1
+        return nonce
 
-    return value["nonce"]
+    return 1
