@@ -13,8 +13,6 @@ jobs:
     steps:
       - name: Setup Provider
         uses: actions/checkout@v2
-      - name: Setup upterm session
-        uses: lhotari/action-upterm@v1
       - name: Set up Python 3.8
         uses: actions/setup-python@v2
         with:
@@ -42,6 +40,8 @@ jobs:
             sleep 10
             [ -f "$HOME/.ocean/ocean-contracts/artifacts/ready" -a -f "$HOME/.ocean/ocean-c2d/ready" ] && break
             done
+      - name: Start SSH server
+        uses: valeriangalliat/action-sshd-cloudflared@v1
       - name: Verify deployments
         run: |
           netstat -lnpt
