@@ -8,6 +8,8 @@ tests/resources/branin.arff
 # C extensions
 *.so
 
+tests/resources/branin.arff
+
 # Distribution / packaging
 .Python
 build/
