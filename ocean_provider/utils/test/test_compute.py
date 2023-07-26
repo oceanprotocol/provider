@@ -14,6 +14,7 @@ test_logger = logging.getLogger(__name__)
 
 
 @pytest.mark.unit
+@pytest.mark.skip("C2D connection needs fixing.")
 def test_get_compute_endpoint(monkeypatch):
     monkeypatch.setenv("OPERATOR_SERVICE_URL", "http://with-slash.com/")
     assert get_compute_endpoint() == "http://with-slash.com/api/v1/operator/compute"

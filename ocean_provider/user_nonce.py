@@ -4,6 +4,7 @@
 #
 import logging
 import os
+import sqlite3
 
 import jwt
 from flask_caching import Cache
@@ -45,18 +46,28 @@ def update_nonce(address, nonce_value):
     :param: nonce_value
     """
     if nonce_value is None:
+        logger.debug(f"Nonce value is not provided.")
         return
+
+    logger.debug(f"Received nonce value: {nonce_value}")
 
     if os.getenv("REDIS_CONNECTION"):
-        nonce = get_or_create_user_nonce_object(address, nonce_value)
-        cache.set(address, nonce)
+        cache.set(address, nonce_value)
 
         return
 
-    nonce_object = get_or_create_user_nonce_object(address, nonce_value)
-    nonce_object.nonce = nonce_value
+    nonce_object = models.UserNonce.query.filter_by(address=address).first()
+    if nonce_object is None:
+        nonce_object = models.UserNonce(address=address, nonce=nonce_value)
+    else:
+        if nonce_object.nonce == nonce_value:
+            msg = f"Cannot create duplicates in the database.\n Existing nonce: {nonce_object.nonce} vs. new nonce: {nonce_value}"
+            logger.debug(msg)
+            raise sqlite3.IntegrityError(msg)
 
-    logger.debug(f"update_nonce: {address}, new nonce {nonce_object.nonce}")
+        nonce_object.nonce = nonce_value
+
+    logger.debug(f"Wallet address: {address}, new nonce {nonce_object.nonce}")
 
     try:
         db.add(nonce_object)
@@ -65,18 +76,6 @@ def update_nonce(address, nonce_value):
         db.rollback()
         logger.exception("Database update failed.")
         raise
-
-
-def get_or_create_user_nonce_object(address, nonce_value):
-    if os.getenv("REDIS_CONNECTION"):
-        cache.set(address, nonce_value)
-
-        return nonce_value
-
-    nonce_object = models.UserNonce.query.filter_by(address=address).first()
-    if nonce_object is None:
-        nonce_object = models.UserNonce(address=address, nonce=nonce_value)
-    return nonce_object
 
 
 def force_expire_token(token):

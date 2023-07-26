@@ -116,7 +116,7 @@ def test_access_request_payload(
         "fileIndex": 0,
     }
 
-    nonce = build_nonce()
+    nonce = build_nonce(consumer_wallet.address)
     _msg = f"{asset.did}{nonce}"
     req["signature"] = sign_message(_msg, consumer_wallet)
     req["nonce"] = nonce

@@ -9,6 +9,7 @@ from urllib.parse import urljoin
 
 from eth_keys import KeyAPI
 from eth_keys.backends import NativeECCBackend
+from ocean_provider.user_nonce import get_nonce
 from ocean_provider.utils.accounts import sign_message
 from ocean_provider.utils.basics import get_provider_wallet
 
@@ -46,7 +47,7 @@ def process_compute_request(data):
 
 
 def sign_for_compute(wallet, owner, job_id=None):
-    nonce = datetime.now(timezone.utc).timestamp()
+    nonce = datetime.now(timezone.utc).timestamp() * 1000
 
     # prepare consumer signature on did
     msg = f"{owner}{job_id}{nonce}" if job_id else f"{owner}{nonce}"

@@ -155,7 +155,7 @@ def build_and_send_ddo_with_compute_service(
 
 
 def get_compute_signature(client, consumer_wallet, did, job_id=None):
-    nonce = build_nonce()
+    nonce = build_nonce(consumer_wallet.address)
 
     # prepare consumer signature on did
     if job_id:

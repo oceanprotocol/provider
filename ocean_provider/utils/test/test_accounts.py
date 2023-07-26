@@ -22,9 +22,7 @@ def test_get_private_key(publisher_wallet):
 
 @pytest.mark.unit
 def test_verify_signature(consumer_wallet, publisher_wallet):
-    update_nonce(consumer_wallet.address, build_nonce())
-
-    nonce = build_nonce()
+    nonce = build_nonce(consumer_wallet.address)
     did = "did:op:test"
     msg = f"{consumer_wallet.address}{did}{nonce}"
     msg_w_nonce = f"{consumer_wallet.address}{did}"
@@ -32,7 +30,7 @@ def test_verify_signature(consumer_wallet, publisher_wallet):
 
     assert verify_signature(consumer_wallet.address, signature, msg_w_nonce, nonce)
 
-    nonce = build_nonce()
+    nonce = build_nonce(consumer_wallet.address)
     did = "did:op:test"
     msg = f"{consumer_wallet.address}{did}{nonce}"
     msg_w_nonce = f"{consumer_wallet.address}{did}"
@@ -43,7 +41,7 @@ def test_verify_signature(consumer_wallet, publisher_wallet):
 
     assert f"Invalid signature {signature} for ethereum address" in e_info.value.args[0]
 
-    nonce = (datetime.now(timezone.utc) - timedelta(days=7)).timestamp()
+    nonce = 1
     did = "did:op:test"
     msg = f"{consumer_wallet.address}{did}{nonce}"
     msg_w_nonce = f"{consumer_wallet.address}{did}"

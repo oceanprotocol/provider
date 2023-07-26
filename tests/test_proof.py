@@ -67,7 +67,7 @@ def test_chain_proof(client, monkeypatch, web3, publisher_wallet, consumer_walle
         consumer_wallet,
     )
 
-    nonce = build_nonce()
+    nonce = build_nonce(consumer_wallet.address)
 
     consumer_data = _msg = f"{asset.did}{nonce}"
     signature = sign_message(_msg, consumer_wallet)

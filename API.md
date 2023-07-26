@@ -20,8 +20,7 @@ Parameters
 
 Returns:
 Json object containing the last-used nonce value.
-The nonce endpoint is just informative, use the current UTC timestamp as a nonce,
-where required in other endpoints.
+The nonce returns an int, where required in other Provider endpoints.
 
 Example:
 
@@ -34,7 +33,7 @@ Response:
 
 ```json
 {
-  "nonce": 1644315615.24195
+  "nonce": 1
 }
 ```
 
@@ -76,7 +75,7 @@ Parameters
     encryptedDocument: Hex string, the encrypted document (optional)
     flags: Integer, the flags of the encrypted document (optional)
     documentHash: Hex string, the hash of the encrypted document (optional)
-    nonce: String object, the nonce of the encrypted document (required)
+    nonce: String object, the nonce (either integer, either UTC timestamp format) of the encrypted document (required)
     signature: the signature of the encrypted document (required).
      The signature is based on hashing the string concatenation consisting of:
      transactionId + dataNftAddress + decrypterAddress + chainId + nonce.
@@ -181,7 +180,7 @@ Parameters
     transferTxId: Hex string -- the id of on-chain transaction for approval of datatokens transfer
     given to the provider's account
     fileIndex: integer, the index of the file from the files list in the dataset
-    nonce: Nonce
+    nonce: String object, the nonce (either integer, either UTC timestamp format) required for download request
     consumerAddress: String object containing consumer's address
     signature: String object containg user signature (signed message).
      The signature is based on hashing the following string concatenation consisting of:
@@ -205,6 +204,8 @@ payload:
     "consumerAddress":"0x990922334",
     "signature":"0x00110011",
     "transferTxId": "0xa09fc23421345532e34829"
+    "nonce": 1
+}
 ```
 
 Response:
