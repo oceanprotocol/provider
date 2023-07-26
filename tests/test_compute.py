@@ -33,6 +33,7 @@ from tests.test_auth import create_token
 from tests.test_helpers import get_first_service_by_type, get_ocean_token_address
 
 
+@pytest.mark.skip("C2D connection needs fixing.")
 @pytest.mark.unit
 @pytest.mark.skip("C2D connection needs fixing.")
 def test_compute_rejected(client, monkeypatch):
@@ -41,6 +42,7 @@ def test_compute_rejected(client, monkeypatch):
     assert response.status_code == 404
 
 
+@pytest.mark.skip("C2D connection needs fixing.")
 @pytest.mark.integration
 @pytest.mark.skip("C2D connection needs fixing.")
 @pytest.mark.parametrize("allow_raw_algos", [True, False])
@@ -118,6 +120,7 @@ def test_compute_raw_algo(
         assert "no_raw_algo_allowed" == response.json["error"]["dataset"]
 
 
+@pytest.mark.skip("C2D connection needs fixing.")
 @pytest.mark.integration
 @pytest.mark.skip("C2D connection needs fixing.")
 def test_compute_specific_algo_dids(
@@ -164,6 +167,7 @@ def test_compute_specific_algo_dids(
     assert response.json["error"]["dataset"] == "not_trusted_algo"
 
 
+@pytest.mark.skip("C2D connection needs fixing.")
 @pytest.mark.integration
 @pytest.mark.skip("C2D connection needs fixing.")
 def test_compute(client, publisher_wallet, consumer_wallet, free_c2d_env):
@@ -291,6 +295,7 @@ def test_compute(client, publisher_wallet, consumer_wallet, free_c2d_env):
     assert result_data is not None, "We should have a result"
 
 
+@pytest.mark.skip("C2D connection needs fixing.")
 @pytest.mark.integration
 @pytest.mark.skip("C2D connection needs fixing.")
 def test_compute_arweave(client, publisher_wallet, consumer_wallet, free_c2d_env):
@@ -329,6 +334,7 @@ def test_compute_arweave(client, publisher_wallet, consumer_wallet, free_c2d_env
     assert response.status == "200 OK", f"start compute job failed: {response.data}"
 
 
+@pytest.mark.skip("C2D connection needs fixing.")
 @pytest.mark.integration
 @pytest.mark.skip("C2D connection needs fixing.")
 def test_compute_diff_provider(client, publisher_wallet, consumer_wallet, free_c2d_env):
@@ -365,6 +371,7 @@ def test_compute_diff_provider(client, publisher_wallet, consumer_wallet, free_c
     assert response.status == "200 OK", f"start compute job failed: {response.data}"
 
 
+@pytest.mark.skip("C2D connection needs fixing.")
 @pytest.mark.integration
 @pytest.mark.skip("C2D connection needs fixing.")
 def test_compute_allow_all_published(
@@ -413,6 +420,7 @@ def test_compute_allow_all_published(
     assert response.status == "200 OK"
 
 
+@pytest.mark.skip("C2D connection needs fixing.")
 @pytest.mark.integration
 @pytest.mark.skip("C2D connection needs fixing.")
 def test_compute_additional_input(
@@ -499,6 +507,7 @@ def test_compute_additional_input(
     assert response.status == "200 OK", f"start compute job failed: {response.data}"
 
 
+@pytest.mark.skip("C2D connection needs fixing.")
 @pytest.mark.integration
 @pytest.mark.skip("C2D connection needs fixing.")
 def test_compute_delete_job(
@@ -565,6 +574,7 @@ def test_compute_delete_job(
     assert response.status == "200 OK", f"delete compute job failed: {response.data}"
 
 
+@pytest.mark.skip("C2D connection needs fixing.")
 @pytest.mark.unit
 @pytest.mark.skip("C2D connection needs fixing.")
 def test_compute_environments():
@@ -575,6 +585,7 @@ def test_compute_environments():
             assert env["id"] == "ocean-compute"
 
 
+@pytest.mark.skip("C2D connection needs fixing.")
 @pytest.mark.integration
 @pytest.mark.skip("C2D connection needs fixing.")
 def test_compute_paid_env(
@@ -625,6 +636,7 @@ def test_compute_paid_env(
     _ = job_info.get("jobId", "")
 
 
+@pytest.mark.skip("C2D connection needs fixing.")
 @pytest.mark.integration
 @pytest.mark.skip("C2D connection needs fixing.")
 def test_compute_auth_token(client, publisher_wallet, consumer_wallet, free_c2d_env):
