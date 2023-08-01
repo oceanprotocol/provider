@@ -47,6 +47,7 @@ def test_asset_info(client, publisher_wallet):
             == "1f7c17bed455f484f4d5ebc581cde6bc059977ef1e143b52a703f18b89c86a22"
         )
         assert file_info["checksumType"] == "sha256"
+        assert file_info["filename"] == "shs_dataset_test.txt"
 
     asset = get_dataset_with_invalid_url_ddo(client, publisher_wallet)
     service = get_first_service_by_type(asset, ServiceType.ACCESS)
@@ -80,6 +81,7 @@ def test_check_url_good(client):
         assert file_info["contentType"] == "application/json"
         assert file_info["valid"] is True
         assert file_info["type"] == "url"
+        assert file_info["filename"] == "info.0.json"
 
 
 @pytest.mark.unit

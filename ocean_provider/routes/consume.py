@@ -4,7 +4,6 @@
 #
 import json
 import logging
-from datetime import datetime, timezone
 
 from flask import jsonify, request
 from flask_sieve import validate
@@ -56,9 +55,14 @@ def nonce():
     responses:
       200:
         description: nonce returned
+      405:
+        description: Method rejected.
 
     return: nonce for user address
     """
+    if request.method == "HEAD" or request.method == "OPTIONS":
+        return error_response("Method Not Allowed", 405, logger)
+
     logger.info("nonce endpoint called")
     data = get_request_data(request)
     address = data.get("userAddress")
@@ -308,9 +312,14 @@ def download():
         description: One or more of the required attributes are missing or invalid.
       401:
         description: Invalid asset data.
+      405:
+        description: Method rejected.
       503:
         description: Service Unavailable
     """
+    if request.method == "HEAD" or request.method == "OPTIONS":
+        return error_response("Method Not Allowed", 405, logger)
+
     data = get_request_data(request)
     logger.info(f"download called. arguments = {data}")
 

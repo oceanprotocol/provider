@@ -90,9 +90,14 @@ def decrypt():
         description: decrypted document
       400:
         description: One or more of the required attributes are missing or invalid.
+      405:
+        description: Method rejected.
       503:
         description: Service Unavailable
     """
+    if request.method == "HEAD" or request.method == "OPTIONS":
+        return error_response("Method Not Allowed", 405, logger)
+
     data = get_request_data(request)
     logger.info(f"decrypt called. arguments = {data}")
 
