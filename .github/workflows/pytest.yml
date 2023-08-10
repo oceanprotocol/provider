@@ -35,8 +35,6 @@ jobs:
         working-directory: ${{ github.workspace }}/barge
         run: |
           bash -x start_ocean.sh --no-dashboard 2>&1 --with-rbac --with-c2d --with-provider2 --with-thegraph --skip-subgraph-deploy > start_ocean.log &
-      - name: Setup upterm session
-        uses: lhotari/action-upterm@v1
       - name: Wait for contracts deployment and C2D cluster to be ready
         working-directory: ${{ github.workspace }}/barge
         run: |
@@ -58,7 +56,7 @@ jobs:
           coverage report
           coverage xml
       - name:  docker logs
-        run: docker logs ocean_contracts_1 && ocean_aquarius_1 && docker logs ocean_provider_1 && docker logs ocean_provider2_1 && docker logs ocean_ipfs_1
+        run: docker logs ocean_ocean-contracts_1 && ocean_aquarius_1 && docker logs ocean_provider_1 && docker logs ocean_provider2_1 && docker logs ocean_ipfs_1
         if: ${{ failure() }}
       - name: Publish code coverage
         uses: paambaati/codeclimate-action@v2.7.5
