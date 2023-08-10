@@ -45,6 +45,8 @@ jobs:
       - name: Verify deployments
         run: |
           cat $HOME/.ocean/ocean-contracts/artifacts/address.json
+      - name: Setup upterm session
+        uses: lhotari/action-upterm@v1
       - name: Install dependencies
         working-directory: ${{ github.workspace }}
         run: |
