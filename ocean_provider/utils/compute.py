@@ -47,14 +47,14 @@ def process_compute_request(data):
 
 
 def sign_for_compute(wallet, owner, job_id=None):
-    nonce = int(os.getenv('COMPUTE_NONCE'))
+    nonce = int(os.getenv("COMPUTE_NONCE"))
     if not nonce:
         nonce = 1
     else:
         nonce += 1
 
     logger.info(f"nonce for user {owner} is {nonce}")
-    os.environ['COMPUTE_NONCE'] = str(nonce)
+    os.environ["COMPUTE_NONCE"] = str(nonce)
 
     # prepare consumer signature on did
     msg = f"{owner}{job_id}{nonce}" if job_id else f"{owner}{nonce}"
