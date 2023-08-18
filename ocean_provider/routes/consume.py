@@ -60,7 +60,7 @@ def nonce():
 
     return: nonce for user address
     """
-    if request.method == "HEAD" or request.method == "OPTIONS":
+    if request.method in ["HEAD", "OPTIONS"]:
         return error_response("Method Not Allowed", 405, logger)
 
     logger.info("nonce endpoint called")
@@ -317,7 +317,7 @@ def download():
       503:
         description: Service Unavailable
     """
-    if request.method == "HEAD" or request.method == "OPTIONS":
+    if request.method in ["HEAD", "OPTIONS"]:
         return error_response("Method Not Allowed", 405, logger)
 
     data = get_request_data(request)

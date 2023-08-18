@@ -88,12 +88,9 @@ class EndUrlType:
                     filename = urlparse(files_url).path.split("/")[-1]
                     try:
                         if not self._validate_filename(filename):
-                            logger.error(
-                                "Invalid file name format. It was not possible to get the file name."
-                            )
-                            return False, {
-                                "err_msg": "Invalid file name format. It was not possible to get the file name."
-                            }
+                            msg = "Invalid file name format. It was not possible to get the file name."
+                            logger.error(msg)
+                            return False, {"error": msg}
 
                         file_name = filename
                     except Exception as e:

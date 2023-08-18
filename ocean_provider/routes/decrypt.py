@@ -95,7 +95,7 @@ def decrypt():
       503:
         description: Service Unavailable
     """
-    if request.method == "HEAD" or request.method == "OPTIONS":
+    if request.method in ["HEAD", "OPTIONS"]:
         return error_response("Method Not Allowed", 405, logger)
 
     data = get_request_data(request)
