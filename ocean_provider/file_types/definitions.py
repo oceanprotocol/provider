@@ -94,10 +94,9 @@ class EndUrlType:
 
                         file_name = filename
                     except Exception as e:
-                        logger.warning(f"It was not possible to get the file name. {e}")
-                        return False, {
-                            "err_msg": f"It was not possible to get the file name. {e}"
-                        }
+                        msg = f"It was not possible to get the file name. {e}"
+                        logger.warning(msg)
+                        return False, {"error": msg}
 
                 if not content_length and content_range:
                     # sometimes servers send content-range instead
