@@ -16,6 +16,7 @@ class BaseURLs:
     BASE_PROVIDER_URL = "/api"
     SWAGGER_URL = "/api/docs"  # URL for exposing Swagger UI (without trailing '/')
     SERVICES_URL = BASE_PROVIDER_URL + "/services"
+    NOT_ALLOWED_METHODS = ["HEAD", "OPTIONS"]
 
 
 class Metadata:

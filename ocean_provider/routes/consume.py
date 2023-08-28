@@ -7,6 +7,8 @@ import logging
 
 from flask import jsonify, request
 from flask_sieve import validate
+
+from ocean_provider.constants import BaseURLs
 from ocean_provider.file_types.file_types_factory import FilesTypeFactory
 from ocean_provider.requests_session import get_requests_session
 from ocean_provider.routes import services
@@ -60,7 +62,7 @@ def nonce():
 
     return: nonce for user address
     """
-    if request.method in ["HEAD", "OPTIONS"]:
+    if request.method.upper() in BaseURLs.NOT_ALLOWED_METHODS:
         return error_response("Method Not Allowed", 405, logger)
 
     logger.info("nonce endpoint called")
@@ -317,7 +319,7 @@ def download():
       503:
         description: Service Unavailable
     """
-    if request.method in ["HEAD", "OPTIONS"]:
+    if request.method.upper() in BaseURLs.NOT_ALLOWED_METHODS:
         return error_response("Method Not Allowed", 405, logger)
 
     data = get_request_data(request)

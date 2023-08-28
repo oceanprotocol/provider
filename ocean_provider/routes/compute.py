@@ -51,6 +51,7 @@ from ocean_provider.validation.provider_requests import (
 from requests.models import PreparedRequest
 
 from . import services
+from ..constants import BaseURLs
 
 requests_session = get_requests_session()
 
@@ -245,7 +246,7 @@ def computeDelete():
       503:
         description: Service Unavailable
     """
-    if request.method in ["HEAD", "OPTIONS"]:
+    if request.method.upper() in BaseURLs.NOT_ALLOWED_METHODS:
         return error_response("Method Not Allowed", 405, logger)
 
     data = get_request_data(request)
@@ -310,7 +311,7 @@ def computeStop():
       503:
         description: Service unavailable
     """
-    if request.method in ["HEAD", "OPTIONS"]:
+    if request.method.upper() in BaseURLs.NOT_ALLOWED_METHODS:
         return error_response("Method Not Allowed", 405, logger)
 
     data = get_request_data(request)
@@ -445,7 +446,7 @@ def computeStart():
       503:
         description: Service unavailable
     """
-    if request.method in ["HEAD", "OPTIONS"]:
+    if request.method.upper() in BaseURLs.NOT_ALLOWED_METHODS:
         return error_response("Method Not Allowed", 405, logger)
 
     data = request.json
@@ -534,7 +535,7 @@ def computeResult():
       503:
         description: Service Unavailable
     """
-    if request.method in ["HEAD", "OPTIONS"]:
+    if request.method.upper() in BaseURLs.NOT_ALLOWED_METHODS:
         return error_response("Method Not Allowed", 405, logger)
 
     data = get_request_data(request)
