@@ -14,6 +14,10 @@ This document reflects couple of the possible errors returned by Provider.
 It occurs when the Provider server is not responding.
 This is most likely an error with Provider or its configuration, and not related to particular input.
 
+#### 405 - Method Not Allowed
+It occurs when Provider server receives `HEAD`, `OPTIONS` requests and
+unsupported methods for that route.
+
 #### Basic validation with multiple errors: 400 - Bad Request
 
 These errors happen when the payload sent to provider is missing some attributes,
@@ -79,8 +83,10 @@ the decrypted files object
 - "cannot decrypt files for this service.": The `files` of that dataset could not be decrypted due to the fact that
 `file object`, which contains the structure and the type of specific file, is missing
 from the validation part.
+- "Invalid file name format. It was not possible to get the file name." - filename contains relative path format (with many slashes)
+- "It was not possible to get the file name." - due to invalid format of the file
 
-Other breaking errors may come from the file structure sent to fileinfo. Those are detailed below, under [File Structure Errors](#file-structure-errors)
+- Other breaking errors may come from the file structure sent to fileinfo. Those are detailed below, under [File Structure Errors](#file-structure-errors)
 
 
 ### initialize
