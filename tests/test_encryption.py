@@ -16,6 +16,15 @@ from tests.test_helpers import BLACK_HOLE_ADDRESS, deploy_data_nft, set_metadata
 from web3.main import Web3
 
 
+def test_decrypt_method_not_allowed(client: FlaskClient, publisher_address):
+    """
+    Tests the decrypt endpoint by requesting with unsupported method.
+    """
+
+    response = client.head(BaseURLs.SERVICES_URL + "/decrypt")
+    assert response.status_code == 405, f"{response.data}"
+
+
 @pytest.mark.integration
 def test_decrypt_with_plain_input(
     client: FlaskClient,

@@ -95,6 +95,12 @@ def test_download_service(
     )
     assert response.status_code == 200, f"{response.data}"
 
+    # Try to access service though unsupported method, should fail
+    response = client.head(
+        service.service_endpoint + download_endpoint, query_string=payload
+    )
+    assert response.status_code == 405, f"{response.data}"
+
     if not userdata and not erc20_enterprise:
         nonce = build_nonce(consumer_wallet.address)
         _msg = f"{asset.did}{nonce}"
