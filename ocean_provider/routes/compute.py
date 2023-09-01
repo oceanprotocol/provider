@@ -371,7 +371,6 @@ def computeStatus():
         description: Service Unavailable
     """
     data = get_request_data(request)
-    logger.info(f"computeStatus called. arguments = {data}")
 
     body = process_compute_request(data)
 

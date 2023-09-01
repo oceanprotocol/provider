@@ -4,6 +4,7 @@
 #
 import logging
 import os
+import time
 from datetime import datetime, timezone
 from urllib.parse import urljoin
 
@@ -47,7 +48,8 @@ def process_compute_request(data):
 
 
 def sign_for_compute(wallet, owner, job_id=None):
-    nonce = datetime.now(timezone.utc).timestamp() * 1000
+    nonce = time.time_ns()
+    logger.info(f"nonce for user {owner} is {nonce}")
 
     # prepare consumer signature on did
     msg = f"{owner}{job_id}{nonce}" if job_id else f"{owner}{nonce}"
