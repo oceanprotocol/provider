@@ -178,7 +178,6 @@ def test_can_not_initialize_compute_service_with_simple_initialize(
     )
 
 
-@pytest.mark.skip("C2D connection needs fixing.")
 @pytest.mark.integration
 def test_initialize_compute_works(
     client, publisher_wallet, consumer_wallet, free_c2d_env
@@ -232,7 +231,6 @@ def test_initialize_compute_works(
     assert "validOrder" not in response.json["algorithm"]
 
 
-@pytest.mark.skip("C2D connection needs fixing.")
 @pytest.mark.integration
 def test_initialize_compute_order_reused(
     client, publisher_wallet, consumer_wallet, free_c2d_env
@@ -361,7 +359,6 @@ def test_initialize_compute_order_reused(
     assert "providerFee" in response.json["datasets"][0].keys()
 
 
-@pytest.mark.skip("C2D connection needs fixing.")
 @pytest.mark.integration
 def test_initialize_compute_paid_env(
     client, publisher_wallet, consumer_wallet, paid_c2d_env
