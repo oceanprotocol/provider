@@ -34,6 +34,11 @@ jobs:
         working-directory: ${{ github.workspace }}/barge
         run: |
           bash -x start_ocean.sh --no-dashboard 2>&1 --with-rbac --with-provider2 --with-thegraph --with-c2d --skip-subgraph-deploy > start_ocean.log &
+      - name: Install dependencies
+        working-directory: ${{ github.workspace }}
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements_dev.txt
       - name: Wait for contracts deployment and C2D cluster to be ready
         working-directory: ${{ github.workspace }}/barge
         run: |
@@ -44,11 +49,6 @@ jobs:
       - name: Verify deployments
         run: |
           cat $HOME/.ocean/ocean-contracts/artifacts/address.json
-      - name: Install dependencies
-        working-directory: ${{ github.workspace }}
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements_dev.txt
       - name: Test with pytest
         run: |
           coverage run --source ocean_provider -m pytest
