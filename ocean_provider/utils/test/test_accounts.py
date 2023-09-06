@@ -6,7 +6,6 @@ from ocean_provider.utils.accounts import (
     get_private_key,
     sign_message,
     verify_signature,
-    _find_nonce_format,
 )
 from tests.helpers.nonce import build_nonce
 
@@ -17,14 +16,6 @@ def test_get_private_key(publisher_wallet):
         str(get_private_key(publisher_wallet)).lower()
         == os.getenv("TEST_PRIVATE_KEY1").lower()
     )
-
-
-@pytest.mark.unit
-def test_find_nonce_format():
-    nonce = "1"
-    assert isinstance(_find_nonce_format(nonce), int)
-    nonce = "1.1"
-    assert isinstance(_find_nonce_format(nonce), float)
 
 
 @pytest.mark.unit

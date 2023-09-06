@@ -1,3 +1,5 @@
+import time
+
 from ocean_provider.user_nonce import get_nonce, update_nonce
 
 
@@ -11,3 +13,7 @@ def build_nonce(address) -> int:
 
     update_nonce(address, 1)
     return 1
+
+
+def build_nonce_for_compute() -> int:
+    return time.time_ns()
