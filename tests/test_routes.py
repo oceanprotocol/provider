@@ -103,16 +103,6 @@ def test_get_nonce(client, publisher_wallet):
 
 
 def test_timestamp_format_nonce(client, ganache_wallet, consumer_wallet, web3):
-    address = ganache_wallet.address
-    # Insert in db timestamp format nonce for this particular account
-    timestamp = str(datetime.datetime.utcnow().timestamp() * 1000)
-    update_nonce(address, timestamp)
-    nonce = get_nonce(address)
-    assert timestamp == nonce
-
-    # Cast to int
-    nonce = int(float(nonce)) + 1
-
     # Send download request with the new nonce
     asset = get_registered_asset(ganache_wallet)
     service = get_first_service_by_type(asset, ServiceType.ACCESS)
@@ -127,6 +117,15 @@ def test_timestamp_format_nonce(client, ganache_wallet, consumer_wallet, web3):
         get_provider_fees(asset, service, consumer_wallet.address, 0),
         consumer_wallet,
     )
+
+    # Insert in db timestamp format nonce for this particular account
+    timestamp = str(datetime.datetime.utcnow().timestamp() * 1000)
+    update_nonce(consumer_wallet.address, timestamp)
+    nonce = get_nonce(consumer_wallet.address)
+    assert timestamp == nonce
+
+    # Cast to int
+    nonce = int(float(nonce)) + 1
 
     payload = {
         "documentId": asset.did,
