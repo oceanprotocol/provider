@@ -6,7 +6,6 @@ from ocean_provider.utils.accounts import (
     get_private_key,
     sign_message,
     verify_signature,
-    _find_nonce_format,
 )
 from tests.helpers.nonce import build_nonce
 
