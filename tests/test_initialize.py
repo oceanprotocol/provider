@@ -77,7 +77,7 @@ def test_initialize_on_disabled_asset(client, publisher_wallet, consumer_wallet,
         client, asset.did, service, consumer_wallet, raw_response=True
     )
     assert "error" in response.json
-    assert response.json["error"] == "Asset malformed or disabled."
+    assert response.json["error"] == "Asset is not consumable."
 
 
 @pytest.mark.integration

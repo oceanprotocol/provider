@@ -376,7 +376,7 @@ def set_nft_state(nft_address, nft_state, wallet):
 def get_dataset_ddo_disabled(client, wallet):
     asset = get_registered_asset(wallet)
     did = asset.did
-    set_nft_state(asset.nft["address"], 4, wallet)
+    set_nft_state(asset.nft["address"], 1, wallet)
     aqua_root = "http://172.15.0.5:5000"
     time.sleep(5)
     return asset, wait_for_asset(aqua_root, did)
