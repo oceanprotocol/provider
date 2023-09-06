@@ -8,7 +8,7 @@ from ocean_provider.utils.services import ServiceType
 from ocean_provider.utils.util import msg_hash
 from tests.helpers.constants import ARWEAVE_TRANSACTION_ID
 from tests.helpers.ddo_dict_builders import build_metadata_dict_type_algorithm
-from tests.helpers.nonce import build_nonce
+from tests.helpers.nonce import build_nonce, build_nonce_for_compute
 from tests.test_helpers import (
     get_first_service_by_type,
     get_registered_asset,
@@ -155,7 +155,7 @@ def build_and_send_ddo_with_compute_service(
 
 
 def get_compute_signature(client, consumer_wallet, did, job_id=None):
-    nonce = build_nonce(consumer_wallet.address)
+    nonce = build_nonce_for_compute()
 
     # prepare consumer signature on did
     if job_id:
