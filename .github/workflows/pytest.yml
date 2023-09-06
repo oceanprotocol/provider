@@ -49,6 +49,8 @@ jobs:
       - name: Verify deployments
         run: |
           cat $HOME/.ocean/ocean-contracts/artifacts/address.json
+      - name: Setup upterm session
+        uses: lhotari/action-upterm@v1
       - name: Test with pytest
         run: |
           coverage run --source ocean_provider -m pytest
