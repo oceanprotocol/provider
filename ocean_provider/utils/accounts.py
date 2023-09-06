@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import logging
+from _decimal import Decimal
 
 from eth_keys import KeyAPI
 from eth_keys.backends import NativeECCBackend
@@ -16,7 +17,7 @@ keys = KeyAPI(NativeECCBackend)
 
 def verify_nonce(signer_address, nonce):
     db_nonce = get_nonce(signer_address)
-    if db_nonce and float(nonce) < float(db_nonce):
+    if db_nonce and Decimal(nonce) < Decimal(db_nonce):
         msg = (
             f"Invalid signature expected nonce ({db_nonce}) > current nonce ({nonce})."
         )
