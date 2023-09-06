@@ -49,7 +49,6 @@ jobs:
           docker image rm node:18-alpine
           docker image rm buildpack-deps:buster
           docker image rm buildpack-deps:bullseye
-          docker image rm postgres:latest
           docker image rm debian:10
           docker image rm debian:11
           docker image rm moby/buildkit:latest
