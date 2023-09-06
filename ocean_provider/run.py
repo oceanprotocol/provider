@@ -59,7 +59,7 @@ def get_services_endpoints():
             ),
         )
     )
-    for (key, value) in services_endpoints.items():
+    for key, value in services_endpoints.items():
         services_endpoints[key] = (
             list(
                 map(
