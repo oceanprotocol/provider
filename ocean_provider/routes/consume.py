@@ -75,7 +75,9 @@ def nonce():
         new_nonce = 1
         update_nonce(address, new_nonce)
         nonce = get_nonce(address)
-        assert Decimal(nonce) == Decimal(new_nonce), "New nonce could not be stored correctly."
+        assert Decimal(nonce) == Decimal(
+            new_nonce
+        ), "New nonce could not be stored correctly."
 
     logger.info(f"nonce for user {address} is {nonce}")
 
