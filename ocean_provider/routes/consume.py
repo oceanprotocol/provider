@@ -4,6 +4,7 @@
 #
 import json
 import logging
+from _decimal import Decimal
 
 from flask import jsonify, request
 from flask_sieve import validate
@@ -74,11 +75,13 @@ def nonce():
         new_nonce = 1
         update_nonce(address, new_nonce)
         nonce = get_nonce(address)
-        assert int(nonce) == new_nonce, "New nonce could not be stored correctly."
+        assert Decimal(nonce) == Decimal(
+            new_nonce
+        ), "New nonce could not be stored correctly."
 
     logger.info(f"nonce for user {address} is {nonce}")
 
-    response = jsonify(nonce=int(nonce)), 200
+    response = jsonify(nonce=Decimal(nonce)), 200
     logger.info(f"nonce response = {response}")
 
     return response

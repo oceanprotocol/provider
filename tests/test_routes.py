@@ -4,6 +4,7 @@
 #
 import datetime
 import json
+from _decimal import Decimal
 
 import pytest
 from ocean_provider.constants import BaseURLs
@@ -99,7 +100,7 @@ def test_get_nonce(client, publisher_wallet):
     ), f"get nonce endpoint failed: response status {response.status}, data {response.data}"
 
     value = response.json if response.json else json.loads(response.data)
-    assert value["nonce"] == get_nonce(address)
+    assert Decimal(value["nonce"]) == Decimal(get_nonce(address))
 
 
 def test_timestamp_format_nonce(client, ganache_wallet, consumer_wallet, web3):
