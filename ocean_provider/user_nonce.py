@@ -58,14 +58,14 @@ def update_nonce(address, nonce_value):
 
     nonce_object = models.UserNonce.query.filter_by(address=address).first()
     if nonce_object is None:
-        nonce_object = models.UserNonce(address=address, nonce=str(nonce_value))
+        nonce_object = models.UserNonce(address=address, nonce=nonce_value)
     else:
         if nonce_object.nonce == nonce_value:
             msg = f"Cannot create duplicates in the database.\n Existing nonce: {nonce_object.nonce} vs. new nonce: {nonce_value}"
             logger.debug(msg)
             raise sqlite3.IntegrityError(msg)
 
-        nonce_object.nonce = str(nonce_value)
+        nonce_object.nonce = nonce_value
 
     logger.debug(f"Wallet address: {address}, new nonce {nonce_object.nonce}")
 
