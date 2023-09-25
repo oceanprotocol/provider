@@ -502,8 +502,10 @@ class InputItemValidator:
         """Validates algorithm details that allow the algo dict to be built."""
         algo_data = self.data["algorithm"]
         algorithm_did = algo_data.get("documentId")
+        algo_asset = get_asset_from_metadatastore(get_metadata_url(), algorithm_did)
+        algo_service = algo_asset.get_service_by_id(algo_data.get("serviceId"))
 
-        privacy_options = self.service.compute_dict
+        privacy_options = algo_service.compute_dict
 
         if algorithm_did:
             return self._validate_trusted_algos(
