@@ -676,24 +676,21 @@ def test_algo_credentials(
         fee_token_args=(fee_token, to_wei(80)),
     )
     sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
-    sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
-    nonce, signature = get_compute_signature(client, consumer_wallet, ddo.did)
-
     mint_100_datatokens(
-        web3, sa.datatoken_address, consumer_wallet.address, publisher_wallet
+        web3, sa_compute.datatoken_address, consumer_wallet.address, publisher_wallet
     )
     tx_id, _ = start_order(
         web3,
-        sa.datatoken_address,
+        sa_compute.datatoken_address,
         consumer_wallet.address,
-        sa.index,
-        get_provider_fees(alg_ddo, sa, consumer_wallet.address, 0),
+        sa_compute.index,
+        get_provider_fees(alg_ddo, sa_compute, consumer_wallet.address, 0),
         consumer_wallet,
     )
 
     payload = {
         "documentId": alg_ddo.did,
-        "serviceId": sa.id,
+        "serviceId": sa_compute.id,
         "consumerAddress": consumer_wallet.address,
         "transferTxId": tx_id,
         "fileIndex": 0,
@@ -705,6 +702,8 @@ def test_algo_credentials(
     _msg = f"{alg_ddo.did}{nonce}"
     payload["signature"] = sign_message(_msg, consumer_wallet)
     payload["nonce"] = nonce
-    response = client.get(sa.service_endpoint + download_endpoint, query_string=payload)
+    response = client.get(
+        sa_compute.service_endpoint + download_endpoint, query_string=payload
+    )
     print(f"response: {response.data}")
     assert response.status_code == 400, f"{response.data}"
