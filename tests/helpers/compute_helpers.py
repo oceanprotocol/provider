@@ -25,7 +25,7 @@ def build_and_send_ddo_with_compute_service(
     publisher_wallet,
     consumer_wallet,
     alg_diff=False,
-    custom_algo_credentials={"allow": [], "deny": []},
+    custom_algo_credentials=None,
     asset_type=None,
     c2d_address=None,
     do_send=True,

@@ -662,7 +662,7 @@ def test_algo_credentials(
         {"from": deployer_wallet.address}
     )
 
-    algo_credentials = {"allow": [], "deny": [consumer_wallet.address]}
+    algo_credentials = {"allow": [], "deny": {"type": "address", "values": [consumer_wallet.address]}}
 
     ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
         client,

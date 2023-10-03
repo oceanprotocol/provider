@@ -1012,23 +1012,23 @@ def test_algo_ddo_file_broken(provider_wallet, consumer_address, web3):
         assert validator.message == "file_unavailable"
 
 
-def test_algo_credentials(provider_address, consumer_address):
-    ddo = Asset(ddo_dict)
-    alg_ddo_dict["credentials"] = {"allow": [], "deny": [consumer_address]}
-    alg_ddo = Asset(alg_ddo_dict)
-    sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
-    sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
-
-    data = {
-        "dataset": {"documentId": ddo.did, "serviceId": sa.id, "transferTxId": "tx_id"},
-        "algorithm": {
-            "documentId": alg_ddo.did,
-            "serviceId": sa_compute.id,
-            "transferTxId": "alg_tx_id",
-        },
-    }
-
-    validator = WorkflowValidator(consumer_address, data)
-    assert validator.validate() is False
+# def test_algo_credentials(provider_address, consumer_address):
+#     ddo = Asset(ddo_dict)
+#     alg_ddo_dict["credentials"] = {"allow": [], "deny": [consumer_address]}
+#     alg_ddo = Asset(alg_ddo_dict)
+#     sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
+#     sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
+#
+#     data = {
+#         "dataset": {"documentId": ddo.did, "serviceId": sa.id, "transferTxId": "tx_id"},
+#         "algorithm": {
+#             "documentId": alg_ddo.did,
+#             "serviceId": sa_compute.id,
+#             "transferTxId": "alg_tx_id",
+#         },
+#     }
+#
+#     validator = WorkflowValidator(consumer_address, data)
+#     assert validator.validate() is False
     # assert validator.resource == "credentials"
     # assert validator.message == "restricted_access_for_algo"
