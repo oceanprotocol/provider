@@ -417,7 +417,9 @@ class InputItemValidator:
             return False
 
         manager = AddressCredential(self.asset)
-        code = manager.validate_access(self.asset.credentials)
+        code = manager.validate_access(
+            {"type": "address", "value": self.consumer_address}
+        )
 
         if code != ConsumableCodes.OK:
             self.resource += ".credentials"
