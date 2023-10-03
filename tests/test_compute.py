@@ -679,23 +679,32 @@ def test_algo_credentials(
     sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
     nonce, signature = get_compute_signature(client, consumer_wallet, ddo.did)
 
-    # Start the compute job
+    mint_100_datatokens(
+        web3, sa.datatoken_address, consumer_wallet.address, publisher_wallet
+    )
+    tx_id, _ = start_order(
+        web3,
+        sa.datatoken_address,
+        consumer_wallet.address,
+        sa.index,
+        get_provider_fees(alg_ddo, sa, consumer_wallet.address, 0),
+        consumer_wallet,
+    )
+
     payload = {
-        "dataset": {"documentId": ddo.did, "serviceId": sa.id, "transferTxId": tx_id},
-        "algorithm": {
-            "serviceId": sa_compute.id,
-            "documentId": alg_ddo.did,
-            "transferTxId": alg_tx_id,
-        },
-        "signature": signature,
-        "nonce": nonce,
+        "documentId": alg_ddo.did,
+        "serviceId": sa.id,
         "consumerAddress": consumer_wallet.address,
-        "environment": free_c2d_env["id"],
+        "transferTxId": tx_id,
+        "fileIndex": 0,
     }
 
-    # Start compute with valid signature
-    response = post_to_compute(client, payload)
-    assert (
-        response.status == "400 BAD REQUEST"
-    ), f"start compute job failed: {response.data}"
-    print(f"resp: {response.content}")
+    download_endpoint = BaseURLs.SERVICES_URL + "/download"
+    # Consume using url index and signature (with nonce)
+    nonce = build_nonce(consumer_wallet.address)
+    _msg = f"{alg_ddo.did}{nonce}"
+    payload["signature"] = sign_message(_msg, consumer_wallet)
+    payload["nonce"] = nonce
+    response = client.get(sa.service_endpoint + download_endpoint, query_string=payload)
+    print(f"response: {response.data}")
+    assert response.status_code == 400, f"{response.data}"
