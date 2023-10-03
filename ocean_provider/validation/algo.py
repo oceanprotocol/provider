@@ -14,6 +14,8 @@ from ocean_provider.utils.asset import (
     get_asset_from_metadatastore,
 )
 from ocean_provider.utils.basics import get_metadata_url, get_provider_wallet, get_web3
+from ocean_provider.utils.consumable import ConsumableCodes
+from ocean_provider.utils.credentials import AddressCredential
 from ocean_provider.utils.datatoken import (
     record_consume_request,
     validate_order,
@@ -412,6 +414,14 @@ class InputItemValidator:
 
         if not consumable:
             self.message = message
+            return False
+
+        manager = AddressCredential(self.asset)
+        code = manager.validate_access(self.asset.credentials)
+
+        if code != ConsumableCodes.OK:
+            self.resource += ".credentials"
+            self.message = "restricted_access_for_algo"
             return False
 
         if self.service.type not in ["access", "compute"]:
