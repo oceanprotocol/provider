@@ -426,14 +426,14 @@ class InputItemValidator:
             self.message = message
             return False
 
-        code = AddressCredential(self.asset).validate_access(
-            {"type": "address", "value": self.consumer_address}
-        )
-
-        if code != ConsumableCodes.OK:
-            self.resource += ".credentials"
-            self.message = "restricted_access_for_algo"
-            return False
+        # code = AddressCredential(self.asset).validate_access(
+        #     {"type": "address", "value": self.consumer_address}
+        # )
+        #
+        # if code != ConsumableCodes.OK:
+        #     self.resource += ".credentials"
+        #     self.message = "restricted_access_for_algo"
+        #     return False
 
         if self.service.type not in ["access", "compute"]:
             self.resource += ".serviceId"
