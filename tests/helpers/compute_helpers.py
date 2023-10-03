@@ -25,8 +25,7 @@ def build_and_send_ddo_with_compute_service(
     publisher_wallet,
     consumer_wallet,
     alg_diff=False,
-    custom_dataset_credentials=None,
-    custom_algo_credentials=None,
+    custom_algo_credentials={"allow": [], "deny": []},
     asset_type=None,
     c2d_address=None,
     do_send=True,
@@ -41,16 +40,28 @@ def build_and_send_ddo_with_compute_service(
     algo_metadata = build_metadata_dict_type_algorithm()
     if c2d_address is None:
         c2d_address = consumer_wallet.address
-    if custom_algo_credentials:
-        alg_ddo = get_registered_asset(
-            publisher_wallet,
-            custom_metadata=algo_metadata,
-            custom_credentials=custom_algo_credentials,
-            timeout=timeout,
-            unencrypted_files_list=[
-                {"url": this_is_a_gist, "type": "url", "method": "GET"}
-            ],
-        )
+    if alg_diff:
+        if custom_algo_credentials:
+            alg_ddo = get_registered_asset(
+                publisher_wallet,
+                custom_metadata=algo_metadata,
+                custom_service_endpoint="http://172.15.0.7:8030",
+                custom_credentials=custom_algo_credentials,
+                timeout=timeout,
+                unencrypted_files_list=[
+                    {"url": this_is_a_gist, "type": "url", "method": "GET"}
+                ],
+            )
+        else:
+            alg_ddo = get_registered_asset(
+                publisher_wallet,
+                custom_metadata=algo_metadata,
+                custom_service_endpoint="http://172.15.0.7:8030",
+                timeout=timeout,
+                unencrypted_files_list=[
+                    {"url": this_is_a_gist, "type": "url", "method": "GET"}
+                ],
+            )
     else:
         alg_ddo = get_registered_asset(
             publisher_wallet,
