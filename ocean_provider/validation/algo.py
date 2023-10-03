@@ -310,15 +310,15 @@ class WorkflowValidator:
             self.message = "file_unavailable"
             return False
 
-        try:
-            AddressCredential(algo_ddo).validate_access(
-                {"type": "address", "value": self.consumer_address}
-            )
-
-        except Exception:
-            self.resource += ".credentials"
-            self.message = "restricted_access_for_algo"
-            return False
+        # try:
+        #     AddressCredential(algo_ddo).validate_access(
+        #         {"type": "address", "value": self.consumer_address}
+        #     )
+        #
+        # except Exception:
+        #     self.resource += ".credentials"
+        #     self.message = "restricted_access_for_algo"
+        #     return False
 
         return True
 
