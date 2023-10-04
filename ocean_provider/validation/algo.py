@@ -310,10 +310,22 @@ class WorkflowValidator:
             self.message = "file_unavailable"
             return False
 
+        consumable, message = check_asset_consumable(
+            algo_ddo, self.consumer_address, logger, service.service_endpoint
+        )
+
+        if not consumable:
+            self.resource += ".credentials"
+            self.message = message
+            return False
+
         # try:
-        #     AddressCredential(algo_ddo).validate_access(
-        #         {"type": "address", "value": self.consumer_address}
-        #     )
+        #     manager = AddressCredential(algo_ddo)
+        #
+        #     if manager.requires_credential():
+        #         manager.validate_access(
+        #             {"type": "address", "value": self.consumer_address}
+        #         )
         #
         # except Exception:
         #     self.resource += ".credentials"

@@ -671,7 +671,7 @@ def test_algo_credentials(
         client,
         publisher_wallet,
         consumer_wallet,
-        False,
+        True,
         custom_algo_credentials=algo_credentials,
         c2d_address=free_c2d_env["consumerAddress"],
         valid_until=valid_until,

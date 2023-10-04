@@ -1012,6 +1012,14 @@ def test_algo_ddo_file_broken(provider_wallet, consumer_address, web3):
         assert validator.message == "file_unavailable"
 
 
+@pytest.mark.unit
+@patch(
+    "ocean_provider.validation.algo.check_asset_consumable", return_value=(False, "")
+)
+@patch(
+    "ocean_provider.validation.algo.get_service_files_list",
+    return_value=[{"url": this_is_a_gist, "type": "url"}],
+)
 def test_algo_credentials(provider_address, consumer_address):
     ddo = Asset(ddo_dict)
     alg_ddo_dict["credentials"] = {
@@ -1031,7 +1039,18 @@ def test_algo_credentials(provider_address, consumer_address):
         },
     }
 
-    validator = WorkflowValidator(consumer_address, data)
-    assert validator.validate() is False
-    assert validator.resource == "credentials"
-    assert validator.message == "restricted_access_for_algo"
+    def side_effect(*args, **kwargs):
+        nonlocal ddo, alg_ddo
+        if ddo.did == args[1]:
+            return ddo
+        if alg_ddo.did == args[1]:
+            return alg_ddo
+
+    with patch(
+        "ocean_provider.validation.algo.get_asset_from_metadatastore",
+        side_effect=side_effect,
+    ):
+        validator = WorkflowValidator(consumer_address, data)
+        assert validator.validate() is False
+        assert validator.resource == "credentials"
+        assert validator.message == "restricted_access_for_algo"
