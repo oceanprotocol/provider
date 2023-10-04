@@ -310,27 +310,14 @@ class WorkflowValidator:
             self.message = "file_unavailable"
             return False
 
-        # consumable, message = check_asset_consumable(
-        #     algo_ddo, self.consumer_address, logger, service.service_endpoint
-        # )
-        #
-        # if not consumable:
-        #     self.resource += ".credentials"
-        #     self.message = message
-        #     return False
+        consumable, message = check_asset_consumable(
+            algo_ddo, self.consumer_address, logger, service.service_endpoint
+        )
 
-        # try:
-        #     manager = AddressCredential(algo_ddo)
-        #
-        #     if manager.requires_credential():
-        #         manager.validate_access(
-        #             {"type": "address", "value": self.consumer_address}
-        #         )
-        #
-        # except Exception:
-        #     self.resource += ".credentials"
-        #     self.message = "restricted_access_for_algo"
-        #     return False
+        if not consumable:
+            self.resource += ".credentials"
+            self.message = message
+            return False
 
         return True
 
@@ -437,15 +424,6 @@ class InputItemValidator:
         if not consumable:
             self.message = message
             return False
-
-        # code = AddressCredential(self.asset).validate_access(
-        #     {"type": "address", "value": self.consumer_address}
-        # )
-        #
-        # if code != ConsumableCodes.OK:
-        #     self.resource += ".credentials"
-        #     self.message = "restricted_access_for_algo"
-        #     return False
 
         if self.service.type not in ["access", "compute"]:
             self.resource += ".serviceId"

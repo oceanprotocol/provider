@@ -105,10 +105,9 @@ class AddressCredential:
             credentials = json.loads(self.asset.credentials)
         else:
             credentials = self.asset.credentials
+
         entries = credentials.get(access_class, [])
-        address_entries = [
-            entry for entry in entries if json.loads(entry).get("type") == "address"
-        ]
+        address_entries = [entry for entry in entries if entry.get("type") == "address"]
         return address_entries[0] if address_entries else None
 
 

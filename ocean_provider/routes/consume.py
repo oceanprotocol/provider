@@ -337,9 +337,9 @@ def download():
     # the datatoken address
     asset = get_asset_from_metadatastore(get_metadata_url(), did)
 
-    # consumable, message = check_asset_consumable(asset, consumer_address, logger)
-    # if not consumable:
-    #     return error_response(message, 400, logger)
+    consumable, message = check_asset_consumable(asset, consumer_address, logger)
+    if not consumable:
+        return error_response(message, 400, logger)
 
     service = asset.get_service_by_id(service_id)
 

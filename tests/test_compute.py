@@ -664,7 +664,7 @@ def test_algo_credentials(
 
     algo_credentials = {
         "allow": [],
-        "deny": {"type": "address", "values": [consumer_wallet.address]},
+        "deny": [{"type": "address", "values": [consumer_wallet.address]}],
     }
 
     ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
@@ -708,5 +708,8 @@ def test_algo_credentials(
     response = client.get(
         sa_compute.service_endpoint + download_endpoint, query_string=payload
     )
-    print(f"response: {response.data}")
     assert response.status_code == 400, f"{response.data}"
+    assert (
+        response.json["error"]
+        == f"Error: Access to asset {alg_ddo.did} was denied with code: ConsumableCodes.CREDENTIAL_IN_DENY_LIST."
+    )
