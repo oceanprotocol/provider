@@ -47,11 +47,16 @@ jobs:
           docker image rm node:16-alpine
           docker image rm node:18
           docker image rm node:18-alpine
+          docker image rm node:20
+          docker image rm node-20-alpine
           docker image rm buildpack-deps:buster
           docker image rm buildpack-deps:bullseye
           docker image rm debian:10
           docker image rm debian:11
           docker image rm moby/buildkit:latest
+          docker image rm alpine:16
+          docker image rm alpine:17
+          docker image rm alpine:18
       - name: Wait for contracts deployment and C2D cluster to be ready
         working-directory: ${{ github.workspace }}/barge
         run: |
@@ -62,8 +67,6 @@ jobs:
       - name: Verify deployments
         run: |
           cat $HOME/.ocean/ocean-contracts/artifacts/address.json
-      - name: Setup upterm session
-        uses: lhotari/action-upterm@v1
       - name: Test with pytest
         run: |
           coverage run --source ocean_provider -m pytest
