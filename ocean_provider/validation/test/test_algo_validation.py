@@ -1017,3 +1017,66 @@ def test_algo_ddo_file_broken(provider_wallet, consumer_address, web3):
         assert validator.validate() is False
         assert validator.resource == "algorithm"
         assert validator.message == "file_unavailable"
+
+
+@pytest.mark.unit
+def test_algo_credentials(
+    client,
+    provider_address,
+    consumer_address,
+    publisher_wallet,
+    web3,
+    consumer_wallet,
+    free_c2d_env,
+):
+    valid_until = get_future_valid_until()
+    deployer_wallet = Account.from_key(os.getenv("FACTORY_DEPLOYER_PRIVATE_KEY"))
+    fee_token = get_datatoken_contract(web3, get_ocean_token_address(web3))
+    fee_token.functions.mint(consumer_wallet.address, to_wei(80)).transact(
+        {"from": deployer_wallet.address}
+    )
+    custom_algo_credentials = {
+        "allow": [],
+        "deny": [{"type": "address", "values": [consumer_address]}],
+    }
+    ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
+        client,
+        publisher_wallet,
+        consumer_wallet,
+        True,
+        custom_algo_credentials=custom_algo_credentials,
+        c2d_address=free_c2d_env["consumerAddress"],
+        valid_until=valid_until,
+        c2d_environment=free_c2d_env["id"],
+        fee_token_args=(fee_token, to_wei(80)),
+    )
+    sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
+    sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
+
+    data = {
+        "dataset": {"documentId": ddo.did, "serviceId": sa.id, "transferTxId": tx_id},
+        "algorithm": {
+            "documentId": alg_ddo.did,
+            "serviceId": sa_compute.id,
+            "transferTxId": alg_tx_id,
+        },
+    }
+
+    def side_effect(*args, **kwargs):
+        nonlocal ddo, alg_ddo
+        if ddo.did == args[1]:
+            return ddo
+        if alg_ddo.did == args[1]:
+            return alg_ddo
+
+    with patch(
+        "ocean_provider.validation.algo.get_asset_from_metadatastore",
+        side_effect=side_effect,
+    ):
+        validator = WorkflowValidator(consumer_address, data)
+        assert validator.validate() is False
+        assert validator.resource == "algorithm.credentials"
+        assert (
+            validator.message
+            == f"Error: Access to asset {alg_ddo.did} was denied with code: ConsumableCodes.CREDENTIAL_IN_DENY_LIST."
+        )
