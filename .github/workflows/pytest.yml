@@ -48,7 +48,7 @@ jobs:
           docker image rm node:18
           docker image rm node:18-alpine
           docker image rm node:20
-          docker image rm node-20-alpine
+          docker image rm node:20-alpine
           docker image rm buildpack-deps:buster
           docker image rm buildpack-deps:bullseye
           docker image rm debian:10
