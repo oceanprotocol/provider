@@ -581,6 +581,9 @@ def test_consume_algo_with_credentials(
     )
 
     # Use case 3: Consume asset by allowed address
+    mint_100_datatokens(
+        web3, sa_compute.datatoken_address, consumer_wallet.address, publisher_wallet
+    )
     tx_id, _ = start_order(
         web3,
         sa_compute.datatoken_address,
