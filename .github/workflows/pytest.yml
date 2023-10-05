@@ -54,9 +54,9 @@ jobs:
           docker image rm debian:10
           docker image rm debian:11
           docker image rm moby/buildkit:latest
-          docker image rm alpine:16
-          docker image rm alpine:17
-          docker image rm alpine:18
+          docker image rm alpine:3.16
+          docker image rm alpine:3.17
+          docker image rm alpine:3.18
       - name: Wait for contracts deployment and C2D cluster to be ready
         working-directory: ${{ github.workspace }}/barge
         run: |
