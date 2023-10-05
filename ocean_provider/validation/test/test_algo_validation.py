@@ -2,16 +2,23 @@
 # Copyright 2023 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
+import os
 import copy
 from unittest.mock import Mock, patch
 
 import pytest
+from eth_account import Account
 from ocean_provider.utils.asset import Asset
+from ocean_provider.utils.currency import to_wei
 from ocean_provider.utils.services import Service, ServiceType
 from ocean_provider.validation.algo import WorkflowValidator
 from tests.ddo.ddo_sample1_compute import alg_ddo_dict, ddo_dict
-from tests.helpers.compute_helpers import get_future_valid_until
-from tests.test_helpers import get_first_service_by_type
+from tests.test_helpers import get_first_service_by_type, get_ocean_token_address
+from ocean_provider.utils.datatoken import get_datatoken_contract
+from tests.helpers.compute_helpers import (
+    get_future_valid_until,
+    build_and_send_ddo_with_compute_service,
+)
 
 provider_fees_event = Mock()
 provider_fees_event.args.providerData = {"environment": "ocean-compute"}
@@ -1013,26 +1020,45 @@ def test_algo_ddo_file_broken(provider_wallet, consumer_address, web3):
 
 
 @pytest.mark.unit
-@patch(
-    "ocean_provider.validation.algo.get_service_files_list",
-    return_value=[{"url": this_is_a_gist, "type": "url"}],
-)
-def test_algo_credentials(provider_address, consumer_address):
-    ddo = Asset(ddo_dict)
-    alg_ddo_dict["credentials"] = {
+def test_algo_credentials(
+    client,
+    provider_address,
+    consumer_address,
+    publisher_wallet,
+    web3,
+    consumer_wallet,
+    free_c2d_env,
+):
+    valid_until = get_future_valid_until()
+    deployer_wallet = Account.from_key(os.getenv("FACTORY_DEPLOYER_PRIVATE_KEY"))
+    fee_token = get_datatoken_contract(web3, get_ocean_token_address(web3))
+    fee_token.functions.mint(consumer_wallet.address, to_wei(80)).transact(
+        {"from": deployer_wallet.address}
+    )
+    custom_algo_credentials = {
         "allow": [],
         "deny": [{"type": "address", "values": [consumer_address]}],
     }
-    alg_ddo = Asset(alg_ddo_dict)
-    sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
+    ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
+        client,
+        publisher_wallet,
+        consumer_wallet,
+        True,
+        custom_algo_credentials=custom_algo_credentials,
+        c2d_address=free_c2d_env["consumerAddress"],
+        valid_until=valid_until,
+        c2d_environment=free_c2d_env["id"],
+        fee_token_args=(fee_token, to_wei(80)),
+    )
     sa = get_first_service_by_type(ddo, ServiceType.COMPUTE)
+    sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
 
     data = {
-        "dataset": {"documentId": ddo.did, "serviceId": sa.id, "transferTxId": "tx_id"},
+        "dataset": {"documentId": ddo.did, "serviceId": sa.id, "transferTxId": tx_id},
         "algorithm": {
             "documentId": alg_ddo.did,
             "serviceId": sa_compute.id,
-            "transferTxId": "alg_tx_id",
+            "transferTxId": alg_tx_id,
         },
     }
 
