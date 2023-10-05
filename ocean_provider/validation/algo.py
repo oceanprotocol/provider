@@ -315,7 +315,7 @@ class WorkflowValidator:
         )
 
         if not consumable:
-            self.resource += ".credentials"
+            self.resource = "algorithm.credentials"
             self.message = message
             return False
 

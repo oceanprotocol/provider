@@ -579,3 +579,31 @@ def test_consume_algo_with_credentials(
         response.json["error"]
         == f"Error: Access to asset {alg_ddo.did} was denied with code: ConsumableCodes.CREDENTIAL_NOT_IN_ALLOW_LIST."
     )
+
+    # Use case 3: Consume asset by allowed address
+    tx_id, _ = start_order(
+        web3,
+        sa_compute.datatoken_address,
+        consumer_wallet.address,
+        sa_compute.index,
+        get_provider_fees(alg_ddo, sa_compute, consumer_wallet.address, 0),
+        consumer_wallet,
+    )
+
+    payload = {
+        "documentId": alg_ddo.did,
+        "serviceId": sa_compute.id,
+        "consumerAddress": consumer_wallet.address,
+        "transferTxId": tx_id,
+        "fileIndex": 0,
+    }
+
+    download_endpoint = BaseURLs.SERVICES_URL + "/download"
+    nonce = build_nonce(consumer_wallet.address)
+    _msg = f"{alg_ddo.did}{nonce}"
+    payload["signature"] = sign_message(_msg, consumer_wallet)
+    payload["nonce"] = nonce
+    response = client.get(
+        sa_compute.service_endpoint + download_endpoint, query_string=payload
+    )
+    assert response.status_code == 200, f"{response.data}"
