@@ -64,8 +64,9 @@ jobs:
           cat $HOME/.ocean/ocean-contracts/artifacts/address.json
       - name: Test with pytest
         run: |
-          pytest tests/test_download.py::test_consume_algo_with_credentials
-          pytest ocean_provider/validation/test/test_algo_validation.py::test_algo_credentials
+          coverage run --source ocean_provider -m pytest
+          coverage report
+          coverage xml
       - name:  docker logs
         run: docker logs ocean_aquarius_1 && docker logs ocean_provider_1 && docker logs ocean_provider2_1 && docker logs ocean_ipfs_1
         if: ${{ failure() }}
