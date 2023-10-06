@@ -2,26 +2,25 @@
 ## Copyright 2023 Ocean Protocol Foundation
 ## SPDX-License-Identifier: Apache-2.0
 ##
-FROM ubuntu:18.04
+FROM python:3.8-slim-buster
 LABEL maintainer="Ocean Protocol <devops@oceanprotocol.com>"
 
 ARG VERSION
 
 RUN apt-get update && \
-   apt-get install --no-install-recommends -y \
-   gcc \
-   python3.8 \
-   python3-pip \
-   python3.8-dev \
-   gettext-base
+    apt-get install --no-install-recommends -y \
+    build-essential \
+    gcc \
+    gettext-base && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 COPY . /ocean-provider
 WORKDIR /ocean-provider
 
-RUN python3.8 -m pip install --upgrade pip
-RUN python3.8 -m pip install setuptools
-RUN python3.8 -m pip install wheel
-RUN python3.8 -m pip install .
+# Install dependencies in a virtual environment
+RUN python3.8 -m pip install --no-cache-dir setuptools wheel && \
+    python3.8 -m pip install --no-cache-dir .
 
 ENV NETWORK_URL='http://127.0.0.1:8545'
 
