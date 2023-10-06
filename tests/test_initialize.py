@@ -261,9 +261,8 @@ def test_initialize_compute_order_reused(
         publisher_wallet,
         consumer_wallet,
         True,
-        None,
-        free_c2d_env["consumerAddress"],
-        valid_until,
+        c2d_address=free_c2d_env["consumerAddress"],
+        valid_until=valid_until,
         timeout=60,
         c2d_environment=free_c2d_env["id"],
     )

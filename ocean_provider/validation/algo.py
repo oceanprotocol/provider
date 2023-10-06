@@ -14,6 +14,8 @@ from ocean_provider.utils.asset import (
     get_asset_from_metadatastore,
 )
 from ocean_provider.utils.basics import get_metadata_url, get_provider_wallet, get_web3
+from ocean_provider.utils.consumable import ConsumableCodes
+from ocean_provider.utils.credentials import AddressCredential
 from ocean_provider.utils.datatoken import (
     record_consume_request,
     validate_order,
@@ -306,6 +308,15 @@ class WorkflowValidator:
         except Exception:
             self.resource = "algorithm"
             self.message = "file_unavailable"
+            return False
+
+        consumable, message = check_asset_consumable(
+            algo_ddo, self.consumer_address, logger, service.service_endpoint
+        )
+
+        if not consumable:
+            self.resource = "algorithm.credentials"
+            self.message = message
             return False
 
         return True

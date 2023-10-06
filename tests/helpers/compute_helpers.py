@@ -25,6 +25,7 @@ def build_and_send_ddo_with_compute_service(
     publisher_wallet,
     consumer_wallet,
     alg_diff=False,
+    custom_algo_credentials=None,
     asset_type=None,
     c2d_address=None,
     do_send=True,
@@ -40,15 +41,27 @@ def build_and_send_ddo_with_compute_service(
     if c2d_address is None:
         c2d_address = consumer_wallet.address
     if alg_diff:
-        alg_ddo = get_registered_asset(
-            publisher_wallet,
-            custom_metadata=algo_metadata,
-            custom_service_endpoint="http://172.15.0.7:8030",
-            timeout=timeout,
-            unencrypted_files_list=[
-                {"url": this_is_a_gist, "type": "url", "method": "GET"}
-            ],
-        )
+        if custom_algo_credentials:
+            alg_ddo = get_registered_asset(
+                publisher_wallet,
+                custom_metadata=algo_metadata,
+                custom_service_endpoint="http://172.15.0.7:8030",
+                custom_credentials=custom_algo_credentials,
+                timeout=timeout,
+                unencrypted_files_list=[
+                    {"url": this_is_a_gist, "type": "url", "method": "GET"}
+                ],
+            )
+        else:
+            alg_ddo = get_registered_asset(
+                publisher_wallet,
+                custom_metadata=algo_metadata,
+                custom_service_endpoint="http://172.15.0.7:8030",
+                timeout=timeout,
+                unencrypted_files_list=[
+                    {"url": this_is_a_gist, "type": "url", "method": "GET"}
+                ],
+            )
     else:
         alg_ddo = get_registered_asset(
             publisher_wallet,
@@ -58,7 +71,6 @@ def build_and_send_ddo_with_compute_service(
                 {"url": this_is_a_gist, "type": "url", "method": "GET"}
             ],
         )
-
     # publish an algorithm asset (asset with metadata of type `algorithm`)
     service = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
     mint_100_datatokens(

@@ -2,6 +2,7 @@
 # Copyright 2023 Ocean Protocol Foundation
 # SPDX-License-Identifier: Apache-2.0
 #
+import json
 from typing import Optional
 
 from ocean_provider.utils.consumable import ConsumableCodes, MalformedCredential
@@ -100,7 +101,12 @@ class AddressCredential:
         """Get address credentials entry of the specified access class. access_class = "allow" or "deny"."""
         if not self.asset.credentials:
             return None
-        entries = self.asset.credentials.get(access_class, [])
+        if isinstance(self.asset.credentials, str):
+            credentials = json.loads(self.asset.credentials)
+        else:
+            credentials = self.asset.credentials
+
+        entries = credentials.get(access_class, [])
         address_entries = [entry for entry in entries if entry.get("type") == "address"]
         return address_entries[0] if address_entries else None
 

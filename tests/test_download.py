@@ -4,15 +4,23 @@
 #
 import copy
 import logging
+import os
 import time
 from unittest.mock import patch
 
 import pytest
+from eth_account import Account
 from ocean_provider.constants import BaseURLs
 from ocean_provider.utils.accounts import sign_message
+from ocean_provider.utils.currency import to_wei
 from ocean_provider.utils.data_nft_factory import get_data_nft_factory_address
+from ocean_provider.utils.datatoken import get_datatoken_contract
 from ocean_provider.utils.provider_fees import get_provider_fees
 from ocean_provider.utils.services import ServiceType
+from tests.helpers.compute_helpers import (
+    get_future_valid_until,
+    build_and_send_ddo_with_compute_service,
+)
 from tests.helpers.constants import ARWEAVE_TRANSACTION_ID
 from tests.helpers.nonce import build_nonce
 from tests.test_auth import create_token
@@ -27,6 +35,7 @@ from tests.test_helpers import (
     start_multiple_order,
     start_order,
     try_download,
+    get_ocean_token_address,
 )
 
 logger = logging.getLogger(__name__)
@@ -454,3 +463,150 @@ def test_download_arweave(client, publisher_wallet, consumer_wallet, web3):
         response.data.decode("utf-8").partition("\n")[0]
         == "% 1. Title: Branin Function"
     )
+
+
+@pytest.mark.integration
+def test_consume_algo_with_credentials(
+    client, publisher_wallet, consumer_wallet, free_c2d_env, web3
+):
+    valid_until = get_future_valid_until()
+    deployer_wallet = Account.from_key(os.getenv("FACTORY_DEPLOYER_PRIVATE_KEY"))
+    fee_token = get_datatoken_contract(web3, get_ocean_token_address(web3))
+    fee_token.functions.mint(consumer_wallet.address, to_wei(80)).transact(
+        {"from": deployer_wallet.address}
+    )
+    # Use case 1: Consume an algorithm asset by an address which is in the denied list
+    algo_credentials = {
+        "allow": [],
+        "deny": [{"type": "address", "values": [consumer_wallet.address]}],
+    }
+
+    ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
+        client,
+        publisher_wallet,
+        consumer_wallet,
+        True,
+        custom_algo_credentials=algo_credentials,
+        c2d_address=free_c2d_env["consumerAddress"],
+        valid_until=valid_until,
+        c2d_environment=free_c2d_env["id"],
+        fee_token_args=(fee_token, to_wei(80)),
+    )
+    sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
+    mint_100_datatokens(
+        web3, sa_compute.datatoken_address, consumer_wallet.address, publisher_wallet
+    )
+    tx_id, _ = start_order(
+        web3,
+        sa_compute.datatoken_address,
+        consumer_wallet.address,
+        sa_compute.index,
+        get_provider_fees(alg_ddo, sa_compute, consumer_wallet.address, 0),
+        consumer_wallet,
+    )
+
+    payload = {
+        "documentId": alg_ddo.did,
+        "serviceId": sa_compute.id,
+        "consumerAddress": consumer_wallet.address,
+        "transferTxId": tx_id,
+        "fileIndex": 0,
+    }
+
+    download_endpoint = BaseURLs.SERVICES_URL + "/download"
+    nonce = build_nonce(consumer_wallet.address)
+    _msg = f"{alg_ddo.did}{nonce}"
+    payload["signature"] = sign_message(_msg, consumer_wallet)
+    payload["nonce"] = nonce
+    response = client.get(
+        sa_compute.service_endpoint + download_endpoint, query_string=payload
+    )
+    assert response.status_code == 400, f"{response.data}"
+    assert (
+        response.json["error"]
+        == f"Error: Access to asset {alg_ddo.did} was denied with code: ConsumableCodes.CREDENTIAL_IN_DENY_LIST."
+    )
+
+    # Use case 2: Consume an algorithm asset by an address which is not in the allowed list
+
+    algo_credentials = {
+        "allow": [{"type": "address", "values": [consumer_wallet.address]}],
+        "deny": [],
+    }
+
+    ddo, tx_id, alg_ddo, alg_tx_id = build_and_send_ddo_with_compute_service(
+        client,
+        publisher_wallet,
+        deployer_wallet,
+        True,
+        custom_algo_credentials=algo_credentials,
+        c2d_address=free_c2d_env["consumerAddress"],
+        valid_until=valid_until,
+        c2d_environment=free_c2d_env["id"],
+        fee_token_args=(fee_token, to_wei(80)),
+    )
+    sa_compute = get_first_service_by_type(alg_ddo, ServiceType.ACCESS)
+    mint_100_datatokens(
+        web3, sa_compute.datatoken_address, deployer_wallet.address, publisher_wallet
+    )
+    tx_id, _ = start_order(
+        web3,
+        sa_compute.datatoken_address,
+        deployer_wallet.address,
+        sa_compute.index,
+        get_provider_fees(alg_ddo, sa_compute, deployer_wallet.address, 0),
+        deployer_wallet,
+    )
+
+    payload = {
+        "documentId": alg_ddo.did,
+        "serviceId": sa_compute.id,
+        "consumerAddress": deployer_wallet.address,
+        "transferTxId": tx_id,
+        "fileIndex": 0,
+    }
+
+    download_endpoint = BaseURLs.SERVICES_URL + "/download"
+    nonce = build_nonce(deployer_wallet.address)
+    _msg = f"{alg_ddo.did}{nonce}"
+    payload["signature"] = sign_message(_msg, deployer_wallet)
+    payload["nonce"] = nonce
+    response = client.get(
+        sa_compute.service_endpoint + download_endpoint, query_string=payload
+    )
+    assert response.status_code == 400, f"{response.data}"
+    assert (
+        response.json["error"]
+        == f"Error: Access to asset {alg_ddo.did} was denied with code: ConsumableCodes.CREDENTIAL_NOT_IN_ALLOW_LIST."
+    )
+
+    # Use case 3: Consume asset by allowed address
+    mint_100_datatokens(
+        web3, sa_compute.datatoken_address, consumer_wallet.address, publisher_wallet
+    )
+    tx_id, _ = start_order(
+        web3,
+        sa_compute.datatoken_address,
+        consumer_wallet.address,
+        sa_compute.index,
+        get_provider_fees(alg_ddo, sa_compute, consumer_wallet.address, 0),
+        consumer_wallet,
+    )
+
+    payload = {
+        "documentId": alg_ddo.did,
+        "serviceId": sa_compute.id,
+        "consumerAddress": consumer_wallet.address,
+        "transferTxId": tx_id,
+        "fileIndex": 0,
+    }
+
+    download_endpoint = BaseURLs.SERVICES_URL + "/download"
+    nonce = build_nonce(consumer_wallet.address)
+    _msg = f"{alg_ddo.did}{nonce}"
+    payload["signature"] = sign_message(_msg, consumer_wallet)
+    payload["nonce"] = nonce
+    response = client.get(
+        sa_compute.service_endpoint + download_endpoint, query_string=payload
+    )
+    assert response.status_code == 200, f"{response.data}"
