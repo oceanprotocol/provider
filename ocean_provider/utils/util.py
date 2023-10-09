@@ -13,6 +13,7 @@ from eth_keys import KeyAPI
 from eth_keys.backends import NativeECCBackend
 from eth_typing.encoding import HexStr
 from ocean_provider.utils.asset import Asset
+from ocean_provider.utils.basics import get_network_name
 from ocean_provider.utils.encryption import do_decrypt
 from ocean_provider.utils.services import Service
 from web3 import Web3
@@ -40,6 +41,7 @@ def get_service_files_list(
     if asset is None or version == "4.0.0":
         return get_service_files_list_old_structure(service, provider_wallet)
 
+    network_name = get_network_name(asset.chain_id)
     try:
         files_str = do_decrypt(service.encrypted_files, provider_wallet)
         if not files_str:
@@ -49,29 +51,35 @@ def get_service_files_list(
 
         for key in ["datatokenAddress", "nftAddress", "files"]:
             if key not in files_json:
-                raise Exception(f"Key {key} not found in files.")
+                raise Exception(
+                    f"Provider {network_name}: Key {key} not found in files."
+                )
 
         if Web3.toChecksumAddress(
             files_json["datatokenAddress"]
         ) != Web3.toChecksumAddress(service.datatoken_address):
             raise Exception(
-                f"Mismatch of datatoken. Got {files_json['datatokenAddress']} vs expected {service.datatoken_address}"
+                f"Provider {network_name}: Mismatch of datatoken. Got {files_json['datatokenAddress']} vs expected {service.datatoken_address}"
             )
 
         if Web3.toChecksumAddress(files_json["nftAddress"]) != Web3.toChecksumAddress(
             asset.nftAddress
         ):
             raise Exception(
-                f"Mismatch of dataNft. Got {files_json['nftAddress']} vs expected {asset.nftAddress}"
+                f"Provider {network_name}: Mismatch of dataNft. Got {files_json['nftAddress']} vs expected {asset.nftAddress}"
             )
 
         files_list = files_json["files"]
         if not isinstance(files_list, list):
-            raise TypeError(f"Expected a files list, got {type(files_list)}.")
+            raise TypeError(
+                f"Provider {network_name}: Expected a files list, got {type(files_list)}."
+            )
 
         return files_list
     except Exception as e:
-        logger.error(f"Error decrypting service files {Service}: {str(e)}")
+        logger.error(
+            f"Provider {network_name}: Error decrypting service files {Service}: {str(e)}"
+        )
         return None
 
 

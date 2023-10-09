@@ -20,6 +20,17 @@ from web3.middleware import geth_poa_middleware
 
 logger = logging.getLogger(__name__)
 
+NETWORK_NAME_MAP = {
+    1: "Mainnet",
+    5: "Goerli",
+    56: "Binance Smart Chain",
+    137: "Polygon",
+    246: "Energy Web",
+    1285: "Moonriver",
+    80001: "Mumbai",
+    11155111: "Sepolia",
+}
+
 
 def decode_keyed(env_key):
     try:
@@ -159,6 +170,13 @@ def get_web3_connection_provider(
             f"`http` or `wss`. A correct network url is required."
         )
         raise AssertionError(msg)
+
+
+def get_network_name(chain_id: int) -> str:
+    if not chain_id:
+        logger.error("Chain ID is missing")
+
+    return NETWORK_NAME_MAP[chain_id]
 
 
 def send_ether(web3, from_wallet: Account, to_address: str, amount: int):
