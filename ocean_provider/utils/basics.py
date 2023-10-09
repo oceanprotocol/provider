@@ -29,6 +29,7 @@ NETWORK_NAME_MAP = {
     1285: "Moonriver",
     80001: "Mumbai",
     11155111: "Sepolia",
+    8996: "Ganache",
 }
 
 
