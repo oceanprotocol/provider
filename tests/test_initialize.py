@@ -77,7 +77,7 @@ def test_initialize_on_disabled_asset(client, publisher_wallet, consumer_wallet,
         client, asset.did, service, consumer_wallet, raw_response=True
     )
     assert "error" in response.json
-    assert response.json["error"] == "Asset is not consumable."
+    assert response.json["error"] == "Provider Ganache: Asset is not consumable."
 
 
 @pytest.mark.integration
@@ -109,7 +109,7 @@ def test_initialize_on_asset_with_custom_credentials(
     assert "error" in response.json
     assert (
         response.json["error"]
-        == f"Error: Access to asset {asset.did} was denied with code: ConsumableCodes.CREDENTIAL_IN_DENY_LIST."
+        == f"Provider Ganache: Error: Access to asset {asset.did} was denied with code: ConsumableCodes.CREDENTIAL_IN_DENY_LIST."
     )
 
 
@@ -174,7 +174,7 @@ def test_can_not_initialize_compute_service_with_simple_initialize(
     assert "error" in response.json
     assert (
         response.json["error"]
-        == "Use the initializeCompute endpoint to initialize compute jobs."
+        == "Provider Ganache: Use the initializeCompute endpoint to initialize compute jobs."
     )
 
 

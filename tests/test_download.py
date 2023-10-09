@@ -413,7 +413,7 @@ def test_download_compute_asset_by_user_fails(
             assert response.status_code == 400, f"{response.data}"
             assert (
                 response.json["error"]
-                == f"Service with index={service.id} is not an access service."
+                == f"Provider Ganache: Service with index={service.id} is not an access service."
             )
 
 
@@ -524,7 +524,7 @@ def test_consume_algo_with_credentials(
     assert response.status_code == 400, f"{response.data}"
     assert (
         response.json["error"]
-        == f"Error: Access to asset {alg_ddo.did} was denied with code: ConsumableCodes.CREDENTIAL_IN_DENY_LIST."
+        == f"Provider Ganache: Error: Access to asset {alg_ddo.did} was denied with code: ConsumableCodes.CREDENTIAL_IN_DENY_LIST."
     )
 
     # Use case 2: Consume an algorithm asset by an address which is not in the allowed list
@@ -577,7 +577,7 @@ def test_consume_algo_with_credentials(
     assert response.status_code == 400, f"{response.data}"
     assert (
         response.json["error"]
-        == f"Error: Access to asset {alg_ddo.did} was denied with code: ConsumableCodes.CREDENTIAL_NOT_IN_ALLOW_LIST."
+        == f"Provider Ganache: Error: Access to asset {alg_ddo.did} was denied with code: ConsumableCodes.CREDENTIAL_NOT_IN_ALLOW_LIST."
     )
 
     # Use case 3: Consume asset by allowed address
