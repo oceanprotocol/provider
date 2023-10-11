@@ -5,6 +5,9 @@
 import json
 import logging
 import os
+from pathlib import Path
+
+import addresses
 from datetime import datetime, timezone
 from distutils.util import strtobool
 from json.decoder import JSONDecodeError
@@ -19,18 +22,6 @@ from web3.main import Web3
 from web3.middleware import geth_poa_middleware
 
 logger = logging.getLogger(__name__)
-
-NETWORK_NAME_MAP = {
-    1: "Mainnet",
-    5: "Goerli",
-    56: "Binance Smart Chain",
-    137: "Polygon",
-    246: "Energy Web",
-    1285: "Moonriver",
-    80001: "Mumbai",
-    11155111: "Sepolia",
-    8996: "Ganache",
-}
 
 
 def decode_keyed(env_key):
@@ -177,7 +168,15 @@ def get_network_name(chain_id: int) -> str:
     if not chain_id:
         logger.error("Chain ID is missing")
 
-    return NETWORK_NAME_MAP[chain_id]
+    address_path = Path(os.path.join(addresses.__file__, "..", "address.json"))
+
+    address_file = address_path.expanduser().resolve()
+    with open(address_file) as f:
+        addresses_json = json.load(f)
+
+    for k, v in addresses_json.items():
+        if v["chainId"] == chain_id:
+            return k
 
 
 def send_ether(web3, from_wallet: Account, to_address: str, amount: int):
