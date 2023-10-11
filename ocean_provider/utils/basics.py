@@ -168,6 +168,9 @@ def get_network_name(chain_id: int) -> str:
     if not chain_id:
         logger.error("Chain ID is missing")
 
+    if chain_id == 8996:
+        return "Ganache"
+
     address_path = Path(os.path.join(addresses.__file__, "..", "address.json"))
 
     address_file = address_path.expanduser().resolve()
