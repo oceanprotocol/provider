@@ -181,6 +181,8 @@ def get_network_name(chain_id: int) -> str:
         if v["chainId"] == chain_id:
             return k
 
+    return "Unknown"
+
 
 def send_ether(web3, from_wallet: Account, to_address: str, amount: int):
     """Sends ether from wallet to the address."""
