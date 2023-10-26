@@ -18,7 +18,12 @@ from ocean_provider.utils.asset import (
     check_asset_consumable,
     get_asset_from_metadatastore,
 )
-from ocean_provider.utils.basics import get_metadata_url, get_provider_wallet, get_web3
+from ocean_provider.utils.basics import (
+    get_metadata_url,
+    get_provider_wallet,
+    get_web3,
+    get_network_name,
+)
 from ocean_provider.utils.datatoken import validate_order
 from ocean_provider.utils.error_responses import error_response
 from ocean_provider.utils.proof import send_proof
@@ -66,8 +71,8 @@ def nonce():
     if request.method.upper() in BaseURLs.NOT_ALLOWED_METHODS:
         return error_response("Method Not Allowed", 405, logger)
 
-    logger.info("nonce endpoint called")
     data = get_request_data(request)
+    logger.info(f"nonce endpoint called with data: {data}")
     address = data.get("userAddress")
     nonce = get_nonce(address)
 
@@ -112,7 +117,7 @@ def fileinfo():
     return: list of file info (index, valid, contentLength, contentType)
     """
     data = get_request_data(request)
-    logger.debug(f"fileinfo called. arguments = {data}")
+    logger.info(f"fileinfo called. arguments = {data}")
     did = data.get("did")
     service_id = data.get("serviceId")
 
@@ -124,17 +129,24 @@ def fileinfo():
                 400,
                 logger,
             )
+
+        network_name = get_network_name(asset.chain_id)
+        logger.info(
+            f"Provider {network_name}: Retrieved asset {did} from Metadata store."
+        )
         service = asset.get_service_by_id(service_id)
         if not service:
             return error_response(
-                "Invalid serviceId.",
+                f"Provider {network_name}: Invalid serviceId.",
                 400,
                 logger,
             )
         provider_wallet = get_provider_wallet(asset.chain_id)
         files_list = get_service_files_list(service, provider_wallet, asset)
         if not files_list:
-            return error_response("Unable to get dataset files", 400, logger)
+            return error_response(
+                f"Provider {network_name}: Unable to get dataset files", 400, logger
+            )
     else:
         files_list = [data]
 
@@ -193,7 +205,7 @@ def initialize():
         ```
     """
     data = get_request_data(request)
-    logger.info(f"initialize called. arguments = {data}")
+    logger.info(f"initialize endpoint called. arguments = {data}")
 
     did = data.get("documentId")
     consumer_address = data.get("consumerAddress")
@@ -205,21 +217,24 @@ def initialize():
             400,
             logger,
         )
+    network_name = get_network_name(asset.chain_id)
+    logger.info(f"Provider {network_name}: Retrieved asset {did} from Metadata store.")
+
     consumable, message = check_asset_consumable(asset, consumer_address, logger)
     if not consumable:
-        return error_response(message, 400, logger)
+        return error_response(f"Provider {network_name}: " + message, 400, logger)
 
     service_id = data.get("serviceId")
     service = asset.get_service_by_id(service_id)
     if not service:
         return error_response(
-            "Invalid serviceId.",
+            f"Provider {network_name}: Invalid serviceId.",
             400,
             logger,
         )
     if service.type == "compute":
         return error_response(
-            "Use the initializeCompute endpoint to initialize compute jobs.",
+            f"Provider {network_name}: Use the initializeCompute endpoint to initialize compute jobs.",
             400,
             logger,
         )
@@ -236,8 +251,10 @@ def initialize():
                 allow_expired_provider_fees=True,
             )
             return {"validOrder": _order_log.transactionHash.hex()}, 200
-        except Exception:
-            pass
+        except Exception as e:
+            logger.error(
+                f"Provider {network_name}: Received error when validation order: {e}"
+            )
 
     token_address = service.datatoken_address
 
@@ -249,13 +266,13 @@ def initialize():
         url_object["userdata"] = data.get("userdata")
         valid, message = FilesTypeFactory.validate_and_create(url_object)
         if not valid:
-            return error_response(message, 400, logger)
+            return error_response(f"Provider {network_name}: " + message, 400, logger)
 
         file_instance = message
         valid, url_details = file_instance.check_details(with_checksum=False)
         if not valid or not url_details:
             return error_response(
-                f"Error: Asset URL not found, not available or invalid. \n"
+                f"Provider {network_name}: Asset URL not found, not available or invalid. \n"
                 f"Payload was: {data}",
                 400,
                 logger,
@@ -278,7 +295,7 @@ def initialize():
         approve_params["validOrder"] = valid_order
 
     response = jsonify(approve_params), 200
-    logger.info(f"initialize response = {response}")
+    logger.info(f"Provider {network_name}: initialize response = {response}")
 
     return response
 
@@ -336,10 +353,18 @@ def download():
     # grab asset for did from the metadatastore associated with
     # the datatoken address
     asset = get_asset_from_metadatastore(get_metadata_url(), did)
+    if not asset:
+        return error_response(
+            "Cannot resolve DID",
+            400,
+            logger,
+        )
+    network_name = get_network_name(asset.chain_id)
+    logger.info(f"Provider {network_name}: Retrieved asset {did} from Metadata store.")
 
     consumable, message = check_asset_consumable(asset, consumer_address, logger)
     if not consumable:
-        return error_response(message, 400, logger)
+        return error_response(f"Provider {network_name}: " + message, 400, logger)
 
     service = asset.get_service_by_id(service_id)
 
@@ -358,12 +383,14 @@ def download():
 
         if not is_c2d_consumer_address:
             return error_response(
-                f"Service with index={service_id} is not an access service.",
+                f"Provider {network_name}: Service with index={service_id} is not an access service.",
                 400,
                 logger,
             )
 
-    logger.info("validate_order called from download endpoint.")
+    logger.info(
+        f"Provider {network_name}: validate_order called from download endpoint."
+    )
 
     try:
         _tx, _order_log, _, _ = validate_order(
@@ -371,7 +398,7 @@ def download():
         )
     except Exception as e:
         return error_response(
-            f"=Order with tx_id {tx_id} could not be validated due to error: {e}",
+            f"Provider {network_name}: Order with tx_id {tx_id} could not be validated due to error: {e}",
             400,
             logger,
         )
@@ -380,28 +407,30 @@ def download():
     provider_wallet = get_provider_wallet(asset.chain_id)
     files_list = get_service_files_list(service, provider_wallet, asset)
     if file_index > len(files_list):
-        return error_response(f"No such fileIndex {file_index}", 400, logger)
+        return error_response(
+            f"Provider {network_name}: No such fileIndex {file_index}", 400, logger
+        )
     url_object = files_list[file_index]
     url_object["userdata"] = data.get("userdata")
     url_valid, message = FilesTypeFactory.validate_and_create(url_object)
 
     if not url_valid:
-        return error_response(message, 400, logger)
+        return error_response(f"Provider {network_name}: " + message, 400, logger)
 
     file_instance = message
     valid, details = file_instance.check_details(with_checksum=True)
 
     if not valid:
-        return error_response(details, 400, logger)
+        return error_response(f"Provider {network_name}: " + details, 400, logger)
 
     logger.debug(
-        f"Done processing consume request for asset {did}, "
+        f"Provider {network_name}: Done processing consume request for asset {did}, "
         f" url {file_instance.get_download_url()}"
     )
     update_nonce(consumer_address, data.get("nonce"))
 
     response = file_instance.build_download_response(request)
-    logger.info(f"download response = {response}")
+    logger.info(f"Provider {network_name}: download response = {response}")
 
     provider_proof_data = json.dumps(
         {
@@ -424,5 +453,6 @@ def download():
         consumer_address=consumer_address,
         datatoken_address=service.datatoken_address,
     )
+    logger.info(f"Provider {network_name}: proof approved")
 
     return response

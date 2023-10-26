@@ -5,6 +5,9 @@
 import json
 import logging
 import os
+from pathlib import Path
+
+import addresses
 from datetime import datetime, timezone
 from distutils.util import strtobool
 from json.decoder import JSONDecodeError
@@ -159,6 +162,26 @@ def get_web3_connection_provider(
             f"`http` or `wss`. A correct network url is required."
         )
         raise AssertionError(msg)
+
+
+def get_network_name(chain_id: int) -> str:
+    if not chain_id:
+        logger.error("Chain ID is missing")
+
+    if chain_id == 8996:
+        return "Ganache"
+
+    address_path = Path(os.path.join(addresses.__file__, "..", "address.json"))
+
+    address_file = address_path.expanduser().resolve()
+    with open(address_file) as f:
+        addresses_json = json.load(f)
+
+    for k, v in addresses_json.items():
+        if v["chainId"] == chain_id:
+            return k
+
+    return "Unknown"
 
 
 def send_ether(web3, from_wallet: Account, to_address: str, amount: int):

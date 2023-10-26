@@ -9,7 +9,7 @@ from eth_typing.encoding import HexStr
 from eth_typing.evm import HexAddress
 from hexbytes import HexBytes
 from ocean_provider.utils.address import get_contract_definition
-from ocean_provider.utils.basics import get_provider_wallet
+from ocean_provider.utils.basics import get_provider_wallet, get_network_name
 from ocean_provider.utils.currency import to_wei
 from ocean_provider.utils.data_nft import get_data_nft_contract
 from ocean_provider.utils.services import Service
@@ -55,13 +55,15 @@ def verify_order_tx(
     except ConnectionClosed:
         # try again in this case
         tx_receipt = _get_tx_receipt(web3, tx_id)
+
+    network_name = get_network_name(web3.eth.chain_id)
     if tx_receipt is None:
         raise AssertionError(
-            "Failed to get tx receipt for the `startOrder` transaction.."
+            f"Provider {network_name}: Failed to get tx receipt for the `startOrder` transaction.."
         )
 
     if tx_receipt.status == 0:
-        raise AssertionError("order transaction failed.")
+        raise AssertionError(f"Provider {network_name}: order transaction failed.")
 
     # check provider fees
     datatoken_contract = get_datatoken_contract(web3, datatoken_address)
@@ -86,7 +88,7 @@ def verify_order_tx(
 
     if not provider_fee_order_log:
         raise AssertionError(
-            f"Cannot find the event for the provider fee in tx id {tx_id}."
+            f"Provider {network_name}: Cannot find the event for the provider fee in tx id {tx_id}."
         )
 
     provider_initialize_timestamp = 0
@@ -94,7 +96,7 @@ def verify_order_tx(
         provider_data = json.loads(provider_fee_order_log.args.providerData)
         if extra_data["environment"] != provider_data["environment"]:
             raise AssertionError(
-                "Mismatch between ordered c2d environment and selected one."
+                f"Provider {network_name}: Mismatch between ordered c2d environment and selected one."
             )
         provider_initialize_timestamp = provider_data["timestamp"]
 
@@ -102,7 +104,7 @@ def verify_order_tx(
         provider_fee_order_log.args.providerFeeAddress
     ) != Web3.toChecksumAddress(provider_wallet.address):
         raise AssertionError(
-            f"The providerFeeAddress {provider_fee_order_log.args.providerFeeAddress} in the event does "
+            f"Provider {network_name}: The providerFeeAddress {provider_fee_order_log.args.providerFeeAddress} in the event does "
             f"not match the provider address {provider_wallet.address}\n"
         )
 
@@ -132,7 +134,7 @@ def verify_order_tx(
     pk = keys.PrivateKey(provider_wallet.key)
     if not keys.ecdsa_verify(signable_hash, signature, pk.public_key):
         raise AssertionError(
-            "Provider was not able to check the signed message in ProviderFees event\n"
+            f"Provider {network_name}: Provider was not able to check the signed message in ProviderFees event\n"
         )
 
     timestamp_now = datetime.now(timezone.utc).timestamp()
@@ -147,7 +149,9 @@ def verify_order_tx(
                 >= provider_fee_order_log.args.validUntil
                 + (block.timestamp - provider_initialize_timestamp + 90)
             ):
-                raise AssertionError("Ordered c2d time was exceeded, check validUntil.")
+                raise AssertionError(
+                    f"Provider {network_name}: Ordered c2d time was exceeded, check validUntil."
+                )
     # end check provider fees
 
     # check if we have an OrderReused event. If so, get orderTxId and switch next checks to use that
@@ -157,8 +161,10 @@ def verify_order_tx(
             tx_receipt, errors=DISCARD
         )
     except Exception as e:
-        logger.error(e)
-    logger.debug(f"Got events log when searching for ReuseOrder : {event_logs}")
+        logger.error(f"Provider {network_name}: {e}")
+    logger.debug(
+        f"Provider {network_name}: Got events log when searching for ReuseOrder : {event_logs}"
+    )
     log_timestamp = None
     order_log = event_logs[0] if event_logs else None
     if order_log and order_log.args.orderTxId:
@@ -169,11 +175,17 @@ def verify_order_tx(
             # try again in this case
             tx_receipt = _get_tx_receipt(web3, order_log.args.orderTxId)
         if tx_receipt is None:
-            raise AssertionError("Failed to get tx receipt referenced in OrderReused..")
+            raise AssertionError(
+                f"Provider {network_name}: Failed to get tx receipt referenced in OrderReused.."
+            )
         if tx_receipt.status == 0:
-            raise AssertionError("order referenced in OrderReused failed.")
+            raise AssertionError(
+                f"Provider {network_name}: order referenced in OrderReused failed."
+            )
 
-    logger.debug(f"Search for orderStarted in tx_receipt : {tx_receipt}")
+    logger.debug(
+        f"Provider {network_name}: Search for orderStarted in tx_receipt : {tx_receipt}"
+    )
 
     # this has changed now if the original original_tx was a reuseOrder
     start_order_tx_id = tx_receipt.transactionHash
@@ -182,8 +194,10 @@ def verify_order_tx(
             tx_receipt, errors=DISCARD
         )
     except Exception as e:
-        logger.error(e)
-    logger.debug(f"Got events log when searching for OrderStarted : {event_logs}")
+        logger.error(f"Provider {network_name}: {e}")
+    logger.debug(
+        f"Provider {network_name}: Got events log when searching for OrderStarted : {event_logs}"
+    )
     order_log = None
     # search in all startOrder events until we have a match. if not, we don't have a valid event
     for log in event_logs:
@@ -192,12 +206,12 @@ def verify_order_tx(
 
     if not order_log:
         raise AssertionError(
-            f"Cannot find the event for the order transaction with tx id {tx_id}."
+            f"Provider {network_name}: Cannot find the event for the order transaction with tx id {tx_id}."
         )
 
     if order_log.args.serviceIndex != service.index:
         raise AssertionError(
-            f"The service id in the event does "
+            f"Provider {network_name}: The service id in the event does "
             f"not match the requested asset. \n"
             f"requested: serviceIndex={service.index}\n"
             f"event: serviceIndex={order_log.args.serviceIndex}"
@@ -205,7 +219,7 @@ def verify_order_tx(
 
     if order_log.args.amount < amount:
         raise ValueError(
-            f"The amount in the event is less than the amount requested. \n"
+            f"Provider {network_name}: The amount in the event is less than the amount requested. \n"
             f"requested: amount={amount}\n"
             f"event: amount={order_log.args.amount}"
         )
@@ -218,12 +232,12 @@ def verify_order_tx(
     )
     timestamp_delta = timestamp_now - log_timestamp
     logger.debug(
-        f"verify_order_tx: service timeout = {service.timeout}, timestamp delta = {timestamp_delta}"
+        f"Provider {network_name}: verify_order_tx: service timeout = {service.timeout}, timestamp delta = {timestamp_delta}"
     )
     if service.timeout != 0:
         if timestamp_delta > service.timeout:
             raise ValueError(
-                f"The order has expired. \n"
+                f"Provider {network_name}: The order has expired. \n"
                 f"current timestamp={timestamp_now}\n"
                 f"order timestamp={log_timestamp}\n"
                 f"timestamp delta={timestamp_delta}\n"
@@ -234,7 +248,9 @@ def verify_order_tx(
         web3.toChecksumAddress(order_log.args.consumer),
         web3.toChecksumAddress(order_log.args.payer),
     ]:
-        raise ValueError("sender of order transaction is not the consumer/payer.")
+        raise ValueError(
+            f"Provider {network_name}: sender of order transaction is not the consumer/payer."
+        )
 
     tx = web3.eth.get_transaction(HexBytes(tx_id))
 
@@ -253,9 +269,9 @@ def validate_order(
     did = asset.did
     token_address = web3.toChecksumAddress(service.datatoken_address)
     num_tokens = 1
-
+    network_name = get_network_name(asset.chain_id)
     logger.debug(
-        f"validate_order: did={did}, service_id={service.id}, tx_id={tx_id}, "
+        f"Provider {network_name}: validate_order: did={did}, service_id={service.id}, tx_id={tx_id}, "
         f"sender={sender}, num_tokens={num_tokens}, token_address={token_address}"
     )
 
@@ -266,7 +282,9 @@ def validate_order(
     num_tries = 3
     i = 0
     while i < num_tries:
-        logger.debug(f"validate_order is on trial {i + 1} in {num_tries}.")
+        logger.debug(
+            f"Provider {network_name}: validate_order is on trial {i + 1} in {num_tries}."
+        )
         i += 1
         try:
             tx, order_event, provider_fees_event, start_order_tx_id = verify_order_tx(
@@ -280,17 +298,19 @@ def validate_order(
                 allow_expired_provider_fees,
             )
             logger.debug(
-                f"validate_order succeeded for: did={did}, service_id={service.id}, tx_id={tx_id}, "
+                f"Provider {network_name}: validate_order succeeded for: did={did}, service_id={service.id}, tx_id={tx_id}, "
                 f"sender={sender}, num_tokens={num_tokens}, token_address={token_address}. "
                 f"result is: tx={tx}, order_event={order_event}."
             )
 
             return tx, order_event, provider_fees_event, start_order_tx_id
         except ConnectionClosed:
-            logger.debug("got ConnectionClosed error on validate_order.")
+            logger.debug(
+                f"Provider {network_name}: got ConnectionClosed error on validate_order."
+            )
             if i == num_tries:
                 logger.debug(
-                    "reached max no. of tries, raise ConnectionClosed in validate_order."
+                    f"Provider {network_name}: reached max no. of tries, raise ConnectionClosed in validate_order."
                 )
                 raise
         except Exception:

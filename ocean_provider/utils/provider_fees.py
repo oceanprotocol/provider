@@ -9,7 +9,12 @@ from eth_keys.backends import NativeECCBackend
 from ocean_provider.requests_session import get_requests_session
 from ocean_provider.utils.address import get_provider_fee_token
 from ocean_provider.utils.asset import get_asset_from_metadatastore
-from ocean_provider.utils.basics import get_metadata_url, get_provider_wallet, get_web3
+from ocean_provider.utils.basics import (
+    get_metadata_url,
+    get_provider_wallet,
+    get_web3,
+    get_network_name,
+)
 from ocean_provider.utils.compute_environments import (
     get_c2d_environments,
     get_environment,
@@ -84,7 +89,8 @@ def get_provider_fees(
         "s": Web3.toHex(Web3.toBytes(signed.s).rjust(32, b"\0")),
         "validUntil": valid_until,
     }
-    logger.debug(f"Returning provider_fees: {provider_fee}")
+    network_name = get_network_name(asset.chain_id)
+    logger.debug(f"Provider {network_name}: Returning provider_fees: {provider_fee}")
     return provider_fee
 
 
