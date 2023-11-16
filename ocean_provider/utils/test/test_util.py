@@ -390,6 +390,17 @@ def test_validate_url_object():
     assert result is False
     assert message == "Unsafe method delete."
 
+    url_object = {
+        "url": "./../dir",
+        "type": "url",
+        "method": "GET",
+    }
+    result, message = FilesTypeFactory.validate_and_create(url_object)
+    assert result is False
+    assert (
+        message == "Invalid file name format. It was not possible to get the file name."
+    )
+
 
 @pytest.mark.unit
 def test_build_download_response_ipfs():
