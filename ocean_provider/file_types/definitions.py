@@ -72,7 +72,10 @@ class EndUrlType:
                 if result:
                     status_code = result.status_code
                     headers = copy.deepcopy(result.headers)
-                    files_url = copy.deepcopy(result.url)
+                    if "arweave" in result.url:
+                        files_url = ""
+                    else:
+                        files_url = copy.deepcopy(result.url)
                     # always close requests session, see https://requests.readthedocs.io/en/latest/user/advanced/#body-content-workflow
                     result.close()
                     if status_code == 200:
@@ -85,18 +88,7 @@ class EndUrlType:
                 file_name = None
 
                 if files_url:
-                    filename = urlparse(files_url).path.split("/")[-1]
-                    try:
-                        if not self._validate_filename(filename):
-                            msg = "Invalid file name format. It was not possible to get the file name."
-                            logger.error(msg)
-                            return False, {"error": msg}
-
-                        file_name = filename
-                    except Exception as e:
-                        msg = f"It was not possible to get the file name. {e}"
-                        logger.warning(msg)
-                        return False, {"error": msg}
+                    file_name = urlparse(files_url).path.split("/")[-1]
 
                 if not content_length and content_range:
                     # sometimes servers send content-range instead
@@ -127,10 +119,6 @@ class EndUrlType:
             pass
 
         return False, {}
-
-    def _validate_filename(self, header: str) -> bool:
-        pattern = re.compile(r"\\|\.\.|/")
-        return not bool(pattern.findall(header))
 
     def _get_result_from_url(self, with_checksum=False):
         func, func_args = self._get_func_and_args()

@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import re
 from typing import Any, Optional, Tuple
 from urllib.parse import urljoin
 from uuid import uuid4
@@ -34,10 +35,21 @@ class UrlFile(EndUrlType, FilesType):
         if self.method not in ["get", "post"]:
             return False, f"Unsafe method {self.method}."
 
+        if not self.validate_url(self.url):
+            msg = "Invalid file name format. It was not possible to get the file name."
+            logger.error(msg)
+            return False, msg
+
         return True, self
 
     def get_download_url(self):
         return self.url
+
+    def validate_url(self, url: str) -> bool:
+        pattern = re.compile(r"^(.+)\/([^/]+)$")
+        if url.startswith("http://") or url.startswith("https://"):
+            return True
+        return not bool(pattern.findall(url))
 
     @enforce_types
     def get_filename(self) -> str:
