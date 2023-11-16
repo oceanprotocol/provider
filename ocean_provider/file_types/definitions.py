@@ -4,7 +4,6 @@ import json
 import logging
 import mimetypes
 import os
-import re
 from abc import abstractmethod
 from cgi import parse_header
 from typing import Protocol, Tuple
@@ -72,10 +71,7 @@ class EndUrlType:
                 if result:
                     status_code = result.status_code
                     headers = copy.deepcopy(result.headers)
-                    if "arweave" in result.url:
-                        files_url = ""
-                    else:
-                        files_url = copy.deepcopy(result.url)
+                    files_url = copy.deepcopy(result.url)
                     # always close requests session, see https://requests.readthedocs.io/en/latest/user/advanced/#body-content-workflow
                     result.close()
                     if status_code == 200:
