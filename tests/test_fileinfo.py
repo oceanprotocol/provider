@@ -171,7 +171,7 @@ def test_check_arweave_good(client):
         assert file_info["contentType"] == "application/octet-stream"
         assert file_info["valid"] is True
         assert file_info["type"] == "arweave"
-        assert file_info["name"] == ""
+        assert file_info["filename"] == ""
 
 
 @pytest.mark.unit
