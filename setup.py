@@ -18,7 +18,7 @@ with open("README.md") as readme_file:
 # Installed by pip install ocean-provider
 # or pip install -e .
 install_requirements = [
-    "ocean-contracts==1.1.15",
+    "ocean-contracts==2.0.2",
     "web3==5.25.0",
     "Flask==2.1.2",
     "Flask-Cors==3.0.9",
@@ -100,7 +100,7 @@ setup(
     url="https://github.com/oceanprotocol/provider-py",
     # fmt: off
     # bumpversion needs single quotes
-    version='2.1.5',
+    version='2.1.6',
     # fmt: on
     zip_safe=False,
 )
