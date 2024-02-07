@@ -55,20 +55,29 @@ def get_service_files_list(
                     f"Provider {network_name}: Key {key} not found in files."
                 )
 
-        if Web3.toChecksumAddress(
-            files_json["datatokenAddress"]
-        ) != Web3.toChecksumAddress(service.datatoken_address):
-            raise Exception(
-                f"Provider {network_name}: Mismatch of datatoken. Got {files_json['datatokenAddress']} vs expected {service.datatoken_address}"
-            )
+        try:
+            if Web3.toChecksumAddress(
+                files_json["datatokenAddress"]
+            ) != Web3.toChecksumAddress(service.datatoken_address):
+                raise Exception(
+                    f"Provider {network_name}: Invalid datatokenAddress. Got {files_json['datatokenAddress']} vs expected {service.datatoken_address}"
+                )
+        except Exception as e:
+                raise Exception(
+                    f"Provider {network_name}: Mismatch of datatoken. Got {files_json['datatokenAddress']} vs expected {service.datatoken_address}"
+                )
 
-        if Web3.toChecksumAddress(files_json["nftAddress"]) != Web3.toChecksumAddress(
-            asset.nftAddress
-        ):
+        try:
+            if Web3.toChecksumAddress(files_json["nftAddress"]) != Web3.toChecksumAddress(
+                asset.nftAddress
+            ):
+                raise Exception(
+                    f"Provider {network_name}: Invalid nftAddress. Got {files_json['nftAddress']} vs expected {asset.nftAddress}"
+                )
+        except:
             raise Exception(
-                f"Provider {network_name}: Mismatch of dataNft. Got {files_json['nftAddress']} vs expected {asset.nftAddress}"
-            )
-
+                    f"Provider {network_name}: Mismatch of dataNft. Got {files_json['nftAddress']} vs expected {asset.nftAddress}"
+                )
         files_list = files_json["files"]
         if not isinstance(files_list, list):
             raise TypeError(
