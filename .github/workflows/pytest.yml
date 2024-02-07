@@ -41,24 +41,14 @@ jobs:
           pip install -r requirements_dev.txt
       - name: Delete default runner images
         run: |
-          docker image rm node:14
-          docker image rm node:14-alpine
           docker image rm node:16
           docker image rm node:16-alpine
           docker image rm node:18
           docker image rm node:18-alpine
           docker image rm node:20
-          docker image rm node:20-alpine
-          docker image rm buildpack-deps:buster
-          docker image rm buildpack-deps:bullseye
           docker image rm debian:10
           docker image rm debian:11
           docker image rm moby/buildkit:latest
-          docker image rm alpine:3.16
-          docker image rm alpine:3.17
-          docker image rm alpine:3.18
-          docker image rm ubuntu:18.04
-          docker image rm ubuntu:20.04
       - name: Wait for contracts deployment and C2D cluster to be ready
         working-directory: ${{ github.workspace }}/barge
         run: |
